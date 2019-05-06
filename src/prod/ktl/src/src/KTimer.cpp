@@ -14,6 +14,9 @@
 
 #include "ktl.h"
 #include "string.h"
+#if defined(PLATFORM_UNIX) && defined(CLANG_5_0_1_PLUS)
+#include <signal.h>
+#endif
 
 extern "C" _Check_return_ _CRTIMP int __cdecl _wtoi(_In_z_ const wchar_t *_Str);
 

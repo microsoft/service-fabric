@@ -8,7 +8,7 @@
 
   <PropertyGroup>
     <Description>Fabric Fault Analysis Service</Description>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>$(SFTargetFramework)</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>FabricFAS</AssemblyName>
     <OutputType>Exe</OutputType>

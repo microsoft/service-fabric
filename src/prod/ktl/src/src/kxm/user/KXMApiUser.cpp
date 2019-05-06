@@ -29,6 +29,9 @@ Abstract:
 
 #include <palhandle.h>
 #include "KXMUKApi.h"
+#if defined(PLATFORM_UNIX) && defined(CLANG_5_0_1_PLUS)
+#include <sys/uio.h>
+#endif
 
 #define Message(a, b...) //printf("[%s@%d] "a"\n", __FUNCTION__, __LINE__, ##b)
 

@@ -111,7 +111,7 @@ namespace ReliableConcurrentQueueTests
         KSharedPtr<TxnReplicator::Transaction> CreateReplicatorTransaction(__in Data::TStore::Store<LONG64, TValue>& store)
         {
             CODING_ERROR_ASSERT(store.TransactionalReplicatorSPtr);
-            return Transaction::CreateTransaction(*store.TransactionalReplicatorSPtr, GetAllocator());
+            return Transaction::CreateTransaction(*store.get_TransactionalReplicator(), GetAllocator());
         }
 
         KSharedPtr<Data::Collections::ReliableConcurrentQueue<TValue>> CreateRCQ(

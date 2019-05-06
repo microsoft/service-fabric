@@ -4,12 +4,14 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#undef _WIN64
 #include "cpprest/http_client.h"
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/rawptrstream.h"
 #include "cpprest/filestream.h"
+#define _WIN64 1
 
 using namespace std;
 using namespace Common;

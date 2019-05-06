@@ -55,7 +55,7 @@ namespace Data
          {
             if (item.Value->GetRecordKind() == RecordKind::DeletedVersion)
             {
-               valueCheckpointFileSPtr_->WriteItem(*valueFileStreamSPtr_, *valueBufferSPtr_, *item.Value, *valueSerializerSPtr_);
+               valueCheckpointFileSPtr_->WriteItem(*valueFileStreamSPtr_, *valueBufferSPtr_, *item.get_Value(), *valueSerializerSPtr_);
                co_return;
             }
 
@@ -166,12 +166,12 @@ namespace Data
 
             if (shouldSerialize)
             {
-               valueCheckpointFileSPtr_->WriteItem(*valueFileStreamSPtr_, *valueBufferSPtr_, *item.Value, *valueSerializerSPtr_);
+               valueCheckpointFileSPtr_->WriteItem(*valueFileStreamSPtr_, *valueBufferSPtr_, *item.get_Value(), *valueSerializerSPtr_);
             }
             else
             {
                STORE_ASSERT(value != nullptr, "value is null");
-               valueCheckpointFileSPtr_->WriteItem(*valueFileStreamSPtr_, *valueBufferSPtr_, *item.Value, *value);
+               valueCheckpointFileSPtr_->WriteItem(*valueFileStreamSPtr_, *valueBufferSPtr_, *item.get_Value(), *value);
             }
 
             ULONG32 endPosition = static_cast<ULONG32>(valueBufferSPtr_->Position);

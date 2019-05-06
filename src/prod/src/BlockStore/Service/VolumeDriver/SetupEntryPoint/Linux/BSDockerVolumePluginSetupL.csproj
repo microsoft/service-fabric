@@ -4,7 +4,7 @@
   <PropertyGroup>
     <NetStandardBuildWindows>false</NetStandardBuildWindows>
     <RuntimeIdentifier>ubuntu.16.04-x64</RuntimeIdentifier>
-    <RuntimeFrameworkVersion>2.0.7</RuntimeFrameworkVersion>
+    <TargetFramework>$(SFTargetFramework)</TargetFramework>  
   </PropertyGroup>
   <Import Project="..\BSDockerVolumePluginSetup.targets" />
 

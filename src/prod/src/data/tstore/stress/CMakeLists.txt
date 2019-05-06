@@ -19,8 +19,6 @@ add_executable(${exe_TStore_Stress}
   ../TestTransactionContext.cpp
 )
 
-add_precompiled_header(${exe_TStore_Stress} ../stdafx.h FORCEINCLUDE)
-
 set_target_properties(${exe_TStore_Stress} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}
     LINK_FLAGS "-Wl,--allow-multiple-definition")

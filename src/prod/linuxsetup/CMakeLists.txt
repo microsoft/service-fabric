@@ -82,7 +82,7 @@ add_custom_target(fabricdrop
     COMMAND chrpath -d ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/libFabricRuntime.so
 
     COMMAND cp -a ${THIRD_PARTY_LIB_DIR}/casablanca_v_2/Binaries/.      ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
-    COMMAND cp -a ${THIRD_PARTY_LIB_DIR}/Boost_1_61_0/lib/.         ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
+    COMMAND cp -a ${THIRD_PARTY_LIB_DIR}/${BOOST_VERSION}/lib/.         ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
 
     COMMAND cp -a ${Linux_Setup_Dir}/runtime/scripts/deployfabric.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/deployfabric.sh
     COMMAND cp -a ${Linux_Setup_Dir}/runtime/scripts/starthost.sh    ${FABRIC_DROP_DIR}/bin/starthost.sh

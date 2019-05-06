@@ -43,7 +43,7 @@
           BeforeTargets="BeforeBuild"
 		  Inputs="$(MSBuildProjectFullPath)"
 		  Outputs="$(CoreClrPrjLockFile);$(ProjectAssetsFile)">
-    <Exec Command="$(DotnetCliExe) restore $(MSBuildProjectFullPath) /p:SRCROOT=$(SRCROOT) /p:NuGetPackageRoot=$(NuGetPackageRoot) /p:EnvironmentConfig=$(EnvironmentConfig) /p:BUILD_VERSION=$(BUILD_VERSION) /p:SF_DOTNET_TYPE=$(SF_DOTNET_TYPE) --no-dependencies --packages $(DotnetPackagesDir) --configfile $(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\NuGet.Config" />
+    <Exec Command="$(DotnetCliExe) restore $(MSBuildProjectFullPath) /p:SRCROOT=$(SRCROOT) /p:NuGetPackageRoot=$(NuGetPackageRoot) /p:EnvironmentConfig=$(EnvironmentConfig) /p:BUILD_VERSION=$(BUILD_VERSION) /p:SF_DOTNET_TYPE=$(SF_DOTNET_TYPE) /p:BuildUbuntu1804=$(BuildUbuntu1804) /p:DotNetSdkVersion=$(DotNetSdkVersion) --no-dependencies --packages $(DotnetPackagesDir) --configfile $(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\NuGet.Config" />
 
 	<MakeDir Directories="$(DotnetPackagesDir)" />
     <Touch Files="$(CoreClrPrjLockFile)"
@@ -62,6 +62,9 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(BuildLinux)'=='true'" >
       <ResgenExe>$(DotnetCliExe) $(SRCROOT)/../external/ServiceFabric.ResGen.NetStandard/resgen/resgen.dll </ResgenExe>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(BuildLinux)'=='true' And '$(BuildUbuntu1804)' == 'true'" >
+      <ResgenExe>$(DotnetCliExe) $(SRCROOT)/../external/ServiceFabric.ResGen.NetStandard/resgen-dotnet2.1/resgen/resgen.dll </ResgenExe>
     </PropertyGroup>
     <PropertyGroup Condition="'$(BuildLinux)'!='true'" >
       <ResgenExe>$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe</ResgenExe>

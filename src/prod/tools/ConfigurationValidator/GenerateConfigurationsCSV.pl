@@ -1,6 +1,8 @@
 ﻿#!perl -w
 use strict;
 use File::Find;
+use File::Basename;
+use lib dirname (__FILE__) . "/../../test/generated";
 use WFFileIO;
 
 my $FabricRoot = shift;

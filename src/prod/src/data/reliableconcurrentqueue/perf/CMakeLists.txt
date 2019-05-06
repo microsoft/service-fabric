@@ -15,8 +15,6 @@ add_executable(${exe_ReliableConcurrentQueue_Perf}
   ../ReliableConcurrentQueue.PerfTest.cpp
 )
 
-add_precompiled_header(${exe_ReliableConcurrentQueue_Perf} ../stdafx.h FORCEINCLUDE)
-
 set_target_properties(${exe_ReliableConcurrentQueue_Perf} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}
     LINK_FLAGS "-Wl,--allow-multiple-definition")

@@ -3,6 +3,7 @@
   <PropertyGroup>
     <NetStandardBuildWindows>false</NetStandardBuildWindows>
     <SelfContained>false</SelfContained>
+    <TargetFramework>$(SFTargetFramework)</TargetFramework>
   </PropertyGroup>
   <Import Project="..\AzureFilesVolumePluginSetup.targets" />
 

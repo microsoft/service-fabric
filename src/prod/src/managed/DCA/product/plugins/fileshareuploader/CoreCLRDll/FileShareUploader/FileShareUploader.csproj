@@ -6,6 +6,7 @@
 
   <PropertyGroup>
     <Description>FileShareUploader Class Library</Description>
+    <TargetFramework>$(SFTargetFramework)</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>FileShareUploader</AssemblyName>
     <PackageId>FileShareUploader</PackageId>

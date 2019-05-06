@@ -7,7 +7,7 @@
 
   <PropertyGroup>
     <Description>Fabric Deployer</Description>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>$(SFTargetFramework)</TargetFramework>
     <AssemblyName>FabricDeployer</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>FabricDeployer</PackageId>

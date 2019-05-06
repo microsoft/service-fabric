@@ -28,6 +28,8 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <AssemblyFileVersion>$(BuildMajorVersionOnly)</AssemblyFileVersion>
     <LinuxBuildArtifacts>$(SRCROOT)/../external/ServiceFabric.Linux.Coreclr.BuildArtifacts/build</LinuxBuildArtifacts>
     <SfDotnetType>$(SF_DOTNET_TYPE)</SfDotnetType>
+    <BuildUbuntu1804>$(BuildUbuntu1804)</BuildUbuntu1804>
+    <DotNetSdkVersion>$(DotNetSdkVersion)</DotNetSdkVersion>
   </PropertyGroup>
 
   <!-- Create a dummy SetEnvironment task for linux -->

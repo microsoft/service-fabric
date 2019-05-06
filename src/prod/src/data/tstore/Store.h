@@ -1000,7 +1000,7 @@ namespace Data
                 Diagnostics::Validate(status);
                 try
                 {
-                    co_await MetadataManager::OpenAsync(*snapshotMetadataTableSPtr, *this->CurrentDiskMetadataFilePath, this->GetThisAllocator(), *traceComponent_);
+                    co_await MetadataManager::OpenAsync(*snapshotMetadataTableSPtr, *this->get_CurrentDiskMetadataFilePath(), this->GetThisAllocator(), *traceComponent_);
 
                     // Backup the current metadata table.
                     auto backupMetadataFileName = Common::Path::Combine(backupDirectorySPtr->operator LPCWSTR(), CurrentDiskMetadataFileName.operator LPCWSTR());
@@ -1168,7 +1168,7 @@ namespace Data
                         traceComponent_->PartitionId, traceComponent_->TraceTag,
                         Data::Utilities::ToStringLiteral(*backupDirectorySPtr),
                         Data::Utilities::ToStringLiteral(*backupMetadataTableFilePathSPtr),
-                        Data::Utilities::ToStringLiteral(*this->CurrentDiskMetadataFilePath));
+                        Data::Utilities::ToStringLiteral(*this->get_CurrentDiskMetadataFilePath()));
                     auto fileCopy = Common::File::Copy(backupMetadataTableFilePathSPtr->operator LPCWSTR(), this->CurrentDiskMetadataFilePath->operator LPCWSTR(), true);
                     if (fileCopy.IsSuccess() == false)
                     {
@@ -3468,7 +3468,7 @@ namespace Data
                 {
                     IncrementCount(replicatorTransaction.TransactionId, sequenceNumber);
 
-                    auto keySize = (*metadataOperationDataKCSPtr->KeyBytes)[0]->QuerySize();
+                    auto keySize = (*metadataOperationDataKCSPtr->get_KeyBytes())[0]->QuerySize();
                     auto cachedEstimator = keySizeEstimatorSPtr_.Get();
                     cachedEstimator->AddKeySize(keySize);
                 }
@@ -3739,7 +3739,7 @@ namespace Data
                     KSharedPtr<StoreTransaction<TKey, TValue>> rwtxSPtr = &rwtx;
                     MetadataOperationData::CSPtr metadataOperationDataCSPtr = &metadataOperationData;
 
-                    co_await FireUndoNotificationsAsync(*rwtx.ReplicatorTransaction, key, *metadataOperationDataCSPtr, readResultSPtr, sequenceNumber);
+                    co_await FireUndoNotificationsAsync(*rwtx.get_ReplicatorTransaction(), key, *metadataOperationDataCSPtr, readResultSPtr, sequenceNumber);
                     UpdateCountForUndoOperation(rwtxSPtr->Id, sequenceNumber, *metadataOperationDataCSPtr, readResultSPtr->VersionedItem);
                 }
                 catch (const ktl::Exception & e)
@@ -3844,7 +3844,7 @@ namespace Data
                         auto cachedEstimator = keySizeEstimatorSPtr_.Get();
                         cachedEstimator->AddKeySize(keySize);
 
-                        co_await FireItemAddedNotificationOnSecondaryAsync(*storeTransaction.ReplicatorTransaction, key, value, sequenceNumber);
+                        co_await FireItemAddedNotificationOnSecondaryAsync(*storeTransaction.get_ReplicatorTransaction(), key, value, sequenceNumber);
 
                         //StoreEventSource::Events->StoreOnApplyAdd(
                         //    traceComponent_->PartitionId, traceComponent_->TraceTag,
@@ -3926,7 +3926,7 @@ namespace Data
                         // Update count, notifications and trace
 
                         KSharedPtr< const StoreTransaction<TKey, TValue>> storeTransactionSPtr = &storeTransaction;
-                        co_await FireItemUpdatedNotificationOnSecondaryAsync(*storeTransaction.ReplicatorTransaction, key, value, sequenceNumber);
+                        co_await FireItemUpdatedNotificationOnSecondaryAsync(*storeTransaction.get_ReplicatorTransaction(), key, value, sequenceNumber);
 
                         //StoreEventSource::Events->StoreOnApplyUpdate(
                         //    traceComponent_->PartitionId, traceComponent_->TraceTag,
@@ -4006,7 +4006,7 @@ namespace Data
                         auto newCount = DecrementCount(storeTransaction.Id, sequenceNumber);
                         UNREFERENCED_PARAMETER(newCount);
 
-                        co_await FireItemRemovedNotificationOnSecondaryAsync(*storeTransaction.ReplicatorTransaction, key, sequenceNumber);
+                        co_await FireItemRemovedNotificationOnSecondaryAsync(*storeTransaction.get_ReplicatorTransaction(), key, sequenceNumber);
 
                         //StoreEventSource::Events->StoreOnApplyRemove(
                         //    traceComponent_->PartitionId, traceComponent_->TraceTag,
@@ -4277,11 +4277,11 @@ namespace Data
                     auto versions = cachedComponentSPtr->ReadVersions(key);
                     if (versions->PreviousVersionSPtr)
                     {
-                        cachedDeltaComponentSPtr->Add(key, *(versions->PreviousVersionSPtr), *consolidationManagerSPtr_);
+                        cachedDeltaComponentSPtr->Add(key, *(versions->get_PreviousVersion()), *consolidationManagerSPtr_);
                     }
 
                     STORE_ASSERT(versions->CurrentVersionSPtr, "versions->CurrentVersionSPtr");
-                    cachedDeltaComponentSPtr->Add(key, *(versions->CurrentVersionSPtr), *consolidationManagerSPtr_);
+                    cachedDeltaComponentSPtr->Add(key, *(versions->get_CurrentVersion()), *consolidationManagerSPtr_);
                 }
             }
 
@@ -4563,9 +4563,9 @@ namespace Data
                         continue;
                     }
 
-                    OnRecoverKeyCallback(row.Key, *row.Value);
+                    OnRecoverKeyCallback(row.Key, *row.get_Value());
 
-                    consolidationManagerSPtr_->Add(row.Key, *row.Value);
+                    consolidationManagerSPtr_->Add(row.Key, *row.get_Value());
 
                     if (shouldLoadValuesInRecovery_)
                     {

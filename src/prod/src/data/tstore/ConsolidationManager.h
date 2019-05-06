@@ -93,7 +93,7 @@ namespace Data
                   auto status = StoreTransaction<TKey, TValue>::Create(
                      consolidationProviderSPtr_->CreateTransactionId(),
                      consolidationProviderSPtr_->StateProviderId,
-                     *consolidationProviderSPtr_->KeyComparerSPtr,
+                     *consolidationProviderSPtr_->get_KeyComparer(),
                      *traceComponent_,
                      this->GetThisAllocator(), 
                       rwtxSPtr);
@@ -105,7 +105,7 @@ namespace Data
                   try
                   {
                      co_await rwtxSPtr->AcquirePrimeLockAsync(
-                        *consolidationProviderSPtr_->LockManagerSPtr,
+                        *consolidationProviderSPtr_->get_LockManager(),
                         LockMode::Shared,
                         Common::TimeSpan::FromMilliseconds(256 * 1000), // TODO: make constant
                         true);
@@ -145,11 +145,11 @@ namespace Data
                   // Assumption: new consolidated state's size will be similar to old consolidated state's size.
                   // todo: Add an overload that takes in count.
                   KSharedPtr<ConsolidatedStoreComponent<TKey, TValue>> newConsolidatedStateSPtr;
-                  status = ConsolidatedStoreComponent<TKey, TValue>::Create(*consolidationProviderSPtr_->KeyComparerSPtr, this->GetThisAllocator(), newConsolidatedStateSPtr);
+                  status = ConsolidatedStoreComponent<TKey, TValue>::Create(*consolidationProviderSPtr_->get_KeyComparer(), this->GetThisAllocator(), newConsolidatedStateSPtr);
                   Diagnostics::Validate(status);
                    
                   // Create new aggregated state here. This method is the only writer, there can be no readers. Unlike managed, clear cannot contend here for writes.
-                  status = AggregatedStoreComponent<TKey, TValue>::Create(*newConsolidatedStateSPtr, *consolidationProviderSPtr_->KeyComparerSPtr, *traceComponent_, this->GetThisAllocator(), newAggregatedStoreComponentSPtr_);
+                  status = AggregatedStoreComponent<TKey, TValue>::Create(*newConsolidatedStateSPtr, *consolidationProviderSPtr_->get_KeyComparer(), *traceComponent_, this->GetThisAllocator(), newAggregatedStoreComponentSPtr_);
                   Diagnostics::Validate(status);
 
                   auto oldConsolidatedStateSPtr = cachedAggregatedComponentSPtr->GetConsolidatedState();
@@ -174,7 +174,7 @@ namespace Data
                      KSharedPtr<DifferentialStateEnumerator<TKey, TValue>> diffStateEnumeratorSPtr = nullptr;
                      status = DifferentialStateEnumerator<TKey, TValue>::Create(
                         *differentialState,
-                        *(consolidationProviderSPtr_->KeyComparerSPtr),
+                        *(consolidationProviderSPtr_->get_KeyComparer()),
                         this->GetThisAllocator(),
                         diffStateEnumeratorSPtr);
                      Diagnostics::Validate(status);
@@ -189,7 +189,7 @@ namespace Data
                   bool isConsolidatedStateDrained = !consolidatedStateEnumeratorSPtr->MoveNext();
 
                   KSharedPtr<DifferentialDataEnumerator<TKey, TValue>> differentialDataEnumeratorSPtr = nullptr;
-                  status = DifferentialDataEnumerator<TKey, TValue>::Create(*priorityQueueSPtr, *(consolidationProviderSPtr_->KeyComparerSPtr), *this, *metadataTableSPtr, this->GetThisAllocator(), differentialDataEnumeratorSPtr);
+                  status = DifferentialDataEnumerator<TKey, TValue>::Create(*priorityQueueSPtr, *(consolidationProviderSPtr_->get_KeyComparer()), *this, *metadataTableSPtr, this->GetThisAllocator(), differentialDataEnumeratorSPtr);
                   Diagnostics::Validate(status);
 
                   STORE_ASSERT(differentialDataEnumeratorSPtr != nullptr, "differential enumerator cannot be null");
@@ -308,7 +308,7 @@ namespace Data
 
                         if (differentialStateVersionsSPtr->CurrentVersionSPtr->GetRecordKind() != RecordKind::DeletedVersion)
                         {
-                           newConsolidatedStateSPtr->Add(differntialStateKey, *(differentialStateVersionsSPtr->CurrentVersionSPtr));
+                           newConsolidatedStateSPtr->Add(differntialStateKey, *(differentialStateVersionsSPtr->get_CurrentVersion()));
                         }
 
                         isDifferentialStateDrained = !differentialDataEnumeratorSPtr->MoveNext();
@@ -568,9 +568,9 @@ namespace Data
                      if (snapshotComponentSPtr == nullptr)
                      {
                         status = SnapshotComponent<TKey, TValue>::Create(
-                            *consolidationProviderSPtr_->SnapshotContainerSPtr, 
+                            *consolidationProviderSPtr_->get_SnapshotContainer(), 
                             consolidationProviderSPtr_->IsValueAReferenceType, 
-                            *consolidationProviderSPtr_->KeyComparerSPtr, 
+                            *consolidationProviderSPtr_->get_KeyComparer(), 
                             *traceComponent_,
                             this->GetThisAllocator(), 
                             snapshotComponentSPtr);
@@ -664,7 +664,7 @@ namespace Data
                // Iterate through delta differential states here
                KSharedPtr<SweepEnumerator<TKey, TValue>> valuesForSweepEnumeratorSPtr = nullptr;
                NTSTATUS status = SweepEnumerator<TKey, TValue>::Create(
-                   *cachedAggregatedComponentSPtr->DeltaDifferentialStateList, 
+                   *cachedAggregatedComponentSPtr->get_DeltaDifferentialStateList(), 
                    cachedAggregatedComponentSPtr->Index, 
                    this->GetThisAllocator(), 
                    *traceComponent_,
@@ -746,9 +746,9 @@ namespace Data
                         bool found = mergeTableSPtr->Table->TryGetValue(fileId, fileMetadataSPtr);
                         STORE_ASSERT(found, "fileId {1} should be in merge table", fileId);
 
-                        auto enumeratorSPtr = fileMetadataSPtr->CheckpointFileSPtr->GetAsyncEnumerator<TKey, TValue>(*consolidationProviderSPtr_->KeyConverterSPtr);
+                        auto enumeratorSPtr = fileMetadataSPtr->CheckpointFileSPtr->GetAsyncEnumerator<TKey, TValue>(*consolidationProviderSPtr_->get_KeyConverter());
                         STORE_ASSERT(enumeratorSPtr != nullptr, "key checkpoint file enumerator should not be null");
-                        enumeratorSPtr->KeyComparerSPtr = *consolidationProviderSPtr_->KeyComparerSPtr;
+                        enumeratorSPtr->KeyComparerSPtr = *consolidationProviderSPtr_->get_KeyComparer();
 
                         // Prime the enumerator so it can be compared
                         auto hasNext = co_await enumeratorSPtr->MoveNextAsync(cancellationToken);
@@ -788,8 +788,8 @@ namespace Data
                         *valueFileStreamSPtr,
                         *keyFileStreamSPtr,
                         logicalTimeStamp,
-                        *consolidationProviderSPtr_->KeyConverterSPtr,
-                        *consolidationProviderSPtr_->ValueConverterSPtr,
+                        *consolidationProviderSPtr_->get_KeyConverter(),
+                        *consolidationProviderSPtr_->get_ValueConverter(),
                         *traceComponent_,
                         this->GetThisAllocator(),
                         blockAlignedWriterSPtr);
@@ -962,7 +962,7 @@ namespace Data
 
                     if (!fileIsEmpty)
                     {
-                       auto fullFileNameSPtr = CombinePaths(*consolidationProviderSPtr_->WorkingDirectoryCSPtr, *fileNameSPtr, L"");
+                       auto fullFileNameSPtr = CombinePaths(*consolidationProviderSPtr_->get_WorkingDirectory(), *fileNameSPtr, L"");
 
                        StoreEventSource::Events->ConsolidationManagerMergeFile(traceComponent_->PartitionId, traceComponent_->TraceTag, ToStringLiteral(*fullFileNameSPtr));
                         
@@ -1091,7 +1091,7 @@ namespace Data
                  KSharedPtr<DifferentialStateVersions<TValue>> diffStateVersions = deltaDifferentialState->ReadVersions(key);
                  if (diffStateVersions->PreviousVersionSPtr)
                  {
-                    ProcessToBeRemovedVersions(key, *diffStateVersions->CurrentVersionSPtr, *diffStateVersions->PreviousVersionSPtr, metadataTable);
+                    ProcessToBeRemovedVersions(key, *diffStateVersions->get_CurrentVersion(), *diffStateVersions->get_PreviousVersion(), metadataTable);
                     diffStateVersions->SetPreviousVersion(nullptr);
                  }
               }
@@ -1175,8 +1175,8 @@ namespace Data
                auto fileId = consolidationProviderSPtr_->IncrementFileId();
 
                fileNameSPtr = CreateGUIDString();
-               auto keyFileNameSPtr = CombinePaths(*consolidationProviderSPtr_->WorkingDirectoryCSPtr, *fileNameSPtr, KeyCheckpointFile::GetFileExtension());
-               auto valueFileNameSPtr = CombinePaths(*consolidationProviderSPtr_->WorkingDirectoryCSPtr, *fileNameSPtr, ValueCheckpointFile::GetFileExtension());
+               auto keyFileNameSPtr = CombinePaths(*consolidationProviderSPtr_->get_WorkingDirectory(), *fileNameSPtr, KeyCheckpointFile::GetFileExtension());
+               auto valueFileNameSPtr = CombinePaths(*consolidationProviderSPtr_->get_WorkingDirectory(), *fileNameSPtr, ValueCheckpointFile::GetFileExtension());
 
                keyFileSPtr = co_await KeyCheckpointFile::CreateAsync(*traceComponent_, *keyFileNameSPtr, consolidationProviderSPtr_->IsValueAReferenceType, fileId, this->GetThisAllocator());
                valueFileSPtr = co_await ValueCheckpointFile::CreateAsync(*traceComponent_, *valueFileNameSPtr, fileId, this->GetThisAllocator());
@@ -1251,7 +1251,7 @@ namespace Data
            numberOfDeltasToBeConsolidated_(Constants::DefaultNumberOfDeltasTobeConsolidated)
         {
            KSharedPtr<AggregatedStoreComponent<TKey, TValue>> aggregatedStoreComponentSPtr = nullptr;
-           NTSTATUS status = AggregatedStoreComponent<TKey, TValue>::Create(*consolidationProviderSPtr_->KeyComparerSPtr, traceComponent, this->GetThisAllocator(), aggregatedStoreComponentSPtr);
+           NTSTATUS status = AggregatedStoreComponent<TKey, TValue>::Create(*consolidationProviderSPtr_->get_KeyComparer(), traceComponent, this->GetThisAllocator(), aggregatedStoreComponentSPtr);
            if (!NT_SUCCESS(status))
            {
               this->SetConstructorStatus(status);

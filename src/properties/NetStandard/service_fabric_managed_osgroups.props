@@ -3,13 +3,20 @@
   <PropertyGroup>
     <TargetsWindows>false</TargetsWindows>
     <TargetsLinux>false</TargetsLinux>
+    <SFTargetFramework>netcoreapp2.0</SFTargetFramework>
   </PropertyGroup>
 
-  <PropertyGroup Condition="('$(BuildLinux)' != 'true' ) And ( '$(CurrentRuntimeIdentifier)' == 'win10-x64' )">
+  <PropertyGroup Condition="('$(BuildLinux)' != 'true' ) And ( '$(CurrentRuntimeIdentifier)' == 'win10-x64')">
     <TargetsWindows>true</TargetsWindows>
+    <SFTargetFramework>netcoreapp2.0</SFTargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="$(CurrentRuntimeIdentifier) == 'ubuntu.16.04-x64'">
     <TargetsLinux>true</TargetsLinux>
+    <SFTargetFramework>netcoreapp2.0</SFTargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="('$(BuildLinux)' == 'true' ) And ('$(BuildUbuntu1804)' == 'true' )">
+    <TargetsLinux>true</TargetsLinux>
+    <SFTargetFramework>netcoreapp2.1</SFTargetFramework>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(NetStandardBuildLinux)' != 'false' ">

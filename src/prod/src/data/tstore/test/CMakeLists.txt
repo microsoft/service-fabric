@@ -1,10 +1,5 @@
 include_directories("..")
 
-add_compile_options(-rdynamic)
-
-add_definitions(-DBOOST_TEST_ENABLED)
-add_definitions(-DNO_INLINE_EVENTDESCCREATE)
-
 add_executable(${exe_TStore_Test}
   ${PROJECT_SOURCE_DIR}/test/BoostUnitTest/btest.cpp  
   ../Consolidation.Test.cpp
@@ -55,8 +50,6 @@ add_executable(${exe_TStore_Test}
   ../SweepManager.Test.cpp
   ../Upgrade.Test.cpp
 )
-
-#add_precompiled_header(${exe_TStore_Test} ../stdafx.h)
 
 set_target_properties(${exe_TStore_Test} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}

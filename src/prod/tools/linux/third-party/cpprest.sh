@@ -8,9 +8,9 @@
 
 VERSION=28
 NAME=cpprest
-BRANCH=cpprest28sf
+BRANCH=zhol_ubuntu1804
 
-REPO="https://github.com/yihuaz/cpprestsdk.git"
+REPO="https://github.com/kavyako/cpprestsdk.git"
 
 # Import variables and functions from config.sh
 ScriptPath=`dirname $0`

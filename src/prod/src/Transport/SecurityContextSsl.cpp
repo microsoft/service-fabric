@@ -577,7 +577,11 @@ int SecurityContextSsl::CertVerifyCallback(int preverify_ok, X509_STORE_CTX* ctx
     auto issuerName = X509_NAME_oneline(X509_get_issuer_name(cert), nullptr, 0);
     Invariant(issuerName);
     KFinally([=] { free(issuerName); });
+#if defined(CLANG_5_0_1_PLUS)
+    uint64 certSerialNo = ASN1_INTEGER_get(X509_get0_serialNumber(cert));
+#else
     uint64 certSerialNo = ASN1_INTEGER_get(cert->cert_info->serialNumber);
+#endif
 
     if (preverify_ok)
     {

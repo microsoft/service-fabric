@@ -473,7 +473,7 @@ namespace TStoreTests
           }
 
           co_await storeSPtr->CloseAsync(ktl::CancellationToken::None);
-          co_return co_await CreateSecondaryAsync(storeSPtr->Name, storeSPtr->StateProviderId, *storeSPtr->WorkingDirectoryCSPtr, nullptr, nullptr);
+          co_return co_await CreateSecondaryAsync(storeSPtr->Name, storeSPtr->StateProviderId, *storeSPtr->get_WorkingDirectory(), nullptr, nullptr);
       }
 
         void RemoveStateAndReopenStore()
@@ -859,8 +859,8 @@ namespace TStoreTests
             NTSTATUS status = StoreTransaction<TKey, TValue>::Create(
                 transactionId, 
                 storeId, 
-                *storeSPtr_->KeyComparerSPtr, 
-                *Store->TraceComponent,
+                *storeSPtr_->get_KeyComparer(), 
+                *Store->get_TraceComponent(),
                 allocator, 
                 storeTxn);
             CODING_ERROR_ASSERT(status == STATUS_SUCCESS);
@@ -870,7 +870,7 @@ namespace TStoreTests
         KSharedPtr<TxnReplicator::Transaction> CreateReplicatorTransaction(__in Data::TStore::Store<TKey, TValue>& store)
         {
             CODING_ERROR_ASSERT(store.TransactionalReplicatorSPtr);
-            return Transaction::CreateTransaction(*store.TransactionalReplicatorSPtr, GetAllocator());
+            return Transaction::CreateTransaction(*store.get_TransactionalReplicator(), GetAllocator());
         }
 
 

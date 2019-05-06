@@ -2,9 +2,11 @@
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------
 #include "stdafx.h"
+#undef _WIN64
 #include "cpprest/http_client.h"
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
+#define _WIN64 1
 
 using namespace std;
 using namespace Common;

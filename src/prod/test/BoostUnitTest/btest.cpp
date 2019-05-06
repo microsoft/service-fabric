@@ -7,6 +7,7 @@
 
 // currently windows is not using latest boost. 
 #ifdef PLATFORM_UNIX
+#define sealed sealed_
 #define BOOST_TEST_MODULE My Test 
 #include <boost/test/included/unit_test.hpp>
 #else

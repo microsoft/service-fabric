@@ -1,6 +1,10 @@
 include_directories("../Linux/user/inc/")
 include_directories("../Linux/driver/inc/")
 
+if (CLANG_VERSION_STRING VERSION_GREATER 5.0.0)
+  return()
+endif()
+
 add_executable(${exe_BlkDeviceLinuxKernelValidation_Test}
   BlkDeviceLinuxKernelValidation.cpp
 )

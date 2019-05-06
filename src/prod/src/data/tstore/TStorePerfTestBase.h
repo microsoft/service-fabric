@@ -74,7 +74,7 @@ namespace TStoreTests
                 auto key = item.Key;
                 auto value = item.Value;
                 stopwatch.Start();
-                co_await this->Store->AddAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, ktl::CancellationToken::None);
+                co_await this->Store->AddAsync(*txn->get_StoreTransactionSPtr(), key, value, DefaultTimeout, ktl::CancellationToken::None);
                 stopwatch.Stop();
                 stopwatch.Reset();
             }
@@ -129,7 +129,7 @@ namespace TStoreTests
                 auto key = item.Key;
                 auto value = item.Value;
                 TValue defaultValue = TValue();
-                co_await this->VerifyKeyExistsAsync(*(this->Store), *txn->StoreTransactionSPtr, key, defaultValue, value, equalityFunction);
+                co_await this->VerifyKeyExistsAsync(*(this->get_Store()), *txn->get_StoreTransactionSPtr(), key, defaultValue, value, equalityFunction);
             }
 
             co_await txn->CommitAsync();
@@ -186,7 +186,7 @@ namespace TStoreTests
                 auto key = item.Key;
 
                 KeyValuePair<LONG64, TValue> output(-1, defaultValue);
-                co_await this->Store->ConditionalGetAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, output, ktl::CancellationToken::None);
+                co_await this->Store->ConditionalGetAsync(*txn->get_StoreTransactionSPtr(), key, DefaultTimeout, output, ktl::CancellationToken::None);
             }
 
             co_await txn->AbortAsync();
@@ -240,7 +240,7 @@ namespace TStoreTests
                 auto key = item.Key;
                 auto value = item.Value;
 
-                co_await this->Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, ktl::CancellationToken::None);
+                co_await this->Store->ConditionalUpdateAsync(*txn->get_StoreTransactionSPtr(), key, value, DefaultTimeout, ktl::CancellationToken::None);
             }
 
             co_await txn->CommitAsync();
@@ -268,7 +268,7 @@ namespace TStoreTests
                 auto item = (*itemsSPtr)[k];
                 auto key = item.Key;
 
-                co_await this->Store->ConditionalRemoveAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, ktl::CancellationToken::None);
+                co_await this->Store->ConditionalRemoveAsync(*txn->get_StoreTransactionSPtr(), key, DefaultTimeout, ktl::CancellationToken::None);
             }
 
             co_await txn->CommitAsync();
@@ -436,7 +436,7 @@ namespace TStoreTests
 
                     Common::Stopwatch stopwatch;
                     stopwatch.Start();
-                    co_await this->Store->ConditionalGetAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, output, ktl::CancellationToken::None);
+                    co_await this->Store->ConditionalGetAsync(*txn->get_StoreTransactionSPtr(), key, DefaultTimeout, output, ktl::CancellationToken::None);
                     stopwatch.Stop();
                     InterlockedAdd64(&GetAsyncCallTime, stopwatch.ElapsedTicks);
                 }
@@ -464,7 +464,7 @@ namespace TStoreTests
 
             {
                 auto txn = this->CreateWriteTransaction();
-                SyncAwait(this->Store->AddAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, ktl::CancellationToken::None));
+                SyncAwait(this->Store->AddAsync(*txn->get_StoreTransactionSPtr(), key, value, DefaultTimeout, ktl::CancellationToken::None));
                 SyncAwait(txn->CommitAsync());
             }
 

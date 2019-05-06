@@ -9,8 +9,20 @@ elseif(EXISTS "/usr/share/dotnet/")
 endif()
 message(STATUS "DOTNET TYPE: ${SF_DOTNET_TYPE}")
 
+SET (CORECLR_CLI_COMMAND dotnet) 
+
+if(LINUX_DISTRIBUTION STREQUAL "DEBIAN" AND LINUX_VERSION STREQUAL "18.04")
+    SET(BuildUbuntu1804 true)
+else()
+    SET(BuildUbuntu1804 false)
+endif()
+
+# Get dotnet version
+EXECUTE_PROCESS(COMMAND ${CORECLR_CLI_COMMAND} --version OUTPUT_VARIABLE DotNetSdkVersion OUTPUT_STRIP_TRAILING_WHITESPACE)
+LIST (APPEND ManagedLinuxBuildEnv "DotNetSdkVersion=${DotNetSdkVersion}")
+message(STATUS "DOTNET VERSION: ${DotNetSdkVersion}")
+
 # Dotnet specific commands
-SET (CORECLR_CLI_COMMAND dotnet)
 SET (CORECLR_RESTORE_COMMAND restore)
 SET (CORECLR_BUILD_COMMAND msbuild)
 SET (EXTRA_FLAGS "/warnaserror")
@@ -22,6 +34,7 @@ LIST (APPEND ManagedLinuxBuildEnv "BINROOT=${PROJECT_BINARY_DIR}/")
 LIST (APPEND ManagedLinuxBuildEnv "BUILD_VERSION=${BUILD_VERSION}")
 LIST (APPEND ManagedLinuxBuildEnv "SF_DOTNET_TYPE=${SF_DOTNET_TYPE}")
 LIST (APPEND ManagedLinuxBuildEnv "EnvironmentConfig=${PROJECT_SOURCE_DIR}/../properties/linux/environment.props")
+LIST (APPEND ManagedLinuxBuildEnv "BuildUbuntu1804=${BuildUbuntu1804}")
 
 # Project specific variables
 LIST (APPEND ManagedLinuxBuildEnv "PkgSF_AspNetCore_Internal=${MANAGED_DEPS_DIR}/SF.AspNetCore.Internal")

@@ -5,12 +5,14 @@
 
 #include "stdafx.h"
 
+#undef _WIN64
 #include "cpprest/json.h"
 #include "cpprest/http_listener.h"
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
 #include "requestmessagecontext.linux.h"
 #include "Common/CryptoUtility.Linux.h"
+#define _WIN64 1
 
 using namespace Common;
 using namespace Transport;

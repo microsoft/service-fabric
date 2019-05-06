@@ -7,13 +7,20 @@
     <NetStandardCliLocation Condition="('$(SfDotnetType)' == 'STANDARD') or ('$(SfDotnetType)' == '')">/usr/share/dotnet/</NetStandardCliLocation>
     <NetStandardCliLocation Condition="'$(SfDotnetType)' == 'RHDOTNET20'">/opt/rh/rh-dotnet20/root/usr/lib64/dotnet/</NetStandardCliLocation>
     <NetStandardCliLocation Condition="'$(SfDotnetType)' == 'RHDOTNET21'">/opt/rh/rh-dotnet21/root/usr/lib64/dotnet/</NetStandardCliLocation>
+
     <NetStandardSdkVersion>2.0.3</NetStandardSdkVersion>
+    <NetStandardSdkVersion Condition=" '$(BuildUbuntu1804)' == 'true' ">$(DotNetSdkVersion)</NetStandardSdkVersion>
+
     <CscToolExe>RunCsc.sh</CscToolExe>
+    <CscToolExe  Condition=" '$(BuildUbuntu1804)' == 'true' ">bincore/RunCsc</CscToolExe>
+	
     <!-- Unify NetStandardImplicitPackageVersion in linux and windows : RDBug #12679665 -->
     <NetStandardImplicitPackageVersion>2.0.2</NetStandardImplicitPackageVersion>
     <WindowsPublicKey>$(SRCROOT)/../external/ServiceFabric.Linux.Coreclr.BuildArtifacts/certs/windows.snk</WindowsPublicKey>
     <!-- Do not use the Restore task. Use CLI for now. -->
     <DotnetCliExe>$(NetStandardCliLocation)dotnet</DotnetCliExe>
+    <RuntimeFrameworkVersion>2.0.7</RuntimeFrameworkVersion>
+    <RuntimeFrameworkVersion Condition=" '$(BuildUbuntu1804)' == 'true' ">2.1.5</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <!-- Windows Properties -->
@@ -24,6 +31,7 @@
     <NetStandardImplicitPackageVersion>2.0.0</NetStandardImplicitPackageVersion>
     <!-- Do not use the Restore task. Use CLI for now. -->
     <DotnetCliExe>$(NetStandardCliLocation)dotnet.exe</DotnetCliExe>
+    <RuntimeFrameworkVersion>2.0.7</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <!-- Common properties valid both for linux and windows build env-->
@@ -80,8 +88,6 @@
 
     <!-- Enable /highentropyva linker flag in coreclr -->
     <HighEntropyVA>true</HighEntropyVA>
-
-    <RuntimeFrameworkVersion>2.0.7</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_task_override.tasks" />

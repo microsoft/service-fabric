@@ -6,9 +6,11 @@
 #include "stdafx.h"
 
 #if defined(PLATFORM_UNIX)
+#undef _WIN64
 #include "cpprest/http_client.h"
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
+#define _WIN64
 #endif
 
 using namespace std;
