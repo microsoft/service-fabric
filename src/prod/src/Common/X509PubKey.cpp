@@ -13,8 +13,11 @@ using namespace std;
 X509PubKey::X509PubKey(PCCertContext certContext)
 {
     auto* x509PubKey = X509_get_X509_PUBKEY(certContext);
-    algorithm_ = X509_ALGOR_dup(x509PubKey->algor);
-    pubKey_ = ASN1_STRING_dup(x509PubKey->public_key);
+
+    X509_ALGOR *alg;
+    X509_PUBKEY_get0_param(0, 0, 0, &alg, x509PubKey);
+    algorithm_ = X509_ALGOR_dup(alg);
+    pubKey_ = ASN1_STRING_dup(X509_get0_pubkey_bitstr(certContext));
 }
 
 X509PubKey::~X509PubKey()

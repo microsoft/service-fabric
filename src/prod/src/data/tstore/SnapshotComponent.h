@@ -156,7 +156,7 @@ namespace Data
                         }
 
                         // Load the value into memory.
-                        value = co_await versionedItemSPtr->GetValueAsync(*fileMetadataSPtr, *containerSPtr_->ValueSerializer, readMode, *traceComponent_, ktl::CancellationToken::None);
+                        value = co_await versionedItemSPtr->GetValueAsync(*fileMetadataSPtr, *containerSPtr_->get_ValueSerializer(), readMode, *traceComponent_, ktl::CancellationToken::None);
                     }
 
                     if (versionedItemSPtr->GetVersionSequenceNumber() <= visibilityLSN)

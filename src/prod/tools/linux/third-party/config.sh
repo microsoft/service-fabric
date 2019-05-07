@@ -138,6 +138,40 @@ print_help()
     exit 1
 }
 
+# Update variables to build third-party library on Ubuntu1804.
+# boost version 1.66.0
+# cri-o version 1.9.14
+# llvm  version 6.0
+update_ubuntu1804_var()
+{
+    if [ ${NAME} == "clang" -o ${NAME} == "protobuf" ]; then
+        exit 0
+    fi
+	
+    CC=/usr/bin/clang-6.0
+    CXX=/usr/bin/clang++-6.0
+	
+    BOOST_INSTALL_PREFIX=${DEPS_ROOT}/third-party/bin/Boost_1_66_0
+	
+    if [ ${NAME} == "boost" ]; then
+        VERSION=1.66.0
+        TAG=boost-1.66.0
+        LIB_DIR=${BOOST_INSTALL_PREFIX}
+        BOOST_INCLUDE_DIR=${LIB_DIR}
+        BOOST_LIB_DIR=${LIB_DIR}/lib	
+    fi
+    if [ ${NAME} == "cri-o" ]; then
+        VERSION=1.9.14
+        BRANCH=v1.9.14
+    fi
+    if [ ${NAME} == "llvm" ]; then
+        VERSION=6.0
+        BRANCH=release_60
+    fi
+
+    DIR_NAME=${NAME}-${VERSION}
+}
+
 run()
 {
     local CLEAN_BIN=0
@@ -152,6 +186,10 @@ run()
         ;;
         -v|--verbose)
         VERBOSE=1
+        shift
+        ;;
+        -clang60)
+        update_ubuntu1804_var
         shift
         ;;
         -c|--clean)

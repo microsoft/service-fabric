@@ -60,7 +60,7 @@ config()
 }
 
 update()
-{
+{	
     cd ${LLVM_SRC_DIR}
     git pull
 

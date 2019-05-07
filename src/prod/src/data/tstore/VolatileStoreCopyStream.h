@@ -200,7 +200,7 @@ namespace Data
 
                     if (item.Value->GetRecordKind() != RecordKind::DeletedVersion)
                     {
-                        this->WriteValue(valueMemoryBuffer, *item.Value);
+                        this->WriteValue(valueMemoryBuffer, *item.get_Value());
                         this->WriteKey(keyMemoryBuffer, item);
 
                         chunkCount++;

@@ -433,7 +433,12 @@ X509Context LinuxCryptUtil::LoadCertificate(std::string const& filepath) const
     KFinally([=] { free(subjectName); });
     auto issuerName = X509_NAME_oneline(X509_get_issuer_name(x.get()), nullptr, 0);
     KFinally([=] { free(issuerName); });
+
+#if defined(CLANG_5_0_1_PLUS)
+    uint64 certSerialNo = ASN1_INTEGER_get(X509_get0_serialNumber(x.get()));
+#else
     uint64 certSerialNo = ASN1_INTEGER_get(x->cert_info->serialNumber);
+#endif
 
     WriteInfo(
         TraceType,
@@ -1177,19 +1182,33 @@ ErrorCode LinuxCryptUtil::DeriveKey(ByteBuffer const & input, ByteBuffer & key) 
 ErrorCode LinuxCryptUtil::ComputeHmac(ByteBuffer const& data, ByteBuffer const& key, ByteBuffer & output) const
 {
     ErrorCode error;
+#if defined(CLANG_5_0_1_PLUS)
+    HMAC_CTX *ctx = HMAC_CTX_new();
+    HMAC_CTX_reset(ctx);
+    KFinally([&] { HMAC_CTX_free(ctx); });
+#else
     HMAC_CTX ctx = {};
     HMAC_CTX_init(&ctx);
     KFinally([&] { HMAC_CTX_cleanup(&ctx); });
+#endif
 
     auto alg = EVP_sha512(); // LINUXTODO make algorithm an input parameter
+#if defined(CLANG_5_0_1_PLUS)
+    if (!HMAC_Init(ctx, key.data(), key.size(), EVP_sha512())) 
+#else
     if (!HMAC_Init(&ctx, key.data(), key.size(), EVP_sha512())) 
+#endif
     {
         error = GetOpensslErr();
         WriteError(TraceType, "ComputeHmac: HMAC_Init failed: {0}:{1}", error, error.Message);
         return error;
     }
 
+#if defined(CLANG_5_0_1_PLUS)
+    if (!HMAC_Update(ctx, data.data(), data.size()))
+#else
     if (!HMAC_Update(&ctx, data.data(), data.size()))
+#endif
     {
         error = GetOpensslErr();
         WriteError(TraceType, "ComputeHmac: HMAC_Update failed: {0}:{1}", error, error.Message);
@@ -1199,7 +1218,11 @@ ErrorCode LinuxCryptUtil::ComputeHmac(ByteBuffer const& data, ByteBuffer const& 
     // LINUXTODO output size depends on hash algorithm 
     output.resize(512);
     unsigned int len = 0;
+#if defined(CLANG_5_0_1_PLUS)
+    if (!HMAC_Final(ctx, output.data(), &len))
+#else
     if (!HMAC_Final(&ctx, output.data(), &len))
+#endif
     {
         error = GetOpensslErr();
         WriteError(TraceType, "ComputeHmac: HMAC_Final failed: {0}:{1}", error, error.Message);
@@ -1212,19 +1235,33 @@ ErrorCode LinuxCryptUtil::ComputeHmac(ByteBuffer const& data, ByteBuffer const& 
 
 ErrorCode LinuxCryptUtil::ComputeHash(ByteBuffer const & input, ByteBuffer & output) const
 {
+#if defined(CLANG_5_0_1_PLUS)
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    EVP_MD_CTX_reset(ctx);
+    KFinally([&] { EVP_MD_CTX_free(ctx); });
+#else
     EVP_MD_CTX ctx = {};
     EVP_MD_CTX_init(&ctx);
     KFinally([&] { EVP_MD_CTX_cleanup(&ctx); });
+#endif
 
     auto md = EVP_sha256(); //LINUXTODO take algorithm as an input parameter
+#if defined(CLANG_5_0_1_PLUS)
+    if (!EVP_DigestInit_ex(ctx, md, nullptr))
+#else
     if (!EVP_DigestInit_ex(&ctx, md, nullptr))
+#endif
     {
         auto error = GetOpensslErr();
         WriteError(TraceType, "ComputeHash: EVP_DigestInit_ex failed: {0}:{1}", error, error.Message);
         return error;
     }
 
+#if defined(CLANG_5_0_1_PLUS)
+    if (!EVP_DigestUpdate(ctx, input.data(), input.size()))
+#else
     if (!EVP_DigestUpdate(&ctx, input.data(), input.size()))
+#endif
     {
         auto error = GetOpensslErr();
         WriteError(TraceType, "ComputeHash: EVP_DigestUpdate failed: {0}:{1}", error, error.Message);
@@ -1233,7 +1270,11 @@ ErrorCode LinuxCryptUtil::ComputeHash(ByteBuffer const & input, ByteBuffer & out
 
     unsigned int mdLen = 0;
     output.resize(EVP_MAX_MD_SIZE);
+#if defined(CLANG_5_0_1_PLUS)
+    if (!EVP_DigestFinal(ctx, output.data(), &mdLen))
+#else
     if (!EVP_DigestFinal(&ctx, output.data(), &mdLen))
+#endif
     {
         auto error = GetOpensslErr();
         WriteError(TraceType, "ComputeHash: EVP_DigestFinal failed: {0}:{1}", error, error.Message);
@@ -1533,7 +1574,12 @@ ErrorCode LinuxCryptUtil::LoadIssuerChain(PCCertContext certContext, std::vector
 
     auto subjectCert = certContext;
     X509_check_purpose(subjectCert, -1, 0);
+   
+#if defined(CLANG_5_0_1_PLUS)
+    if (X509_get_extension_flags(subjectCert) & EXFLAG_SS) //self signed?
+#else
     if (subjectCert->ex_flags & EXFLAG_SS) //self signed?
+#endif
         return ErrorCodeValue::Success; 
 
     vector<X509Context> allCerts;
@@ -1563,7 +1609,11 @@ ErrorCode LinuxCryptUtil::LoadIssuerChain(PCCertContext certContext, std::vector
                 issuerChain.emplace_back(move(issuerCandicate));
 
                 X509_check_purpose(subjectCert, -1, 0);
+#if defined(CLANG_5_0_1_PLUS)
+                if (X509_get_extension_flags(subjectCert) & EXFLAG_SS) //self signed?
+#else
                 if (subjectCert->ex_flags & EXFLAG_SS) //self signed?
+#endif
                    return ErrorCodeValue::Success; 
 
                 shouldContinue = true;
@@ -1592,7 +1642,12 @@ ErrorCode LinuxCryptUtil::LoadDecryptionCertificate(PKCS7* p7, wstring const & c
         auto certIssuerName = X509_get_issuer_name(cert.get());
         auto nameToPrint = X509_NAME_oneline(certIssuerName, nullptr, 0);
         KFinally([=] { free(nameToPrint); });
+
+#if defined(CLANG_5_0_1_PLUS)
+        uint64 certSerialNo = ASN1_INTEGER_get(X509_get0_serialNumber(cert.get()));
+#else
         uint64 certSerialNo = ASN1_INTEGER_get(cert->cert_info->serialNumber);
+#endif
         WriteInfo(
             TraceType,
             "FindMatchingCertFile: cert: issuer='{0}', serialno={1:x}",

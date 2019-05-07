@@ -5,11 +5,13 @@
 
 #include "stdafx.h"
 #include "Common/CryptoUtility.Linux.h"
+#undef _WIN64
 #include "cpprest/json.h"
 #include "cpprest/http_listener.h"
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
 #include <boost/bind.hpp>
+#define _WIN64 1
 #include <iomanip>
 #include <src/Transport/TransportSecurity.Linux.h>
 

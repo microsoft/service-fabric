@@ -13,12 +13,7 @@
 #if !defined(TEMPLATE_H) || defined(TRACEPOINT_HEADER_MULTI_READ)
 #define TEMPLATE_H
 
-#if defined(LINUX_DISTRIB_DEBIAN)
-// workaround a bug that trace after lttng destruct when process shutdowns
-#include <retail/native/FabricCommon/tracepoint.h>
-#else
 #include <lttng/tracepoint.h>
-#endif
 
 TRACEPOINT_EVENT(
         service_fabric,

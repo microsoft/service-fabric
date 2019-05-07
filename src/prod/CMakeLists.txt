@@ -23,7 +23,7 @@ elseif(EXISTS "/etc/redhat-release")
   set(LINUX_DISTRIBUTION REDHAT)
   add_definitions(-DLINUX_DISTRIB_REDHAT)
 endif()
-message(STATUS "Distribution: ${LINUX_DISTRIBUTION}")
+message(STATUS "Distribution: ${LINUX_DISTRIBUTION} Version: ${LINUX_VERSION}")
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BuildType)
 if(BuildType STREQUAL "DEBUG")
@@ -46,6 +46,9 @@ ENDMACRO(SF_ADD_COMPILE_OPTIONS)
 if (CLANG_VERSION_STRING VERSION_GREATER 5.0.0)
   sf_add_compile_options(-fdeclspec)
   add_definitions(-DCLANG_5_0_1_PLUS)
+  set (BOOST_VERSION "Boost_1_66_0")
+else()
+  set (BOOST_VERSION "Boost_1_61_0")
 endif()
 
 MACRO(ADD_PRECOMPILED_HEADER _targetName _inputhdr)
@@ -282,7 +285,7 @@ include_directories ("shared/ktlwf/ktlwf/inc")
 include_directories ("shared/ktlwf/com/inc")
 
 # for boost (bug fixed)
-include_directories("${THIRD_PARTY_LIB_DIR}/Boost_1_61_0")
+include_directories("${THIRD_PARTY_LIB_DIR}/${BOOST_VERSION}")
 
 # for Cxx 
 set (CXX_INC_PATH "${THIRD_PARTY_LIB_DIR}/Cxx/include/c++/v1")
@@ -309,8 +312,7 @@ include_directories("${THIRD_PARTY_LIB_DIR}/minizip")
 # casablanca include directories
 set(Casablanca_INCLUDE_DIR "${THIRD_PARTY_LIB_DIR}/casablanca_v_2/include")
 set(WebSocket_INCLUDE_DIR "${THIRD_PARTY_LIB_DIR}/casablanca_v_2/libs/websocketpp")
-set(Boost_INCLUDE_DIR "${THIRD_PARTY_LIB_DIR}/Boost_1_61_0")
-
+set(Boost_INCLUDE_DIR "${THIRD_PARTY_LIB_DIR}/${BOOST_VERSION}")
 
 set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WebSocket_INCLUDE_DIR})
 include_directories(${Casablanca_INCLUDE_DIRS})
@@ -335,11 +337,11 @@ set (ENV{BOOST_TEST_LOG_LEVEL} "test_suite")
 
 # boost packages for casablanca
 # set boost paths for casablanca
-set(BOOST_ROOT "${THIRD_PARTY_LIB_DIR}/Boost_1_61_0")
+set(BOOST_ROOT "${THIRD_PARTY_LIB_DIR}/${BOOST_VERSION}")
 set(BOOST_INCLUDEDIR "${BOOST_ROOT}/boost")
 # not needed?
 #set(BOOST_INCLUDE_DIRS "${BOOST_ROOT}/boost")
-#set (BOOST_TEST_PATH ${THIRD_PARTY_LIB_DIR}/Boost_1_61_0/lib)
+#set (BOOST_TEST_PATH ${THIRD_PARTY_LIB_DIR}/${BOOST_VERSION}/lib)
 
 set(BOOST_LIBRARY_DIRS "${BOOST_ROOT}/lib")
 

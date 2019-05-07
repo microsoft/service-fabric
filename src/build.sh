@@ -37,20 +37,24 @@ TotalErrors=0
 GetOs()
 {
     local __resultvar=$1
+    local __linuxVersion=$2
 
     . /etc/os-release
     local linuxDistrib=$ID
 
     if [ $linuxDistrib = "ubuntu" ]; then
         eval $__resultvar="DEBIAN"
+        eval $__linuxVersion=$VERSION_ID
     elif [ $linuxDistrib = "rhel" ] || [ $linuxDistrib = "centos" ]; then
         eval $__resultvar="REDHAT"
+        eval $__linuxVersion=$VERSION_ID
     else
         eval $__resultvar="UNKNOWN"
+        eval $__linuxVersion="UNKNOWN"
     fi
 }
 
-GetOs LINUX_DISTRIBUTION
+GetOs LINUX_DISTRIBUTION LINUX_VERSION
 
 pushd `dirname $0` > /dev/null
 ScriptPath=`pwd -P`
@@ -92,7 +96,7 @@ fi
 CoreCLRLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/coreclrlibs.version)
 SFXLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/sfxlibs.version)
 SFUpgradeTestVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/upgradetestlibs.version)
-SFResgenVersion="ServiceFabric.ResGen.NetStandard.1.0.1"
+SFResgenVersion="ServiceFabric.ResGen.NetStandard.1.0.9"
 CoreclrBuildArtifacts="ServiceFabric.Linux.Coreclr.BuildArtifacts.1.0.1"
 MCGLinux="Microsoft.DotNet.Interop.1.0.0.7171701"
 DataExtensions="Microsoft.ServiceFabric.Data.Extensions.1.4.4"
@@ -149,8 +153,12 @@ BuildLib()
         ${BuildScript} --uninstall
         ${BuildScript} -c
     fi
-    if [ ${VERBOSE} = 1 ]; then
+    if [ ${VERBOSE} = 1 ] && [ ${ClangVersion} == "6.0" ]; then	
+        ${BuildScript} -v -clang60 -j ${NumProc}
+    elif [ ${VERBOSE} = 1 ]; then
         ${BuildScript} -v -j ${NumProc}
+    elif [ ${ClangVersion} == "6.0" ]; then
+        ${BuildScript} -clang60 -j ${NumProc}
     else
         ${BuildScript} -j ${NumProc}
     fi
@@ -175,6 +183,9 @@ BuildDir()
     if [ ${BuildThirdPartyLib} = "OFF" ]; then
         CC=/usr/lib/llvm-${ClangVersion}/bin/clang
         CXX=/usr/lib/llvm-${ClangVersion}/bin/clang++
+    elif [ ${ClangVersion} == "6.0" ]; then
+        CC=/usr/bin/clang-6.0
+        CXX=/usr/bin/clang++-6.0
     else
         CC=${ProjRoot}/deps/third-party/bin/clang/bin/clang
         CXX=${ProjRoot}/deps/third-party/bin/clang/bin/clang++
@@ -232,6 +243,7 @@ BuildDir()
               -DBUILD_THIRD_PARTY=${BuildThirdPartyLib} \
               -DBUILD_KTL_ONLY=${DoKtlOnlyBuild} \
               -DPACKAGE_LOCAL_BUILD_MANAGED=${PACKAGE_LOCAL_CORECLR_BUILD} \
+              -DLINUX_VERSION=${LINUX_VERSION} \
               -${DARM_CMAKE_FLAG} \
               ${DisablePrecompileFlag} ${ScriptPath}/$DirName
         if [ $? != 0 ]; then
@@ -410,7 +422,7 @@ while (( "$#" )); do
     elif [ "$1" == "-debug" ]; then
         BuildType="Debug"
     elif [ "$1" == "-clang60" ]; then
-        ClangVersion="6.0-sf"
+        ClangVersion="6.0"
     elif [[ "$1" =~ ^-j.* ]]; then
         NumProcStr=${1:2}
         NumProc=$(($NumProcStr + 0))
@@ -454,6 +466,11 @@ if [ "ON" = ${ArmCrossCompile} ]; then
 else
     SFArmCrossCompileSysRoot=""
 fi    
+
+if [ $LINUX_DISTRIBUTION == "DEBIAN" ] && [ $LINUX_VERSION == "18.04" ]; then
+    ClangVersion="6.0"
+    BuildThirdPartyLib="ON"
+fi
 
 mkdir -p ${ProjRoot}/external
 InstallPkgs

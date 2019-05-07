@@ -38,4 +38,4 @@ target_link_libraries(${exe_KtlLogCoreTest}
   ${BoostTest2}
 )
 
-install(CODE "EXECUTE_PROCESS(COMMAND cp -a ${EXTERNAL_DIR}/WinFab.Linux.Libs/Boost_1_61_0/rhel/lib/. ${LIBRARY_OUTPUT_DIR})")
+install(CODE "EXECUTE_PROCESS(COMMAND cp -a ${EXTERNAL_DIR}/WinFab.Linux.Libs/${BOOST_VERSION}/rhel/lib/. ${LIBRARY_OUTPUT_DIR})")

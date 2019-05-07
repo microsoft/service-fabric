@@ -159,7 +159,7 @@ namespace Reliability
                     return;
                 }
 
-                auto const & entity = *jobItemHandlerParameters.Entity;
+                auto const & entity = *jobItemHandlerParameters.get_Entity();
                 Infrastructure::RAEventSource::Events->MessageProcessStart(
                     jobItemHandlerParameters.TraceId,
                     jobItemHandlerParameters.RA.NodeInstance,

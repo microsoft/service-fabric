@@ -25,8 +25,6 @@ add_executable(${exe_TStore_Perf}
   ../TestTransactionContext.cpp
 )
 
-add_precompiled_header(${exe_TStore_Perf} ../stdafx.h)
-
 set_target_properties(${exe_TStore_Perf} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}
     LINK_FLAGS "-Wl,--allow-multiple-definition")

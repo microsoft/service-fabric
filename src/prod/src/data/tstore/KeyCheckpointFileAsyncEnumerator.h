@@ -111,8 +111,8 @@ namespace Data
                 }
 
                 // If they are both deleted items, compare timestamps.
-                VersionedItem<TValue>& currentItem = *(current_->Value);
-                VersionedItem<TValue>& otherItem = *(other.GetCurrent()->Value);
+                VersionedItem<TValue>& currentItem = *(current_->get_Value());
+                VersionedItem<TValue>& otherItem = *(other.GetCurrent()->get_Value());
 
                 if (currentItem.GetRecordKind() == RecordKind::DeletedVersion && otherItem.GetRecordKind() == RecordKind::DeletedVersion)
                 {

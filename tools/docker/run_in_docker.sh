@@ -67,6 +67,7 @@ docker run \
     --cap-add=NET_ADMIN \
     -ti \
     -v "$OUT_DIR":/out \
+    -v "$REPOROOT"/deps:/deps \
     -v "$REPOROOT"/external:/external \
     -v "$REPOROOT"/deps:/deps \
     -v "$REPOROOT"/src:/src \

@@ -1,6 +1,8 @@
 #!perl -w
 use strict;
 use utf8;
+use File::Basename;
+use lib dirname (__FILE__);
 use WFFileIO;
 
 my $FabricRoot = shift;

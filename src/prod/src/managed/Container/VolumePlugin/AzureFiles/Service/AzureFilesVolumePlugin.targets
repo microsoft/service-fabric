@@ -5,7 +5,7 @@
   <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>$(SFTargetFramework)</TargetFramework>
     <OutputType>Exe</OutputType>
     <AssemblyName>AzureFilesVolumePlugin</AssemblyName>
     <PackageId>AzureFilesVolumePlugin</PackageId>

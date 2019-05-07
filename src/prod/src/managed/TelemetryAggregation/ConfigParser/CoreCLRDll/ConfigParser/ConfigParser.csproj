@@ -11,6 +11,7 @@
     <AssemblyName>TelemetryConfigParser</AssemblyName>
     <PackageId>TelemetryConfigParser</PackageId>
     <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <TargetFramework>$(SFTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

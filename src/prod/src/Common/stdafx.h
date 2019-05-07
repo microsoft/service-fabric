@@ -20,6 +20,7 @@
 #include <sys/wait.h>
 #include "CryptoUtility.Linux.h"
 #include <stdlib.h>
+#include <sys/time.h>
 
 #define ObjectFolderDefault ".service.fabric"
 #define ObjectFolderDefaultW L".service.fabric"

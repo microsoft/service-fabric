@@ -197,7 +197,7 @@ namespace Data
                         }
 
                         STORE_ASSERT(snapshotComponentSPtr != nullptr, "snapshotComponentSPtr != nullptr");
-                        snapshotComponentSPtr->Add(key, *differentialStateVersionsSPtr->PreviousVersionSPtr);
+                        snapshotComponentSPtr->Add(key, *differentialStateVersionsSPtr->get_PreviousVersion());
                      }
 
                      // Wait on notifications and remove the entry from the container.

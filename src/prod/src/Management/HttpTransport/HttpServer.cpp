@@ -5,10 +5,12 @@
 
 #include "stdafx.h"
 #if defined(PLATFORM_UNIX)
+#undef _WIN64
 #include "cpprest/json.h"
 #include "cpprest/http_listener.h"
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
+#define _WIN64 1
 #endif
 
 using namespace std;

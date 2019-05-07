@@ -154,6 +154,13 @@ namespace service_fabric
         {
             return _ready;
         }
+		
+#if defined(CLANG_5_0_1_PLUS)
+        void unhandled_exception() noexcept
+        {
+            _ex = std::current_exception();
+        }
+#endif
 
         void set_exception(std::exception_ptr ex)
         {
@@ -362,6 +369,13 @@ namespace service_fabric
 
         // don't final suspend - we don't have a way to resume nor destroy the coroutine either
         auto final_suspend() noexcept { return std::experimental::suspend_never{}; }
+		
+#if defined(CLANG_5_0_1_PLUS)
+        void unhandled_exception() noexcept
+        {
+            _value->unhandled_exception();
+        }
+#endif
 
         void set_exception(std::exception_ptr ex)
         {

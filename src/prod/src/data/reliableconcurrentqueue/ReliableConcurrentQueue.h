@@ -350,7 +350,7 @@ namespace Data
                 __out typename StoreTransaction<LONG64, TValue>::SPtr& result) override
             {
                 typename QueueTransaction::SPtr ptr;
-                NTSTATUS status = QueueTransaction::Create(this, id, transaction, owner, container, keyComparer, *this->TraceComponent, this->GetThisAllocator(), ptr);
+                NTSTATUS status = QueueTransaction::Create(this, id, transaction, owner, container, keyComparer, *this->get_TraceComponent(), this->GetThisAllocator(), ptr);
                 if (!NT_SUCCESS(status))
                 {
                     return status;

@@ -7,6 +7,9 @@ string (REGEX REPLACE ".*clang version ([0-9]+\\.[0-9]+\\.[0-9]).*" "\\1" CLANG_
 if (CLANG_VERSION_STRING VERSION_GREATER 5.0.0)
   add_compile_options(-fdeclspec)
   add_definitions(-DCLANG_5_0_1_PLUS)
+  set (BOOST_VERSION "Boost_1_66_0")
+else()
+  set (BOOST_VERSION "Boost_1_61_0")
 endif()
 
 set(WARNINGS)
@@ -194,7 +197,7 @@ include_directories ("./boost/inc") # for boost-taef.h
 # BUG!!!: These inc dirs are forming an upward source dependency on SF
 include_directories ("${PROJECT_SOURCE_DIR}/../../src/pal/src")
 
-set(BOOST_ROOT "${THIRD_PARTY_LIB_DIR}/Boost_1_61_0")
+set(BOOST_ROOT "${THIRD_PARTY_LIB_DIR}/${BOOST_VERSION}")
 set(BOOST_INCLUDEDIR "${BOOST_ROOT}/boost")
 set(BOOST_LIBRARY_DIRS "${BOOST_ROOT}/lib")
 

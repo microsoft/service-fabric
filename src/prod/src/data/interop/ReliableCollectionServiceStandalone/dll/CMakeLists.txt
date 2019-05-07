@@ -25,8 +25,6 @@ add_compile_options(-fPIC)
 
 add_library(objects_ReliableCollectionServiceStandalone OBJECT ${LINUX_SOURCES})
 
-add_precompiled_header(objects_ReliableCollectionServiceStandalone ../stdafx.h)
-
 add_library(${lib_ReliableCollectionServiceStandalone} SHARED $<TARGET_OBJECTS:objects_ReliableCollectionServiceStandalone>)
 
 set_target_properties(${lib_ReliableCollectionServiceStandalone} PROPERTIES 

@@ -8,7 +8,7 @@
   <PropertyGroup>
     <Description>Image Builder</Description>
 
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>$(SFTargetFramework)</TargetFramework>
     <DefineConstants>$(DefineConstants);DotNetCoreClr;DotNetCoreClrLinux</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>ImageBuilder</AssemblyName>

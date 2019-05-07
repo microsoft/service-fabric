@@ -168,8 +168,8 @@ namespace Data
                 while (valueMemoryBuffer.Position != valueMemoryBuffer.Length)
                 {
                     KSharedPtr<KeyData<TKey, TValue>> keyData = ReadKey(keyMemoryBuffer);
-                    ReadValue(valueMemoryBuffer, *keyData->Value);
-                    consolidationManagerSPtr_->Add(keyData->Key, *keyData->Value);
+                    ReadValue(valueMemoryBuffer, *keyData->get_Value());
+                    consolidationManagerSPtr_->Add(keyData->Key, *keyData->get_Value());
 
                     // Sender (i.e. Primary) de-dupes keys, so every key we receive is unique
                     count_++;
