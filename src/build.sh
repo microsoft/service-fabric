@@ -96,7 +96,7 @@ fi
 CoreCLRLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/coreclrlibs.version)
 SFXLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/sfxlibs.version)
 SFUpgradeTestVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/upgradetestlibs.version)
-SFResgenVersion="ServiceFabric.ResGen.NetStandard.1.0.4"
+SFResgenVersion="ServiceFabric.ResGen.NetStandard.1.0.9"
 CoreclrBuildArtifacts="ServiceFabric.Linux.Coreclr.BuildArtifacts.1.0.1"
 MCGLinux="Microsoft.DotNet.Interop.1.0.0.7171701"
 DataExtensions="Microsoft.ServiceFabric.Data.Extensions.1.4.4"
@@ -480,7 +480,7 @@ if [ $? != 0 ]; then
     exit 1
 fi
 
-#BuildLib
+BuildLib
 
 BuildDir prod ${CleanBuildDrop} ${DisablePrecompile}
 endTime=`date +%s`
