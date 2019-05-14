@@ -72,9 +72,13 @@ You do not need to do this, but note that if you skip this step, you must run al
 ## Build Service Fabric
 To start the build inside of a docker container you can clone the repository and run this command from the root directory:
 
+#### Build on Ubuntu 16.04
 ```sh
-
 ./runbuild.sh
+```
+#### Build on Ubuntu 18.04
+```sh
+./runbuild.sh -ubuntu18
 ```
 
 This will do a full build of the project with the output being placed into the `out` directory.  For more options see `runbuild.sh -h`.
