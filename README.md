@@ -4,6 +4,23 @@ Service Fabric is a distributed systems platform for packaging, deploying, and m
 
 ## Architecture and Subsystem Explorer
 [Learn about Service Fabric's Core Subsystems](docs/architecture/README.md), mapped to this repo's folder structure.
+
+## Service Fabric roadmap
+Here is the upcoming release schedule for Service Fabric runtime versions that we will be supporting starting with version 7.0 coming fall 2019 for the next few releases. Code developed for each of these will be published to this repo. 
+
+| Version 	| Release date 	|
+|---------	|--------------	|
+| 7.0     	| 2019 Nov     	|
+| 7.1     	| 2020 Mar     	|
+| 7.2     	| 2020 Jul     	|
+| 8.0     	| 2020 Nov     	|
+| 8.1     	| 2021 Mar     	|
+| 8.2     	| 2021 Jul     	|
+| 9.0     	| 2021 Nov     	|
+| 9.1     	| 2022 Mar     	|
+| 9.2     	| 2022 Jul     	|
+| 10.0    	| 2022 Nov     	|
+
  
 ## Project timeline and development
 Service Fabric is currently undergoing a big transition to open development. Our main goal right now is to move the entire build, test, and development process to GitHub. For now the Service Fabric team will continue regular feature development internally while we work on transitioning everything to GitHub.  
