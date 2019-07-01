@@ -5,7 +5,7 @@ Service Fabric is a distributed systems platform for packaging, deploying, and m
 ## Architecture and Subsystem Explorer
 [Learn about Service Fabric's Core Subsystems](docs/architecture/README.md), mapped to this repo's folder structure.
 
-## Service Fabric roadmap
+## Service Fabric release schedule 
 Here is the upcoming release schedule for Service Fabric runtime versions that we will be supporting starting with version 7.0 coming fall 2019 for the next few releases. Code developed for each of these will be published to this repo. 
 
 | Version 	| Release date 	|
@@ -20,6 +20,8 @@ Here is the upcoming release schedule for Service Fabric runtime versions that w
 | 9.1     	| 2022 Mar     	|
 | 9.2     	| 2022 Jul     	|
 | 10.0    	| 2022 Nov     	|
+
+We will be publishing upcoming features and roadmap items on [Azure Updates for Service Fabric](https://azure.microsoft.com/en-us/updates/?product=service-fabric).
 
  
 ## Project timeline and development
