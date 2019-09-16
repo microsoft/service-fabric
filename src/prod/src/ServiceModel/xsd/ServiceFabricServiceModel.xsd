@@ -3309,7 +3309,7 @@
           <xs:sequence>
             <xs:element name="Parameter" minOccurs="0" maxOccurs="unbounded">
               <xs:complexType>
-                <xs:attribute name="DataType" type="xs:string" use="optional" default="string"/>
+                <xs:attribute name="DataType" type="xs:string" default="string"/>
                 <xs:attribute name="Name" type="xs:string" use="required"/>
                 <xs:attribute name="Value" type="xs:string" use="required"/>
                 <xs:attribute name="MustOverride" type="xs:boolean" default="false">
