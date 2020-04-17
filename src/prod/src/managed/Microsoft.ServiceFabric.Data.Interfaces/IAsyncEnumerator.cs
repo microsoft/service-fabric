@@ -37,7 +37,7 @@ namespace Microsoft.ServiceFabric.Data
         ///  if the enumerator has passed the end of the collection.
         /// </returns>
         /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
-        Task<bool> MoveNextAsync(CancellationToken cancellationToken);
+        Task<bool> MoveNextAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Sets the enumerator to its initial position, which is before the first element
