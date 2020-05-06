@@ -1,6 +1,6 @@
 # Microsoft Azure Service Fabric 7.0 Sixth Refresh Release Notes
 
-This release includes the bug fixes and features described in this document. This release includes runtime, SDKs and Windows Server Standalone deployments to run on-premises. 
+This release includes the bug fix related to image store that impact Azure clusters only and hence only includes updates to runtime version. 
 
 The following packages and versions are part of this release:
 
@@ -38,7 +38,7 @@ Service Fabric versions below the Service Fabric 7.0 Third Refresh Release (Wind
 
 | Versions | IssueType | Description | Resolution | 
 |----------|-----------|-|-|
-| **Windows 7.0.** | **Bug** | App provisioing from SFPKG is stuck indefinitely in some usecases | **Impact**: This issue ONLY impacts Azure clusters and is encountered when deploying application through Azure Dev Ops. In certain usecases, Imagebuilder gets stuck for indefinte period of time while trying to downloading SFPKG to Imagestore. Retry or higher version of the impacted application type is blocked as well. <br> **Workaround**: The mitigation to log into a node to kill ImageBuilder.exe and retry, did not resolve issue for all scenarios <br> **Fix**: Upgrade to this release version and upgrade the application.
+| **Windows 7.0.471.1 <br> Ubuntu 7.0.472.9590** | **Bug** | App provisioing from SFPKG is stuck indefinitely in Azure clusters when deployed via Azure DevOps  | **Impact**: This issue ONLY impacts Azure clusters and is encountered when deploying application through Azure Dev Ops. In certain usecases, Imagebuilder gets stuck for indefinte period of time while trying to downloading SFPKG to Imagestore. Retry or higher version of the impacted application type is blocked as well. <br> **Workaround**: The mitigation to log into a node to kill ImageBuilder.exe and retry, did not resolve issue for all scenarios. <br> **Fix**: Upgrade to this release version and upgrade the application.
 
 
 ## Repositories and Download Links
