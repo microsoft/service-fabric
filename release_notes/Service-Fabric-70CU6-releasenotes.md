@@ -56,7 +56,7 @@ Follow this guidance for setting up your developer environment:
 |Service Fabric for Windows Server |Service Fabric Standalone Installer Package |7.0.470.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/7.0.470.9590/Microsoft.Azure.ServiceFabric.WindowsServer.7.0.470.9590.zip |
 ||Service Fabric Standalone Runtime |7.0.470.9590 |N/A |https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/7.0.470.9590/MicrosoftAzureServiceFabric.7.0.470.9590.cab |
 |.NET SDK |Windows .NET SDK | 4.0.470 |N/A |https://download.microsoft.com/download/0/0/f/00fbca28-0a64-4c9a-a3a3-b11763ee17e5/MicrosoftServiceFabricSDK.4.0.470.msi |
-||Microsoft.ServiceFabric | 7.0.472 |N/A |https://www.nuget.org |
+||Microsoft.ServiceFabric | 7.0.470 |N/A |https://www.nuget.org |
 ||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf |4.0.470|https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
 ||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*|4.0.470 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
 ||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 4.0.470 |N/A| https://www.nuget.org |
