@@ -1,6 +1,6 @@
 # Microsoft Azure Service Fabric 7.1 First Refresh Release Notes
 
-**The rollout for this release has been paused. We will provide further updates when we resume the rollout in the next few days.**
+**The rollout for this release has been resumed. Please expect to recieve the update in the next 7-10 days.**
 
 This release includes bug fixes and features as described in this document. 
 
