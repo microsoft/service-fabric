@@ -50,7 +50,7 @@ Follow this guidance for setting up your developer environment:
 |-|-|-|-|-|
 |Service Fabric Runtime |Ubuntu Developer Set-up | 7.1.418.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
 || Windows Developer Set-up| 7.1.416.9590 | N/A | https://download.microsoft.com/download/2/9/8/2984267f-4c79-4f6a-a687-8a48ac5cf877/MicrosoftServiceFabric.7.1.416.9590.exe |
-|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 7.1.416.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/7.1.416.9590/Microsoft.Azure.ServiceFabric.WindowsServer.7.1.416.9590.zip |
+|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 7.1.416.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/7.1.417.9590/Microsoft.Azure.ServiceFabric.WindowsServer.7.1.417.9590.zip |
 ||Service Fabric Standalone Runtime | 7.1.416.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/7.1.416.9590/MicrosoftAzureServiceFabric.7.1.416.9590.cab |
 |.NET SDK |Windows .NET SDK | 4.1.416 |N/A | https://download.microsoft.com/download/2/9/8/2984267f-4c79-4f6a-a687-8a48ac5cf877/MicrosoftServiceFabricSDK.4.1.416.msi |
 ||Microsoft.ServiceFabric | 7.1.416 |N/A |https://www.nuget.org |
