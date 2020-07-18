@@ -6,7 +6,7 @@ One of the easiest ways to contribute is to participate in discussions and discu
 ### Open an issue
 For non-security related bugs, issues, or other discussion, please log a new issue in the appropriate GitHub repo:
 
-- [Microsoft/service-fabric](http://github.com/Microsoft/service-fabric) (this repository) for bugs or feature requests related to **Service Fabric Runtime**. When filing an issue here, please tag @microsoft/service-fabric-triage team to get the issue triaged.
+- [Microsoft/service-fabric](http://github.com/Microsoft/service-fabric) (this repository) for bugs or feature requests related to **Service Fabric Runtime**. When filing an issue, please tag **@microsoft/service-fabric-triage** team to get the issue triaged.
 - [Microsoft/service-fabric-services-and-actors-dotnet](https://github.com/Microsoft/service-fabric-services-and-actors-dotnet) for issues related to **Reliable Services, Reliable Actors, and Service Remoting**.
 - [Microsoft/service-fabric-aspnetcore](https://github.com/Microsoft/service-fabric-aspnetcore) for issues related to **ASP.NET Core integration with Reliable Services**.
 - [Microsoft/service-fabric-cli](https://github.com/Microsoft/service-fabric-cli) for any issues related to the **SF CLI (sfctl)**.
