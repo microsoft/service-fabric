@@ -12,7 +12,7 @@ Here is the upcoming release schedule for Service Fabric runtime versions that w
 |---------	|--------------	|
 | 7.0     	| 2019 Nov     	|
 | 7.1     	| 2020 Mar     	|
-| 7.2     	| 2020 Jul     	|
+| 7.2     	| 2020 Sep     	|
 | 8.0     	| 2020 Nov     	|
 | 8.1     	| 2021 Mar     	|
 | 8.2     	| 2021 Jul     	|
