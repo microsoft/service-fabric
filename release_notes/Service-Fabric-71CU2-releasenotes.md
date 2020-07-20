@@ -22,7 +22,7 @@ Microsoft Azure Service Fabric 7.1 First Refresh Release Notes
 
 ## Key Announcements
 **Potential 7.1 Deployment Failures**:<br>
-**Cause**: SF 7.1 introduced a more rigorous validation of security settings; in particular, requiring that settings ClusterCredentialType and ServerAuthCredentialType have matching values. However, existing clusters may have been created with 'x509' for the ServerAuthCredentialType and 'none' for the ClusterCredentialType. <br> **Impact**:  In the case mentioned above, attempting an upgrade to SF71CU1 will cause the upgrade to fail. <br> **Workaround** :No workaround exists for this issue, as the ClusterCredentialType is immutable. If you are in this situation, please continue using SF70 until the SF71CU2 release becomes available.
+**Cause**: SF 7.1 introduced a more rigorous validation of security settings; in particular, requiring that settings ClusterCredentialType and ServerAuthCredentialType have matching values. However, existing clusters may have been created with 'x509' for the ServerAuthCredentialType and 'none' for the ClusterCredentialType. <br> **Impact**:  In the case mentioned above, attempting an upgrade to SF71CU1 will cause the upgrade to fail. <br> **Workaround** :No workaround exists for this issue, as the ClusterCredentialType is immutable. If you are in this situation, please continue using SF70 until the 7.1 second refresh release becomes available.
 
 ## Service Fabric Common Bug Fixes
 
