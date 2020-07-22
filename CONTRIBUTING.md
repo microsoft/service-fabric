@@ -5,11 +5,19 @@ One of the easiest ways to contribute is to participate in discussions and discu
 
 ## Open an issue
 
+### Production Issues
+To receive support for Production issues, you must file a support request through official Azure support channels recommended below as urgent support is out of scope of this repository's objectives. Issues related to Production workloads **MUST NOT BE REPORTED** in this repository.
+
+> **IMPORTANT**: 
+For official customer support with response-time SLAs please see
+   - [Service Fabric Support options](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-support)
+   - [Azure Support options](https://azure.microsoft.com/en-us/support/options/)
+ 
 ### Reporting security issues and bugs
 Security issues and bugs should be reported privately, via email, to the Microsoft Security Response Center (MSRC)  secure@microsoft.com. You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [Security TechCenter](https://technet.microsoft.com/en-us/security/ff852094.aspx).
 
 ### Open Non-Production issue
-For non-security related bugs, issues, or other discussion, please log a new issue in the appropriate GitHub repo.
+For non-security related bugs, issues, or other discussion, please log a new issue following below guidlines in the appropriate GitHub repositories.
 
 #### New Issues Creation Guideline
    -  Use this template [create_new_issue](https://github.com/microsoft/service-fabric/issues/new?template=create_new_issue.md) to submit new issues to Github repos listed       below.
@@ -23,11 +31,10 @@ For non-security related bugs, issues, or other discussion, please log a new iss
 - [Microsoft/service-fabric-aspnetcore](https://github.com/Microsoft/service-fabric-aspnetcore) for issues related to **ASP.NET Core integration with Reliable Services**.
 - [Microsoft/service-fabric-cli](https://github.com/Microsoft/service-fabric-cli) for any issues related to the **SF CLI (sfctl)**.
 - [Microsoft/service-fabric-explorer](https://github.com/Microsoft/service-fabric-explorer) for issues related to **Service Fabric Explorer**.
-
 - [RCMissingTypes tools previewed in 7.0](https://github.com/hiadusum/ReliableCollectionsMissingTypesTool)
 - [Backupexplorer](https://github.com/microsoft/service-fabric-backup-explorer) for issues related to **Service Fabric Backup Explorer**.
 - [POA](https://github.com/microsoft/Service-Fabric-POA) for issues related to **Patch Orcherstration Agent**.
-- [Auto Scale Helper](https://github.com/Azure/service-fabric-autoscale-helper)
+- [Auto Scale Helper](https://github.com/Azure/service-fabric-autoscale-helper) for issues related to autoscaling VMSS based Service Fabric clusters.
 - [Application DR Tool](https://github.com/microsoft/Service-Fabric-AppDRTool) for issues related to **Service Fabric Application Disaster Recovery Tool**.
 - [FabricObserver/ClusterObserver](https://github.com/microsoft/service-fabric-observer) for issues related to **Service Fabric Observer**.
 
