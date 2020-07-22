@@ -1,17 +1,22 @@
 ---
 name: create_new_issue
-about: Describe this issue template's purpose here.
+about: Describe this issue here using below template.
 title: ''
 labels: ''
-assignees: ''
+assignees: '@microsoft/service-fabric-triage'
 
 ---
+Service Fabric Runtime Version: 
 
-Service Fabric runtime Version:
-        Environment: Standalone OR Azure OR OneBox/Dev cluster
-        Description:
-        Observed behavior:
-        Expected Behavior:
-        OS(Windows/Linux): 
+Environment: Must be one of these values [Standalone OR Azure OR OneBox/Dev cluster]
 
+Description: 
+
+Observed behavior:
+
+Expected Behavior:
+
+OS(Windows/Linux): 
+
+---
 Assignees: @microsoft/service-fabric-triage
