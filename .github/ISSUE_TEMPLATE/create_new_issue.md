@@ -1,8 +1,8 @@
 ---
 name: create_new_issue
-about: Describe this issue here using below template.
-title: ''
-labels: ''
+about: Describe this issue in detail using below template.
+title: Enter short description of Issue
+labels: Will be assigned by Service Fabric team 
 assignees: '@microsoft/service-fabric-triage'
 
 ---
