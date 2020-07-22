@@ -3,8 +3,20 @@ Welcome! If you are interested in contributing to Service Fabric, reporting issu
 
 One of the easiest ways to contribute is to participate in discussions and discuss issues. You can also contribute by opening an issue and submitting a pull request with code changes.
 
-### Open an issue
-For non-security related bugs, issues, or other discussion, please log a new issue in the appropriate GitHub repo:
+## Open an issue
+
+### Reporting security issues and bugs
+Security issues and bugs should be reported privately, via email, to the Microsoft Security Response Center (MSRC)  secure@microsoft.com. You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [Security TechCenter](https://technet.microsoft.com/en-us/security/ff852094.aspx).
+
+### Open Non-Production issue
+For non-security related bugs, issues, or other discussion, please log a new issue in the appropriate GitHub repo.
+
+#### New Issues Creation Guideline
+   -  Use this template [create_new_issue](https://github.com/microsoft/service-fabric/issues/new?template=create_new_issue.md) to submit new issues to Github repos listed       below.
+   -  Edit the title and fill in the details (runtime version, OS type, behaviors) requested in the template.
+   -  New issues will be assigned automatically to our team @microsoft/service-fabric-triage . ***Do not update the assignees listed in the template***
+     
+ #### GitHub Repositories
 
 - [Microsoft/service-fabric](http://github.com/Microsoft/service-fabric) (this repository) for bugs or feature requests related to **Service Fabric Runtime**. When filing an issue, please tag **@microsoft/service-fabric-triage** team to get the issue triaged.
 - [Microsoft/service-fabric-services-and-actors-dotnet](https://github.com/Microsoft/service-fabric-services-and-actors-dotnet) for issues related to **Reliable Services, Reliable Actors, and Service Remoting**.
@@ -12,8 +24,13 @@ For non-security related bugs, issues, or other discussion, please log a new iss
 - [Microsoft/service-fabric-cli](https://github.com/Microsoft/service-fabric-cli) for any issues related to the **SF CLI (sfctl)**.
 - [Microsoft/service-fabric-explorer](https://github.com/Microsoft/service-fabric-explorer) for issues related to **Service Fabric Explorer**.
 
-### Reporting security issues and bugs
-Security issues and bugs should be reported privately, via email, to the Microsoft Security Response Center (MSRC)  secure@microsoft.com. You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [Security TechCenter](https://technet.microsoft.com/en-us/security/ff852094.aspx).
+- [RCMissingTypes tools previewed in 7.0](https://github.com/hiadusum/ReliableCollectionsMissingTypesTool)
+- [Backupexplorer](https://github.com/microsoft/service-fabric-backup-explorer) for issues related to **Service Fabric Backup Explorer**.
+- [POA](https://github.com/microsoft/Service-Fabric-POA) for issues related to **Patch Orcherstration Agent**.
+- [Auto Scale Helper](https://github.com/Azure/service-fabric-autoscale-helper)
+- [Application DR Tool](https://github.com/microsoft/Service-Fabric-AppDRTool) for issues related to **Service Fabric Application Disaster Recovery Tool**.
+- [FabricObserver/ClusterObserver](https://github.com/microsoft/service-fabric-observer) for issues related to **Service Fabric Observer**.
+
 
 ### Other discussions
 For general "how-to" and guidance questions about using Service Fabric to build and run applications, please use [Stack Overflow](http://stackoverflow.com/questions/tagged/azure-service-fabric) tagged with `azure-service-fabric`.
