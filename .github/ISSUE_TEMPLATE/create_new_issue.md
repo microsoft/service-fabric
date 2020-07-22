@@ -13,5 +13,4 @@ Service Fabric runtime Version:
         Observed behavior:
         Expected Behavior:
         OS(Windows/Linux): 
-
 Assignees: @microsoft/service-fabric-triage
