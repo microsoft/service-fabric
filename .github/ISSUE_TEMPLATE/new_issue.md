@@ -8,10 +8,6 @@ about: Describe the issue using this template below.
         Observed behavior:
         Expected Behavior:
         OS(Windows/Linux):
-labels: Issue must also include appropriate labels to help triage and resolve issue in the timely manner
-       1. area-*  define feature component
-       2. type* (code defect, question or feature ask]
-       3. mention @microsoft/service-fabric-triage
  assignees: @microsoft/service-fabric-triage
 
 ---
