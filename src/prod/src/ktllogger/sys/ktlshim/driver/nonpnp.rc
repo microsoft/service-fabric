@@ -1,0 +1,12 @@
+#include <windows.h>
+
+#include "fabricverp.h"
+
+#define VER_FILETYPE             VFT_DRV
+#define VER_FILESUBTYPE          VFT2_DRV_SYSTEM
+#define VER_FILEDESCRIPTION_STR  "KTL Physical Logger Device Driver"
+#define VER_INTERNALNAME_STR     "KTLLogger.sys"
+
+#include "common.ver"
+
+#include "KtlLoggerCounters.rc"

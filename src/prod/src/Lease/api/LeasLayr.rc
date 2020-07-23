@@ -1,0 +1,19 @@
+#include "fabricverp.h"
+
+#define VER_FILETYPE                VFT_DRV
+#define VER_FILESUBTYPE             VFT2_DRV_SYSTEM
+#define VER_FILEDESCRIPTION_STR     "Lease Layer API"
+#define VER_INTERNALNAME_STR        "LeasLayr.dll"
+#define VER_ORIGINALFILENAME_STR    "LeasLayr.dll"
+
+#define IDS_SERVICE_DISPLAY_NAME                    ( 101 )
+#define IDS_SERVICE_DESCRIPTION                     ( 102 )
+
+STRINGTABLE
+BEGIN
+	IDS_SERVICE_DISPLAY_NAME		"Windows Fabric Lease Layer API"
+	IDS_SERVICE_DESCRIPTION			"Windows Fabric Reliable Failure Detection User level API"
+END
+
+
+#include "common.ver"

@@ -12,7 +12,8 @@ INITIALIZE_SIZE_ESTIMATION(ContainerEndpointDescription)
 bool ContainerEndpointDescription::operator==(ContainerEndpointDescription const & other) const
 {
     if (name_ == other.name_
-        && port_ == other.port_)
+        && port_ == other.port_
+        && useDynamicHostPort_ == other.useDynamicHostPort_)
     {
         return true;
     }

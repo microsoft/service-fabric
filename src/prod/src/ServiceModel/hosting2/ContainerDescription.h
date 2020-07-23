@@ -7,8 +7,12 @@
 
 namespace Hosting2
 {
-    class ContainerDescription : public Serialization::FabricSerializable
+    class ContainerDescription : 
+        public Serialization::FabricSerializable,
+        private Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>
     {
+        using Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>::WriteInfo;
+
         DEFAULT_COPY_ASSIGNMENT(ContainerDescription)
         DEFAULT_COPY_CONSTRUCTOR(ContainerDescription)
 
@@ -27,7 +31,6 @@ namespace Hosting2
             std::wstring const & hostName,
             std::wstring const & deploymentFolder,
             std::wstring const & nodeWorkFolder,
-            std::wstring const & assignedIp,
             std::map<std::wstring, std::wstring> const & portBindings,
             ServiceModel::LogConfigDescription const & logConfig,
             std::vector<ServiceModel::ContainerVolumeDescription> const & volumes,
@@ -35,6 +38,7 @@ namespace Hosting2
             std::vector<std::wstring> const & dnsServers,
             ServiceModel::RepositoryCredentialsDescription const & repositoryCredentials,
             ServiceModel::ContainerHealthConfigDescription const & healthConfig,
+            ContainerNetworkConfigDescription const & networkConfig,
             std::vector<std::wstring> const & securityOptions,
 #if defined(PLATFORM_UNIX)
             ContainerPodDescription const & podDesc,
@@ -49,9 +53,9 @@ namespace Hosting2
             std::wstring const & codePackageName = std::wstring(),
             std::wstring const & servicePackageActivationId = std::wstring(),
             std::wstring const & partitionId = std::wstring(),
-            std::map<std::wstring, std::wstring> const& bindMounts = std::map<std::wstring, std::wstring>());
+            std::map<std::wstring, std::wstring> const & bindMounts = std::map<std::wstring, std::wstring>());
 
-        virtual ~ContainerDescription() {};
+        virtual ~ContainerDescription();
 
         __declspec(property(get = get_ApplicationName)) std::wstring const & ApplicationName;
         inline std::wstring const & get_ApplicationName() const { return applicationName_; };
@@ -62,9 +66,9 @@ namespace Hosting2
         __declspec(property(get = get_ApplicationId)) std::wstring const & ApplicationId;
         inline std::wstring const & get_ApplicationId() const { return applicationId_; };
 
-        __declspec(property(get=get_ContainerName)) std::wstring const & ContainerName;
+        __declspec(property(get = get_ContainerName)) std::wstring const & ContainerName;
         inline std::wstring const & get_ContainerName() const { return containerName_; };
-        
+
         __declspec(property(get = get_GroupContainerName)) std::wstring const & GroupContainerName;
         inline std::wstring const & get_GroupContainerName() const { return groupContainerName_; };
 
@@ -76,7 +80,7 @@ namespace Hosting2
         inline ContainerPodDescription const & get_PodDescription() const { return podDescription_; };
 #endif
 
-        __declspec(property(get=get_DeploymentFolder)) std::wstring const & DeploymentFolder;
+        __declspec(property(get = get_DeploymentFolder)) std::wstring const & DeploymentFolder;
         inline std::wstring const & get_DeploymentFolder() const { return deploymentFolder_; };
 
         __declspec(property(get = get_EntryPoint)) std::wstring const & EntryPoint;
@@ -85,7 +89,7 @@ namespace Hosting2
         __declspec(property(get = get_IsolationMode)) ServiceModel::ContainerIsolationMode::Enum const & IsolationMode;
         inline ServiceModel::ContainerIsolationMode::Enum const & get_IsolationMode() const { return isolationMode_; };
 
-        __declspec(property(get=get_NodeWorkFolder)) std::wstring const & NodeWorkFolder;
+        __declspec(property(get = get_NodeWorkFolder)) std::wstring const & NodeWorkFolder;
         inline std::wstring const & get_NodeWorkFolder() const { return nodeWorkFolder_; };
 
         __declspec(property(get = get_Hostname)) std::wstring const & Hostname;
@@ -147,30 +151,31 @@ namespace Hosting2
         __declspec(property(get = get_UseTokenAuthenticationCredentials)) bool UseTokenAuthenticationCredentials;
         inline bool get_UseTokenAuthenticationCredentials() const { return useTokenAuthenticationCredentials_; };
 
+        __declspec(property(get = get_ContainerNetworkConfig)) ContainerNetworkConfigDescription const & NetworkConfig;
+        inline ContainerNetworkConfigDescription const & get_ContainerNetworkConfig() const { return networkConfig_; };
+
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
         Common::ErrorCode ToPublicApi(
             __in Common::ScopedHeap & heap,
             __out FABRIC_CONTAINER_DESCRIPTION & fabricContainerDescription) const;
 
-
 #if !defined(PLATFORM_UNIX)
-	FABRIC_FIELDS_29(applicationName_, containerName_, deploymentFolder_, isolationMode_, 
-                nodeWorkFolder_, portBindings_, logConfig_, volumes_, labels_, 
-                dnsServers_, assignedIp_, repositoryCredentials_, 
-                securityOptions_, applicationId_, entryPoint_, hostName_, groupContainerName_, 
-                autoRemove_, runInteractive_, isContainerRoot_, healthConfig_, serviceName_, 
-                codePackageName_, servicePackageActivationId_, partitionId_, useDefaultRepositoryCredentials_, removeServiceFabricRuntimeAccess_, bindMounts_,
-                useTokenAuthenticationCredentials_);
+        FABRIC_FIELDS_30(applicationName_, containerName_, deploymentFolder_, isolationMode_,
+            nodeWorkFolder_, portBindings_, logConfig_, volumes_, labels_,
+            dnsServers_, assignedIp_, repositoryCredentials_,
+            securityOptions_, applicationId_, entryPoint_, hostName_, groupContainerName_,
+            autoRemove_, runInteractive_, isContainerRoot_, healthConfig_, serviceName_,
+            codePackageName_, servicePackageActivationId_, partitionId_, useDefaultRepositoryCredentials_, removeServiceFabricRuntimeAccess_, bindMounts_,
+            useTokenAuthenticationCredentials_, networkConfig_);
 #else
-    FABRIC_FIELDS_30(applicationName_, containerName_, deploymentFolder_, isolationMode_,
-                nodeWorkFolder_, portBindings_, logConfig_, volumes_, labels_,
-                dnsServers_, assignedIp_, repositoryCredentials_,
-                securityOptions_, applicationId_, entryPoint_, hostName_, groupContainerName_, podDescription_,
-                autoRemove_, runInteractive_, isContainerRoot_, healthConfig_, serviceName_,
-                codePackageName_, servicePackageActivationId_, partitionId_, useDefaultRepositoryCredentials_, removeServiceFabricRuntimeAccess_, bindMounts_,
-                useTokenAuthenticationCredentials_);
-
+        FABRIC_FIELDS_31(applicationName_, containerName_, deploymentFolder_, isolationMode_,
+            nodeWorkFolder_, portBindings_, logConfig_, volumes_, labels_,
+            dnsServers_, assignedIp_, repositoryCredentials_,
+            securityOptions_, applicationId_, entryPoint_, hostName_, groupContainerName_, podDescription_,
+            autoRemove_, runInteractive_, isContainerRoot_, healthConfig_, serviceName_,
+            codePackageName_, servicePackageActivationId_, partitionId_, useDefaultRepositoryCredentials_, removeServiceFabricRuntimeAccess_, bindMounts_,
+            useTokenAuthenticationCredentials_, networkConfig_);
 #endif
 
     private:
@@ -206,5 +211,6 @@ namespace Hosting2
         bool useDefaultRepositoryCredentials_;
         std::map<std::wstring, std::wstring> bindMounts_;
         bool useTokenAuthenticationCredentials_;
+        ContainerNetworkConfigDescription networkConfig_;
     };
 }

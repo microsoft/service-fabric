@@ -39,6 +39,7 @@ set( LINUX_SOURCES
   ../uploadsessionrequest.cpp
   ../VolumeOperationTcpMessage.cpp
   ../FileUploadCreateRequestHeader.cpp
+  ../GatewayResourceManagerTcpMessage.cpp
 )
 
 include_directories("..")

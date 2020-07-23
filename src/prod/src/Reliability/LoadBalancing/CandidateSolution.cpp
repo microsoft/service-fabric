@@ -26,6 +26,7 @@ CandidateSolution::CandidateSolution(
     nodePlacements_(&(originalPlacement->NodePlacements)),
     nodeMovingInPlacements_(&(originalPlacement->NodeMovingInPlacements)),
     partitionPlacements_(&(originalPlacement->PartitionPlacements)),
+    inBuildCountsPerNode_(&(originalPlacement->InBuildCountsPerNode)),
     applicationPlacements_(&(originalPlacement->ApplicationPlacements)),
     applicationNodeCounts_(&(originalPlacement->ApplicationNodeCounts)),
     applicationTotalLoad_(&(originalPlacement->ApplicationsTotalLoads)),
@@ -93,6 +94,7 @@ CandidateSolution::CandidateSolution(CandidateSolution && other)
     nodePlacements_(move(other.nodePlacements_)),
     nodeMovingInPlacements_(move(other.nodeMovingInPlacements_)),
     partitionPlacements_(move(other.partitionPlacements_)),
+    inBuildCountsPerNode_(move(other.inBuildCountsPerNode_)),
     applicationPlacements_(move(other.applicationPlacements_)),
     applicationNodeCounts_(move(other.applicationNodeCounts_)),
     applicationTotalLoad_(move(other.applicationTotalLoad_)),
@@ -126,6 +128,7 @@ CandidateSolution& CandidateSolution::operator=(CandidateSolution && other)
         nodePlacements_ = move(other.nodePlacements_);
         nodeMovingInPlacements_ = move(other.nodeMovingInPlacements_);
         partitionPlacements_ = move(other.partitionPlacements_);
+        inBuildCountsPerNode_ = move(other.inBuildCountsPerNode_);
         applicationPlacements_ = move(other.applicationPlacements_);
         applicationNodeCounts_ = move(other.applicationNodeCounts_);
         applicationTotalLoad_ = move(other.applicationTotalLoad_);
@@ -157,6 +160,7 @@ CandidateSolution::CandidateSolution(CandidateSolution const& other)
     nodePlacements_(other.nodePlacements_),
     nodeMovingInPlacements_(other.nodeMovingInPlacements_),
     partitionPlacements_(other.partitionPlacements_),
+    inBuildCountsPerNode_(other.inBuildCountsPerNode_),
     applicationPlacements_(other.applicationPlacements_),
     applicationNodeCounts_(other.applicationNodeCounts_),
     applicationTotalLoad_(other.applicationTotalLoad_),
@@ -348,6 +352,11 @@ void CandidateSolution::ModifyAll(Movement const & oldMove, Movement const & new
     partitionPlacements_.ChangeMovement(oldMove, newMove);
     applicationPlacements_.ChangeMovement(oldMove, newMove);
     applicationTotalLoad_.ChangeMovement(oldMove, newMove);
+
+    if (originalPlacement_->IsThrottlingConstraintNeeded)
+    {
+        inBuildCountsPerNode_.ChangeMovement(oldMove, newMove);
+    }
 
     // ApplicationReservedLoads will make the change in node loads and in node counts.
     applicationReservedLoads_.ChangeMovement(oldMove, newMove, applicationNodeLoads_, applicationNodeCounts_);

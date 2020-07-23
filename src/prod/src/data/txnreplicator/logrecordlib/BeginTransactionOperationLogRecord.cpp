@@ -113,6 +113,19 @@ BeginTransactionOperationLogRecord::SPtr BeginTransactionOperationLogRecord::Cre
     return BeginTransactionOperationLogRecord::SPtr(pointer);
 }
 
+std::wstring BeginTransactionOperationLogRecord::ToString() const
+{
+    wstring boolean = isSingleOperationTransaction_ ?  L"true" : L"false"; 
+
+    std::wstring logRecordString = Constants::CompEndlJSON;
+
+    logRecordString += L"Single Operation Transaction" + 
+        Constants::DivisionBoolJSON + boolean;
+    logRecordString += Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}
+
 void BeginTransactionOperationLogRecord::UpdateApproximateDiskSize()
 {
     ApproximateSizeOnDisk = ApproximateSizeOnDisk + DiskSpaceUsed;

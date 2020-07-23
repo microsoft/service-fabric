@@ -88,11 +88,45 @@ void ResourceMonitoringAgent::UpdateFromHost(Management::ResourceMonitor::HostUp
 
             if (updateEvent.IsUp)
             {
-                hostsToMonitor_[updateEvent.AppHostId] = ResourceDescription(updateEvent.CodePackageInstanceIdentifier, updateEvent.AppName);
+                if (updateEvent.IsLinuxContainerIsolated)
+                {
+                    auto partitionIter = partitionsToMonitor_.find(updateEvent.PartitionId);
+                    if (partitionIter == partitionsToMonitor_.end())
+                    {
+                        partitionsToMonitor_[updateEvent.PartitionId] = ResourceDescription(
+                            updateEvent.CodePackageInstanceIdentifier,
+                            updateEvent.AppName,
+                            updateEvent.IsLinuxContainerIsolated);
+                    }
+                    partitionsToMonitor_[updateEvent.PartitionId].UpdateAppHosts(updateEvent.AppHostId, true);
+                }
+                else
+                {
+                    hostsToMonitor_[updateEvent.AppHostId] = ResourceDescription(
+                        updateEvent.CodePackageInstanceIdentifier,
+                        updateEvent.AppName,
+                        updateEvent.IsLinuxContainerIsolated);
+                }
             }
             else
             {
-                hostsToMonitor_.erase(updateEvent.AppHostId);
+                if (updateEvent.IsLinuxContainerIsolated)
+                {
+                    auto partitionIter = partitionsToMonitor_.find(updateEvent.PartitionId);
+                    if (partitionIter != partitionsToMonitor_.end())
+                    {
+                        partitionsToMonitor_[updateEvent.PartitionId].UpdateAppHosts(updateEvent.AppHostId, false);
+                        if (partitionIter->second.AppHosts.size() == 0)
+                        {
+                            partitionsToMonitor_.erase(updateEvent.PartitionId);
+                        }
+                    }
+                }
+                else
+                {
+                    hostsToMonitor_.erase(updateEvent.AppHostId);
+                }
+
             }
         }
     }
@@ -183,12 +217,31 @@ void ResourceMonitoringAgent::SendResourceUsage(TimerSPtr const & timer)
                 if (hostMeasured.second.IsExclusive)
                 {
                     Reliability::PartitionId partitionId(hostMeasured.second.PartitionId);
-
+                    // For other containers summarize usage for all code packages
                     partitionUsage[partitionId].CpuUsage += hostMeasured.second.resourceUsage_.cpuRate_;
                     partitionUsage[partitionId].MemoryUsage += hostMeasured.second.resourceUsage_.memoryUsage_;
 
                     partitionUsage[partitionId].CpuUsageRaw += hostMeasured.second.resourceUsage_.cpuRateCurrent_;
                     partitionUsage[partitionId].MemoryUsageRaw += hostMeasured.second.resourceUsage_.memoryUsageCurrent_;
+                }
+            }
+        }
+
+        for (auto & hostMeasured : partitionsToMonitor_)
+        {
+            if (hostMeasured.second.resourceUsage_.IsValid() && hostMeasured.second.AppHosts.size() > 0)
+            {
+                if (hostMeasured.second.IsExclusive && hostMeasured.second.IsLinuxContainerIsolated)
+                {
+                    Reliability::PartitionId partitionId(hostMeasured.second.PartitionId);
+                    // For Linux isolated containers (crio) - stats are retrieved by reading pod cgroup
+                    // This represents the usage on service package level (for all code packages)
+                    // Therefore there is no need in summarizing usage for each code package
+                    partitionUsage[partitionId].CpuUsage = hostMeasured.second.resourceUsage_.cpuRate_;
+                    partitionUsage[partitionId].MemoryUsage = hostMeasured.second.resourceUsage_.memoryUsage_;
+
+                    partitionUsage[partitionId].CpuUsageRaw = hostMeasured.second.resourceUsage_.cpuRateCurrent_;
+                    partitionUsage[partitionId].MemoryUsageRaw = hostMeasured.second.resourceUsage_.memoryUsageCurrent_;
                 }
             }
         }
@@ -220,11 +273,34 @@ void ResourceMonitoringAgent::SendResourceUsage(TimerSPtr const & timer)
 
 void ResourceMonitoringAgent::TraceCallback(Common::TimerSPtr const & timer)
 {
-    WriteInfo(TraceComponent, "Tracing started with {0} hosts", hostsToMonitor_.size());
+    WriteInfo(TraceComponent, "Tracing started with {0} hosts and {1} partitions", hostsToMonitor_.size(), partitionsToMonitor_.size());
 
     AcquireReadLock grab(lock_);
 
     for (auto & hostMeasured : hostsToMonitor_)
+    {
+        if (hostMeasured.second.resourceUsage_.IsValid())
+        {
+            //this means that this is shared host
+            //for these RM will trace out resource info
+            //for exclusive RA is tracing
+            if (!hostMeasured.second.IsExclusive)
+            {
+                resourceMonitorEventSource_.ResourceUsageReportSharedHost(
+                    hostMeasured.second.appName_,
+                    hostMeasured.second.codePackageIdentifier_.ServicePackageInstanceId.ServicePackageName,
+                    hostMeasured.second.codePackageIdentifier_.CodePackageName,
+                    nodeId_.ToString(),
+                    hostMeasured.second.resourceUsage_.cpuRate_,
+                    hostMeasured.second.resourceUsage_.memoryUsage_,
+                    hostMeasured.second.resourceUsage_.cpuRateCurrent_,
+                    hostMeasured.second.resourceUsage_.memoryUsageCurrent_
+                );
+            }
+        }
+    }
+
+    for (auto & hostMeasured : partitionsToMonitor_)
     {
         if (hostMeasured.second.resourceUsage_.IsValid())
         {
@@ -253,7 +329,6 @@ void ResourceMonitoringAgent::TraceCallback(Common::TimerSPtr const & timer)
 std::vector<std::wstring> ResourceMonitoringAgent::GetHostsToMeasure()
 {
     std::vector<std::wstring> hosts;
-
     {
         AcquireReadLock grab(lock_);
 
@@ -264,6 +339,15 @@ std::vector<std::wstring> ResourceMonitoringAgent::GetHostsToMeasure()
             if (host.second.resourceUsage_.ShouldCheckUsage(now))
             {
                 hosts.push_back(host.first);
+            }
+        }
+
+        for (auto & host : partitionsToMonitor_)
+        {
+            if (host.second.resourceUsage_.ShouldCheckUsage(now) && host.second.AppHosts.size() > 0)
+            {
+                // take first app host for the partition based reports
+                hosts.push_back(*host.second.AppHosts.begin());
             }
         }
     }
@@ -293,6 +377,22 @@ void ResourceMonitoringAgent::UpdateWithMeasurements(std::map<std::wstring, Mana
                 if (ResourceMonitorServiceConfig::GetConfig().IsTestMode)
                 {
                     WriteInfo(TraceComponent, "Resource update {0} {1}", itHost->first, itHost->second.resourceUsage_);
+                }
+            }
+            else
+            {
+                // check partitions
+                for (auto& partition : partitionsToMonitor_)
+                {
+                    auto foundAppHost = partition.second.AppHosts.find(measurement.first);
+                    if (foundAppHost != partition.second.AppHosts.end())
+                    {
+                        partition.second.resourceUsage_.Update(measurement.second);
+                        if (ResourceMonitorServiceConfig::GetConfig().IsTestMode)
+                        {
+                            WriteInfo(TraceComponent, "Resource update for partition {0} {1}", partition.first, partition.second.resourceUsage_);
+                        }
+                    }
                 }
             }
         }

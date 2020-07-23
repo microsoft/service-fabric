@@ -1268,361 +1268,6 @@ private:
 };
 
 // ********************************************************************************************************************
-// VersionedServicePackage::ActivatePrimaryCodePackages Implementation
-//
-class VersionedServicePackage::ActivatePrimaryCodePackagesAsyncOperation
-    : public AsyncOperation,
-    protected TextTraceComponent<TraceTaskCodes::Hosting>
-{
-    DENY_COPY(ActivatePrimaryCodePackagesAsyncOperation)
-
-public:
-    ActivatePrimaryCodePackagesAsyncOperation(
-        __in VersionedServicePackage & owner,
-        CodePackageMap const & codePackages,
-        TimeSpan const timeout,
-        AsyncCallback const & callback,
-        AsyncOperationSPtr const & parent)
-        : AsyncOperation(callback, parent),
-        owner_(owner),
-        timeoutHelper_(timeout),
-        codePackages_(codePackages)
-    {
-    }
-
-    virtual ~ActivatePrimaryCodePackagesAsyncOperation()
-    {
-    }
-
-    static ErrorCode End(AsyncOperationSPtr const & operation)
-    {
-        auto thisPtr = AsyncOperation::End<ActivatePrimaryCodePackagesAsyncOperation>(operation);
-        return thisPtr->Error;
-    }
-
-
-protected:
-    void OnStart(AsyncOperationSPtr const & thisSPtr)
-    {
-        for (auto iter = codePackages_.begin(); iter != codePackages_.end(); ++iter)
-        {
-            auto codePackage = (*iter).second;
-            if (codePackage->Description.Name == Constants::BlockStoreServiceCodePackageName)
-            {
-                auto timeout = timeoutHelper_.GetRemainingTime();
-                auto operation = codePackage->BeginActivate(                    
-                    timeout,
-                    [this, codePackage](AsyncOperationSPtr const & operation)
-                {
-                    this->FinishCodePackageOperation(codePackage, operation, false);
-                },
-                    thisSPtr);
-                FinishCodePackageOperation(codePackage, operation, true);
-
-            }
-        }
-    }
-
-    void FinishCodePackageOperation(
-        CodePackageSPtr const & codePackage,
-        AsyncOperationSPtr const & operation,
-        bool expectedCompletedSynhronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynhronously)
-        {
-            return;
-        }
-
-        auto error = codePackage->EndActivate(operation);
-        TryComplete(operation->Parent, error);
-        
-    }
-
-protected:
-    VersionedServicePackage & owner_;
-
-private:
-    CodePackageMap const codePackages_;
-    vector<CodePackageSPtr> secondaryCodePackages_;
-    TimeoutHelper timeoutHelper_;
-};
-
-// ********************************************************************************************************************
-// VersionedServicePackage::ActivateSecondaryCodePackages Implementation
-//
-class VersionedServicePackage::ActivateSecondaryCodePackagesAsyncOperation
-    : public AsyncOperation,
-    protected TextTraceComponent<TraceTaskCodes::Hosting>
-{
-    DENY_COPY(ActivateSecondaryCodePackagesAsyncOperation)
-
-public:
-    ActivateSecondaryCodePackagesAsyncOperation(
-        __in VersionedServicePackage & owner,
-        CodePackageMap const & codePackages,
-        TimeSpan const timeout,
-        AsyncCallback const & callback,
-        AsyncOperationSPtr const & parent)
-        : AsyncOperation(callback, parent),
-        owner_(owner),
-        timeoutHelper_(timeout),
-        codePackages_(codePackages),
-        failed_(codePackages),
-        completed_(),
-        lock_(),
-        lastError_(ErrorCodeValue::Success),
-        pendingOperationCount_(0)
-    {
-    }
-
-    virtual ~ActivateSecondaryCodePackagesAsyncOperation()
-    {
-    }
-
-    static ErrorCode End(AsyncOperationSPtr const & operation, CodePackageMap & failed, CodePackageMap & completed)
-    {
-        auto thisPtr = AsyncOperation::End<ActivateSecondaryCodePackagesAsyncOperation>(operation);
-
-        {
-            AcquireWriteLock lock(thisPtr->lock_);
-            failed = move(thisPtr->failed_);
-            completed = move(thisPtr->completed_);
-        }
-
-        return thisPtr->Error;
-    }
-
-
-protected:
-    void OnStart(AsyncOperationSPtr const & thisSPtr)
-    {
-        auto error = owner_.RegisterEventWaitOperation(thisSPtr);
-        if (!error.IsSuccess())
-        {
-            TryComplete(thisSPtr, error);
-            return;
-        }
-        //Primary code package is deactivated separately
-        pendingOperationCount_.store(codePackages_.size() - 1);
-
-        for (auto iter = codePackages_.begin(); iter != codePackages_.end(); ++iter)
-        {
-            auto codePackage = (*iter).second;
-            if (codePackage != nullptr &&
-                codePackage->Description.Name != Constants::BlockStoreServiceCodePackageName)
-            {
-                auto timeout = timeoutHelper_.GetRemainingTime();
-                auto operation = codePackage->BeginActivate(
-                    timeout,
-                    [this, codePackage](AsyncOperationSPtr const & operation)
-                {
-                    this->FinishCodePackageOperation(codePackage, operation, false);
-                },
-                    thisSPtr);
-                FinishCodePackageOperation(codePackage, operation, true);
-
-            }
-            else
-            {
-                secondaryCodePackages_.push_back(codePackage);
-            }
-        }
-
-        CheckPendingOperations(thisSPtr, codePackages_.size() - 1);
-    }
-
-    void FinishCodePackageOperation(
-        CodePackageSPtr const & codePackage,
-        AsyncOperationSPtr const & operation,
-        bool expectedCompletedSynhronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynhronously)
-        {
-            return;
-        }
-        auto error = codePackage->EndActivate(operation);
-        {
-            AcquireWriteLock lock(lock_);
-
-            if (!error.IsSuccess())
-            {
-                lastError_.Overwrite(error);
-            }
-            else
-            {
-                auto iter = failed_.find(codePackage->Description.Name);
-
-                ASSERT_IF(
-                    iter == failed_.end(),
-                    "CodePackage {0} must be present in the failed map as failed map is initialized with all code packages.",
-                    codePackage->Description.Name);
-
-                failed_.erase(iter);
-                completed_.insert(make_pair(codePackage->Description.Name, codePackage));
-            }
-        }
-
-        uint64 pendingOperationCount = --pendingOperationCount_;
-        CheckPendingOperations(operation->Parent, pendingOperationCount);
-    }
-
-    void CheckPendingOperations(AsyncOperationSPtr const & thisSPtr, uint64 pendingOperationCount)
-    {
-        if (pendingOperationCount == 0)
-        {
-            auto lastError = ErrorCode(ErrorCodeValue::Success);
-            {
-                AcquireReadLock lock(lock_);
-                lastError = lastError_;
-                lastError_.ReadValue();
-            }
-            if (TryStartComplete())
-            {
-                owner_.UnregisterEventWaitOperation();
-                FinishComplete(thisSPtr, lastError);
-            }
-        }
-    }
-
-protected:
-    VersionedServicePackage & owner_;
-    RwLock lock_;
-
-private:
-    CodePackageMap const codePackages_;
-    vector<CodePackageSPtr> secondaryCodePackages_;
-    TimeoutHelper timeoutHelper_;
-    CodePackageMap failed_;
-    CodePackageMap completed_;
-    ErrorCode lastError_;
-    atomic_uint64 pendingOperationCount_;
-};
-
-// ********************************************************************************************************************
-// VersionedServicePackage::DeactivateSecondaryCodePackages Implementation
-//
-class VersionedServicePackage::DeactivateSecondaryCodePackagesAsyncOperation
-    : public AsyncOperation,
-    protected TextTraceComponent<TraceTaskCodes::Hosting>
-{
-    DENY_COPY(DeactivateSecondaryCodePackagesAsyncOperation)
-
-public:
-    DeactivateSecondaryCodePackagesAsyncOperation(
-        __in VersionedServicePackage & owner,
-        CodePackageMap const & codePackages,
-        TimeSpan const timeout,
-        AsyncCallback const & callback,
-        AsyncOperationSPtr const & parent)
-        : AsyncOperation(callback, parent),
-        owner_(owner),
-        timeoutHelper_(timeout),
-        codePackages_(codePackages),
-        lock_(),
-        lastError_(ErrorCodeValue::Success),
-        pendingOperationCount_(0)
-    {
-    }
-
-    virtual ~DeactivateSecondaryCodePackagesAsyncOperation()
-    {
-    }
-
-    static ErrorCode End(AsyncOperationSPtr const & operation)
-    {
-        auto thisPtr = AsyncOperation::End<DeactivateSecondaryCodePackagesAsyncOperation>(operation);
-        return thisPtr->Error;
-    }
-
-
-protected:
-    void OnStart(AsyncOperationSPtr const & thisSPtr)
-    {
-        auto error = owner_.RegisterEventWaitOperation(thisSPtr, false);
-        //Primary code package is deactivated separately
-        pendingOperationCount_.store(codePackages_.size() -1);
-
-        for (auto iter = codePackages_.begin(); iter != codePackages_.end(); ++iter)
-        {
-            auto codePackage = (*iter).second;
-            if (codePackage != nullptr &&
-                codePackage->Description.Name != Constants::BlockStoreServiceCodePackageName)
-            {
-                auto timeout = timeoutHelper_.GetRemainingTime();
-                auto operation = codePackage->BeginDeactivate(
-                    timeout,
-                    [this, codePackage](AsyncOperationSPtr const & operation)
-                {
-                    this->FinishCodePackageOperation(codePackage, operation, false);
-                },
-                    thisSPtr);
-                FinishCodePackageOperation(codePackage, operation, true);
-
-            }
-            else
-            {
-                secondaryCodePackages_.push_back(codePackage);
-            }
-        }
-
-        CheckPendingOperations(thisSPtr, codePackages_.size() -1);
-    }
-
-    void FinishCodePackageOperation(
-        CodePackageSPtr const & codePackage,
-        AsyncOperationSPtr const & operation,
-        bool expectedCompletedSynhronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynhronously)
-        {
-            return;
-        }
-        codePackage->EndDeactivate(operation);
-      
-        uint64 pendingOperationCount = --pendingOperationCount_;
-        CheckPendingOperations(operation->Parent, pendingOperationCount);
-    }
-
-    void CheckPendingOperations(AsyncOperationSPtr const & thisSPtr, uint64 pendingOperationCount)
-    {
-        if (pendingOperationCount == 0)
-        {
-            auto lastError = ErrorCode(ErrorCodeValue::Success);
-            {
-                AcquireReadLock lock(lock_);
-                lastError = lastError_;
-                lastError_.ReadValue();
-            }
-
-            if (TryStartComplete())
-            {
-                auto err = owner_.deactivationCompleteEvent_.Set();
-                WriteTrace(
-                    err.ToLogLevel(),
-                    TraceType,
-                    owner_.TraceId,
-                    "Completion event for deactivation eventName {0}, error {1}",
-                    err);
-                owner_.UnregisterEventWaitOperation(false);
-                FinishComplete(thisSPtr, lastError);
-            }
-            return;
-        }
-    }
-
-protected:
-    VersionedServicePackage & owner_;
-    RwLock lock_;
-
-private:
-    CodePackageMap const codePackages_;
-    vector<CodePackageSPtr> secondaryCodePackages_;
-    TimeoutHelper timeoutHelper_;
-    ErrorCode lastError_;
-    atomic_uint64 pendingOperationCount_;
-};
-
-// ********************************************************************************************************************
 // VersionedServicePackage::ActivateCodePackageAsyncOperation Implementation
 //
 class VersionedServicePackage::ActivateCodePackagesAsyncOperation
@@ -1748,7 +1393,8 @@ protected:
             }
         }
 
-        if (!StringUtility::AreEqualCaseInsensitive(codePackage->Description.CodePackage.Name, (wstring)Constants::ImplicitTypeHostCodePackageName))
+        //Skip BlockStoreService and ImplicitHost code packages as they are not part of the digested set.
+        if (!StringUtility::AreEqualCaseInsensitive(codePackage->Description.CodePackage.Name, (wstring)Constants::ImplicitTypeHostCodePackageName) && !StringUtility::AreEqualCaseInsensitive(codePackage->Description.CodePackage.Name, (wstring)Constants::BlockStoreServiceCodePackageName))
         {
             ASSERT_IF(newRolloutVersion == RolloutVersion::Invalid, "The CodePackage that needs to be updated should be present in the NewPackageDescription. CodePackage={0}", codePackage->Description);
         }
@@ -2254,10 +1900,10 @@ private:
             timeout);
         auto operation = owner_.EnvironmentManagerObj->BeginSetupServicePackageInstanceEnvironment(
             owner_.ServicePackageObj.ApplicationEnvironment,
+            owner_.ServicePackageObj.ApplicationName,
             owner_.ServicePackageObj.Id,
             owner_.ServicePackageObj.InstanceId,
             packageDescription_,
-            owner_.ServicePackageObj.ApplicationName,
             timeout,
             [this](AsyncOperationSPtr const & operation) { this->FinishSetupEnvironment(operation, false); },
             thisSPtr);
@@ -3163,16 +2809,19 @@ private:
 
         if (owner_.isOnDemandActivationEnabled_)
         {
-            ASSERT_IF(
-                newActiveCpCount != 1 || newActiveCpCount != prevActiveCpCount,
-                "Final CP size {0} must match previous CP size {0} or 1",
-                newActiveCpCount,
-                prevActiveCpCount);
+            if (newActiveCpCount != 1 && newActiveCpCount != prevActiveCpCount)
+            {
+                TRACE_ERROR_AND_ASSERT(
+                    TraceType,
+                    "Final CP size {0} must match previous CP size {0} or it should be 1 when OnDemandActivation is enabled.",
+                    newActiveCpCount,
+                    prevActiveCpCount);
+            }
         }
-        else
+        else if(newActiveCpCount != newCodePackages_.size())
         {
-            ASSERT_IF(
-                newActiveCpCount != newCodePackages_.size(),
+            TRACE_ERROR_AND_ASSERT(
+                TraceType,
                 "The size {0} of the final code packages must match size {0} of new code packages",
                 newActiveCpCount,
                 newCodePackages_.size());
@@ -3234,7 +2883,7 @@ private:
             oldVersionCp->IsShared,
             ProcessDebugParameters(),
             oldVersionCp->PortBindings,
-            owner_.packageDescription__.SFRuntimeAccessDescription.RemoveServiceFabricRuntimeAccess,
+            oldVersionCp->RemoveServiceFabricRuntimeAccess,
             oldVersionCp->GuestServiceTypes);
     }
 
@@ -3907,14 +3556,9 @@ VersionedServicePackage::VersionedServicePackage(
     registrationTimeoutTracker_(),
     runLayout_(servicePackageHolder.RootedObject.HostingHolder.RootedObject.DeploymentFolder),
     serviceTypeInstanceIds_(serviceTypeInstanceIds),
-    hasPrimarySecondaryCodePackages_(false),
     codePackagesActivationRequested_(false),
     eventWaitAsyncOperation_(),
     deactivateAsyncOperation_(),
-    activateEventName_(HelperUtilities::GetSecondaryCodePackageEventName(servicePackageHolder.RootedObject.Id, true, false)),
-    deactivateEventName_(HelperUtilities::GetSecondaryCodePackageEventName(servicePackageHolder.RootedObject.Id, false, false)),
-    activationCompletedEventName_(HelperUtilities::GetSecondaryCodePackageEventName(servicePackageHolder.RootedObject.Id, true, true)),
-    deactivationCompletedEventName_(HelperUtilities::GetSecondaryCodePackageEventName(servicePackageHolder.RootedObject.Id, false, true)),
     lock_(),
     isOnDemandActivationEnabled_(false),
     activatorCodePackageName_(),
@@ -3926,10 +3570,6 @@ VersionedServicePackage::VersionedServicePackage(
 
     auto registrationTracker = make_shared<ServiceTypeRegistrationTimeoutTracker>(*this);
     registrationTimeoutTracker_ = move(registrationTracker);
-
-    // Initialize the deactivation complete event
-    AutoResetEvent completionEvent(true, this->deactivationCompletedEventName_);
-    deactivationCompleteEvent_.swap(completionEvent);
 
     this->InitializeOnDemandActivationInfo();
 
@@ -4303,7 +3943,6 @@ ErrorCode VersionedServicePackage::LoadCodePackages(
     // Disable SFReplicated Store scenarios (e.g. SFVolumeDisk) if preview features are not enabled on the cluster
     if (useSFReplicatedStore)
     {
-#if !defined(PLATFORM_UNIX)
         if ((!CommonConfig::GetConfig().EnableUnsupportedPreviewFeatures) || (!HostingConfig::GetConfig().IsSFVolumeDiskServiceEnabled))
         {
             useSFReplicatedStore = false;
@@ -4312,16 +3951,8 @@ ErrorCode VersionedServicePackage::LoadCodePackages(
                 TraceId,
                 "LoadCodePackages: SFVolumeDisk is disabled since feature is not enabled on the cluster.");
         }
-#else // defined(PLATFORM_UNIX)
-        useSFReplicatedStore = false;
-        WriteInfo(
-            TraceType,
-            TraceId,
-            "LoadCodePackages: SFVolumeDisk is not supported on this platform.");
-#endif // !defined(PLATFORM_UNIX)
     }
 
-    hasPrimarySecondaryCodePackages_ = useSFReplicatedStore;
     for (auto & dcpDesc : packageDescription.DigestedCodePackages)
     {
         if (onlyActivatorCodePackage && !dcpDesc.CodePackage.IsActivator)
@@ -4507,54 +4138,6 @@ ErrorCode VersionedServicePackage::CreateImplicitTypeHostCodePackage(
     return ErrorCode(ErrorCodeValue::Success);
 }
 
-void VersionedServicePackage::RegisterForEvents(
-    CodePackageMap const & codePackages,
-    AsyncOperationSPtr const & parent,
-    bool forPrimary)
-{
-    UNREFERENCED_PARAMETER(parent);
-    {
-        //Register handler for activate/deactivate secondary code packages event
-        if (forPrimary)
-        {
-            WriteInfo(
-                TraceType,
-                TraceId,
-                "Registered for activate events: Id={0}:{1}, CodePackageCount={2}, eventname={3}",
-                ServicePackageObj.Id,
-                ServicePackageObj.InstanceId,
-                codePackages.size(),
-                activateEventName_);
-            activateEventHandler_ = make_unique<AsyncAutoResetEvent>(false, activateEventName_);
-
-            auto op = activateEventHandler_->BeginWaitOne(TimeSpan::MaxValue,
-                [this, codePackages](AsyncOperationSPtr const & op) {
-                this->OnActivateSecondaryCodePackages(codePackages, op);
-            },
-                CreateAsyncOperationRoot());
-        }
-        else
-        {
-            WriteInfo(
-                TraceType,
-                TraceId,
-                "Registered for deactivate events: Id={0}:{1}, CodePackageCount={2}, eventname={3}",
-                ServicePackageObj.Id,
-                ServicePackageObj.InstanceId,
-                codePackages.size(),
-                deactivateEventName_);
-
-            deactivateEventHandler_ = make_unique<AsyncAutoResetEvent>(false, deactivateEventName_);
-
-            auto op = deactivateEventHandler_->BeginWaitOne(TimeSpan::MaxValue,
-                [this, codePackages](AsyncOperationSPtr const & op) {
-                this->OnDeactivateSecondaryCodePackages(codePackages, op);
-            },
-                CreateAsyncOperationRoot());
-        }
-    }
-}
-
 void VersionedServicePackage::ActivateCodePackagesAsync(
     CodePackageMap const & codePackages,
     TimeSpan const timeout,
@@ -4569,32 +4152,17 @@ void VersionedServicePackage::ActivateCodePackagesAsync(
         ServicePackageObj.InstanceId,
         codePackages.size(),
         timeout);
-    if (hasPrimarySecondaryCodePackages_)
-    {
-       
-        RegisterForEvents(codePackages, parent, true);
-
-        auto operation = AsyncOperation::CreateAndStart<ActivatePrimaryCodePackagesAsyncOperation>(
+   
+    auto operation = AsyncOperation::CreateAndStart<ActivateCodePackagesAsyncOperation>(
             *this,
             codePackages,
             timeout,
-            [this, asyncCallback](AsyncOperationSPtr const & operation) { this->FinishAtivateCodePackages(operation, false, asyncCallback); },
+            [this, asyncCallback](AsyncOperationSPtr const & operation) { this->FinishActivateCodePackages(operation, false, asyncCallback); },
             parent);
-        this->FinishAtivateCodePackages(operation, true, asyncCallback);
-    }
-    else
-    {
-        auto operation = AsyncOperation::CreateAndStart<ActivateCodePackagesAsyncOperation>(
-            *this,
-            codePackages,
-            timeout,
-            [this, asyncCallback](AsyncOperationSPtr const & operation) { this->FinishAtivateCodePackages(operation, false, asyncCallback); },
-            parent);
-        this->FinishAtivateCodePackages(operation, true, asyncCallback);
-    }
+        this->FinishActivateCodePackages(operation, true, asyncCallback);
 }
 
-void VersionedServicePackage::FinishAtivateCodePackages(
+void VersionedServicePackage::FinishActivateCodePackages(
     AsyncOperationSPtr const & operation,
     bool expectedCompletedSynchronously,
     CodePackagesAsyncOperationCompletedCallback const & asyncCallback)
@@ -4607,21 +4175,8 @@ void VersionedServicePackage::FinishAtivateCodePackages(
     CodePackageMap failed;
     CodePackageMap completed;
     ErrorCode error;
-    if (hasPrimarySecondaryCodePackages_)
-    {
-        error = ActivatePrimaryCodePackagesAsyncOperation::End(operation);
-        WriteTrace(
-            error.ToLogLevel(),
-            TraceType,
-            TraceId,
-            "End(ActivateCodePackages): Id={0}:{1}, ErrorCode={4}",
-            ServicePackageObj.Id,
-            ServicePackageObj.InstanceId,
-            error);
-    }
-    else
-    {
-        error = ActivateCodePackagesAsyncOperation::End(operation, failed, completed);
+   
+    error = ActivateCodePackagesAsyncOperation::End(operation, failed, completed);
         WriteTrace(
             error.ToLogLevel(),
             TraceType,
@@ -4632,172 +4187,8 @@ void VersionedServicePackage::FinishAtivateCodePackages(
             completed.size(),
             failed.size(),
             error);
-    }
     asyncCallback(operation, error, completed, failed);
 }
-
-void VersionedServicePackage::OnActivateSecondaryCodePackages(
-    CodePackageMap const & codePackages,
-    AsyncOperationSPtr const & operation)
-{
-    auto error = activateEventHandler_->EndWaitOne(operation);
-    WriteInfo(
-        TraceType,
-        TraceId,
-        "ActivateSecondary event callback: Id={0}:{1}, CodePackageCount={2}, eventname={3}, error {4}",
-        ServicePackageObj.Id,
-        ServicePackageObj.InstanceId,
-        codePackages.size(),
-        activateEventName_,
-        error);
-    if (!error.IsSuccess())
-    {
-        RegisterForEvents(codePackages, operation->Parent, true);
-        return;
-    }
-    RegisterForEvents(codePackages, operation->Parent, false);
-    ActivateSecondaryCodePackagesAsync(codePackages, TimeSpan::MaxValue, operation->Parent);
-}
-
-void VersionedServicePackage::OnDeactivateSecondaryCodePackages(
-    CodePackageMap const & codePackages,
-    AsyncOperationSPtr const & operation)
-{
-    auto error = deactivateEventHandler_->EndWaitOne(operation);
-    WriteInfo(
-        TraceType,
-        TraceId,
-        "DeactivateSecondary event callback: Id={0}:{1}, CodePackageCount={2}, eventname={3}, error {4}",
-        ServicePackageObj.Id,
-        ServicePackageObj.InstanceId,
-        codePackages.size(),
-        activateEventName_,
-        error);
-    if (!error.IsSuccess())
-    {
-        RegisterForEvents(codePackages, operation->Parent, false);
-        return;
-    }
-    
-    CodePackageMap newcodePackages;
-    error = LoadCodePackages(CurrentVersionInstance, PackageDescription, environmentContext__, false, newcodePackages);
-    if (!error.IsSuccess())
-    {
-        Abort();
-        return;
-    }
-    CodePackageSPtr primaryCodePackage;
-    auto it = activeCodePackages_.find((wstring)Constants::BlockStoreServiceCodePackageName);
-    if (it != activeCodePackages_.end())
-    {
-        primaryCodePackage = move(it->second);
-    }
-    
-    auto it2 = newcodePackages.find((wstring)Constants::BlockStoreServiceCodePackageName);
-    if (it2 != newcodePackages.end())
-    {
-        newcodePackages.erase(it2);
-    }
-    newcodePackages.insert(make_pair((wstring)Constants::BlockStoreServiceCodePackageName, move(primaryCodePackage)));
-    activeCodePackages_ = newcodePackages;
-
-    RegisterForEvents(newcodePackages, operation->Parent, true);
-    DeactivateSecondaryCodePackagesAsync(codePackages, TimeSpan::MaxValue, operation->Parent);
-}
-
-void VersionedServicePackage::ActivateSecondaryCodePackagesAsync(
-    CodePackageMap const & codePackages,
-    TimeSpan const timeout,
-    AsyncOperationSPtr const & parent)
-{
-    codePackagesActivationRequested_ = true;
-    WriteNoise(
-        TraceType,
-        TraceId,
-        "Begin(ActivateCodePackages): Id={0}:{1}, CodePackageCount={2}, Timeout={3}",
-        ServicePackageObj.Id,
-        ServicePackageObj.InstanceId,
-        codePackages.size(),
-        timeout);
-   
-        auto operation = AsyncOperation::CreateAndStart<ActivateSecondaryCodePackagesAsyncOperation>(
-            *this,
-            codePackages,
-            timeout,
-            [this](AsyncOperationSPtr const & operation) { this->FinishAtivateSecondaryCodePackages(operation, false); },
-            parent);
-        this->FinishAtivateSecondaryCodePackages(operation, true);
-}
-
-void VersionedServicePackage::FinishAtivateSecondaryCodePackages(
-    AsyncOperationSPtr const & operation,
-    bool expectedCompletedSynchronously)
-{
-    if (operation->CompletedSynchronously != expectedCompletedSynchronously)
-    {
-        return;
-    }
-
-    CodePackageMap failed;
-    CodePackageMap completed;
-    auto error = ActivateSecondaryCodePackagesAsyncOperation::End(operation, failed, completed);
-    WriteTrace(
-        error.ToLogLevel(),
-        TraceType,
-        TraceId,
-        "End(ActivateSecondaryCodePackages): Id={0}:{1}, ErrorCode={2}",
-        ServicePackageObj.Id,
-        ServicePackageObj.InstanceId,
-        error);
-}
-
-void VersionedServicePackage::DeactivateSecondaryCodePackagesAsync(
-    CodePackageMap const & codePackages,
-    TimeSpan const timeout,
-    AsyncOperationSPtr const & parent)
-{
-    WriteNoise(
-        TraceType,
-        TraceId,
-        "Begin(ActivateCodePackages): Id={0}:{1}, CodePackageCount={2}, Timeout={3}",
-        ServicePackageObj.Id,
-        ServicePackageObj.InstanceId,
-        codePackages.size(),
-        timeout);
-    if (codePackagesActivationRequested_)
-    {
-        codePackagesActivationRequested_ = false;
-        auto operation = AsyncOperation::CreateAndStart<DeactivateSecondaryCodePackagesAsyncOperation>(
-            *this,
-            codePackages,
-            timeout,
-            [this](AsyncOperationSPtr const & operation) { this->FinishDeativateSecondaryCodePackages(operation, false); },
-            parent);
-        this->FinishDeativateSecondaryCodePackages(operation, true);
-    }
-}
-
-void VersionedServicePackage::FinishDeativateSecondaryCodePackages(
-    AsyncOperationSPtr const & operation,
-    bool expectedCompletedSynchronously)
-{
-    if (operation->CompletedSynchronously != expectedCompletedSynchronously)
-    {
-        return;
-    }
-
-    auto error = DeactivateSecondaryCodePackagesAsyncOperation::End(operation);
-    WriteTrace(
-        error.ToLogLevel(),
-        TraceType,
-        TraceId,
-        "End(DeactivateSecondaryCodePackages): Id={0}:{1}, ErrorCode={2}",
-        ServicePackageObj.Id,
-        ServicePackageObj.InstanceId,
-        error);
-
-}
-
 
 void VersionedServicePackage::UpdateCodePackagesAsync(
     CodePackageMap const & codePackages,
@@ -5245,47 +4636,12 @@ ErrorCode VersionedServicePackage::TryGetPackageSecurityPrincipalInfo(
     return ErrorCodeValue::NotFound;
 }
 
-ErrorCode VersionedServicePackage::RegisterEventWaitOperation(AsyncOperationSPtr const & operation, bool isActivateOperation)
-{
-    {
-        AcquireExclusiveLock grab(lock_);
-        if (GetState() == VersionedServicePackage::Opened)
-        {
-            if (isActivateOperation)
-            {
-                eventWaitAsyncOperation_ = operation;
-            }
-            else
-            {
-                deactivateAsyncOperation_ = operation;
-            }
-            return ErrorCodeValue::Success;
-        }
-        else
-        {
-            return ErrorCodeValue::ObjectClosed;
-        }
-    }
-}
-
-void VersionedServicePackage::UnregisterEventWaitOperation(bool isActivateOperation)
-{
-    AcquireExclusiveLock grab(lock_);
-    if (isActivateOperation)
-    {
-        eventWaitAsyncOperation_.reset();
-    }
-    else
-    {
-        deactivateAsyncOperation_.reset();
-    }
-}
-
 void VersionedServicePackage::InitializeOnDemandActivationInfo()
 {
     auto activationContext = servicePackageHolder_.RootedObject.Id.ActivationContext;
 
     auto implicitTypeCount = 0;
+    auto implicitStatefulTypeCount = 0;
     auto normalTypeCount = 0;
 
     for (auto serviceType : packageDescription__.DigestedServiceTypes.ServiceTypes)
@@ -5293,6 +4649,11 @@ void VersionedServicePackage::InitializeOnDemandActivationInfo()
         if (serviceType.UseImplicitHost)
         {
             ++implicitTypeCount;
+
+            if (serviceType.IsStateful)
+            {
+                ++implicitStatefulTypeCount;
+            }
         }
         else
         {
@@ -5329,9 +4690,28 @@ void VersionedServicePackage::InitializeOnDemandActivationInfo()
         activationContext.IsExclusive &&
         HostingConfig::GetConfig().HostGuestServiceTypeInProc;
 
+    if (isEligibleGuestApp && 
+        implicitStatefulTypeCount == 0 &&
+        HostingConfig::GetConfig().DisableOnDemandActivationForStatelessGuestApp)
+    {
+        WriteInfo(
+            TraceType,
+            TraceId,
+            "Disabling OnDemandActivation as DisableOnDemandActivationForStatelessGuestApp=true. ServicePackageInstanceId:{0}",
+            servicePackageHolder_.RootedObject.Id);
+        return;
+    }
+
     if (isEligibleGuestApp || hasActivatorCp)
     {
         isOnDemandActivationEnabled_ = true;
+
+        WriteInfo(
+            TraceType,
+            TraceId,
+            "OnDemandActivationEnabled: {0} PackageDescription={1}",
+            isOnDemandActivationEnabled_,
+            packageDescription__);
 
         if (!hasActivatorCp)
         {

@@ -19,7 +19,8 @@ DigestedApplicationDescription::DigestedApplicationDescription(
     CodePackageDescriptionMap const & codePackages,
     std::vector<StoreDataServiceTemplate> const & serviceTemplates,
     std::vector<Naming::PartitionedServiceDescriptor> const & defaultServices,
-    ServiceModel::ServicePackageResourceGovernanceMap const & rgDescription)
+    ServiceModel::ServicePackageResourceGovernanceMap const & rgDescription,
+    std::vector<wstring> const & networks)
     : Application(application)
     , ServicePackages(servicePackages)
     , CodePackages(codePackages)
@@ -27,6 +28,7 @@ DigestedApplicationDescription::DigestedApplicationDescription(
     , DefaultServices(defaultServices)
     , ResourceGovernanceDescriptions(rgDescription)
     , CodePackageContainersImages()
+    , Networks(networks)
 {
     // Fix RG settings in case that user did not provide anything on SP level (but something on CP level exists).
     for (auto cpPair : CodePackages)

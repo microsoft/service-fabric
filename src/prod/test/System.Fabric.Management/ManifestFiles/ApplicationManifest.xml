@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="MasterApplicationType" ApplicationTypeVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>Test Application</Description>
+    <Parameters>
+        <Parameter Name="portvalue" DefaultValue="3000" />
+        <Parameter Name="RunAsUser" DefaultValue="AdminUser" />
+        <Parameter Name="LocalGroup" DefaultValue="LocalGroup" />
+        <Parameter Name="DomainGroup" DefaultValue="DGroup"/>
+        <Parameter Name="InstanceCountParam" DefaultValue=""/>
+        <Parameter Name="MyUserParam" DefaultValue=""/>
+		    <Parameter Name="MyUserParamType" DefaultValue="SecretsStoreRef"/>
+        <Parameter Name="FirstPartitionName" DefaultValue="" />
+        <Parameter Name="EndpointResource" DefaultValue="" />
+        <Parameter Name="EndpointResource1" DefaultValue="" />
+        <Parameter Name="RepoPassword" DefaultValue="" />
+        <Parameter Name="Destination" DefaultValue="" />
+        <Parameter Name="Source" DefaultValue="" />
+        <Parameter Name="ContainerCertificateRef" DefaultValue="" />
+        <Parameter Name="ContainerRetentionCount" DefaultValue="" />
+        <!--Diagnostics parameters begin-->
+        <Parameter Name="CrashDumpCollectionEnabled" DefaultValue="true" />
+        <Parameter Name="CrashDumpLocalPath0" DefaultValue="LocalCrashDumps2" />
+        <Parameter Name="CrashDumpLocalStore1Enabled" DefaultValue="false" />
+        <Parameter Name="CrashDumpLocalStore1DataDeletionAgeInDays" DefaultValue="10" />
+        <Parameter Name="CrashDumpLocalStore1P3" DefaultValue="CrashDumpSource0LocalStore0, P3" />
+        <Parameter Name="CrashDumpFileStorePath0" DefaultValue="file://myshare/crashdumps2" />
+        <Parameter Name="CrashDumpFileStore1Enabled" DefaultValue="false" />
+        <Parameter Name="CrashDumpFileStore1UploadInterval" DefaultValue="5" />
+        <Parameter Name="CrashDumpFileStore1DataDeletionAgeInDays" DefaultValue="3" />
+        <Parameter Name="CrashDumpFileStore1P0" DefaultValue="CrashDumpSource0FileStore0, P0" />
+        <Parameter Name="CrashDumpAzureBlob1Enabled" DefaultValue="true" />
+        <Parameter Name="CrashDumpAzureBlob1ConnectionString" DefaultValue="xstore:DefaultEndpointsProtocol=https;AccountName=myazurestorageaccount;AccountKey=myazurestoragekey" />
+        <Parameter Name="CrashDumpAzureBlob1ConnectionStringIsEncrypted" DefaultValue="false" />
+        <Parameter Name="CrashDumpAzureBlob1UploadIntervalInMinutes" DefaultValue="7" />
+        <Parameter Name="CrashDumpAzureBlob1DataDeletionAgeInDays" DefaultValue="15" />
+        <Parameter Name="CrashDumpAzureBlob0P0" DefaultValue="CrashDumpSource0AzureBlob0, P0" />
+        <Parameter Name="CrashDump0P1" DefaultValue="CrashDumpSource0, P1" />
+        <Parameter Name="ETWDataCollectionEnabled" DefaultValue="true" />
+        <Parameter Name="ETWLocalStore0LevelFilter" DefaultValue="Verbose" />
+        <Parameter Name="ETWFileStore0LevelFilter" DefaultValue="Informational" />
+        <Parameter Name="ETWAzureBlob0LevelFilter" DefaultValue="Informational" />
+        <Parameter Name="ETWAzureBlob0ContainerName" DefaultValue="etwtraces" />
+        <Parameter Name="ETWP0" DefaultValue="ETWSource0, P0" />
+        <Parameter Name="Folder0CollectionEnabled" DefaultValue="true" />
+        <Parameter Name="Folder0RelativeFolderPath" DefaultValue="DataFolder1" />
+        <Parameter Name="Folder0DataDeletionAgeInDays" DefaultValue="8" />
+        <Parameter Name="FolderP0" DefaultValue="FolderSource0, P0" />
+        <Parameter Name="CrashDumpFileStore1AccountType" DefaultValue="ManagedServiceAccount" />
+        <Parameter Name="CrashDumpFileStore1ManagedServiceAccountName" DefaultValue="domain\ManagedServiceUser1" />
+        <Parameter Name="CrashDumpFileStore1ManagedServiceAccountPassword" DefaultValue="" />
+        <Parameter Name="CrashDumpFileStore1ManagedServiceAccountPasswordIsEncrypted" DefaultValue="" />
+        <Parameter Name="ETWFileStore0DomainUserAccountName" DefaultValue="domain\DomainUser1" />
+        <Parameter Name="ETWFileStore0DomainUserAccountPassword" DefaultValue="DomainUser1Password" />
+        <Parameter Name="ETWFileStore0DomainUserAccountPasswordIsEncrypted" DefaultValue="false" />
+        <Parameter Name="FolderFileStore0AccountName" DefaultValue="" />
+        <Parameter Name="FolderFileStore0AccountPassword" DefaultValue="" />
+        <Parameter Name="FolderFileStore0AccountPasswordIsEncrypted" DefaultValue="" />
+        <!--Diagnostics parameters end-->
+        <Parameter Name="DriverOptionName1" DefaultValue="" />
+        <Parameter Name="DriverOptionValue1" DefaultValue="" />
+        <Parameter Name="VolumeDriver" DefaultValue="" />
+    </Parameters>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="CoreServices" ServiceManifestVersion="1.0" />
+        <ConfigOverrides>
+            <ConfigOverride Name="UserServiceHost.Config">
+                <Settings>
+                    <Section Name="UserServiceHostSection">
+                        <Parameter Name="port" Value="[portvalue]" />
+                        <Parameter Name="MyParam" Value="[MyUserParam]" Type="[MyUserParamType]"/>
+                    </Section>
+                </Settings>
+            </ConfigOverride>
+        </ConfigOverrides>
+        <Policies>
+            <RunAsPolicy UserRef="[RunAsUser]" CodePackageRef="UserServiceHost"/>
+            <SecurityAccessPolicy ResourceRef="EndpointResource" PrincipalRef="DefaultUser"/>
+            <SecurityAccessPolicy ResourceRef="EndpointResource1" PrincipalRef="[RunAsUser]"/>
+            <ServiceFabricRuntimeAccessPolicy UseServiceFabricReplicatedStore="false" />
+        </Policies>
+    </ServiceManifestImport>
+    <ServiceTemplates>
+        <StatelessService ServiceTypeName="WcfAnagramService" InstanceCount="[InstanceCountParam]">
+            <SingletonPartition />
+        </StatelessService>
+        <StatefulService ServiceTypeName="WcfQueueService" TargetReplicaSetSize="3" MinReplicaSetSize="2">
+            <UniformInt64Partition PartitionCount="3" LowKey="0" HighKey="9223372036854775807" />
+        </StatefulService>
+        <StatefulService ServiceTypeName="WcfPerformanceStoreService" TargetReplicaSetSize="3" MinReplicaSetSize="2">
+            <NamedPartition>
+                <Partition Name="HighlyAvailable"/>
+                <Partition Name="Faster"/>
+            </NamedPartition>
+        </StatefulService>
+    </ServiceTemplates>
+    <DefaultServices>
+        <Service Name="RequiredAnagramService">
+            <StatelessService ServiceTypeName="WcfAnagramService" InstanceCount="100">
+                <SingletonPartition />
+            </StatelessService>
+        </Service>
+        <Service Name="RequiredQueueService">
+            <StatefulService ServiceTypeName="WcfQueueService" TargetReplicaSetSize="3" MinReplicaSetSize="2">
+                <UniformInt64Partition PartitionCount="3" LowKey="0" HighKey="9223372036854775807" />
+            </StatefulService>
+        </Service>
+        <Service Name="RequiredGenericStoreService">
+            <StatefulService ServiceTypeName="WcfGenericStoreService" TargetReplicaSetSize="3" MinReplicaSetSize="2">
+                <SingletonPartition />
+            </StatefulService>
+        </Service>
+        <Service Name="RequiredPerformanceStoreService">
+            <StatefulService ServiceTypeName="WcfPerformanceStoreService" TargetReplicaSetSize="3" MinReplicaSetSize="2">
+                <NamedPartition>
+                    <Partition Name="HighlyAvailable"/>
+                    <Partition Name="Faster"/>
+                </NamedPartition>
+            </StatefulService>
+        </Service>
+    </DefaultServices>
+    <Principals>
+        <Groups>
+            <Group Name="[LocalGroup]">
+                <Membership>
+                    <DomainGroup Name="[DomainGroup]"/>
+                    <DomainUser Name="redmond\TestUser"/>
+                    <SystemGroup Name="LocalTestGroup"/>
+                </Membership>
+            </Group>
+        </Groups>
+        <Users>
+            <User Name="DefaultUser">
+                <MemberOf>
+                    <SystemGroup Name="User"/>
+                    <Group NameRef="[LocalGroup]"/>
+                </MemberOf>
+            </User>
+            <User Name="AdminUser">
+                <MemberOf>
+                    <SystemGroup Name="Administrator"/>
+                    <Group NameRef="[LocalGroup]"/>
+                </MemberOf>
+            </User>
+        </Users>
+    </Principals>
+    <Policies>
+        <HealthPolicy ConsiderWarningAsError="false" MaxPercentUnhealthyDeployedApplications="0">
+            <DefaultServiceTypeHealthPolicy MaxPercentUnhealthyServices="0" MaxPercentUnhealthyPartitionsPerService="0" MaxPercentUnhealthyReplicasPerPartition="0" />
+            <ServiceTypeHealthPolicy MaxPercentUnhealthyServices="0" MaxPercentUnhealthyPartitionsPerService="0" MaxPercentUnhealthyReplicasPerPartition="0" ServiceTypeName="WcfAnagramService" />
+            <ServiceTypeHealthPolicy MaxPercentUnhealthyServices="0" MaxPercentUnhealthyPartitionsPerService="0" MaxPercentUnhealthyReplicasPerPartition="0" ServiceTypeName="WcfQueueService" />
+        </HealthPolicy>
+        <DefaultRunAsPolicy UserRef="DefaultUser"/>
+        <LogCollectionPolicies>
+            <LogCollectionPolicy Path="TestPath"/>
+        </LogCollectionPolicies>
+    </Policies>
+    <Diagnostics>
+        <CrashDumpSource IsEnabled="[CrashDumpCollectionEnabled]">
+            <Destinations>
+                <LocalStore RelativeFolderPath="[CrashDumpLocalPath0]" />
+                <LocalStore IsEnabled="[CrashDumpLocalStore1Enabled]" RelativeFolderPath="LocalCrashDumps1" DataDeletionAgeInDays="[CrashDumpLocalStore1DataDeletionAgeInDays]">
+                    <Parameters>
+                        <Parameter Name="P3" Value="[CrashDumpLocalStore1P3]"></Parameter>
+                        <Parameter Name="P0" Value="CrashDumpSource0LocalStore0, P0" IsEncrypted="false"></Parameter>
+                        <Parameter Name="P2" Value="CrashDumpSource0LocalStore0, P2" IsEncrypted="false"></Parameter>
+                        <Parameter Name="P1" Value="CrashDumpSource0LocalStore0, P1"></Parameter>
+                    </Parameters>
+                </LocalStore>
+                <FileStore Path="[CrashDumpFileStorePath0]" />
+                <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Not a secret.  Developers: the next element must be one line.  If it is broken into multiple lines this suppression will not work.")]-->     
+                <FileStore IsEnabled="[CrashDumpFileStore1Enabled]" Path="file://myshare/crashdumps" UploadIntervalInMinutes="[CrashDumpFileStore1UploadInterval]" DataDeletionAgeInDays="[CrashDumpFileStore1DataDeletionAgeInDays]" AccountType="[CrashDumpFileStore1AccountType]" AccountName="[CrashDumpFileStore1ManagedServiceAccountName]" Password="[CrashDumpFileStore1ManagedServiceAccountPassword]" PasswordEncrypted="[CrashDumpFileStore1ManagedServiceAccountPasswordIsEncrypted]">
+                    <Parameters>
+                        <Parameter Name="P0" Value="[CrashDumpFileStore1P0]"></Parameter>
+                    </Parameters>
+                </FileStore>
+                <AzureBlob ConnectionString="xstore:DefaultEndpointsProtocol=https;AccountName=myazurestorageaccount;AccountKey=myazurestoragekey" ConnectionStringIsEncrypted="false" ContainerName="crashdumps2" />
+                <AzureBlob IsEnabled="[CrashDumpAzureBlob1Enabled]"
+                           ConnectionString="[CrashDumpAzureBlob1ConnectionString]"
+                           ConnectionStringIsEncrypted="[CrashDumpAzureBlob1ConnectionStringIsEncrypted]"
+                           UploadIntervalInMinutes="[CrashDumpAzureBlob1UploadIntervalInMinutes]"
+                           DataDeletionAgeInDays="[CrashDumpAzureBlob1DataDeletionAgeInDays]"
+                           ContainerName="crashdumps1">
+                    <Parameters>
+                        <Parameter Name="P0" Value="[CrashDumpAzureBlob0P0]"></Parameter>
+                        <Parameter Name="P1" Value="CrashDumpSource0AzureBlob0, P1"></Parameter>
+                    </Parameters>
+                </AzureBlob>
+            </Destinations>
+            <Parameters>
+                <Parameter Name="P1" Value="[CrashDump0P1]"></Parameter>
+                <Parameter Name="P0" Value="CrashDumpSource0, P0"></Parameter>
+            </Parameters>
+        </CrashDumpSource>
+        <ETWSource IsEnabled="[ETWDataCollectionEnabled]">
+            <Destinations>
+                <LocalStore IsEnabled="true" RelativeFolderPath="LocalETWTraces1" DataDeletionAgeInDays="5" LevelFilter="[ETWLocalStore0LevelFilter]">
+                    <Parameters>
+                        <Parameter Name="P0" Value="ETWSource0LocalStore0, P0"></Parameter>
+                        <Parameter Name="P1" Value="ETWSource0LocalStore0, P1"></Parameter>
+                    </Parameters>
+                </LocalStore>
+                <LocalStore RelativeFolderPath="LocalETWTraces2" />
+                <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Not a secret.  Developers: the next element must be one line.  If it is broken into multiple lines this suppression will not work.")]--> 
+                <FileStore IsEnabled="false" Path="file://myshare/etwtraces" UploadIntervalInMinutes="2" DataDeletionAgeInDays="8" LevelFilter="[ETWFileStore0LevelFilter]" AccountType="DomainUser" AccountName="[ETWFileStore0DomainUserAccountName]" Password="[ETWFileStore0DomainUserAccountPassword]" PasswordEncrypted="[ETWFileStore0DomainUserAccountPasswordIsEncrypted]">
+                    <Parameters>
+                        <Parameter Name="P0" Value="ETWSource0FileStore0, P0"></Parameter>
+                    </Parameters>
+                </FileStore>
+                <FileStore Path="file://myshare/etwtraces2" />
+                <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Not a secret.  Developers: the next element must be one line.  If it is broken into multiple lines this suppression will not work.")]-->     
+                <AzureBlob IsEnabled="true" ConnectionString="xstore:DefaultEndpointsProtocol=https;AccountName=myazurestorageaccount2;AccountKey=myazurestoragekey" ConnectionStringIsEncrypted="false" UploadIntervalInMinutes="6" DataDeletionAgeInDays="30" ContainerName="[ETWAzureBlob0ContainerName]" LevelFilter="[ETWAzureBlob0LevelFilter]">
+                    <Parameters>
+                        <Parameter Name="P0" Value="ETWSource0AzureBlob0, P0"></Parameter>
+                        <Parameter Name="P1" Value="ETWSource0AzureBlob0, P1"></Parameter>
+                    </Parameters>
+                </AzureBlob>
+                <AzureBlob ConnectionString="xstore:DefaultEndpointsProtocol=https;AccountName=myazurestorageaccount1;AccountKey=myazurestoragekey" ConnectionStringIsEncrypted="false" ContainerName="etwtraces" />
+            </Destinations>
+            <Parameters>
+                <Parameter Name="P0" Value="[ETWP0]"></Parameter>
+            </Parameters>
+        </ETWSource>
+        <FolderSource RelativeFolderPath="DataFolder3">
+            <Destinations>
+            </Destinations>
+        </FolderSource>
+        <FolderSource IsEnabled="[Folder0CollectionEnabled]" RelativeFolderPath="[Folder0RelativeFolderPath]" DataDeletionAgeInDays="[Folder0DataDeletionAgeInDays]">
+            <Destinations>
+                <LocalStore IsEnabled="false" RelativeFolderPath="CustomData1" DataDeletionAgeInDays="10">
+                    <Parameters>
+                        <Parameter Name="P0" Value="FolderSource0LocalStore0, P0"></Parameter>
+                        <Parameter Name="P1" Value="FolderSource0LocalStore0, P1"></Parameter>
+                    </Parameters>
+                </LocalStore>
+                <LocalStore RelativeFolderPath="CustomData2" />
+                <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Not a secret.  Developers: the next element must be one line.  If it is broken into multiple lines this suppression will not work.")]-->   
+                <FileStore IsEnabled="false" Path="file://myshare/customdata" UploadIntervalInMinutes="5" DataDeletionAgeInDays="3" AccountName="[FolderFileStore0AccountName]" Password="[FolderFileStore0AccountPassword]" PasswordEncrypted="[FolderFileStore0AccountPasswordIsEncrypted]">
+                    <Parameters>
+                        <Parameter Name="P0" Value="FolderSource0FileStore0, P0"></Parameter>
+                    </Parameters>
+                </FileStore>
+                <FileStore Path="file://myshare/customdata2" />
+                <AzureBlob IsEnabled="true"
+                           ConnectionString="xstore:DefaultEndpointsProtocol=https;AccountName=myazurestorageaccount;AccountKey=myazurestoragekey"
+                           ConnectionStringIsEncrypted="false"
+                           UploadIntervalInMinutes="20"
+                           DataDeletionAgeInDays="12"
+                           ContainerName="customdata">
+                    <Parameters>
+                        <Parameter Name="P0" Value="FolderSource0AzureBlob0, P0"></Parameter>
+                        <Parameter Name="P1" Value="FolderSource0AzureBlob0, P1"></Parameter>
+                    </Parameters>
+                </AzureBlob>
+                <AzureBlob ConnectionString="xstore:DefaultEndpointsProtocol=https;AccountName=myazurestorageaccount;AccountKey=myazurestoragekey" ConnectionStringIsEncrypted="false" />
+            </Destinations>
+            <Parameters>
+                <Parameter Name="P0" Value="[FolderP0]"></Parameter>
+                <Parameter Name="P1" Value="FolderSource0, P1"></Parameter>
+            </Parameters>
+        </FolderSource>
+        <FolderSource IsEnabled="true" RelativeFolderPath="DataFolder2" DataDeletionAgeInDays="13">
+            <Destinations>
+                <FileStore IsEnabled="false" Path="file://myshare/customdata3" UploadIntervalInMinutes="5" DataDeletionAgeInDays="3">
+                    <Parameters>
+                        <Parameter Name="P0" Value="FolderSource1FileStore0, P0"></Parameter>
+                    </Parameters>
+                </FileStore>
+            </Destinations>
+        </FolderSource>
+    </Diagnostics>
+    <Certificates>
+        <SecretsCertificate X509FindType="FindByThumbprint" X509FindValue="28 8a 4f e5 02 05 b1 48 0f 3a d9 e1 5f d2 42 96 23 9a 0b ed" X509StoreName="MY" />
+    </Certificates>
+</ApplicationManifest>

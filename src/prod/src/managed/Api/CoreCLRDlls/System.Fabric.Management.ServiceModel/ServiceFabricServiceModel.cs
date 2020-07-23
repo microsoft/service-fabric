@@ -264,6 +264,10 @@ namespace System.Fabric.Management.ServiceModel {
         
         private InternalEndpointType centralSecretServiceReplicatorEndpointField;
         
+        private InternalEndpointType eventStoreServiceReplicatorEndpointField;
+        
+        private InternalEndpointType gatewayResourceManagerReplicatorEndpointField;
+        
         private InternalEndpointType defaultReplicatorEndpointField;
         
         private FabricEndpointsTypeApplicationEndpoints applicationEndpointsField;
@@ -427,6 +431,26 @@ namespace System.Fabric.Management.ServiceModel {
             }
             set {
                 this.centralSecretServiceReplicatorEndpointField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public InternalEndpointType EventStoreServiceReplicatorEndpoint {
+            get {
+                return this.eventStoreServiceReplicatorEndpointField;
+            }
+            set {
+                this.eventStoreServiceReplicatorEndpointField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public InternalEndpointType GatewayResourceManagerReplicatorEndpoint {
+            get {
+                return this.gatewayResourceManagerReplicatorEndpointField;
+            }
+            set {
+                this.gatewayResourceManagerReplicatorEndpointField = value;
             }
         }
         
@@ -5059,9 +5083,9 @@ namespace System.Fabric.Management.ServiceModel {
         private string upperLoadThresholdField;
         
         private string scaleIntervalInSecondsField;
-
+        
         private string useOnlyPrimaryLoadField;
-
+        
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string MetricName {
@@ -5413,6 +5437,85 @@ namespace System.Fabric.Management.ServiceModel {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/2011/01/fabric")]
+    public partial class NetworkPoliciesType {
+        
+        private ContainerNetworkPolicyType[] itemsField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("ContainerNetworkPolicy")]
+        public ContainerNetworkPolicyType[] Items {
+            get {
+                return this.itemsField;
+            }
+            set {
+                this.itemsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.0.30319.17929")]
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/2011/01/fabric")]
+    public partial class ContainerNetworkPolicyType {
+        
+        private ContainerNetworkPolicyEndpointBindingType[] itemsField;
+        
+        private string networkRefField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("EndpointBinding")]
+        public ContainerNetworkPolicyEndpointBindingType[] Items {
+            get {
+                return this.itemsField;
+            }
+            set {
+                this.itemsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string NetworkRef {
+            get {
+                return this.networkRefField;
+            }
+            set {
+                this.networkRefField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.0.30319.17929")]
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/2011/01/fabric")]
+    public partial class ContainerNetworkPolicyEndpointBindingType {
+        
+        private string endpointRefField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string EndpointRef {
+            get {
+                return this.endpointRefField;
+            }
+            set {
+                this.endpointRefField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.0.30319.17929")]
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://schemas.microsoft.com/2011/01/fabric")]
     public partial class ConfigPackageDescriptionType {
         
         private string nameField;
@@ -5717,8 +5820,11 @@ namespace System.Fabric.Management.ServiceModel {
         
         private string isEncryptedField;
         
+        private string typeField;
+        
         public DriverOptionType() {
             this.isEncryptedField = "false";
+            this.typeField = "PlainText";
         }
         
         /// <remarks/>
@@ -5752,6 +5858,18 @@ namespace System.Fabric.Management.ServiceModel {
             }
             set {
                 this.isEncryptedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        [System.ComponentModel.DefaultValueAttribute("PlainText")]
+        public string Type {
+            get {
+                return this.typeField;
+            }
+            set {
+                this.typeField = value;
             }
         }
     }
@@ -5993,6 +6111,8 @@ namespace System.Fabric.Management.ServiceModel {
         
         private string emailField;
         
+        private string typeField;
+        
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string AccountName {
@@ -6045,6 +6165,17 @@ namespace System.Fabric.Management.ServiceModel {
             }
             set {
                 this.emailField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Type {
+            get {
+                return this.typeField;
+            }
+            set {
+                this.typeField = value;
             }
         }
     }
@@ -8238,6 +8369,7 @@ namespace System.Fabric.Management.ServiceModel {
         [System.Xml.Serialization.XmlArrayItemAttribute("ConfigPackagePolicies", typeof(ConfigPackagePoliciesType), IsNullable=false)]
         [System.Xml.Serialization.XmlArrayItemAttribute("ContainerHostPolicies", typeof(ContainerHostPoliciesType), IsNullable=false)]
         [System.Xml.Serialization.XmlArrayItemAttribute("EndpointBindingPolicy", typeof(EndpointBindingPolicyType), IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("NetworkPolicies", typeof(NetworkPoliciesType), IsNullable=false)]
         [System.Xml.Serialization.XmlArrayItemAttribute("PackageSharingPolicy", typeof(PackageSharingPolicyType), IsNullable=false)]
         [System.Xml.Serialization.XmlArrayItemAttribute("ResourceGovernancePolicy", typeof(ResourceGovernancePolicyType), IsNullable=false)]
         [System.Xml.Serialization.XmlArrayItemAttribute("RunAsPolicy", typeof(RunAsPolicyType), IsNullable=false)]
@@ -9323,6 +9455,8 @@ namespace System.Fabric.Management.ServiceModel {
         
         private ServicePackageTypeDigestedResources digestedResourcesField;
         
+        private ContainerNetworkPolicyType[] networkPoliciesField;
+        
         private ServiceDiagnosticsType diagnosticsField;
         
         private string nameField;
@@ -9425,6 +9559,17 @@ namespace System.Fabric.Management.ServiceModel {
             }
             set {
                 this.digestedResourcesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("ContainerNetworkPolicy", IsNullable=false)]
+        public ContainerNetworkPolicyType[] NetworkPolicies {
+            get {
+                return this.networkPoliciesField;
+            }
+            set {
+                this.networkPoliciesField = value;
             }
         }
         

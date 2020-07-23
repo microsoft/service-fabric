@@ -1,0 +1,41 @@
+###Upgrade for time range 11/12/2014 5:30:50 PM-11/12/2014 5:39:15 PM
+
+fabric:/System
+Upgrade:
+Code Version = 1.2.763.0, Config Version = version3
+	4 upgrade domains have been completed: ud0, ud1, ud2, ud3, 
+	2 upgrade domains still pending: ud4, ud5, 
+	Current upgrade domain is ud4### and it started at 11/12/2014 5:34:14 PM.
+	CM was waiting for FM to complete.
+
+	Following nodes are stuck:
+	Node Id = 50
+		Node Name = nodeid:50
+		Phase = In Progress (look into RA upgrade traces)
+
+
+	What RA/Hosting were doing:
+	Node Id = 50
+		RA was trying to actually upgrade the fabric bits### for 3 minute(s).
+		Hosting trace does not contain an error or warning.
+
+fabric:/System
+Rollback:
+Code Version = 1.2.762.0, Config Version = version2
+	4 upgrade domains have been completed: ud0, ud1, ud2, ud3, 
+	2 upgrade domains still pending: ud4, ud5, 
+	Current upgrade domain is ud4### and it started at 11/12/2014 5:34:45 PM.
+	CM was waiting for FM to complete.
+
+	Following nodes are stuck:
+	Node Id = 50
+		Node Name = nodeid:50
+		Phase = In Progress (look into RA upgrade traces)
+
+
+	What RA/Hosting were doing:
+	Node Id = 50
+		RA was trying to actually upgrade the fabric bits### for 4 minute(s).
+		Hosting trace does not contain an error or warning.
+
+

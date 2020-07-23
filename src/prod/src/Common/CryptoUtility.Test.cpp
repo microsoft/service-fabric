@@ -20,8 +20,6 @@ wstring const TestCertCN = L"WinFabricCryptoUtilityTestCertCN";
 
 namespace Common
 {
-    #define CryptoUtilityTestTraceType "CryptoUtilityTest"
-
     class CryptoUtilityTest
     {
     protected:
@@ -38,7 +36,7 @@ namespace Common
         SecurityTestSetup securityTestSetup_;
     };
 
-    BOOST_FIXTURE_TEST_SUITE(CryptoSuite, CryptoUtilityTest);
+    BOOST_FIXTURE_TEST_SUITE2(CryptoSuite, CryptoUtilityTest);
 
 #ifdef PLATFORM_UNIX
 
@@ -89,18 +87,18 @@ namespace Common
             L"CryptoSuite.PublicKey.second");
 
         X509PubKey key1(cert1.CertContext());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "key1 long format = {0:l}", key1);
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "key1 = {0}", key1);
+        Trace.WriteInfo(TraceType, "key1 long format = {0:l}", key1);
+        Trace.WriteInfo(TraceType, "key1 = {0}", key1);
 
         X509PubKey key1dup(cert1.CertContext());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "key1dup = {0}", key1dup);
+        Trace.WriteInfo(TraceType, "key1dup = {0}", key1dup);
 
         VERIFY_IS_TRUE(key1 == key1dup);
         VERIFY_IS_FALSE(key1 < key1dup);
         VERIFY_IS_FALSE(key1dup < key1);
 
         X509PubKey key2(cert2.CertContext());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "key2 = {0}", key2);
+        Trace.WriteInfo(TraceType, "key2 = {0}", key2);
 
         VERIFY_IS_FALSE(key1 == key2);
         if (key1 < key2) VERIFY_IS_FALSE(key2 < key1);
@@ -150,7 +148,7 @@ namespace Common
         wstring subjectName = (L"CN=" + commonName);
         InstallTestCertInScope testCert(subjectName);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "FindBySubjectName with common name");
+        Trace.WriteInfo(TraceType, "FindBySubjectName with common name");
         {
             X509FindValue::SPtr findValue;
             auto error = X509FindValue::Create(X509FindType::FindBySubjectName, commonName, findValue);
@@ -169,7 +167,7 @@ namespace Common
 
         }
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "FindBySubjectName with subject name");
+        Trace.WriteInfo(TraceType, "FindBySubjectName with subject name");
         {
             X509FindValue::SPtr findValue;
             auto error = X509FindValue::Create(X509FindType::FindBySubjectName, subjectName, findValue);
@@ -187,7 +185,7 @@ namespace Common
             VERIFY_ARE_EQUAL2(loadedCerts.size(), 1);
         }
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "FindByThumbprint");
+        Trace.WriteInfo(TraceType, "FindByThumbprint");
         {
             X509FindValue::SPtr findValue;
             auto error = X509FindValue::Create(X509FindType::FindByThumbprint, testCert.Thumbprint()->PrimaryToString(), findValue);
@@ -220,16 +218,80 @@ namespace Common
             nullptr,
             cipherText);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "EncryptText returned {0}", error);
+        Trace.WriteInfo(TraceType, "EncryptText returned {0}", error);
         VERIFY_ARE_EQUAL2(error.ReadValue(), ErrorCodeValue::Success);
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "ciphertext: {0}", cipherText);
+        Trace.WriteInfo(TraceType, "ciphertext: {0}", cipherText);
 
         SecureString decrypted;
         error = CryptoUtility::DecryptText(cipherText, X509Default::StoreLocation(), decrypted);
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "DecryptText returned {0}", error);
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "decrypted: {0}", decrypted.GetPlaintext());
+        Trace.WriteInfo(TraceType, "DecryptText returned {0}", error);
+        Trace.WriteInfo(TraceType, "decrypted: {0}", decrypted.GetPlaintext());
         VERIFY_ARE_EQUAL2(error.ReadValue(), ErrorCodeValue::Success);
         VERIFY_ARE_EQUAL2(decrypted.GetPlaintext(), plainText);
+    }
+
+    BOOST_AUTO_TEST_CASE(EncryptTest) // Test with public API
+    {
+        InstallTestCertInScope testCert;
+
+        ComPointer<IFabricStringResult> encryptedResult;
+        wstring text = L"The lazy fox jumped";
+        auto hr  = ::FabricEncryptText(
+            text.c_str(),
+            testCert.Thumbprint()->ToStrings().first.c_str(),
+            X509Default::StoreName().c_str(),
+            X509Default::StoreLocation_Public(),
+            nullptr,
+            encryptedResult.InitializationAddress());
+        
+        VERIFY_ARE_EQUAL2(hr, 0);
+
+        ComPointer<IFabricStringResult> encryptedResult2;
+        hr  = ::FabricEncryptText(
+            text.c_str(),
+            testCert.Thumbprint()->ToStrings().first.c_str(),
+            X509Default::StoreName().c_str(),
+            X509Default::StoreLocation_Public(),
+            nullptr,
+            encryptedResult2.InitializationAddress());
+        
+        VERIFY_ARE_EQUAL2(hr, 0);      
+
+        // two identical encrypt calls should produce different results
+        VERIFY_IS_TRUE(encryptedResult->get_String() != encryptedResult2->get_String());
+        
+        ComPointer<IFabricStringResult> decryptedResult;
+        hr  = ::FabricDecryptText(
+            encryptedResult->get_String(),
+            X509Default::StoreLocation_Public(),
+            decryptedResult.InitializationAddress());
+        
+        VERIFY_ARE_EQUAL2(hr, 0);
+        VERIFY_ARE_EQUAL2(decryptedResult->get_String(), text);
+
+        ComPointer<IFabricStringResult> decryptedResult2;
+        hr  = ::FabricDecryptText(
+            encryptedResult2->get_String(),
+            X509Default::StoreLocation_Public(),
+            decryptedResult2.InitializationAddress());
+        
+        VERIFY_ARE_EQUAL2(hr, 0);
+        VERIFY_ARE_EQUAL2(decryptedResult2->get_String(), text);     
+
+        ComPointer<IFabricStringResult> encryptedResult3;
+        
+        // The max length is specified by MaxLongStringSize (1024) in Common.Test.exe.cfg.
+        // The value of MaxLongStringSize controls TRY_COM_PARSE_PUBLIC_LONG_STRING marco.
+        text = wstring(2048, 't');
+        hr = ::FabricEncryptText(
+            text.c_str(),
+            testCert.Thumbprint()->ToStrings().first.c_str(),
+            X509Default::StoreName().c_str(),
+            X509Default::StoreLocation_Public(),
+            nullptr,
+            encryptedResult3.InitializationAddress());
+
+        VERIFY_ARE_EQUAL2(hr, STRSAFE_E_INVALID_PARAMETER);
     }
 
     BOOST_AUTO_TEST_CASE(LoadCertificateByAltSubjectName)
@@ -285,9 +347,137 @@ namespace Common
         cryptoUtil.GetCertificateNotBeforeDate(testCert.CertContext(), notBefore); 
         cryptoUtil.GetCertificateNotAfterDate(testCert.CertContext(), notAfter);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "NotBefore = {0}, NotAfter = {1}, expectedExpiry = {2}", notBefore, notAfter, expectedExpiry);
+        Trace.WriteInfo(TraceType, "NotBefore = {0}, NotAfter = {1}, expectedExpiry = {2}", notBefore, notAfter, expectedExpiry);
         BOOST_REQUIRE(notBefore <= now); 
         BOOST_REQUIRE(expectedExpiry <= notAfter);
+    }
+
+#else
+    //LINUXTODO enable this test when setting algorithm is supported on Linux
+    BOOST_AUTO_TEST_CASE(EncryptTest_SetAlgorithm)
+    {
+        InstallTestCertInScope testCert;
+
+        ComPointer<IFabricStringResult> encryptedResult;
+        wstring text = L"The lazy fox jumped";
+        auto hr = ::FabricEncryptText(
+            text.c_str(),
+            testCert.Thumbprint()->ToStrings().first.c_str(),
+            X509Default::StoreName().c_str(),
+            X509Default::StoreLocation_Public(),
+            szOID_NIST_AES192_CBC, //LINUXTODO, need to define this?
+            encryptedResult.InitializationAddress());
+
+        VERIFY_ARE_EQUAL2(hr, 0);
+
+        ComPointer<IFabricStringResult> decryptedResult;
+        hr = ::FabricDecryptText(
+            encryptedResult->get_String(),
+            X509Default::StoreLocation_Public(),
+            decryptedResult.InitializationAddress());
+
+        VERIFY_ARE_EQUAL2(hr, 0);
+        VERIFY_ARE_EQUAL2(decryptedResult->get_String(), text);
+    }
+
+    BOOST_AUTO_TEST_CASE(EncryptTest_CertFile)
+    {
+        const wstring certFileName = L"WinFabric-Test-SAN1-Alice.cer";
+        wstring bins;
+        if (!Environment::GetEnvironmentVariableW(L"_NTTREE", bins, Common::NOTHROW()))
+        {
+            bins = Directory::GetCurrentDirectoryW();
+        }
+        
+        if (!File::Exists(certFileName))
+        {
+            wstring certFileInBins = Path::Combine(bins, L"FabricUnitTests\\" + certFileName);
+            // copy the binplaced certificate file
+            VERIFY_IS_TRUE(File::Copy(certFileInBins, certFileName).IsSuccess());
+        }
+
+        ComPointer<IFabricStringResult> encryptedResult;
+        wstring text = L"The lazy fox jumped";
+        auto hr = ::FabricEncryptText2(
+            text.c_str(),
+            L"WinFabric-Test-SAN1-Alice.cer",
+            nullptr,
+            encryptedResult.InitializationAddress());
+
+        VERIFY_ARE_EQUAL2(hr, 0);
+
+        ComPointer<IFabricStringResult> decryptedResult;
+        hr = ::FabricDecryptText(
+            encryptedResult->get_String(),
+            X509Default::StoreLocation_Public(),
+            decryptedResult.InitializationAddress());
+
+        VERIFY_ARE_EQUAL2(hr, 0);
+        VERIFY_ARE_EQUAL2(decryptedResult->get_String(), text);
+    }
+
+    static PCRYPT_KEY_PROV_INFO GetKeyProvInfo(PCCERT_CONTEXT pCertContext)
+    {
+        DWORD dwPropId = CERT_KEY_PROV_INFO_PROP_ID;
+        DWORD cbData = 0;
+        void* pvData = nullptr;
+
+        bool result = CertGetCertificateContextProperty(
+          pCertContext,
+          dwPropId,
+          NULL,
+          &cbData);
+        VERIFY_IS_TRUE(result == true);
+
+        pvData = (void*)malloc(cbData);
+        VERIFY_IS_TRUE(pvData != nullptr);
+
+        result = CertGetCertificateContextProperty(
+            pCertContext,
+            dwPropId,
+            pvData,
+            &cbData);
+        VERIFY_IS_TRUE(result == true);
+
+        return (PCRYPT_KEY_PROV_INFO)pvData;
+    }
+
+    static void CreateSelfSignedCertificate_Keyset_Impl(wstring commonName, bool fMachineKeyset)
+    {
+        CertContextUPtr cert = nullptr;
+        ErrorCode error = CryptoUtility::CreateSelfSignedCertificate(
+            L"CN=" + commonName,
+            L"CN=" + commonName,
+            fMachineKeyset,
+            cert);
+        VERIFY_IS_TRUE(error.IsSuccess());
+        PCRYPT_KEY_PROV_INFO pKeyProvInfo = GetKeyProvInfo(cert.get());
+        VERIFY_IS_TRUE(pKeyProvInfo != nullptr);
+        bool isMachineKeyset = pKeyProvInfo->dwFlags & CRYPT_MACHINE_KEYSET;
+        VERIFY_IS_TRUE(isMachineKeyset == fMachineKeyset);
+
+        // Cleanup.
+        // Destroy the key container and keys.
+        HCRYPTPROV hCryptProv = 0;
+        bool result = CryptAcquireContext(
+            &hCryptProv,
+            pKeyProvInfo->pwszContainerName,
+            pKeyProvInfo->pwszProvName,
+            pKeyProvInfo->dwProvType,
+            pKeyProvInfo->dwFlags | CRYPT_DELETEKEYSET);
+        VERIFY_IS_TRUE(result == true);
+
+        // Free pKeyProvInfo (allocated by GetKeyProvInfo).
+        free(pKeyProvInfo);
+
+        // Free the certificate context.
+        CertFreeCertificateContext(cert.get());
+    }
+
+    BOOST_AUTO_TEST_CASE(CreateSelfSignedCertificate_Keyset)
+    {
+        CreateSelfSignedCertificate_Keyset_Impl(GetNewCommonName(), true);
+        CreateSelfSignedCertificate_Keyset_Impl(GetNewCommonName(), false);
     }
 
 #endif
@@ -339,12 +529,12 @@ namespace Common
         InstallTestCertInScope c1;
         InstallTestCertInScope c2;
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test before AddError");
+        Trace.WriteInfo(TraceType, "test before AddError");
         uint testFlag = CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;  
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c1.Thumbprint()), testFlag, true), testFlag);
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c1.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test after AddError");
+        Trace.WriteInfo(TraceType, "test after AddError");
         cache.AddError(*(c1.Thumbprint()), c1.CertContext(), testFlag); 
 
         cacheCopy = cache.Test_GetCacheCopy();
@@ -359,7 +549,7 @@ namespace Common
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c2.Thumbprint()), testFlag, true), testFlag);
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c2.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test duplicate AddError");
+        Trace.WriteInfo(TraceType, "test duplicate AddError");
         cache.AddError(*(c1.Thumbprint()), c1.CertContext(), testFlag); 
 
         cacheCopy = cache.Test_GetCacheCopy();
@@ -374,18 +564,18 @@ namespace Common
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c2.Thumbprint()), testFlag, true), testFlag);
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c2.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "wait for offline report");
+        Trace.WriteInfo(TraceType, "wait for offline report");
         VERIFY_IS_TRUE(offlineReported->WaitOne(TimeSpan::FromSeconds(10)));
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "wait for recovery report");
+        Trace.WriteInfo(TraceType, "wait for recovery report");
         VERIFY_IS_TRUE(recoveryReported->WaitOne(TimeSpan::FromSeconds(10)));
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test after recovery report");
+        Trace.WriteInfo(TraceType, "test after recovery report");
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c1.Thumbprint()), testFlag, true), testFlag);
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c1.Thumbprint()), testFlag, false), testFlag);
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c2.Thumbprint()), testFlag, true), testFlag);
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c2.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test AddError on both c1 and c2");
+        Trace.WriteInfo(TraceType, "test AddError on both c1 and c2");
         cache.AddError(*(c1.Thumbprint()), c1.CertContext(), testFlag); 
         cache.AddError(*(c2.Thumbprint()), c2.CertContext(), testFlag); 
 
@@ -404,9 +594,9 @@ namespace Common
         VERIFY_IS_FALSE(CrlOfflineErrCache::CrlCheckingEnabled(masked));
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c2.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "wait for offline report for both certs");
+        Trace.WriteInfo(TraceType, "wait for offline report for both certs");
         VERIFY_IS_TRUE(bothCertsAdded->WaitOne(TimeSpan::FromSeconds(10)));
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "wait for recovery report");
+        Trace.WriteInfo(TraceType, "wait for recovery report");
         VERIFY_IS_TRUE(recoveryReported->WaitOne(TimeSpan::FromSeconds(10)));
     }
 
@@ -483,7 +673,7 @@ namespace Common
         InstallTestCertInScope c2;
         InstallTestCertInScope c3;
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test before AddError");
+        Trace.WriteInfo(TraceType, "test before AddError");
         uint testFlag = CERT_CHAIN_REVOCATION_CHECK_CHAIN;  
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c1.Thumbprint()), testFlag, true), testFlag);
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c1.Thumbprint()), testFlag, false), testFlag);
@@ -492,7 +682,7 @@ namespace Common
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c3.Thumbprint()), testFlag, true), testFlag);
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c3.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test after AddError");
+        Trace.WriteInfo(TraceType, "test after AddError");
         cache.AddError(*(c1.Thumbprint()), c1.CertContext(), testFlag); 
         cache.AddError(*(c2.Thumbprint()), c2.CertContext(), testFlag); 
         cache.AddError(*(c3.Thumbprint()), c3.CertContext(), testFlag); 
@@ -517,7 +707,7 @@ namespace Common
         VERIFY_IS_FALSE(CrlOfflineErrCache::CrlCheckingEnabled(masked));
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c3.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "remove with 0");
+        Trace.WriteInfo(TraceType, "remove with 0");
         cache.TryRemoveError(*(c1.Thumbprint()), 0); 
         cache.TryRemoveError(*(c2.Thumbprint()), 0); 
         cache.TryRemoveError(*(c3.Thumbprint()), 0); 
@@ -542,7 +732,7 @@ namespace Common
         VERIFY_IS_FALSE(CrlOfflineErrCache::CrlCheckingEnabled(masked));
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c3.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "remove c1");
+        Trace.WriteInfo(TraceType, "remove c1");
         cache.TryRemoveError(*(c1.Thumbprint()), testFlag); 
 
         cacheCopy = cache.Test_GetCacheCopy();
@@ -565,7 +755,7 @@ namespace Common
         VERIFY_IS_FALSE(CrlOfflineErrCache::CrlCheckingEnabled(masked));
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c3.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "remove c3");
+        Trace.WriteInfo(TraceType, "remove c3");
         cache.TryRemoveError(*(c3.Thumbprint()), testFlag); 
 
         cacheCopy = cache.Test_GetCacheCopy();
@@ -588,7 +778,7 @@ namespace Common
         VERIFY_IS_TRUE(CrlOfflineErrCache::CrlCheckingEnabled(masked));
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c3.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "add c1 again");
+        Trace.WriteInfo(TraceType, "add c1 again");
         cache.AddError(*(c1.Thumbprint()), c1.CertContext(), testFlag); 
 
         cacheCopy = cache.Test_GetCacheCopy();
@@ -611,7 +801,7 @@ namespace Common
         VERIFY_IS_TRUE(CrlOfflineErrCache::CrlCheckingEnabled(masked));
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c3.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "remove c1 c2 c3");
+        Trace.WriteInfo(TraceType, "remove c1 c2 c3");
         cache.TryRemoveError(*(c1.Thumbprint()), testFlag); 
         cache.TryRemoveError(*(c2.Thumbprint()), testFlag); 
         cache.TryRemoveError(*(c3.Thumbprint()), testFlag); 
@@ -636,7 +826,7 @@ namespace Common
         VERIFY_IS_TRUE(CrlOfflineErrCache::CrlCheckingEnabled(masked));
         VERIFY_ARE_EQUAL2(cache.MaskX509CertChainFlags(*(c3.Thumbprint()), testFlag, false), testFlag);
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "remove c1 c2 c3 again should not cause any issue");
+        Trace.WriteInfo(TraceType, "remove c1 c2 c3 again should not cause any issue");
         cache.TryRemoveError(*(c1.Thumbprint()), testFlag); 
         cache.TryRemoveError(*(c2.Thumbprint()), testFlag); 
         cache.TryRemoveError(*(c3.Thumbprint()), testFlag); 
@@ -677,7 +867,7 @@ namespace Common
         InstallTestCertInScope c4;
         InstallTestCertInScope c5;
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "add in parallel"); 
+        Trace.WriteInfo(TraceType, "add in parallel"); 
         const uint testFlag = CERT_CHAIN_REVOCATION_CHECK_END_CERT;
         const size_t thrCount = 12;
         atomic_uint64 completedThreads(0);
@@ -706,7 +896,7 @@ namespace Common
             });
         }
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "wait for all add to complete"); 
+        Trace.WriteInfo(TraceType, "wait for all add to complete"); 
         VERIFY_IS_TRUE(allThreadsCompleted.WaitOne(TimeSpan::FromSeconds(6)));
 
         cacheCopy = cache.Test_GetCacheCopy();
@@ -734,7 +924,7 @@ namespace Common
         masked = cache.MaskX509CertChainFlags(*(c5.Thumbprint()), testFlag, true);
         VERIFY_IS_FALSE(CrlOfflineErrCache::CrlCheckingEnabled(masked));
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "remove in parallel"); 
+        Trace.WriteInfo(TraceType, "remove in parallel"); 
         completedThreads.store(0);
         for (size_t i = 0; i < thrCount; ++i)
         {
@@ -760,7 +950,7 @@ namespace Common
             });
         }
 
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "wait for all remove to complete"); 
+        Trace.WriteInfo(TraceType, "wait for all remove to complete"); 
         VERIFY_IS_TRUE(allThreadsCompleted.WaitOne(TimeSpan::FromSeconds(6)));
 
         cacheCopy = cache.Test_GetCacheCopy();
@@ -882,16 +1072,16 @@ namespace Common
         CryptoBitBlob bb11, bb12, bb13;
         auto err = bb11.InitializeAsSignatureHash(cert1.CertContext());
         VERIFY_IS_TRUE(err.IsSuccess());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "InitializeAsSignatureHash(cert1): {0}", bb11);
+        Trace.WriteInfo(TraceType, "InitializeAsSignatureHash(cert1): {0}", bb11);
         err = bb12.InitializeAsSignatureHash(cert2.CertContext());
         VERIFY_IS_TRUE(err.IsSuccess());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "InitializeAsSignatureHash(cert2): {0}", bb12);
+        Trace.WriteInfo(TraceType, "InitializeAsSignatureHash(cert2): {0}", bb12);
 
         VERIFY_IS_TRUE(bb11 != bb12);
 
         err = bb13.InitializeAsSignatureHash(cert1.CertContext());
         VERIFY_IS_TRUE(err.IsSuccess());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "InitializeAsSignatureHash(cert1): {0}", bb13);
+        Trace.WriteInfo(TraceType, "InitializeAsSignatureHash(cert1): {0}", bb13);
         VERIFY_IS_TRUE(bb11 == bb13);
 
         X509FindValue::SPtr findValue;
@@ -910,7 +1100,7 @@ namespace Common
 
         CryptoBitBlob bb15;
         err = bb15.InitializeAsSignatureHash(hostCert.get());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "InitializeAsSignatureHash(GlobalSign): {0}", bb15);
+        Trace.WriteInfo(TraceType, "InitializeAsSignatureHash(GlobalSign): {0}", bb15);
         VERIFY_IS_TRUE(bb15.Data().size() > 20); // SHA1 is deprecated, signature hash size should be larger
 #endif
 
@@ -998,20 +1188,17 @@ namespace Common
         LinuxCryptUtil cryptoUtil;
         auto corePfxPath = thumbprintStr;
         StringUtility::ToUpper(corePfxPath);
-        long buflen = 16384; 
+        long buflen = 16384;
 
-        unique_ptr<char[]> username(new char[buflen]);
-        auto errorCode = getlogin_r(username.get(), buflen);
-        VERIFY_IS_TRUE(errorCode == 0);
-
+        auto uid = geteuid();
         unique_ptr<char[]> buf(new char[buflen]);
         struct passwd pwbuf, *pwbufp;
-        errorCode = getpwnam_r(username.get(), &pwbuf, buf.get(), buflen, &pwbufp);
+        auto errorCode = getpwuid_r(uid, &pwbuf, buf.get(), buflen, &pwbufp);
         VERIFY_IS_TRUE(errorCode == 0);
         auto homeDirectory = StringUtility::Utf8ToUtf16(pwbufp->pw_dir);
         auto corePfxPathw = StringUtility::Utf16ToUtf8(Path::Combine(homeDirectory + L"/.dotnet/corefx/cryptography/x509stores/my", corePfxPath + L".pfx"));
         KFinally ([&corePfxPathw] { std::remove(corePfxPathw.c_str()); });
-        error = cryptoUtil.InstallCoreFxCertificate(username.get(), testCert.X509ContextRef());
+        error = cryptoUtil.InstallCoreFxCertificate(pwbufp->pw_name, testCert.X509ContextRef());
         VERIFY_IS_TRUE(error.IsSuccess());
         error = cryptoUtil.ReadPrivateKey(corePfxPathw, privKey);
         VERIFY_IS_TRUE(error.IsSuccess());
@@ -1034,14 +1221,14 @@ namespace Common
         auto const folderw = Path::GetDirectoryName(pathw);
         error = X509FindValue::Create(X509FindType::FindByThumbprint, thumbprintStr, findValue);
         VERIFY_IS_TRUE(error.IsSuccess());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test with explicit certificate folder {0} and find value {1}", folderw, *findValue);
+        Trace.WriteInfo(TraceType, "test with explicit certificate folder {0} and find value {1}", folderw, *findValue);
         VERIFY_IS_TRUE(VerfiyCertificateThumbprint(findValue, thumbprintStr, folderw));
 
         error = X509FindValue::Create(X509FindType::FindBySubjectName, subjectName, findValue);
         VERIFY_IS_TRUE(error.IsSuccess());
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "test with explicit certificate folder {0} and find value {1}", folderw, *findValue);
+        Trace.WriteInfo(TraceType, "test with explicit certificate folder {0} and find value {1}", folderw, *findValue);
         VERIFY_IS_TRUE(VerfiyCertificateThumbprint(findValue, thumbprintStr, folderw));
-        Trace.WriteInfo(CryptoUtilityTestTraceType, "InstallTest completed");
+        Trace.WriteInfo(TraceType, "InstallTest completed");
     }
 #endif
 }

@@ -1,0 +1,219 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricTypes_.idl";
+import "FabricRuntime.idl";
+import "FabricClient_.idl";
+
+//
+// Forward Declarations
+//
+
+interface IFabricFaultAnalysisService;
+interface IFabricFaultAnalysisServiceAgent;
+
+[
+    uuid(4d62281f-b4a1-4343-8cb6-3b66efeaba63),
+    version(1.0),
+]
+library FabricFaultAnalysisServiceLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricFaultAnalysisService;
+    interface IFabricFaultAnalysisServiceAgent;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(bbea0807-9fc1-4ef4-81e2-99516511564d),
+        noncreatable
+    ]
+    coclass FabricFaultAnalysisServiceAgent
+    {
+        [default] interface IFabricFaultAnalysisServiceAgent;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(f1b0aa86-d4e7-425b-87a7-770e06c81c30),
+        dllname("FabricFaultAnalysisService.dll")
+    ]
+    module FabricFaultAnalysisService {
+        [entry("CreateFabricFaultAnalysisServiceAgent")] HRESULT CreateFabricFaultAnalysisServiceAgent(
+            [in] REFIID riid,
+            [out, retval] void ** fabricFaultAnalysisServiceAgent);
+    }
+
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(bf9b93a9-5b74-4a28-b205-edf387adf3db)]
+interface IFabricFaultAnalysisService : IUnknown
+{
+    [] HRESULT BeginStartPartitionDataLoss(
+        [in] FABRIC_START_PARTITION_DATA_LOSS_DESCRIPTION * invokeDataLossDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartPartitionDataLoss(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetPartitionDataLossProgress(
+        [in] FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionDataLossProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPartitionDataLossProgressResult ** result);
+        
+    [] HRESULT BeginStartPartitionQuorumLoss(
+        [in] FABRIC_START_PARTITION_QUORUM_LOSS_DESCRIPTION * invokeQuorumLossDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartPartitionQuorumLoss(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetPartitionQuorumLossProgress(
+        [in] FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionQuorumLossProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPartitionQuorumLossProgressResult ** result);
+
+    [] HRESULT BeginStartPartitionRestart(
+        [in] FABRIC_START_PARTITION_RESTART_DESCRIPTION * restartPartitionDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartPartitionRestart(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetPartitionRestartProgress(
+        [in] FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionRestartProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPartitionRestartProgressResult ** result);
+
+    [] HRESULT BeginGetTestCommandStatusList(
+        [in] FABRIC_TEST_COMMAND_LIST_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndGetTestCommandStatusList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricTestCommandStatusResult ** result); 
+
+    [] HRESULT BeginCancelTestCommand(
+        [in] FABRIC_CANCEL_TEST_COMMAND_DESCRIPTION* description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCancelTestCommand(
+        [in] IFabricAsyncOperationContext * context);
+        
+    [] HRESULT BeginStartChaos(
+        [in] FABRIC_START_CHAOS_DESCRIPTION * startChaosDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartChaos(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginStopChaos(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStopChaos(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetChaosReport(
+        [in] FABRIC_GET_CHAOS_REPORT_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetChaosReport(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricChaosReportResult ** result);
+
+    [] HRESULT BeginGetStoppedNodeList(        
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndGetStoppedNodeList(
+        [in] IFabricAsyncOperationContext * context,        
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginStartNodeTransition(
+        [in] const FABRIC_NODE_TRANSITION_DESCRIPTION* description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartNodeTransition(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetNodeTransitionProgress(
+        [in] FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNodeTransitionProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricNodeTransitionProgressResult ** result);
+
+	[] HRESULT BeginCallSystemService(
+		[in] LPCWSTR action,
+		[in] LPCWSTR inputBlob,
+		[in] DWORD timeoutMilliseconds,
+		[in] IFabricAsyncOperationCallback * callback,
+		[out, retval] IFabricAsyncOperationContext ** context);
+	[] HRESULT EndCallSystemService(
+		[in] IFabricAsyncOperationContext * context,
+		[out, retval] IFabricStringResult ** outputBlob);
+}
+
+[object, local, uuid(a202ba9d-1478-42a8-ad03-4a1f15c7d255)]
+interface IFabricFaultAnalysisServiceAgent : IUnknown
+{
+    [] HRESULT RegisterFaultAnalysisService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID,
+        [in] IFabricFaultAnalysisService *,
+        [out, retval] IFabricStringResult ** serviceAddress);
+
+    [] HRESULT UnregisterFaultAnalysisService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID);
+}

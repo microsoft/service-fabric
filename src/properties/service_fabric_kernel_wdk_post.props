@@ -1,0 +1,45 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PkgKtl Condition="'$(BuildType)' == 'debug'">$(PkgKtl_debug)</PkgKtl>
+    <PkgKtl Condition="'$(BuildType)' == 'retail'">$(PkgKtl_retail)</PkgKtl>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        KTL_USER_MODE=0;
+        NT_UP=1;
+        NT_INST=0;
+        WIN32=100;
+        _NT1X_=100;
+        WINNT=1;
+        _WIN32_WINNT=0x0603;
+        WINVER=0x0603;
+        _WIN32_IE=0x0A00;
+        WIN32_LEAN_AND_MEAN=1;
+        DEVL=1;
+        _APISET_WINDOWS_VERSION=0x601;
+        _APISET_MINWIN_VERSION=0x0103;
+        _APISET_MINCORE_VERSION=0x0102;
+        NTDDI_VERSION=0x06030000;
+        BUILD_WINDOWS;
+        __WRL_CONFIGURATION_LEGACY__;
+        _USE_DECLSPECS_FOR_SAL=1;
+      </PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories)
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc;
+        $(SrcRoot)\prod\src;
+        $(SrcRoot)\prod\ktl\src\inc;
+        $(SrcRoot)\prod\ktl\src\StatusCodes\$(O);
+        $(SrcRoot)\prod\ktl\src\mc\kernel\$(O);
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

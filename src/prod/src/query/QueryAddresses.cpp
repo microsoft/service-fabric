@@ -20,6 +20,7 @@ GlobalWString QueryAddresses::RAAddressSegment      = make_global<std::wstring>(
 GlobalWString QueryAddresses::RMAddressSegment      = make_global<std::wstring>(L"RM");
 GlobalWString QueryAddresses::TSAddressSegment      = make_global<std::wstring>(L"TS");
 GlobalWString QueryAddresses::UOSAddressSegment     = make_global<std::wstring>(L"UOS");
+GlobalWString QueryAddresses::GRMAddressSegment     = make_global<std::wstring>(L"GRM");
 
 QueryAddressGenerator QueryAddresses::GetGateway()
 { return Query::QueryAddressGenerator("/"); }
@@ -57,3 +58,5 @@ QueryAddressGenerator QueryAddresses::GetUOS()
 QueryAddressGenerator QueryAddresses::GetTestability()
 { return Query::QueryAddressGenerator("/TestabilityAgent[{0}]", QueryResourceProperties::Node::Name); }
 
+QueryAddressGenerator QueryAddresses::GetGRM()
+{ return Query::QueryAddressGenerator("/GRM"); } // Gateway Resource Manager

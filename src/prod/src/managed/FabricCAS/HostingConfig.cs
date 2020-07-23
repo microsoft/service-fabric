@@ -235,6 +235,16 @@ namespace Hosting.ContainerActivatorService
                 }
             }
         }
+        internal string DefaultContainerRepositoryPasswordType
+        {
+            get
+            {
+                using (this.configLock.AcquireReadLock())
+                {
+                    return hostingSettings.DefaultContainerRepositoryPasswordType;
+                }
+            }
+        }
 
         internal string ContainerDefaultNetwork
         {
@@ -277,6 +287,39 @@ namespace Hosting.ContainerActivatorService
                 using (this.configLock.AcquireReadLock())
                 {
                     return hostingSettings.DefaultMSIEndpointForTokenAuthentication;
+                }
+            }
+        }
+
+        internal bool DisableDockerRequestRetry
+        {
+            get
+            {
+                using (this.configLock.AcquireReadLock())
+                {
+                    return hostingSettings.DisableDockerRequestRetry;
+                }
+            }
+        }
+
+        internal bool LocalNatIpProviderEnabled
+        {
+            get
+            {
+                using (this.configLock.AcquireReadLock())
+                {
+                    return hostingSettings.LocalNatIpProviderEnabled;
+                }
+            }
+        }
+
+        internal string LocalNatIpProviderNetworkName
+        {
+            get
+            {
+                using (this.configLock.AcquireReadLock())
+                {
+                    return hostingSettings.LocalNatIpProviderNetworkName;
                 }
             }
         }

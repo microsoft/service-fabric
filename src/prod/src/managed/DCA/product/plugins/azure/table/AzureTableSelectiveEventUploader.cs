@@ -170,6 +170,10 @@ namespace FabricDCA
         /// <returns></returns>
         protected abstract bool IsEventConsidered(string providerName, XmlElement eventDefinition);
 
+#if DotNetCoreClrLinux
+        protected abstract bool IsEventInThisTable(EventRecord eventRecord);
+#endif
+
         // The constituent parts of event name
         private enum TableInfoParts
         {
@@ -953,6 +957,12 @@ namespace FabricDCA
                     break;
                 }
 
+#if DotNetCoreClrLinux
+                if (!this.IsEventInThisTable(eventRecord))
+                {
+                    continue;
+                }
+#endif
                 // Get the event definition
                 EventDefinition eventDefinition = this.manifestCache.GetEventDefinition(eventRecord);
                 if (null == eventDefinition)

@@ -1,0 +1,24 @@
+setcfg Config.TraceEtw.Level 5
+setcfg Config.ApplicationGatewayHttp.IsEnabled true
+
+# Create 5 node cluster.
+load FabSrvFiveNodeLocalCluster.test
+
+# Deploy the Service App
+uploadapp DynamicLonghaulApp apppackages\DynamicLonghaulApp
+provisionapp DynamicLonghaulApp
+
+createapp fabric:/DynamicLonghaulApp DynamicLonghaulApp
+createservice fabric:/DynamicLonghaulApp fabric:/DynamicLonghaulApp/Service DynamicLonghaulVolatileServiceType true minReplicaSetSize=2 targetReplicaSetSize=3 partitionCount=1 lowKey=0 highKey=5 uniformInt64Partition=true hasPersistedState=false
+
+verify
+
+# Start client and test
+client.newclient DynamicLonghaul NativeReplicatorHTTPClient.HTTPClient,NativeReplicatorHTTPClient parameters=serviceName:fabric:/DynamicLonghaulApp/Service
+
+client.starttask DynamicLonghaul DynamicLonghaulTask StartTest parameters={"loopCount":"3","int64PartitionKey":"1","retryCount":"256","sendTimeout":"30","persisted":"false","scenario":"basic;primaryfailover;randomfailover;failoverstress;"}
+
+# Todo: Need to modify timeout, set to 10 hours for now.
+client.waittask taskIds=DynamicLonghaulTask timeout=36000
+
+quit

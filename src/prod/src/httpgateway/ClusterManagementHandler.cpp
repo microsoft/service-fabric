@@ -65,6 +65,11 @@ ErrorCode ClusterManagementHandler::Initialize()
         MAKE_HANDLER_CALLBACK(GetClusterManifest)));
 
     validHandlerUris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::SystemEntitySetPath, Constants::GetClusterVersion),
+        Constants::HttpGetVerb,
+        MAKE_HANDLER_CALLBACK(GetClusterVersion)));
+
+    validHandlerUris.push_back(HandlerUriTemplate(
         MAKE_SUFFIX_PATH(Constants::SystemEntitySetPath, Constants::GetClusterHealth),
         Constants::HttpGetVerb,
         MAKE_HANDLER_CALLBACK(EvaluateClusterHealth)));
@@ -258,13 +263,13 @@ ErrorCode ClusterManagementHandler::Initialize()
         isAadEnabled));  // allowAnonymous access
 
     //
-    // !!!! Donot add new registrations here !!!!
+    // !!!! Do not add new registrations here !!!!
     //
 
     return server_.InnerServer->RegisterHandler(Constants::ClusterManagementHandlerPath, shared_from_this());
 }
 
-void ClusterManagementHandler::GetClusterManifest(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetClusterManifest(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -308,8 +313,8 @@ void ClusterManagementHandler::GetClusterManifest(__in AsyncOperationSPtr const&
 }
 
 void ClusterManagementHandler::OnGetClusterManifestComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -337,7 +342,53 @@ void ClusterManagementHandler::OnGetClusterManifestComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::StartClusterConfigurationUpgrade(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetClusterVersion(AsyncOperationSPtr const& thisSPtr)
+{
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    auto &client = handlerOperation->FabricClient;
+
+    auto inner = client.ClusterMgmtClient->BeginGetClusterVersion(
+        handlerOperation->Timeout,
+        [this](AsyncOperationSPtr const& operation)
+    {
+        this->OnGetClusterVersionComplete(operation, false);
+    },
+        handlerOperation->shared_from_this());
+
+    OnGetClusterVersionComplete(inner, true);
+}
+
+void ClusterManagementHandler::OnGetClusterVersionComplete(
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation->Parent);
+    auto &client = handlerOperation->FabricClient;
+    wstring queryResult;
+
+    auto error = client.ClusterMgmtClient->EndGetClusterVersion(operation, queryResult);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    ClusterVersion result(move(queryResult));
+    ByteBufferUPtr bufferUPtr;
+
+    error = handlerOperation->Serialize(result, bufferUPtr);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
+}
+
+void ClusterManagementHandler::StartClusterConfigurationUpgrade(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -363,8 +414,8 @@ void ClusterManagementHandler::StartClusterConfigurationUpgrade(__in AsyncOperat
 }
 
 void ClusterManagementHandler::OnStartClusterConfigurationUpgradeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -382,7 +433,7 @@ void ClusterManagementHandler::OnStartClusterConfigurationUpgradeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusAccepted, *Constants::StatusDescriptionAccepted);
 }
 
-void ClusterManagementHandler::GetClusterConfigurationUpgradeStatus(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetClusterConfigurationUpgradeStatus(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -399,8 +450,8 @@ void ClusterManagementHandler::GetClusterConfigurationUpgradeStatus(__in AsyncOp
 }
 
 void ClusterManagementHandler::OnGetClusterConfigurationUpgradeStatusComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -435,7 +486,7 @@ void ClusterManagementHandler::OnGetClusterConfigurationUpgradeStatusComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::GetClusterConfiguration(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetClusterConfiguration(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
 
@@ -468,8 +519,8 @@ void ClusterManagementHandler::GetClusterConfiguration(__in AsyncOperationSPtr c
 }
 
 void ClusterManagementHandler::OnGetClusterConfigurationComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -497,7 +548,7 @@ void ClusterManagementHandler::OnGetClusterConfigurationComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::GetUpgradeOrchestrationServiceState(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetUpgradeOrchestrationServiceState(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -514,8 +565,8 @@ void ClusterManagementHandler::GetUpgradeOrchestrationServiceState(__in AsyncOpe
 }
 
 void ClusterManagementHandler::OnGetUpgradeOrchestrationServiceStateComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -543,7 +594,7 @@ void ClusterManagementHandler::OnGetUpgradeOrchestrationServiceStateComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::SetUpgradeOrchestrationServiceState(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::SetUpgradeOrchestrationServiceState(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -569,8 +620,8 @@ void ClusterManagementHandler::SetUpgradeOrchestrationServiceState(__in AsyncOpe
 }
 
 void ClusterManagementHandler::OnSetUpgradeOrchestrationServiceStateComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -598,7 +649,7 @@ void ClusterManagementHandler::OnSetUpgradeOrchestrationServiceStateComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::GetUpgradesPendingApproval(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetUpgradesPendingApproval(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -615,8 +666,8 @@ void ClusterManagementHandler::GetUpgradesPendingApproval(__in AsyncOperationSPt
 }
 
 void ClusterManagementHandler::OnGetUpgradesPendingApprovalComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -633,7 +684,7 @@ void ClusterManagementHandler::OnGetUpgradesPendingApprovalComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusAccepted, *Constants::StatusDescriptionAccepted);
 }
 
-void ClusterManagementHandler::StartApprovedUpgrades(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::StartApprovedUpgrades(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -650,8 +701,8 @@ void ClusterManagementHandler::StartApprovedUpgrades(__in AsyncOperationSPtr con
 }
 
 void ClusterManagementHandler::OnStartApprovedUpgradesComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -668,7 +719,7 @@ void ClusterManagementHandler::OnStartApprovedUpgradesComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusAccepted, *Constants::StatusDescriptionAccepted);
 }
 
-void ClusterManagementHandler::EvaluateClusterHealth(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::EvaluateClusterHealth(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -808,8 +859,8 @@ void ClusterManagementHandler::EvaluateClusterHealth(__in AsyncOperationSPtr con
 }
 
 void ClusterManagementHandler::OnEvaluateClusterHealthComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -901,7 +952,7 @@ void ClusterManagementHandler::OnEvaluateClusterHealthChunkComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::UpgradeFabric(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::UpgradeFabric(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -930,8 +981,8 @@ void ClusterManagementHandler::UpgradeFabric(__in AsyncOperationSPtr const& this
 }
 
 void ClusterManagementHandler::OnUpgradeFabricComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -949,7 +1000,7 @@ void ClusterManagementHandler::OnUpgradeFabricComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusAccepted, *Constants::StatusDescriptionAccepted);
 }
 
-void ClusterManagementHandler::UpdateFabricUpgrade(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::UpdateFabricUpgrade(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -978,8 +1029,8 @@ void ClusterManagementHandler::UpdateFabricUpgrade(__in AsyncOperationSPtr const
 }
 
 void ClusterManagementHandler::OnUpdateFabricUpgradeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -997,7 +1048,7 @@ void ClusterManagementHandler::OnUpdateFabricUpgradeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void ClusterManagementHandler::RollbackFabricUpgrade(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::RollbackFabricUpgrade(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1017,8 +1068,8 @@ void ClusterManagementHandler::RollbackFabricUpgrade(__in AsyncOperationSPtr con
 }
 
 void ClusterManagementHandler::OnRollbackFabricUpgradeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1036,7 +1087,7 @@ void ClusterManagementHandler::OnRollbackFabricUpgradeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusAccepted, *Constants::StatusDescriptionAccepted);
 }
 
-void ClusterManagementHandler::ToggleVerboseServicePlacementHealthReporting(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::ToggleVerboseServicePlacementHealthReporting(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1057,8 +1108,8 @@ void ClusterManagementHandler::ToggleVerboseServicePlacementHealthReporting(__in
 }
 
 void ClusterManagementHandler::OnToggleVerboseServicePlacementHealthReportingComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1076,7 +1127,7 @@ void ClusterManagementHandler::OnToggleVerboseServicePlacementHealthReportingCom
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void ClusterManagementHandler::GetUpgradeProgress(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetUpgradeProgress(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1092,8 +1143,8 @@ void ClusterManagementHandler::GetUpgradeProgress(__in AsyncOperationSPtr const&
 }
 
 void ClusterManagementHandler::OnGetUpgradeProgressComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1127,7 +1178,7 @@ void ClusterManagementHandler::OnGetUpgradeProgressComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::MoveNextUpgradeDomain(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::MoveNextUpgradeDomain(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1156,8 +1207,8 @@ void ClusterManagementHandler::MoveNextUpgradeDomain(__in AsyncOperationSPtr con
 }
 
 void ClusterManagementHandler::OnMoveNextUpgradeDomainComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1175,7 +1226,7 @@ void ClusterManagementHandler::OnMoveNextUpgradeDomainComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void ClusterManagementHandler::ProvisionFabric(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::ProvisionFabric(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1218,8 +1269,8 @@ void ClusterManagementHandler::ProvisionFabric(__in AsyncOperationSPtr const& th
 }
 
 void ClusterManagementHandler::OnProvisionComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1237,7 +1288,7 @@ void ClusterManagementHandler::OnProvisionComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void ClusterManagementHandler::UnprovisionFabric(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::UnprovisionFabric(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1288,8 +1339,8 @@ void ClusterManagementHandler::UnprovisionFabric(__in AsyncOperationSPtr const& 
 }
 
 void ClusterManagementHandler::OnUnprovisionComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1307,7 +1358,7 @@ void ClusterManagementHandler::OnUnprovisionComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void ClusterManagementHandler::GetProvisionedFabricCodeVersions(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetProvisionedFabricCodeVersions(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1330,7 +1381,7 @@ void ClusterManagementHandler::GetProvisionedFabricCodeVersions(__in AsyncOperat
     OnGetProvisionedFabricCodeVersionsComplete(inner, true);
 }
 
-void ClusterManagementHandler::OnGetProvisionedFabricCodeVersionsComplete(__in AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously)
+void ClusterManagementHandler::OnGetProvisionedFabricCodeVersionsComplete(AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1356,7 +1407,7 @@ void ClusterManagementHandler::OnGetProvisionedFabricCodeVersionsComplete(__in A
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::GetProvisionedFabricConfigVersions(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetProvisionedFabricConfigVersions(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1379,7 +1430,7 @@ void ClusterManagementHandler::GetProvisionedFabricConfigVersions(__in AsyncOper
     OnGetProvisionedFabricConfigVersionsComplete(inner, true);
 }
 
-void ClusterManagementHandler::OnGetProvisionedFabricConfigVersionsComplete(__in AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously)
+void ClusterManagementHandler::OnGetProvisionedFabricConfigVersionsComplete(AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1405,7 +1456,7 @@ void ClusterManagementHandler::OnGetProvisionedFabricConfigVersionsComplete(__in
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::GetTokenValidationServiceMetadata(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetTokenValidationServiceMetadata(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1422,8 +1473,8 @@ void ClusterManagementHandler::GetTokenValidationServiceMetadata(__in AsyncOpera
 }
 
 void ClusterManagementHandler::OnGetMetadataComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1435,8 +1486,8 @@ void ClusterManagementHandler::OnGetMetadataComplete(
     if (!error.IsSuccess())
     {
         //
-        // Metadata is static information given by the TVS. If there is an error retreiving it,
-        // send a retriable error so that the client can retry.
+        // Metadata is static information given by the TVS. If there is an error retrieving it,
+        // send a re-triable error so that the client can retry.
         //
         handlerOperation->OnError(operation->Parent, ErrorCodeValue::NotReady);
         return;
@@ -1453,14 +1504,14 @@ void ClusterManagementHandler::OnGetMetadataComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::GetAzureActiveDirectoryMetadata(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetAzureActiveDirectoryMetadata(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto metadata = AzureActiveDirectory::ServerWrapper::IsAadEnabled()
         ? Transport::ClaimsRetrievalMetadata::CreateForAAD()
         : Transport::ClaimsRetrievalMetadata();
-    
-    auto bufferUPtr = make_unique<ByteBuffer>();   
+
+    auto bufferUPtr = make_unique<ByteBuffer>();
     auto error = handlerOperation->Serialize(metadata, bufferUPtr);
 
     if (error.IsSuccess())
@@ -1473,7 +1524,7 @@ void ClusterManagementHandler::GetAzureActiveDirectoryMetadata(__in AsyncOperati
     }
 }
 
-void ClusterManagementHandler::RecoverPartitions(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::RecoverPartitions(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1490,8 +1541,8 @@ void ClusterManagementHandler::RecoverPartitions(__in AsyncOperationSPtr const& 
 }
 
 void ClusterManagementHandler::OnRecoverPartitionsComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1509,7 +1560,7 @@ void ClusterManagementHandler::OnRecoverPartitionsComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void ClusterManagementHandler::RecoverSystemServicePartitions(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::RecoverSystemServicePartitions(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1526,8 +1577,8 @@ void ClusterManagementHandler::RecoverSystemServicePartitions(__in AsyncOperatio
 }
 
 void ClusterManagementHandler::OnRecoverSystemServicePartitionsComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1545,7 +1596,7 @@ void ClusterManagementHandler::OnRecoverSystemServicePartitionsComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void ClusterManagementHandler::GetClusterLoadInformation(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetClusterLoadInformation(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1562,8 +1613,8 @@ void ClusterManagementHandler::GetClusterLoadInformation(__in AsyncOperationSPtr
 }
 
 void ClusterManagementHandler::OnGetClusterLoadInformationComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1650,17 +1701,17 @@ void ClusterManagementHandler::ReportClusterHealth(AsyncOperationSPtr const& thi
     handlerOperation->OnSuccess(thisSPtr, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::InvokeInfrastructureCommand(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::InvokeInfrastructureCommand(AsyncOperationSPtr const& thisSPtr)
 {
     InnerInvokeInfrastructureService(true, thisSPtr);
 }
 
-void ClusterManagementHandler::InvokeInfrastructureQuery(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::InvokeInfrastructureQuery(AsyncOperationSPtr const& thisSPtr)
 {
     InnerInvokeInfrastructureService(false, thisSPtr);
 }
 
-void ClusterManagementHandler::InnerInvokeInfrastructureService(bool isAdminCommand, __in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::InnerInvokeInfrastructureService(bool isAdminCommand, AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1708,8 +1759,8 @@ void ClusterManagementHandler::InnerInvokeInfrastructureService(bool isAdminComm
 }
 
 void ClusterManagementHandler::OnInvokeInfrastructureServiceComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1741,7 +1792,7 @@ void ClusterManagementHandler::OnInvokeInfrastructureServiceComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::CreateRepairTask(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::CreateRepairTask(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1771,8 +1822,8 @@ void ClusterManagementHandler::CreateRepairTask(__in AsyncOperationSPtr const& t
 }
 
 void ClusterManagementHandler::OnCreateRepairTaskComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1801,7 +1852,7 @@ void ClusterManagementHandler::OnCreateRepairTaskComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::CancelRepairTask(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::CancelRepairTask(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1831,8 +1882,8 @@ void ClusterManagementHandler::CancelRepairTask(__in AsyncOperationSPtr const& t
 }
 
 void ClusterManagementHandler::OnCancelRepairTaskComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1861,7 +1912,7 @@ void ClusterManagementHandler::OnCancelRepairTaskComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::ForceApproveRepairTask(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::ForceApproveRepairTask(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1891,8 +1942,8 @@ void ClusterManagementHandler::ForceApproveRepairTask(__in AsyncOperationSPtr co
 }
 
 void ClusterManagementHandler::OnForceApproveRepairTaskComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1921,7 +1972,7 @@ void ClusterManagementHandler::OnForceApproveRepairTaskComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::DeleteRepairTask(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::DeleteRepairTask(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1951,8 +2002,8 @@ void ClusterManagementHandler::DeleteRepairTask(__in AsyncOperationSPtr const& t
 }
 
 void ClusterManagementHandler::OnDeleteRepairTaskComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1970,7 +2021,7 @@ void ClusterManagementHandler::OnDeleteRepairTaskComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::UpdateRepairExecutionState(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::UpdateRepairExecutionState(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -2000,8 +2051,8 @@ void ClusterManagementHandler::UpdateRepairExecutionState(__in AsyncOperationSPt
 }
 
 void ClusterManagementHandler::OnUpdateRepairExecutionStateComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -2030,7 +2081,7 @@ void ClusterManagementHandler::OnUpdateRepairExecutionStateComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::GetRepairTaskList(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::GetRepairTaskList(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -2102,8 +2153,8 @@ void ClusterManagementHandler::GetRepairTaskList(__in AsyncOperationSPtr const& 
 }
 
 void ClusterManagementHandler::OnGetRepairTaskListComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -2129,7 +2180,7 @@ void ClusterManagementHandler::OnGetRepairTaskListComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void ClusterManagementHandler::UpdateRepairTaskHealthPolicy(__in AsyncOperationSPtr const& thisSPtr)
+void ClusterManagementHandler::UpdateRepairTaskHealthPolicy(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -2159,8 +2210,8 @@ void ClusterManagementHandler::UpdateRepairTaskHealthPolicy(__in AsyncOperationS
 }
 
 void ClusterManagementHandler::OnUpdateRepairTaskHealthPolicyComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -2204,7 +2255,7 @@ void ClusterManagementHandler::InitializeContentTypes()
     contentTypes[*Constants::MapExtension] = Constants::MapContentType;
 }
 
-void ClusterManagementHandler::GetGenericStaticFile(__in AsyncOperationSPtr const& operation)
+void ClusterManagementHandler::GetGenericStaticFile(AsyncOperationSPtr const& operation)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation);
     GatewayUri uri(handlerOperation->Uri);
@@ -2221,7 +2272,7 @@ void ClusterManagementHandler::GetGenericStaticFile(__in AsyncOperationSPtr cons
     RespondWithContentFromFile(path, operation);
 }
 
-void ClusterManagementHandler::RedirectToExplorerIndexPage(__in AsyncOperationSPtr const& operation)
+void ClusterManagementHandler::RedirectToExplorerIndexPage(AsyncOperationSPtr const& operation)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation);
     ByteBufferUPtr bufferUPtr;
@@ -2246,17 +2297,17 @@ void ClusterManagementHandler::RedirectToExplorerIndexPage(__in AsyncOperationSP
         operation);
 }
 
-void ClusterManagementHandler::GetRootPage(__in AsyncOperationSPtr const& operation)
+void ClusterManagementHandler::GetRootPage(AsyncOperationSPtr const& operation)
 {
     RespondWithContentFromFile(Constants::RootPageName, operation);
 }
 
-void ClusterManagementHandler::RespondWithContentFromFile(__in wstring const& inFileName, __in AsyncOperationSPtr const& operation)
+void ClusterManagementHandler::RespondWithContentFromFile(wstring const& inFileName, AsyncOperationSPtr const& operation)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation);
 
     wstring fileName = inFileName;
-    StringUtility::Replace<std::wstring>(fileName, *Constants::SegmentDelimiter, *Constants::DirectorySeparator); // Switch to Windows path delimeters
+    StringUtility::Replace<std::wstring>(fileName, *Constants::SegmentDelimiter, *Constants::DirectorySeparator); // Switch to Windows path delimiters
     wstring fileExtension = Path::GetExtension(fileName);
 
     // Check for valid file name
@@ -2270,7 +2321,7 @@ void ClusterManagementHandler::RespondWithContentFromFile(__in wstring const& in
     wstring fullPath = Path::Combine(*Constants::StaticFilesRootPath, fileName);
 
     WriteNoise(TraceType, "Responding with the content from {0}", fullPath);
-        
+
     wstring contentType = contentTypes[fileExtension];
 
     //We will revert back to the async file read once we root cause bug no : 5917518
@@ -2301,7 +2352,7 @@ void ClusterManagementHandler::RespondWithContentFromFile(__in wstring const& in
 }
 
 #ifdef PLATFORM_UNIX
-ErrorCode ClusterManagementHandler::ReadFileToBufferSyncForLinux(__in std::wstring const& path, __out Common::ByteBufferUPtr& bufferUPtr)
+ErrorCode ClusterManagementHandler::ReadFileToBufferSyncForLinux(std::wstring const& path, __out Common::ByteBufferUPtr& bufferUPtr)
 {
     WriteNoise(TraceType, "Responding with the content from {0}", path);
 
@@ -2336,7 +2387,7 @@ ErrorCode ClusterManagementHandler::ReadFileToBufferSyncForLinux(__in std::wstri
 
 #else
 
-void ClusterManagementHandler::OnRespondWithContentFromFileComplete(__in Common::AsyncOperationSPtr const& operation, __in std::wstring const &contentTypeValue)
+void ClusterManagementHandler::OnRespondWithContentFromFileComplete(Common::AsyncOperationSPtr const& operation, std::wstring const &contentTypeValue)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation->Parent);
 
@@ -2354,7 +2405,7 @@ void ClusterManagementHandler::OnRespondWithContentFromFileComplete(__in Common:
 }
 #endif
 
-ErrorCode ClusterManagementHandler::ValidateFileName(__in wstring const& path, __in std::wstring const& fileExtension)
+ErrorCode ClusterManagementHandler::ValidateFileName(wstring const& path, std::wstring const& fileExtension)
 {
     // Checking to make sure that no path traversal is going on.
     if (path.find(*Constants::PathTraversalDisallowedString) != wstring::npos)

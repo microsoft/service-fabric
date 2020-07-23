@@ -24,11 +24,11 @@ add_precompiled_header(${exe_FabricDnsService} ../precomp/stdafx.h)
 
 set_target_properties(${exe_FabricDnsService} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
-
+    
 add_custom_target(CopyFabricDnsService ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/DnsService.Code.Current
     COMMAND ${CMAKE_COMMAND} -E copy ${TEST_OUTPUT_DIR}/${exe_FabricDnsService} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/DnsService.Code.Current/FabricDnsService.exe
-    COMMAND strip ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/DnsService.Code.Current/FabricDnsService.exe
+    COMMAND ${CMAKE_STRIP} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/DnsService.Code.Current/FabricDnsService.exe
     DEPENDS ${exe_FabricDnsService}
 )
 

@@ -23,6 +23,7 @@ namespace Hosting2
             Common::ErrorCode Remove(std::wstring const & hostId, __out ApplicationHostProxySPtr & hostProxy);
             Common::ErrorCode Find(std::wstring const & hostId, __out ApplicationHostProxySPtr & hostProxy);
             Common::ErrorCode Find(ApplicationHostIsolationContext const & isolationContext, __out ApplicationHostProxySPtr & hostProxy); 
+            Common::ErrorCode FindApplicationHostByCodePackageInstanceId(std::wstring const & codePackageInstanceId, __out ApplicationHostProxySPtr & hostProxy);
             std::vector<ApplicationHostProxySPtr> Close();
 
             void StartReportingToRM(std::wstring const & hostIdRM);
@@ -36,11 +37,14 @@ namespace Hosting2
 
         private:
             typedef std::map<std::wstring, ApplicationHostProxySPtr, Common::IsLessCaseInsensitiveComparer<std::wstring>> HostIdIndexMap;
+            typedef std::map<std::wstring, ApplicationHostProxySPtr, Common::IsLessCaseInsensitiveComparer<std::wstring>> CodePackageInstanceIdIndexMap;
+
         private:
             bool isClosed_;
             Common::RwLock lock_;
             HostProxyMap map_;
             HostIdIndexMap hostIdIndex_;
+            CodePackageInstanceIdIndexMap codePackageInstanceIdIndexMap_;
 
             HostingSubsystem & hosting_;
 

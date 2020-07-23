@@ -3379,7 +3379,6 @@ Serialization::IFabricSerializable * DefaultActivator(Serialization::FabricTypeI
         _status = streamHelper.Write(ARG27);                    \
         CheckStatus(_status);                                   \
                                                                 \
-                                                                \
         return streamHelper.WriteEndType();                     \
     }                                                           \
                                                                 \
@@ -3477,9 +3476,8 @@ Serialization::IFabricSerializable * DefaultActivator(Serialization::FabricTypeI
         _status = streamHelper.Read(ARG27);                     \
         CheckStatus(_status);                                   \
                                                                 \
-                                                                \
         return stream->ReadEndType();                           \
-    }                                                           \
+    }     
 
     #define FABRIC_FIELDS_29(ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28) \
     virtual NTSTATUS Write(Serialization::IFabricSerializableStream * stream) \
@@ -3887,6 +3885,426 @@ Serialization::IFabricSerializable * DefaultActivator(Serialization::FabricTypeI
         CheckStatus(_status);                                   \
                                                                 \
         return stream->ReadEndType();                           \
+    }     
+
+    #define FABRIC_FIELDS_31(ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29, ARG30) \
+    virtual NTSTATUS Write(Serialization::IFabricSerializableStream * stream) \
+    {                                                           \
+        NTSTATUS _status = __super::Write(stream);              \
+        CheckStatus(_status);                                   \
+                                                                \
+        FabricSerializationHelper streamHelper(stream);         \
+                                                                \
+        _status = streamHelper.WriteStartType();                \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG0);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG1);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG2);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG3);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG4);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG5);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG6);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG7);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG8);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG9);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG10);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG11);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG12);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG13);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG14);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG15);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG16);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG17);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG18);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG19);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG20);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG21);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG22);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG23);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG24);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG25);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG26);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG27);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG28);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG29);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG30);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        return streamHelper.WriteEndType();                     \
+    }                                                           \
+                                                                \
+    virtual NTSTATUS Read(Serialization::IFabricSerializableStream * stream) \
+    {                                                           \
+        NTSTATUS _status = __super::Read(stream);               \
+        CheckStatus(_status);                                   \
+                                                                \
+        FabricSerializationHelper streamHelper(stream);         \
+                                                                \
+        _status = streamHelper.ReadStartType();                 \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG0);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG1);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG2);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG3);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG4);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG5);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG6);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG7);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG8);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG9);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG10);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG11);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG12);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG13);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG14);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG15);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG16);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG17);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG18);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG19);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG20);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG21);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG22);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG23);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG24);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG25);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG26);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG27);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG28);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG29);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG30);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        return stream->ReadEndType();                           \
+    }                                                           \
+
+    #define FABRIC_FIELDS_30(ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29) \
+    virtual NTSTATUS Write(Serialization::IFabricSerializableStream * stream) \
+    {                                                           \
+        NTSTATUS _status = __super::Write(stream);              \
+        CheckStatus(_status);                                   \
+                                                                \
+        FabricSerializationHelper streamHelper(stream);         \
+                                                                \
+        _status = streamHelper.WriteStartType();                \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG0);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG1);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG2);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG3);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG4);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG5);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG6);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG7);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG8);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG9);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG10);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG11);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG12);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG13);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG14);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG15);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG16);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG17);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG18);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG19);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG20);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG21);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG22);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG23);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG24);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG25);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG26);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG27);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG28);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Write(ARG29);                    \
+        CheckStatus(_status);                                   \
+                                                                \
+        return streamHelper.WriteEndType();                     \
+    }                                                           \
+                                                                \
+    virtual NTSTATUS Read(Serialization::IFabricSerializableStream * stream) \
+    {                                                           \
+        NTSTATUS _status = __super::Read(stream);               \
+        CheckStatus(_status);                                   \
+                                                                \
+        FabricSerializationHelper streamHelper(stream);         \
+                                                                \
+        _status = streamHelper.ReadStartType();                 \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG0);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG1);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG2);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG3);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG4);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG5);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG6);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG7);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG8);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG9);                      \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG10);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG11);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG12);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG13);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG14);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG15);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG16);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG17);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG18);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG19);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG20);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG21);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG22);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG23);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG24);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG25);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG26);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG27);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG28);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        _status = streamHelper.Read(ARG29);                     \
+        CheckStatus(_status);                                   \
+                                                                \
+        return stream->ReadEndType();                           \
     }                                                           \
 
 #define FABRIC_PRIMITIVE_FIELDS_01(ARG0)                    \
@@ -3975,6 +4393,38 @@ public:
         return this->stream_->ReadPointer(object, activator);
     }
 
+    template <class T>
+    NTSTATUS Write(std::deque<T> & field)
+    {
+        std::vector<T> items;
+
+        for(T item : field)
+        {
+            items.push_back(item);
+        }
+
+        return this->Write(items);
+    }
+
+    template <class T>
+    NTSTATUS Read(std::deque<T> & field)
+    {
+        std::vector<T> items;
+
+        NTSTATUS _status = this->Read(items);
+
+        CheckReadFieldSuccess(_status);
+
+        field.clear();
+
+        for(T item : items)
+        {
+            field.push_back(item);
+        }
+
+        return _status;
+    }    
+    
     template <class TKey, class TValue>
     NTSTATUS Write(std::map<TKey, TValue> & field)
     {

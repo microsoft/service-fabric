@@ -4,7 +4,7 @@
 // ------------------------------------------------------------
 
 #include "evntprov.h"
-#include "retail/native/FabricCommon/dll/TraceWrapper.Linux.h"
+#include "retail/native/FabricCommon/TraceWrapper.Linux.h"
 
 ULONG
 EVNTAPI
@@ -70,7 +70,7 @@ EventWrite(
 
     // event size limit should not be bigger than 64KB
     // ref: https://msdn.microsoft.com/en-us/library/windows/desktop/aa363752(v=vs.85).aspx
-    if(totalBytes > 65535)
+    if(totalBytes > MAX_LTTNG_EVENT_DATA_SIZE)
     {
         return ERROR_ARITHMETIC_OVERFLOW;
     }

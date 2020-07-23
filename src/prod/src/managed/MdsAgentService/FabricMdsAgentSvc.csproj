@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <AssemblyName>FabricMdsAgentSvc</AssemblyName>
+    <RootNamespace>FabricMdsAgentSvc</RootNamespace>
+    <ProjectGuid>{C8642884-44E8-45BD-A6C9-54238EC5A485}</ProjectGuid>
+    <AssemblyDescription>Microsoft Azure Service Fabric MDS Agent Service</AssemblyDescription>
+    <AssemblyTitle>Microsoft Azure Service Fabric MDS Agent Service</AssemblyTitle>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BuildDropFolder>$(BinariesBuildTypeArchDirectory)\bin\MonitoringDrop</BuildDropFolder>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\infrastructurewrapper\azurewrapper\AzureRegistryStore.cs">
+      <Link>AzureRegistryStore.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="ClusterManifestParser.cs" />
+    <Compile Include="ConfigReader.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="HealthReporter.cs" />
+    <Compile Include="FabricStringExtensions.cs" />
+    <Compile Include="MdsAgentManager.cs" />
+    <Compile Include="MonitoringAgentServiceEvent.cs" />
+    <Compile Include="Service.cs" />
+    <Compile Include="ServiceHost.cs" />
+    <Compile Include="Utility.cs" />
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\MonitoringService\host\FabricMonSvc.csproj">
+      <!-- Only need to build for packaging, not a dependency at compile or run time -->
+      <Private>False</Private>
+      <Project>{D3C9553F-C977-470F-B079-CDF04D885054}</Project>
+      <Name>FabricMonSvc</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\Microsoft.ServiceFabric.Internal.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\Microsoft.ServiceFabric.Internal.Strings.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\System.Fabric.dll">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <!-- Files that need to have !FABRIC_VERSION! replaced with the build version at build time -->
+  <ItemGroup>
+    <!-- Non RC Drop -->
+    <Content Include="..\..\..\..\test\current\source\Geneva\App\ApplicationManifest.xml">
+      <Link>TestConfig\ApplicationManifest.xml</Link>
+    </Content>
+    <Content Include="Settings.xml" />
+    <FabricVerFile Include="ApplicationManifest.xml">
+      <TargetPath>$(BuildDropFolder)\MAWithMonitoringServiceApplication</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="ServiceManifest.xml">
+      <TargetPath>$(BuildDropFolder)\MAWithMonitoringServiceApplication\MdsAgentServicePackage</TargetPath>
+      <SubType>Designer</SubType>
+    </FabricVerFile>
+    <!-- Test -->
+    <FabricVerFile Include="ServiceManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\MAApp4TestAppPkg\MdsAgentServicePackage</TargetPath>
+    </FabricVerFile>
+  </ItemGroup>
+  <!-- Files for config -->
+  <ItemGroup>
+    <Robocopy Include="Settings.xml">
+      <DestinationFolder>$(BuildDropFolder)\MAWithMonitoringServiceApplication\MdsAgentServicePackage\MdsAgentService.Config</DestinationFolder>
+    </Robocopy>
+    <Robocopy Include="Settings.xml">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\MAApp4TestAppPkg\MdsAgentServicePackage\MdsAgentService.Config</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <!-- MA Agent Files -->
+  <ItemGroup>
+    <!--Copy the MA binaries to the MAApp4Test package which is used in perf tests  -->
+    <Robocopy Include="$(PkgGenevaMonitoringAgent)\Monitoring\agent">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\MAApp4TestAppPkg\MdsAgentServicePackage\MdsAgent.Data</DestinationFolder>
+      <FileExclude>$(PkgGenevaMonitoringAgent)\Monitoring\agent\Extensions\AzureProfilerExtension\AutoRun.xml $(PkgGenevaMonitoringAgent)\Monitoring\agent\Extensions\AzureProfilerTriggerExtension\AutoRun.xml</FileExclude>
+      <IsRecursive>True</IsRecursive>
+    </Robocopy>
+    <!--Service Fabric Mds Config -->
+    <Robocopy Include="ServiceFabricEvents.xml">
+      <DestinationFolder>$(BuildDropFolder)\MAWithMonitoringServiceApplication\MdsAgentServicePackage\MdsAgent.Data</DestinationFolder>
+    </Robocopy>
+    <Robocopy Include="ServiceFabricTraceEvents.xml">
+      <DestinationFolder>$(BuildDropFolder)\MAWithMonitoringServiceApplication\MdsAgentServicePackage\MdsAgent.Data</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <!-- Copy built code -->
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BuildDropFolder)\MAWithMonitoringServiceApplication\MdsAgentServicePackage\MdsAgentService.Code</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileExclude>*.pdb *.lib</FileExclude>
+    </Robocopy>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\MAApp4TestAppPkg\MdsAgentServicePackage\MdsAgentService.Code</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileExclude>*.pdb *.lib</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ServiceFabricEvents.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ServiceFabricTraceEvents.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <Message Text="Anth - $(BinariesBuildTypeArchDirectory)" />
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

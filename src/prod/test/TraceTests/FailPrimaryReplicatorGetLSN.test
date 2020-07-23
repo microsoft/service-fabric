@@ -1,0 +1,26 @@
+#Inject failure in replicator to fail GetLSN
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 3 1
+namingservice 1 3 2
+fmservice 3 1
+cleantest
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+injectfailure 50 fabric:/test1 replicator.getcurrentprogress
+-60
+!pause,300
+removefailure 50 fabric:/test1 replicator.getcurrentprogress
+verify
+!q

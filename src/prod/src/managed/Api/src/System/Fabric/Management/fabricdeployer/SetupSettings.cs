@@ -51,7 +51,21 @@ namespace System.Fabric.FabricDeployer
 
 #if !DotNetCoreClrLinux
         public bool SkipContainerNetworkResetOnReboot { get; private set; }
+
+        public bool SkipIsolatedNetworkResetOnReboot { get; private set; }
 #endif        
+
+        public bool IsolatedNetworkSetup { get; private set; }
+
+        public string IsolatedNetworkName { get; private set; }
+
+        public string IsolatedNetworkInterfaceName { get; private set; }
+
+        public bool UseContainerServiceArguments { get; private set; }
+
+        public string ContainerServiceArguments { get; private set; }
+
+        public bool EnableContainerServiceDebugMode { get; private set; }
 
         public SetupSettings(ClusterManifestType manifest)
         {
@@ -73,13 +87,27 @@ namespace System.Fabric.FabricDeployer
             // For windows, this is true by default unless customers override this in fabric settings
             this.ContainerNetworkSetup = (!string.IsNullOrEmpty(containerNetworkSetupStr)) ? GetBoolFromManifest(setupSection, Constants.ParameterNames.ContainerNetworkSetup) : true;
 
-            // For windows, this is false by default unless customers override this in fabric settings
+            // For windows container network, this is false by default unless customers override this in fabric settings
             var skipContainerNetworkResetOnRebootStr = GetValueFromManifest(setupSection, Constants.ParameterNames.SkipContainerNetworkResetOnReboot);
             this.SkipContainerNetworkResetOnReboot = (!string.IsNullOrEmpty(skipContainerNetworkResetOnRebootStr)) ? GetBoolFromManifest(setupSection, Constants.ParameterNames.SkipContainerNetworkResetOnReboot) : false;
+
+            // For windows isolated network, this is false by default unless customers override this in fabric settings
+            var skipIsolatedNetworkResetOnRebootStr = GetValueFromManifest(setupSection, Constants.ParameterNames.SkipIsolatedNetworkResetOnReboot);
+            this.SkipIsolatedNetworkResetOnReboot = (!string.IsNullOrEmpty(skipIsolatedNetworkResetOnRebootStr)) ? GetBoolFromManifest(setupSection, Constants.ParameterNames.SkipIsolatedNetworkResetOnReboot) : false;
 #else
             // For linux, this is false by default unless customers override this in fabric settings. This is because NAT and MIP do not work together on linux today.
             this.ContainerNetworkSetup = (!string.IsNullOrEmpty(containerNetworkSetupStr)) ? GetBoolFromManifest(setupSection, Constants.ParameterNames.ContainerNetworkSetup) : false;
 #endif
+
+            // By default this is set to IsolatedNetworkConstants.NetworkName unless customers override this in fabric settings
+            var isolatedNetworkNameStr = GetValueFromManifest(setupSection, Constants.ParameterNames.IsolatedNetworkName);
+            this.IsolatedNetworkName = (!string.IsNullOrEmpty(isolatedNetworkNameStr)) ? (isolatedNetworkNameStr) : (IsolatedNetworkConstants.NetworkName);
+
+            var isolatedNetworkSetupStr = GetValueFromManifest(setupSection, Constants.ParameterNames.IsolatedNetworkSetup);
+            this.IsolatedNetworkSetup = (!string.IsNullOrEmpty(isolatedNetworkSetupStr)) ? GetBoolFromManifest(setupSection, Constants.ParameterNames.IsolatedNetworkSetup) : false;
+
+            var isolatedNetworkInterfaceNameStr = GetValueFromManifest(setupSection, Constants.ParameterNames.IsolatedNetworkInterfaceName);
+            this.IsolatedNetworkInterfaceName = (!string.IsNullOrEmpty(isolatedNetworkInterfaceNameStr)) ? (isolatedNetworkInterfaceNameStr) : (string.Empty);
 
             var diagnosticsSection =
                 manifest.FabricSettings.FirstOrDefault(section => section.Name.Equals(Constants.SectionNames.Diagnostics, StringComparison.OrdinalIgnoreCase));
@@ -94,7 +122,18 @@ namespace System.Fabric.FabricDeployer
             this.EnableUnsupportedPreviewFeatures = GetBoolFromManifest(commonSection, Constants.ParameterNames.EnableUnsupportedPreviewFeatures);     
 
             var hostingSection = manifest.FabricSettings.FirstOrDefault(section => section.Name.Equals(Constants.SectionNames.Hosting, StringComparison.OrdinalIgnoreCase));
-            this.IsSFVolumeDiskServiceEnabled = GetBoolFromManifest(hostingSection, Constants.ParameterNames.IsSFVolumeDiskServiceEnabled);      
+            this.IsSFVolumeDiskServiceEnabled = GetBoolFromManifest(hostingSection, Constants.ParameterNames.IsSFVolumeDiskServiceEnabled);
+
+            // Container service start up params
+            var useContainerServiceArgumentsStr = GetValueFromManifest(hostingSection, Constants.ParameterNames.UseContainerServiceArguments);
+            this.UseContainerServiceArguments = (!string.IsNullOrEmpty(useContainerServiceArgumentsStr)) 
+                ? GetBoolFromManifest(hostingSection, Constants.ParameterNames.UseContainerServiceArguments) : true;
+
+            var containerServiceArgumentsStr = GetValueFromManifest(hostingSection, Constants.ParameterNames.ContainerServiceArguments);
+            this.ContainerServiceArguments = (!string.IsNullOrEmpty(containerServiceArgumentsStr)) 
+                ? (containerServiceArgumentsStr) : (FlatNetworkConstants.ContainerServiceArguments);
+
+            this.EnableContainerServiceDebugMode = GetBoolFromManifest(hostingSection, Constants.ParameterNames.EnableContainerServiceDebugMode);
         }
 
         private string GetValueFromManifest(SettingsOverridesTypeSection section, string parameterName)

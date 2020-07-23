@@ -16,7 +16,7 @@ using namespace ServiceModel;
 using namespace Management::ResourceManager;
 using namespace Management::CentralSecretService;
 
-StringLiteral const TraceComponent("RemoveSecretsAsyncOperation");
+StringLiteral const RemoveSecretsAsyncOperation::TraceComponent("CentralSecretServiceReplica::RemoveSecretsAsyncOperation");
 
 RemoveSecretsAsyncOperation::RemoveSecretsAsyncOperation(
     Management::CentralSecretService::SecretManager & secretManager,
@@ -40,110 +40,158 @@ RemoveSecretsAsyncOperation::RemoveSecretsAsyncOperation(
 void RemoveSecretsAsyncOperation::Execute(AsyncOperationSPtr const & thisSPtr)
 {
     ErrorCode error(ErrorCodeValue::Success);
-    SecretReferencesDescription description;
-
-    WriteInfo(TraceComponent,
-        "{0} RemoveSecrets: Begins.",
-        this->TraceId);
-
-    if (this->RequestMsg.GetBody(description))
+    
+    if (this->RequestMsg.GetBody(this->description_))
     {
-        vector<wstring> resourceNames;
+        WriteInfo(
+            this->TraceComponent,
+            "{0}: {1} -> Getting existing secrets resources ...",
+            this->TraceId,
+            this->TraceComponent);
 
-        transform(
-            description.SecretReferences.begin(),
-            description.SecretReferences.end(),
-            back_inserter(resourceNames),
-            [](SecretReference const & secretRef)->wstring
-            {
-                return secretRef.ToResourceName();
-            });
-
-        WriteInfo(TraceComponent,
-            "{0}: RemoveSecrets: Unregistering secrets resources.",
-            this->TraceId);
-
-        this->ResourceManager.UnregisterResources(
-            resourceNames,
+        auto secretsOperationSPtr = this->SecretManager.BeginGetSecrets(
+            this->description_.SecretReferences,
+            false,
             this->RemainingTime,
-            [this, thisSPtr, description](AsyncOperationSPtr const & operationSPtr)
+            [this](AsyncOperationSPtr const & operationSPtr)
             {
-                this->UnregisterResourcesCallback(thisSPtr, operationSPtr, description);
+                this->CompleteGetSecretsOperation(operationSPtr, false);
             },
             thisSPtr,
             this->ActivityId);
+
+        this->CompleteGetSecretsOperation(secretsOperationSPtr, true);
     }
     else
     {
         error = ErrorCode::FromNtStatus(this->RequestMsg.GetStatus());
-        WriteWarning(TraceComponent,
-            "{0}: RemoveSecrets: Failed to get the body of the request, ErrorCode: {1}.",
+        WriteWarning(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to get the body of the request. Error: {2}.",
             this->TraceId,
+            this->TraceComponent,
             error);
         this->Complete(thisSPtr, error);
     }
 }
 
-void RemoveSecretsAsyncOperation::OnCompleted()
-{
-    WriteTrace(
-        this->Error.IsSuccess() ? LogLevel::Info : LogLevel::Error,
-        TraceComponent,
-        "{0} RemoveSecrets: Ended with ErrorCode: {1}",
-        this->TraceId,
-        this->Error);
-}
-
-void RemoveSecretsAsyncOperation::UnregisterResourcesCallback(
-    AsyncOperationSPtr const & thisSPtr,
+void RemoveSecretsAsyncOperation::CompleteGetSecretsOperation(
     AsyncOperationSPtr const & operationSPtr,
-    SecretReferencesDescription const & description)
+    bool expectedCompletedSynchronously)
 {
-    auto error = AsyncOperation::End(operationSPtr);
+    if (operationSPtr->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
+    vector<Secret> readSecrets;
+
+    auto error = this->SecretManager.EndGetSecrets(operationSPtr, readSecrets);
     if (!error.IsSuccess())
     {
-        WriteWarning(TraceComponent,
-            "{0}: RemoveSecrets: Failed to unregistering secret resources, ErrorCode: {1}.",
+        WriteError(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to get secrets. Error: {2}.",
             this->TraceId,
+            this->TraceComponent,
             error);
-        this->Complete(thisSPtr, error);
+        this->Complete(operationSPtr->Parent, error);
         return;
     }
 
-    WriteInfo(TraceComponent,
-        "{0}: RemoveSecrets: Removing secrets.",
-        this->TraceId);
+    if (readSecrets.size() <= 0)
+    {
+        this->Complete(operationSPtr->Parent, ErrorCode(ErrorCodeValue::NotFound));
+        return;
+    }
 
-    this->SecretManager.RemoveSecretsAsync(
-        description.SecretReferences,
-        this->RemainingTime,
-        [this, thisSPtr, description](AsyncOperationSPtr const & operationSPtr)
+    vector<wstring> resourceNames;
+
+    transform(
+        readSecrets.begin(),
+        readSecrets.end(),
+        back_inserter(resourceNames),
+        [](Secret const & secret)->wstring
         {
-            this->RemoveSecretsCallback(thisSPtr, operationSPtr, description);
+            return secret.ToResourceName();
+        });
+
+    WriteInfo(
+        this->TraceComponent,
+        "{0}: {1} -> Unregistering secrets resources ...",
+        this->TraceId,
+        this->TraceComponent);
+
+    auto resourcesOperationSPtr = this->ResourceManager.UnregisterResources(
+        resourceNames,
+        this->RemainingTime,
+        [this](AsyncOperationSPtr const & operationSPtr)
+        {
+            this->CompleteUnregisterResourcesOperation(operationSPtr, false);
         },
-        thisSPtr,
+        operationSPtr->Parent,
         this->ActivityId);
+
+    this->CompleteUnregisterResourcesOperation(resourcesOperationSPtr, true);
 }
 
-void RemoveSecretsAsyncOperation::RemoveSecretsCallback(
-    AsyncOperationSPtr const & thisSPtr,
+void RemoveSecretsAsyncOperation::CompleteUnregisterResourcesOperation(
     AsyncOperationSPtr const & operationSPtr,
-    SecretReferencesDescription const & description)
+    bool expectedCompletedSynchronously)
 {
-    auto error = StoreTransaction::EndCommit(operationSPtr);
+    if (operationSPtr->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
+    auto error = AsyncOperation::End(operationSPtr);
     if (!error.IsSuccess())
     {
-        WriteWarning(TraceComponent,
-            "{0}: RemoveSecrets: Failed to remove secrets, ErrorCode: {1}.",
+        WriteError(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to unregister resources. Error: {2}.",
             this->TraceId,
+            this->TraceComponent,
+            error);
+        this->Complete(operationSPtr->Parent, error);
+        return;
+    }
+
+    WriteInfo(
+        this->TraceComponent,
+        "{0}: {1} -> Removing secrets ...",
+        this->TraceId,
+        this->TraceComponent);
+
+    auto secretsOperationSPtr = this->SecretManager.BeginRemoveSecrets(
+        this->description_.SecretReferences,
+        this->RemainingTime,
+        [this](AsyncOperationSPtr const & operationSPtr)
+        {
+            this->CompleteRemoveSecretsOperation(operationSPtr, false);
+        },
+        operationSPtr->Parent,
+        this->ActivityId);
+
+    this->CompleteRemoveSecretsOperation(secretsOperationSPtr, true);
+}
+
+void RemoveSecretsAsyncOperation::CompleteRemoveSecretsOperation(
+    AsyncOperationSPtr const & operationSPtr,
+    bool expectedCompletedSynchronously)
+{
+    if (operationSPtr->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    vector<SecretReference> removedSecretRefs;
+
+    auto error = this->SecretManager.EndRemoveSecrets(operationSPtr, removedSecretRefs);
+    if (!error.IsSuccess())
+    {
+        WriteError(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to remove secrets. Error: {2}.",
+            this->TraceId,
+            this->TraceComponent,
             error);
     }
     else
     {
-        this->SetReply(make_unique<SecretReferencesDescription>(description));
+        this->SetReply(make_unique<SecretReferencesDescription>(removedSecretRefs));
     }
 
-    this->Complete(thisSPtr, error);
+    this->Complete(operationSPtr->Parent, error);
 }

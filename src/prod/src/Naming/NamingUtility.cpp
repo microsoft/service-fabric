@@ -184,19 +184,19 @@ namespace Naming
 
         if (success)
         {
-            ClientProtocolVersionHeader header;
-            success = message->Headers.TryReadFirst(header);
+            ClientProtocolVersionHeader versionHeader;
+            success = message->Headers.TryReadFirst(versionHeader);
 
             if (success)
             {
-                if (!ClientProtocolVersionHeader::IsMinorAtLeast(header, 0))
+                if (!versionHeader.IsCompatibleVersion())
                 {
                     Trace.WriteWarning(
                         traceComponent,
                         "{0}: unsupported protocol version: expected = '{1}' received = '{2}'",
                         instanceString,
                         ClientProtocolVersionHeader::CurrentMajorVersion,
-                        header);
+                        versionHeader);
 
                     success = false;
                 }

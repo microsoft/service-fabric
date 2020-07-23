@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <RootNamespace>ClusterAnalysis.Common</RootNamespace>
+    <AssemblyName>ClusterAnalysis.Common</AssemblyName>
+    <OutputType>library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" /> 
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Common\Config\Config.cs"/>
+    <Compile Include="..\..\Common\Config\NamedConfigManager.cs"/>
+    <Compile Include="..\..\Common\Config\INamedConfig.cs"/>
+    <Compile Include="..\..\Common\Config\RunMode.cs"/>
+    <Compile Include="..\..\Common\Config\RuntimeContext.cs"/>
+    <Compile Include="..\..\Common\Config\SimpleConfig.cs"/>
+    <Compile Include="..\..\Common\Duration.cs"/>
+    <Compile Include="..\..\Common\GlobalSuppressions.cs"/>
+    <Compile Include="..\..\Common\IHasUniqueIdentity.cs"/>
+    <Compile Include="..\..\Common\ITaskRunner.cs"/>
+    <Compile Include="..\..\Common\IUniquelyIdentifiable.cs"/>
+    <Compile Include="..\..\Common\Logger\FabricTraceLogger.cs"/>
+    <Compile Include="..\..\Common\Logger\FabricTraceLogProvider.cs"/>
+    <Compile Include="..\..\Common\Logger\ServiceFabricTracer.cs"/>
+    <Compile Include="..\..\Common\PerformanceTracker\IPerformanceSessionManager.cs"/>
+    <Compile Include="..\..\Common\PerformanceTracker\ITimeProvider.cs"/>
+    <Compile Include="..\..\Common\PerformanceTracker\PerformanceSession.cs"/>
+    <Compile Include="..\..\Common\PerformanceTracker\RealTimeProvider.cs"/>
+    <Compile Include="..\..\Common\Runtime\IInsightRuntime.cs"/>
+    <Compile Include="..\..\Common\Runtime\DefaultInsightRuntime.cs"/>
+    <Compile Include="..\..\Common\Logger\ILogger.cs"/>
+    <Compile Include="..\..\Common\Logger\ILogProvider.cs"/>
+    <Compile Include="..\..\Common\Logger\LocalDiskLogger.cs"/>
+    <Compile Include="..\..\Common\Store\AgeBasedRetentionPolicy.cs"/>
+    <Compile Include="..\..\Common\Store\DataRetentionPolicy.cs"/>
+    <Compile Include="..\..\Common\Store\InMemoryStore.cs"/>
+    <Compile Include="..\..\Common\Store\IPersistentStore.cs"/>
+    <Compile Include="..\..\Common\Store\IStoreProvider.cs"/>
+    <Compile Include="..\..\Common\Store\SizeBasedRetentionPolicy.cs"/>
+    <Compile Include="..\..\Common\Store\TypedObjectStore.cs"/>
+    <Compile Include="..\..\Common\Util\Assert.cs"/>
+    <Compile Include="..\..\Common\Util\HandyUtil.cs"/>
+    <Compile Include="..\..\Common\Util\IMaxHeap.cs"/>
+    <Compile Include="..\..\Common\Util\MaxHeapImpl.cs"/>
+    <Compile Include="..\..\Common\Util\RetryOperation.cs"/>
+    <Compile Include="..\..\Common\Util\ValidatedNotNullAttribute.cs"/>
+    <Compile Include="..\..\Common\IResolveServiceEndpoint.cs"/>
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

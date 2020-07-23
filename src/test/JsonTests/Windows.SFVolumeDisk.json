@@ -1,0 +1,18 @@
+{
+  "Default": {},
+  "Tests": [
+    {
+      "Name": "BlockStoreE2E",
+      "Type": "V2_ScriptTest",
+      "Owners": "caiwang,sanjayga,mevora",
+      "ResourcesRequired": "Server:2;Group=WS2016CT1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "BlockStoreE2ECloudStandalone.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

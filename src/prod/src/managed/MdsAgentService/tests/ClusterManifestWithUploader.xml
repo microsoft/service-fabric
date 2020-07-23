@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClusterManifest Name="WARP-PPL-BY" Version="3.5" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <NodeTypes>
+    </NodeTypes>
+    <Certificates>
+        <SecretsCertificate X509StoreName="MY" X509FindType="FindByThumbprint" X509FindValue="SecretStorePath=winfab/prod/WARP-PPL-BY/secrets.pfx" />
+    </Certificates>
+    <Infrastructure>
+    </Infrastructure>
+    <FabricSettings>
+        <Section Name="Federation">
+            <Parameter Name="UseV2NodeIdGenerator" Value="true" />
+            <Parameter Name="LeaseDuration" Value="30" />
+            <Parameter Name="UnresponsiveDuration" Value="120" />
+        </Section>
+        
+        <!--
+         Diagnostics section
+         ===================
+         Producer and consumer instances are specified as a comma-separated list.
+         Each item in the list is the name of a section in the manifest that
+         contains more information about that producer/consumer instance
+
+    -->
+        <Section Name="Diagnostics">
+            <Parameter Name="ProducerInstances" Value="WinFabEtlFile, WinFabEtlFileQueryable, WinFabCrashDump, WinFabPerfCounter, WinFabWrapperServiceLog" />
+            <Parameter Name="ConsumerInstances" Value="AzureBlobWinFabEtw, AzureTableWinFabEtwQueryable, MdsWinFabEtw, AzureBlobWinFabCrashDump, AzureBlobWinFabPerfCounter, AzureBlobWinFabWrapperServiceLog" />
+        </Section>
+        <!--
+         Diagnostic producer instance sections
+         =====================================
+         The value for parameter "ProducerType" is one of the well-defined producer
+         types supported by the DCA
+    -->
+        <Section Name="WinFabEtlFile">
+            <Parameter Name="ProducerType" Value="EtlFileProducer" />
+            <Parameter Name="IsEnabled" Value="true" />
+        </Section>
+        <Section Name="WinFabEtlFileQueryable">
+            <Parameter Name="ProducerType" Value="EtlFileProducer" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <Parameter Name="WindowsFabricEtlType" Value="QueryEtl" />
+        </Section>
+        <Section Name="WinFabCrashDump">
+            <Parameter Name="ProducerType" Value="FolderProducer" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <Parameter Name="FolderType" Value="WindowsFabricCrashDumps" />
+        </Section>
+        <Section Name="WinFabPerfCounter">
+            <Parameter Name="ProducerType" Value="FolderProducer" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <Parameter Name="FolderType" Value="WindowsFabricPerformanceCounters" />
+        </Section>
+        <Section Name="WinFabWrapperServiceLog">
+            <Parameter Name="ProducerType" Value="FolderProducer" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <Parameter Name="FolderType" Value="CustomFolder" />
+            <Parameter Name="FolderPath" Value="C:\WFRoot\WindowsFabricDeployment" />
+        </Section>
+        <!--
+         Diagnostic consumer instance sections
+         =====================================
+         The value for parameter "ConsumerType" is one of the well-defined consumer
+         types supported by the DCA
+
+         The value for parameter "ProducerInstance" is the name of the section
+         that contains information about the producer instance that the consumer
+         is associated with
+    -->
+        <!-- TODO: Size base log trimming -->
+        <!-- TODO: Encrypt all StoreConnectionString -->
+        <Section Name="AzureBlobWinFabEtw">
+            <Parameter Name="ConsumerType" Value="AzureBlobEtwCsvUploader" />
+            <Parameter Name="ProducerInstance" Value="WinFabEtlFile" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <!-- NOTE: The tuple {StoreConnectionString, ContainerName} needs to be unique for each cluster -->
+            <Parameter Name="StoreConnectionString" Value="SecretStorePath=" />
+            <Parameter Name="ContainerName" Value="fabriclogs" />
+            <Parameter Name="DeploymentId" Value="WARPPPLBY" />
+            <Parameter Name="DataDeletionAgeInDays" Value="28" />
+        </Section>
+        <Section Name="AzureTableWinFabEtwQueryable">
+            <Parameter Name="ConsumerType" Value="AzureTableQueryableEventUploader" />
+            <Parameter Name="ProducerInstance" Value="WinFabEtlFileQueryable" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <!-- NOTE: The tuple {StoreConnectionString, TableNamePrefix} needs to be unique for each cluster -->
+            <Parameter Name="StoreConnectionString" Value="SecretStorePath=" />
+            <!-- Table name should have MDS namespace as prefix -->
+            <Parameter Name="TableNamePrefix" Value="WARPPPLBYWinFabQueryTrace" />
+            <Parameter Name="DeploymentId" Value="WARPPPLBY" />
+            <Parameter Name="DataDeletionAgeInDays" Value="28" />
+        </Section>
+        <Section Name="MdsWinFabEtw">
+            <Parameter Name="ConsumerType" Value="MdsEtwEventUploader" />
+            <Parameter Name="ProducerInstance" Value="WinFabEtlFile" />
+            <Parameter Name="IsEnabled" Value="true " />
+            <Parameter Name="DirectoryName" Value="C:\WFRoot\MDS\Traces" />
+            <Parameter Name="UploadIntervalInMinutes" Value="1" />
+            <Parameter Name="LogFilter" Value="*.*:4" />
+        </Section>
+        <Section Name="AzureBlobWinFabCrashDump">
+            <Parameter Name="ConsumerType" Value="AzureBlobFolderUploader" />
+            <Parameter Name="ProducerInstance" Value="WinFabCrashDump" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <!-- NOTE: The tuple {StoreConnectionString, ContainerName} needs to be unique for each cluster -->
+            <Parameter Name="StoreConnectionString" Value="SecretStorePath=" />
+            <Parameter Name="ContainerName" Value="fabriccrashdumps" />
+            <Parameter Name="DeploymentId" Value="WARPPPLBY" />
+            <Parameter Name="DataDeletionAgeInDays" Value="28" />
+        </Section>
+        <Section Name="AzureBlobWinFabPerfCounter">
+            <Parameter Name="ConsumerType" Value="AzureBlobFolderUploader" />
+            <Parameter Name="ProducerInstance" Value="WinFabPerfCounter" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <!-- NOTE: The tuple {StoreConnectionString, ContainerName} needs to be unique for each cluster -->
+            <Parameter Name="StoreConnectionString" Value="SecretStorePath=" />
+            <Parameter Name="ContainerName" Value="fabriccounters" />
+            <Parameter Name="DeploymentId" Value="WARPPPLBY" />
+            <Parameter Name="DataDeletionAgeInDays" Value="28" />
+        </Section>
+        <Section Name="AzureBlobWinFabWrapperServiceLog">
+            <Parameter Name="ConsumerType" Value="AzureBlobFolderUploader" />
+            <Parameter Name="ProducerInstance" Value="WinFabWrapperServiceLog" />
+            <Parameter Name="IsEnabled" Value="true" />
+            <!-- NOTE: The tuple {StoreConnectionString, ContainerName} needs to be unique for each cluster -->
+            <Parameter Name="StoreConnectionString" Value="SecretStorePath=" />
+            <Parameter Name="ContainerName" Value="fabriclogs" />
+            <Parameter Name="DeploymentId" Value="WARPPPLBY" />
+            <Parameter Name="DataDeletionAgeInDays" Value="28" />
+        </Section>
+    </FabricSettings>
+</ClusterManifest>

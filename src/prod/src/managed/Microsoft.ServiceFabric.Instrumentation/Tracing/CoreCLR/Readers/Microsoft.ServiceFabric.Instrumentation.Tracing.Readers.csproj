@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>6d898545-3d33-4d58-9d19-6e8d03d4b0f9</ProjectGuid>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootNamespace>Microsoft.ServiceFabric.Instrumentation.Tracing.Readers</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Instrumentation.Tracing.Readers</AssemblyName>
+    <AssemblyTitle>Service Fabric Tracing Reader Assembly</AssemblyTitle>
+    <OutputType>library</OutputType>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Readers\AzureTableReader\AccountAndKeyTableStorageAccess.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\AzureTableQueryResult.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\AzureTimeLoggedBasedFilterBuilder.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\AzureQueryFilterHelper.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\AzureReadTarget.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\AzureTableExtension.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\AzureTablePropertyBag.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\AzureTimeRowCreatedBasedFilterBuilder.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\IFilterBuilder.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\PartitionDataType.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\ServiceFabricAzureAccessDataDecorator.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\TraceRecordAzureTableMetadata.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\Deployment.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\IAzureTableStorageAccess.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\Mapping.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\ServiceFabricAzureTableRecordSession.cs" />
+    <Compile Include="..\..\Readers\Exception\PropertyMissingException.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\WellKnownFields.cs" />
+    <Compile Include="..\..\Readers\AzureTableReader\EventStoreFilterFactory.cs" />
+    <Compile Include="..\..\Readers\EtwTraceRecordSession.cs" />
+
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\CoreCLR\EtlReader\EtlReader.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

@@ -1,0 +1,93 @@
+{
+    "name": "SampleCluster",
+    "clusterConfigurationVersion": "1.0.0",
+    "apiVersion": "08-2017",
+    "nodes": [
+        {
+            "nodeName": "vm0",
+            "iPAddress": "machine1",
+            "nodeTypeRef": "NodeType0",
+            "faultDomain": "fd:/dc1/r0",
+            "upgradeDomain": "UD0"
+        },
+        {
+            "nodeName": "vm1",
+            "iPAddress": "machine2",
+            "nodeTypeRef": "NodeType0",
+            "faultDomain": "fd:/dc1/r1",
+            "upgradeDomain": "UD1"
+        },
+        {
+            "nodeName": "vm2",
+            "iPAddress": "machine3",
+            "nodeTypeRef": "NodeType0",
+            "faultDomain": "fd:/dc1/r2",
+            "upgradeDomain": "UD2"
+        }
+    ],
+  "properties": {
+    "diagnosticsStore": {
+      "metadata": "Please replace the diagnostics file share with an actual file share accessible from all cluster machines. For example, \\\\machine1\\DiagnosticsStore.",
+      "dataDeletionAgeInDays": "7",
+      "storeType": "FileShare",
+      "connectionstring": "c:\\ProgramData\\SF\\DiagnosticsStore"
+    },
+    "security": {
+      "metadata": "The Credential type X509 indicates this is cluster is secured using X509 Certificates. The thumbprint format is - d5 ec 42 3b 79 cb e5 07 fd 83 59 3c 56 b9 d5 31 24 25 42 64.",
+      "ClusterCredentialType": "X509",
+      "ServerCredentialType": "X509",
+      "CertificateInformation": {
+        "ClusterCertificate": {
+          "Thumbprint": "F82E39F1-69DC-4A37-B4D8-3DC75B1C64CA",
+          "X509StoreName": "My"
+        },
+        "ServerCertificate": {
+          "Thumbprint": "27E90DBD-EE81-42ED-B34B-7DC60E7E6072",
+          "X509StoreName": "My"
+        },
+        "ClientCertificateThumbprints": [
+          {
+            "CertificateThumbprint": "37E90DBD-EE81-42ED-B34B-7DC60E7E6072",
+            "IsAdmin": false
+          }
+        ]
+      }
+    },
+    "nodeTypes": [
+      {
+        "name": "NodeType0",
+        "clientConnectionEndpointPort": "19000",
+        "clusterConnectionEndpointPort": "19001",
+        "leaseDriverEndpointPort": "19002",
+        "serviceConnectionEndpointPort": "19003",
+        "httpGatewayEndpointPort": "19080",
+        "reverseProxyEndpointPort": "19081",
+        "applicationPorts": {
+          "startPort": "20001",
+          "endPort": "20031"
+        },
+        "isPrimary": true
+      }
+    ],
+    "fabricSettings": [
+      {
+        "name": "Setup",
+        "parameters": [
+          {
+            "name": "FabricDataRoot",
+            "value": "C:\\ProgramData\\SF"
+          },
+          {
+            "name": "FabricLogRoot",
+            "value": "C:\\ProgramData\\SF\\Log"
+          }
+        ]
+      }
+    ],
+    "addOnFeatures": [
+      "DnsService",
+      "RepairManager",
+      "BackupRestoreService"
+    ]
+  }
+}

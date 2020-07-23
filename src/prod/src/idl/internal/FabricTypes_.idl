@@ -1,0 +1,1746 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "wtypes.idl";
+import "FabricTypes.idl";
+
+[
+    uuid(c0e23f02-3bae-4314-bee4-eaa9ab215ef4),
+    helpstring("Microsoft Azure Service Fabric Internal Data Types"),
+    version(1.0),
+]
+library FabricType_Lib
+{
+    #pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // Typedefs
+    //
+    typedef GUID LOG_CONTAINER_ID;
+    typedef LONGLONG FABRIC_STATE_PROVIDER_ID;
+    typedef GUID FABRIC_BACKUP_OPERATION_ID;
+    typedef GUID FABRIC_RESTORE_OPERATION_ID;
+
+    // ----------------------------------------------------------------------------
+    // Constants
+    //
+    const LPCWSTR FABRIC_SECURITY_ROLE_NAME_AUTHENTICATED_USERS = L"Authenticated Users";
+    const LPCWSTR FABRIC_SECURITY_ROLE_NAME_ADMINISTRATOR = L"Administrator";
+    const FABRIC_STATE_PROVIDER_ID FABRIC_INVALID_STATE_PROVIDER_ID = -1;
+
+    // ----------------------------------------------------------------------------
+    // Enumerations
+    //
+
+    [v1_enum, uuid(dcb33c4a-134b-44f6-aaa2-f6358b955670)]
+    typedef enum FABRIC_NODE_TASK_TYPE
+    {
+        FABRIC_NODE_TASK_TYPE_INVALID     = 0x0000,
+
+        FABRIC_NODE_TASK_TYPE_RESTART     = 0x0001,
+
+        FABRIC_NODE_TASK_TYPE_RELOCATE    = 0x0002,
+
+        FABRIC_NODE_TASK_TYPE_REMOVE      = 0x0003
+
+    } FABRIC_NODE_TASK_TYPE;
+
+    [v1_enum, uuid(23a82620-e134-40da-9872-1238762b72f1)]
+    typedef enum FABRIC_INFRASTRUCTURE_TASK_STATE
+    {
+        FABRIC_INFRASTRUCTURE_TASK_STATE_INVALID             = 0x0000,
+        FABRIC_INFRASTRUCTURE_TASK_STATE_PRE_PROCESSING      = 0x0001,
+        FABRIC_INFRASTRUCTURE_TASK_STATE_PRE_ACK_PENDING     = 0x0002,
+        FABRIC_INFRASTRUCTURE_TASK_STATE_PRE_ACKED           = 0x0003,
+        FABRIC_INFRASTRUCTURE_TASK_STATE_POST_PROCESSING     = 0x0004,
+        FABRIC_INFRASTRUCTURE_TASK_STATE_POST_ACK_PENDING    = 0x0005,
+        FABRIC_INFRASTRUCTURE_TASK_STATE_POST_ACKED          = 0x0006
+
+    } FABRIC_INFRASTRUCTURE_TASK_STATE;
+
+    [v1_enum, uuid(4fd80465-7e08-49e9-a7eb-243f8b1f769d)]
+    typedef enum FABRIC_OPERATION_TYPE_EX
+    {
+        FABRIC_OPERATION_TYPE_EX_INVALID               = 0x0000,
+
+        FABRIC_OPERATION_TYPE_EX_COPY                  = 0x0001,
+
+        FABRIC_OPERATION_TYPE_EX_SINGLE_OPERATION      = 0x0002,
+
+        FABRIC_OPERATION_TYPE_EX_CREATE_ATOMIC_GROUP   = 0x0004,
+
+        FABRIC_OPERATION_TYPE_EX_REDO                  = 0x0008,
+
+        FABRIC_OPERATION_TYPE_EX_UNDO                  = 0x0010,
+
+        FABRIC_OPERATION_TYPE_EX_COMMIT_ATOMIC_GROUP   = 0x0020,
+
+        FABRIC_OPERATION_TYPE_EX_ROLLBACK_ATOMIC_GROUP = 0x0040,
+
+        FABRIC_OPERATION_TYPE_EX_ABORT_ATOMIC_GROUP    = 0x0080,
+
+        FABRIC_OPERATION_TYPE_EX_REDO_PASS_COMPLETE    = 0x0100,
+
+        FABRIC_OPERATION_TYPE_EX_UNDO_PASS_COMPLETE    = 0x0200,
+
+        FABRIC_OPERATION_TYPE_EX_END_OF_STREAM         = 0x0400,
+
+    } FABRIC_OPERATION_TYPE_EX;
+
+    [v1_enum, uuid(CE5C2CEB-E725-4C49-B3A9-F86E572EEE04)]
+    typedef enum FABRIC_REPLICATOR_LOG_SETTINGS_FLAGS
+    {
+        FABRIC_REPLICATOR_LOG_SETTINGS_NONE                  = 0x0000,
+
+        FABRIC_REPLICATOR_LOG_CONTAINER_PATH_AND_ID          = 0x0001,
+
+        FABRIC_REPLICATOR_LOG_MAX_REPLICATOR_CHECKPOINT_SIZE = 0x0002
+
+    } FABRIC_REPLICATOR_LOG_SETTINGS_FLAGS;
+
+    [v1_enum, uuid(3551a305-c917-4b33-b53d-f7d6f864574e)]
+    typedef enum FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS
+    {
+        FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_NONE = 0x0000,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_API_MONITORING_DURATION_SECONDS = 0x0001,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_CHECKPOINT_THRESHOLD_MB = 0x0002,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_MAX_ACCUMULATED_BACKUP_LOG_SIZE_MB = 0x0004,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_MIN_LOG_SIZE_MB = 0x0008,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_TRUNCATION_THRESHOLD_FACTOR = 0x0010,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_THROTTLING_THRESHOLD_FACTOR = 0x0020,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_MAX_RECORD_SIZE_KB = 0x0040,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_MAX_STREAM_SIZE_MB = 0x0080,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_FOR_LOCAL_SSD = 0x00100,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_MAX_WRITE_QUEUE_DEPTH_KB = 0x00200,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_MAX_METADATA_SIZE_KB = 0x00400,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_SECONDARY_COMMIT_APPLY_ACKNOWLEDGEMENT = 0x00800,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_LOG_FOR_LOWER_DISK_USAGE = 0x01000,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_DURATION_SECONDS = 0x02000,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_COUNT_THRESHOLD = 0x04000,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_TIME_THRESHOLD_SECONDS = 0x08000,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_HEALTH_REPORT_TTL_SECONDS = 0x10000,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION = 0x20000,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_INCREMENTAL_BACKUPS_ACROSS_REPLICAS = 0x40000,
+
+        FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS = 0x80000
+
+    } FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS;
+
+    [v1_enum, uuid(6e04d3b8-9a04-430e-ab35-58d480813cda)]
+    typedef enum FABRIC_QUERY_RESULT_KIND
+    {
+        FABRIC_QUERY_RESULT_KIND_INVALID                             = 0x0000,
+
+        FABRIC_QUERY_RESULT_KIND_ITEM                                = 0x0001,
+
+        FABRIC_QUERY_RESULT_KIND_LIST                                = 0x0002,
+
+    } FABRIC_QUERY_RESULT_KIND;
+
+    [v1_enum, uuid(ebfc0402-b04d-44ab-826c-5abaced44a08)]
+    typedef enum FABRIC_QUERY_RESULT_ITEM_KIND
+    {
+        FABRIC_QUERY_RESULT_ITEM_KIND_INVALID                            = 0x0000,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_NODE                               = 0x0001,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_SERVICE                            = 0x0002,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_APPLICATION_TYPE                   = 0x0003,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_APPLICATION                        = 0x0004,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_SERVICE_PARTITION                  = 0x0005,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_SERVICE_REPLICA                    = 0x0006,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_APPLICATION_SERVICE_TYPE           = 0x0007,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_QUERY_METADATA                     = 0x0008,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_SERVICE_TYPE                       = 0x0009,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_APPLICATION               = 0x000A,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_SERVICE_MANIFEST          = 0x000B,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_SERVICE_REPLICA           = 0x000C,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_SERVICE_TYPE              = 0x000D,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_CODE_PACKAGE              = 0x000E,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_APPLICATION_HEALTH                 = 0x000F,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_NODE_HEALTH                        = 0x0010,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_REPLICA_HEALTH                     = 0x0011,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_PARTITION_HEALTH                   = 0x0012,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_SERVICE_PACKAGE_HEALTH    = 0x0013,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_APPLICATION_HEALTH        = 0x0014,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_SERVICE_HEALTH                     = 0x0015,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_CLUSTER_HEALTH                                   = 0x001D,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_SERVICE_REPLICA_DETAIL                  = 0x001E,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_PROVISIONED_FABRIC_CODE_VERSION                  = 0x001F,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_PROVISIONED_FABRIC_CONFIG_VERSION                = 0x0020,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_CLUSTER_LOAD_INFORMATION                         = 0x0021,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_PARTITION_LOAD_INFORMATION                       = 0x0022,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_SERVICE_GROUP_MEMBER               = 0x0023,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_SERVICE_GROUP_MEMBER_TYPE          = 0x0024,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_CLUSTER_HEALTH_CHUNK         = 0x0025,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_TEST_COMMAND_LIST                                      = 0x0026,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_SERVICE_NAME                      = 0x0027,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_APPLICATION_NAME                  = 0x0028,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_COMPOSE_DEPLOYMENT_STATUS                = 0x0029,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_COMPOSE_DEPLOYMENT_UPGRADE_PROGRESS = 0x0030,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_NETWORK = 0x0031,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_NETWORK_APPLICATION = 0x0032,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_NETWORK_NODE = 0x0033,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_APPLICATION_NETWORK = 0x0034,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_NETWORK = 0x0035,
+
+        FABRIC_QUERY_RESULT_ITEM_KIND_DEPLOYED_NETWORK_CODE_PACKAGE = 0x0036,
+    } FABRIC_QUERY_RESULT_ITEM_KIND;
+
+    [v1_enum, uuid(6ea7bfcc-16fc-4fbf-9b66-046cb0a02656)]
+    typedef enum FABRIC_IMAGE_STORE_COPY_FLAG
+    {
+        FABRIC_IMAGE_STORE_COPY_FLAG_INVALID                            = 0x0000,
+        FABRIC_IMAGE_STORE_COPY_FLAG_IF_DIFFERENT                       = 0x0001,
+        FABRIC_IMAGE_STORE_COPY_FLAG_ATOMIC                             = 0x0002,
+        FABRIC_IMAGE_STORE_COPY_FLAG_ATOMIC_SKIP_IF_EXISTS              = 0x0003,
+
+    } FABRIC_IMAGE_STORE_COPY_FLAG;
+
+    [v1_enum, uuid(92574926-8AEB-4DBB-AA17-35F244F98633)]
+    typedef enum FABRIC_FILE_MODE
+    {
+        FABRIC_FILE_MODE_INVALID                                        = 0x00000000,
+        FABRIC_FILE_MODE_CREATE_NEW                                     = 0x00000001,
+        FABRIC_FILE_MODE_CREATE_ALWAYS                                  = 0x00000002,
+        FABRIC_FILE_MODE_OPEN_EXISTING                                  = 0x00000003,
+        FABRIC_FILE_MODE_OPEN_ALWAYS                                    = 0x00000004,
+        FABRIC_FILE_MODE_TRUNCATE_EXISTING                              = 0x00000005,
+
+    } FABRIC_FILE_MODE;
+
+    [v1_enum, uuid(A3201B51-74EF-4D3B-AD2D-A68ACE65A2DD)]
+    typedef enum FABRIC_FILE_ACCESS
+    {
+        FABRIC_FILE_ACCESS_INVALID                                      = 0x00000000L,
+        FABRIC_FILE_ACCESS_READ                                         = 0x80000000L,
+        FABRIC_FILE_ACCESS_WRITE                                        = 0x40000000L,
+        FABRIC_FILE_ACCESS_READ_WRITE                                   = FABRIC_FILE_ACCESS_READ | FABRIC_FILE_ACCESS_WRITE,
+
+    } FABRIC_FILE_ACCESS;
+
+    [v1_enum, uuid(EC05A712-A18A-4A47-B3AF-B6FFDBBAE965)]
+    typedef enum FABRIC_FILE_SHARE
+    {
+        FABRIC_FILE_SHARE_INVALID                                       = 0x00000000,
+        FABRIC_FILE_SHARE_READ                                          = 0x00000001,
+        FABRIC_FILE_SHARE_WRITE                                         = 0x00000002,
+        FABRIC_FILE_SHARE_DELETE                                        = 0x00000004,
+        FABRIC_FILE_SHARE_READ_WRITE                                    = FABRIC_FILE_SHARE_READ | FABRIC_FILE_SHARE_WRITE,
+
+    } FABRIC_FILE_SHARE;
+
+    [v1_enum, uuid(861BFD99-156F-4947-8652-DC949D8F60A0)]
+    typedef enum FABRIC_FILE_ATTRIBUTES
+    {
+        FABRIC_FILE_ATTRIBUTES_NONE                                     = 0x00000000,
+        FABRIC_FILE_ATTRIBUTES_READONLY                                 = 0x00000001,
+        FABRIC_FILE_ATTRIBUTES_HIDDEN                                   = 0x00000002,
+        FABRIC_FILE_ATTRIBUTES_SYSTEM                                   = 0x00000004,
+        FABRIC_FILE_ATTRIBUTES_DIRECTORY                                = 0x00000010,
+        FABRIC_FILE_ATTRIBUTES_ARCHIVE                                  = 0x00000020,
+        FABRIC_FILE_ATTRIBUTES_DEVICE                                   = 0x00000040,
+        FABRIC_FILE_ATTRIBUTES_NORMAL                                   = 0x00000080,
+        FABRIC_FILE_ATTRIBUTES_TEMPORARY                                = 0x00000100,
+        FABRIC_FILE_ATTRIBUTES_SPARSE_FILE                              = 0x00000200,
+        FABRIC_FILE_ATTRIBUTES_REPARSE_POINT                            = 0x00000400,
+        FABRIC_FILE_ATTRIBUTES_COMPRESSED                               = 0x00000800,
+        FABRIC_FILE_ATTRIBUTES_OFFLINE                                  = 0x00001000,
+        FABRIC_FILE_ATTRIBUTES_NOT_CONTENT_INDEXED                      = 0x00002000,
+        FABRIC_FILE_ATTRIBUTES_ENCRYPTED                                = 0x00004000,
+
+        FABRIC_FILE_ATTRIBUTES_WRITE_THROUGH                            = 0x80000000,
+        FABRIC_FILE_ATTRIBUTES_OVERLAPPED                               = 0x40000000,
+        FABRIC_FILE_ATTRIBUTES_NO_BUFFERING                             = 0x20000000,
+        FABRIC_FILE_ATTRIBUTES_RANDOM_ACCESS                            = 0x10000000,
+        FABRIC_FILE_ATTRIBUTES_SEQUENTIAL_SCAN                          = 0x08000000,
+        FABRIC_FILE_ATTRIBUTES_DELETE_ON_CLOSE                          = 0x04000000,
+        FABRIC_FILE_ATTRIBUTES_BACKUP_SEMANTICS                         = 0x02000000,
+        FABRIC_FILE_ATTRIBUTES_POSIX_SEMANTICS                          = 0x01000000,
+        FABRIC_FILE_ATTRIBUTES_SESSION_AWARE                            = 0x00800000,
+        FABRIC_FILE_ATTRIBUTES_OPEN_REPARSE_POINT                       = 0x00200000,
+        FABRIC_FILE_ATTRIBUTES_OPEN_NO_RECALL                           = 0x00100000,
+        FABRIC_FILE_ATTRIBUTES_FIRST_PIPE_INSTANCE                      = 0x00080000,
+
+    } FABRIC_FILE_ATTRIBUTES;
+
+    typedef struct TRANSACTIONAL_REPLICATOR_SETTINGS
+    {
+        DWORD64 Flags;
+        DWORD CheckpointThresholdInMB;
+        DWORD MaxAccumulatedBackupLogSizeInMB;
+        DWORD SlowApiMonitoringDurationSeconds;
+        DWORD MinLogSizeInMB;
+        DWORD TruncationThresholdFactor;
+        DWORD ThrottlingThresholdFactor;
+        DWORD MaxRecordSizeInKB;
+        DWORD MaxStreamSizeInMB;
+        BOOLEAN OptimizeForLocalSSD;
+        DWORD MaxWriteQueueDepthInKB;
+        DWORD MaxMetadataSizeInKB;
+        BOOLEAN EnableSecondaryCommitApplyAcknowledgement;
+        BOOLEAN OptimizeLogForLowerDiskUsage;
+        DWORD SlowLogIODurationSeconds;
+        DWORD SlowLogIOCountThreshold;
+        DWORD SlowLogIOTimeThresholdSeconds;
+        DWORD SlowLogIOHealthReportTTLSeconds;
+        DWORD SerializationVersion;
+        BOOLEAN EnableIncrementalBackupsAcrossReplicas;
+        DWORD LogTruncationIntervalSeconds;
+        void * Reserved;
+    } TRANSACTIONAL_REPLICATOR_SETTINGS;
+
+    // TODO: Rename FABRIC_* when making public
+    //
+    typedef struct KTLLOGGER_SHARED_LOG_SETTINGS
+    {
+        LPCWSTR ContainerPath;
+        LPCWSTR ContainerId;
+        LONGLONG LogSize;
+        ULONG MaximumNumberStreams;
+        ULONG MaximumRecordSize;
+        ULONG CreateFlags;
+        void * Reserved;
+    } KTLLOGGER_SHARED_LOG_SETTINGS;
+
+    [v1_enum, uuid(045b08cd-98b3-4432-b533-575d19848744)]
+    typedef enum FABRIC_SECURITY_PRINCIPAL_IDENTIFIER_KIND
+    {
+        FABRIC_SECURITY_PRINCIPAL_IDENTIFIER_KIND_INVALID = FABRIC_SECURITY_CREDENTIAL_KIND_NONE,
+
+        FABRIC_SECURITY_PRINCIPAL_IDENTIFIER_KIND_X509 = FABRIC_SECURITY_CREDENTIAL_KIND_X509,
+
+        FABRIC_SECURITY_PRINCIPAL_IDENTIFIER_KIND_WINDOWS = FABRIC_SECURITY_CREDENTIAL_KIND_WINDOWS,
+
+        FABRIC_SECURITY_PRINCIPAL_IDENTIFIER_KIND_CLAIM = FABRIC_SECURITY_CREDENTIAL_KIND_CLAIMS,
+
+        FABRIC_SECURITY_PRINCIPAL_IDENTIFIER_KIND_ROLE = 0x8000,
+
+    } FABRIC_SECURITY_PRINCIPAL_IDENTIFIER_KIND;
+
+    [v1_enum, uuid(0df30b72-d2e6-4975-a0c1-4562f41f8929)]
+    typedef enum FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND
+    {
+        FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND_INVALID = 0x0000,
+
+        FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND_PATH_IN_FABRIC_IMAGESTORE = 0x0001,
+
+        FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND_APPLICATION_TYPE = 0x0002,
+
+        FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND_APPLICATION = 0x0003,
+
+        FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND_SERVICE = 0x0004,
+
+        FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND_NAME = 0x0005,
+
+    } FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND;
+
+    // The bits in FABRIC_ACCESS_MASK correspond to the Windows ACCESS_MASK's
+    // specific, standard access rights bits(bits 0 to 23).
+    [v1_enum, uuid(E0A57F77-1CB4-4510-A61C-7CD56230A871)]
+    typedef enum FABRIC_ACCESS_MASK
+    {
+        FABRIC_ACCESS_MASK_NONE = 0x00000000,
+
+        FABRIC_ACCESS_MASK_CREATE = 0x00000001,
+
+        FABRIC_ACCESS_MASK_WRITE = 0x00000002,
+
+        FABRIC_ACCESS_MASK_READ = 0x00000004,
+
+        FABRIC_STANDARD_RIGHTS_DELETE = 0x00010000,
+
+        FABRIC_STANDARD_RIGHTS_READ_CONTROL = 0x00020000,
+
+        FABRIC_STANDARD_RIGHTS_WRITE_DAC = 0x00040000,
+
+        FABRIC_GENERIC_READ = FABRIC_ACCESS_MASK_READ |
+        FABRIC_STANDARD_RIGHTS_READ_CONTROL,
+
+        FABRIC_GENERIC_WRITE = FABRIC_ACCESS_MASK_CREATE |
+        FABRIC_ACCESS_MASK_WRITE,
+
+        FABRIC_GENERIC_ALL = FABRIC_GENERIC_READ |
+        FABRIC_GENERIC_WRITE |
+        FABRIC_STANDARD_RIGHTS_WRITE_DAC |
+        FABRIC_STANDARD_RIGHTS_DELETE,
+
+    } FABRIC_ACCESS_MASK;
+
+    [v1_enum, uuid(04b49b1a-15c7-4381-a450-ead756b642df)]
+    typedef enum FABRIC_SECURITY_ACE_TYPE
+    {
+        FABRIC_SECURITY_ACE_TYPE_INVALID = 0x0000,
+
+        FABRIC_SECURITY_ACE_TYPE_ALLOWED = 0x0001,
+
+    } FABRIC_SECURITY_ACE_TYPE;
+
+    [v1_enum, uuid(346828f1-cd93-4a05-afb2-8b4afd3ee619)]
+    typedef enum FABRIC_PROGRESS_UNIT_TYPE
+    {
+        FABRIC_PROGRESS_UNIT_TYPE_INVALID = 0x0000,
+
+        FABRIC_PROGRESS_UNIT_TYPE_BYTES = 0x0001,
+
+        FABRIC_PROGRESS_UNIT_TYPE_SERVICE_SUB_PACKAGES = 0x0002,
+
+        FABRIC_PROGRESS_UNIT_TYPE_FILES = 0x0003,
+
+    } FABRIC_PROGRESS_UNIT_TYPE;
+
+    [v1_enum, uuid(eb7f2da9-03ec-4ece-b0ef-bf07205d480d)]
+    typedef enum FABRIC_COMPOSE_DEPLOYMENT_STATUS
+    {
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS_INVALID = 0x0000,
+
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS_PROVISIONING = 0x0001,
+
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS_CREATING = 0x0002,
+
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS_READY = 0x0003,
+
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS_DELETING = 0x0004,
+
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS_UNPROVISIONING = 0x0005,
+
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS_FAILED = 0x0006,
+
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS_UPGRADING = 0x0007
+
+    } FABRIC_COMPOSE_DEPLOYMENT_STATUS;
+
+    [v1_enum, uuid(b5f595c8-2ce8-44a6-8611-4decf03a40c0)]
+    typedef enum FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE
+    {
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_INVALID = 0x0000,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_PROVISIONING_TARGET = 0x0001,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_FORWARD_IN_PROGRESS = 0x0002,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_FORWARD_PENDING = 0x0003,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_UNPROVISIONING_CURRENT = 0x0004,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_FORWARD_COMPLETED = 0x0005,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_BACK_IN_PROGRESS = 0x0006,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_UNPROVISIONING_TARGET = 0x0007,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_BACK_COMPLETED = 0x0008,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_FAILED = 0x0009,
+
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_BACK_PENDING = 0x000A,
+
+    } FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE;
+
+    [v1_enum, uuid(48b4b991-4bb4-489d-9dcb-a06936164c47)]
+    typedef enum FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE
+    {
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_INVALID = 0x0000,
+
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_CONTAINER_GROUP_SET = 0x0001,
+
+    } FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE;
+
+    [v1_enum, uuid(5acb30ff-fc9c-487c-8309-623efdfac514)]
+    typedef enum FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER
+    {
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER_DEFAULT = 0x0000,
+
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER_ALL = 0xFFFF,
+
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER_CONTAINER_GROUP_SET = 0x0001,
+
+    } FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER;
+
+    //--------------------------------
+    // Backup Restore Enumerations
+    //--------------------------------
+
+    [v1_enum, uuid(6fd2680b-63db-424a-988e-576c73977be2)]
+    typedef enum FABRIC_BACKUP_POLICY_TYPE
+    {
+        FABRIC_BACKUP_POLICY_TYPE_INVALID            = 0x0000,
+        FABRIC_BACKUP_POLICY_TYPE_FREQUENCY_BASED    = 0x0001,
+        FABRIC_BACKUP_POLICY_TYPE_SCHEDULE_BASED     = 0x0002
+    } FABRIC_BACKUP_POLICY_TYPE;
+
+    [v1_enum, uuid(9fd97a6c-63bf-4691-b34c-734dbe73aa5c)]
+    typedef enum FABRIC_BACKUP_POLICY_RUN_SCHEDULE_MODE
+    {
+        FABRIC_BACKUP_POLICY_RUN_SCHEDULE_MODE_INVALID   = 0x0000,
+        FABRIC_BACKUP_POLICY_RUN_SCHEDULE_MODE_DAILY     = 0x0001,
+        FABRIC_BACKUP_POLICY_RUN_SCHEDULE_MODE_WEEKLY    = 0x0002
+    } FABRIC_BACKUP_POLICY_RUN_SCHEDULE_MODE;
+
+    [v1_enum, uuid(98a5de3d-b10c-4787-ab0b-0810045caa8b)]
+    typedef enum FABRIC_BACKUP_POLICY_RUN_FREQUENCY_MODE
+    {
+        FABRIC_BACKUP_POLICY_RUN_FREQUENCY_MODE_INVALID      = 0x0000,
+        FABRIC_BACKUP_POLICY_RUN_FREQUENCY_MODE_MINUTES      = 0x0001,
+        FABRIC_BACKUP_POLICY_RUN_FREQUENCY_MODE_HOURS        = 0x0002
+    } FABRIC_BACKUP_POLICY_RUN_FREQUENCY_MODE;
+
+    [v1_enum, uuid(0c51aec0-922d-4f07-961f-26e7c0ab686c)]
+    typedef enum FABRIC_BACKUP_STORE_TYPE
+    {
+        FABRIC_BACKUP_STORE_TYPE_INVALID          = 0x0000,
+        FABRIC_BACKUP_STORE_TYPE_FILE_SHARE       = 0x0001,
+        FABRIC_BACKUP_STORE_TYPE_AZURE_STORE      = 0x0002,
+        FABRIC_BACKUP_STORE_TYPE_DSMS_AZURE_STORE = 0x0003,
+    } FABRIC_BACKUP_STORE_TYPE;
+
+    [v1_enum, uuid(9460d8aa-e70d-480e-a118-453016a0867e)]
+    typedef enum FABRIC_BACKUP_STORE_FILE_SHARE_ACCESS_TYPE
+    {
+        FABRIC_BACKUP_STORE_FILE_SHARE_ACCESS_TYPE_NONE        = 0x0000,
+        FABRIC_BACKUP_STORE_FILE_SHARE_ACCESS_TYPE_DOMAIN_USER = 0x0001,
+    } FABRIC_BACKUP_STORE_FILE_SHARE_ACCESS_TYPE;
+
+    [v1_enum, uuid(07f79345-73c5-420d-85f1-5e709a0ef4fb)]
+    typedef enum FABRIC_BACKUP_OPTION
+    {
+        FABRIC_BACKUP_OPTION_INVALID =      0x0000,
+
+        FABRIC_BACKUP_OPTION_FULL =         0x0001,
+
+        FABRIC_BACKUP_OPTION_INCREMENTAL =  0x0002,
+
+    } FABRIC_BACKUP_OPTION;
+
+    [v1_enum, uuid(3804163b-30cf-43b7-baae-90899991b651)]
+    typedef enum FABRIC_RESTORE_POLICY
+    {
+        FABRIC_RESTORE_POLICY_INVALID =        0x0000,
+
+        FABRIC_RESTORE_POLICY_SAFE =        0x0001,
+
+        FABRIC_RESTORE_POLICY_FORCE =       0x0002,
+
+    } FABRIC_RESTORE_POLICY;
+
+    // ----------------------------------------------------------------------------
+    // Structures
+
+    typedef struct FABRIC_IMAGE_STORE_COPY_DESCRIPTION
+    {
+        LPCWSTR RemoteSource;
+        LPCWSTR RemoteDestination;
+        FABRIC_STRING_LIST * SkipFiles;
+        FABRIC_IMAGE_STORE_COPY_FLAG CopyFlag;
+        BOOLEAN CheckMarkFile;
+        void * Reserved;
+    } FABRIC_IMAGE_STORE_COPY_DESCRIPTION;
+
+    typedef struct FABRIC_IMAGE_STORE_LIST_DESCRIPTION
+    {
+        LPCWSTR RemoteLocation;
+        LPCWSTR ContinuationToken;
+        BOOLEAN IsRecursive;
+        void *Reserved;
+    } FABRIC_IMAGE_STORE_LIST_DESCRIPTION;
+
+    typedef struct FABRIC_IMAGE_STORE_FILE_INFO_QUERY_RESULT_ITEM
+    {
+        LPCWSTR StoreRelativePath;
+        LPCWSTR FileVersion;
+        LPCWSTR FileSize;
+        LPCWSTR ModifiedDate;
+    } FABRIC_IMAGE_STORE_FILE_INFO_QUERY_RESULT_ITEM;
+
+    typedef struct FABRIC_IMAGE_STORE_FOLDER_INFO_QUERY_RESULT_ITEM
+    {
+        LPCWSTR StoreRelativePath;
+        LPCWSTR FileCount;
+    } FABRIC_IMAGE_STORE_FOLDER_INFO_QUERY_RESULT_ITEM;
+
+    typedef struct FABRIC_IMAGE_STORE_FILE_INFO_QUERY_RESULT_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_IMAGE_STORE_FILE_INFO_QUERY_RESULT_ITEM * Items;
+    } FABRIC_IMAGE_STORE_FILE_INFO_QUERY_RESULT_LIST;
+
+    typedef struct FABRIC_IMAGE_STORE_FOLDER_INFO_QUERY_RESULT_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_IMAGE_STORE_FOLDER_INFO_QUERY_RESULT_ITEM * Items;
+    } FABRIC_IMAGE_STORE_FOLDER_INFO_QUERY_RESULT_LIST;
+
+    typedef struct FABRIC_IMAGE_STORE_CONTENT_QUERY_RESULT
+    {
+        FABRIC_IMAGE_STORE_FILE_INFO_QUERY_RESULT_LIST* Files;
+        FABRIC_IMAGE_STORE_FOLDER_INFO_QUERY_RESULT_LIST* Folders;
+    } FABRIC_IMAGE_STORE_CONTENT_QUERY_RESULT;
+
+    typedef struct FABRIC_IMAGE_STORE_PAGED_CONTENT_QUERY_RESULT
+    {
+        FABRIC_IMAGE_STORE_FILE_INFO_QUERY_RESULT_LIST* Files;
+        FABRIC_IMAGE_STORE_FOLDER_INFO_QUERY_RESULT_LIST* Folders;
+        LPCWSTR ContinuationToken;
+        void * Reserved;
+    } FABRIC_IMAGE_STORE_PAGED_CONTENT_QUERY_RESULT;
+
+    typedef struct FABRIC_IMAGE_STORE_PAGED_RELATIVEPATH_QUERY_RESULT
+    {
+        FABRIC_STRING_LIST * Files;
+        LPCWSTR ContinuationToken;
+        void * Reserved;
+    } FABRIC_IMAGE_STORE_PAGED_RELATIVEPATH_QUERY_RESULT;
+
+    typedef struct FABRIC_UPLOAD_CHUNK_RANGE_QUERY_RESULT_ITEM
+    {
+        LPCWSTR StartPosition;
+        LPCWSTR EndPosition;
+        void * Reserved;
+    } FABRIC_UPLOAD_CHUNK_RANGE_QUERY_RESULT_ITEM;
+
+    typedef struct FABRIC_UPLOAD_CHUNK_RANGE_QUERY_RESULT_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_UPLOAD_CHUNK_RANGE_QUERY_RESULT_ITEM * Items;
+    } FABRIC_UPLOAD_CHUNK_RANGE_QUERY_RESULT_LIST;
+
+    typedef struct FABRIC_UPLOAD_SESSION_INFO_QUERY_RESULT_ITEM
+    {
+        LPCWSTR StoreRelativePath;
+        FABRIC_UPLOAD_SESSION_ID SessionId;
+        LPCWSTR FileSize;
+        LPCWSTR ModifiedDate;
+        FABRIC_UPLOAD_CHUNK_RANGE_QUERY_RESULT_LIST* ExpectedRanges;
+        void * Reserved;
+    } FABRIC_UPLOAD_SESSION_INFO_QUERY_RESULT_ITEM;
+
+    typedef struct FABRIC_UPLOAD_SESSION_INFO_QUERY_RESULT_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_UPLOAD_SESSION_INFO_QUERY_RESULT_ITEM * Items;
+    } FABRIC_UPLOAD_SESSION_INFO_QUERY_RESULT_LIST;
+
+    typedef struct FABRIC_UPLOAD_SESSION_QUERY_RESULT
+    {
+        FABRIC_UPLOAD_SESSION_INFO_QUERY_RESULT_LIST* UploadSessions;
+        void * Reserved;
+    } FABRIC_UPLOAD_SESSION_QUERY_RESULT;
+
+    typedef struct FABRIC_NODE_TASK_DESCRIPTION
+    {
+        LPCWSTR NodeName;
+        FABRIC_NODE_TASK_TYPE TaskType;
+        void * Reserved;
+    } FABRIC_NODE_TASK_DESCRIPTION;
+
+    typedef struct FABRIC_NODE_TASK_DESCRIPTION_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_NODE_TASK_DESCRIPTION * Items;
+    } FABRIC_NODE_TASK_DESCRIPTION_LIST;
+
+    typedef struct FABRIC_INFRASTRUCTURE_TASK_DESCRIPTION
+    {
+        FABRIC_PARTITION_ID SourcePartitionId;
+        LPCWSTR TaskId;
+        ULONGLONG InstanceId;
+        FABRIC_NODE_TASK_DESCRIPTION_LIST * NodeTasks;
+        void * Reserved;
+    } FABRIC_INFRASTRUCTURE_TASK_DESCRIPTION;
+
+    typedef struct FABRIC_INFRASTRUCTURE_TASK_QUERY_RESULT_ITEM
+    {
+        FABRIC_INFRASTRUCTURE_TASK_DESCRIPTION * Description;
+        FABRIC_INFRASTRUCTURE_TASK_STATE State;
+        void * Reserved;
+    } FABRIC_INFRASTRUCTURE_TASK_QUERY_RESULT_ITEM;
+
+    typedef struct FABRIC_INFRASTRUCTURE_TASK_QUERY_RESULT_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] void * Items;
+    } FABRIC_INFRASTRUCTURE_TASK_QUERY_RESULT_LIST;
+
+    typedef struct FABRIC_REPLICATOR_LOG_SETTINGS {
+        DWORD Flags;
+        LPCWSTR ContainerPath;
+        LOG_CONTAINER_ID ContainerId;
+        ULONG MaxCheckpointSize;
+        void * Reserved;
+    } FABRIC_REPLICATOR_LOG_SETTINGS;
+
+    typedef struct FABRIC_OPERATION_METADATA_EX
+    {
+        FABRIC_OPERATION_TYPE_EX Type;
+        FABRIC_SEQUENCE_NUMBER SequenceNumber;
+        FABRIC_SEQUENCE_NUMBER AtomicGroupId;
+        void * Reserved;
+
+    } FABRIC_OPERATION_METADATA_EX;
+
+    typedef struct FABRIC_STRING_PAIR_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_STRING_PAIR * Items;
+
+    } FABRIC_STRING_PAIR_LIST;
+
+    typedef struct FABRIC_QUERY_RESULT
+    {
+        FABRIC_QUERY_RESULT_KIND Kind;
+        void * Value;
+
+    } FABRIC_QUERY_RESULT;
+
+    typedef struct FABRIC_QUERY_RESULT_LIST
+    {
+        FABRIC_QUERY_RESULT_ITEM_KIND Kind;
+        ULONG Count;
+        [size_is(Count)] void * Items;
+
+    } FABRIC_QUERY_RESULT_LIST;
+
+    typedef struct FABRIC_QUERY_RESULT_ITEM
+    {
+        FABRIC_QUERY_RESULT_ITEM_KIND Kind;
+        void * Item;
+
+    } FABRIC_QUERY_RESULT_ITEM;
+
+    typedef struct FABRIC_QUERY_METADATA_QUERY_RESULT_ITEM
+    {
+        LPCWSTR QueryName;
+        FABRIC_STRING_LIST* RequiredArguments;
+        FABRIC_STRING_LIST* OptionalArguments;
+        void * Reserved;
+
+    } FABRIC_QUERY_METADATA_QUERY_RESULT_ITEM;
+
+    typedef struct FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS
+    {
+        ULONGLONG operationCount;
+        ULONGLONG queueSizeBytes;
+        FABRIC_SEQUENCE_NUMBER allApplyAckLsn;
+
+    } FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS;
+
+    typedef struct FABRIC_TOKEN_CLAIM
+    {
+        LPCWSTR ClaimType;
+        LPCWSTR Issuer;
+        LPCWSTR OriginalIssuer;
+        LPCWSTR Subject;
+        LPCWSTR Value;
+        LPCWSTR ValueType;
+
+        void * Reserved;
+    } FABRIC_TOKEN_CLAIM;
+
+    typedef struct FABRIC_TOKEN_CLAIM_RESULT_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_TOKEN_CLAIM * Items;
+    } FABRIC_TOKEN_CLAIM_RESULT_LIST;
+
+    typedef struct FABRIC_TOKEN_SERVICE_METADATA
+    {
+        LPCWSTR Metadata;
+        LPCWSTR ServiceName;
+        LPCWSTR ServiceDnsName;
+
+        void * Reserved;
+    } FABRIC_TOKEN_SERVICE_METADATA;
+
+    typedef struct FABRIC_SECURITY_RESOURCE_IDENTIFIER
+    {
+        FABRIC_SECURITY_RESOURCE_IDENTIFIER_KIND Kind;
+        void * Value;
+
+    } FABRIC_SECURITY_RESOURCE_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_IMAGESTORE_PATH_RESOURCE_IDENTIFIER
+    {
+        LPCWSTR Path;
+        void * Reserved;
+
+    } FABRIC_SECURITY_IMAGESTORE_PATH_RESOURCE_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_APPLICATION_TYPE_RESOURCE_IDENTIFIER
+    {
+        LPCWSTR ApplicationTypeName;
+        void * Reserved;
+
+    } FABRIC_SECURITY_APPLICATION_TYPE_RESOURCE_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_NAME_RESOURCE_IDENTIFIER
+    {
+        FABRIC_URI Name;
+        void * Reserved;
+
+    } FABRIC_SECURITY_NAME_RESOURCE_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_APPLICATION_RESOURCE_IDENTIFIER
+    {
+        FABRIC_URI ApplicationName;
+        void * Reserved;
+
+    } FABRIC_SECURITY_APPLICATION_RESOURCE_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_SERVICE_RESOURCE_IDENTIFIER
+    {
+        FABRIC_URI ServiceName;
+        void * Reserved;
+
+    } FABRIC_SECURITY_SERVICE_RESOURCE_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_PRINCIPAL_IDENTIFIER
+    {
+        FABRIC_SECURITY_PRINCIPAL_IDENTIFIER_KIND Kind;
+        void * Value;
+
+    } FABRIC_SECURITY_PRINCIPAL_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_X509_PRINCIPAL_IDENTIFIER
+    {
+        LPCWSTR CommonName;
+        void * Reserved;
+
+    } FABRIC_SECURITY_X509_PRINCIPAL_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_WINDOWS_PRINCIPAL_IDENTIFIER
+    {
+        LPCWSTR AccountName;
+        void * Reserved;
+
+    } FABRIC_SECURITY_WINDOWS_PRINCIPAL_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_CLAIM_PRINCIPAL_IDENTIFIER
+    {
+        LPCWSTR Claim;
+        void * Reserved;
+
+    } FABRIC_SECURITY_CLAIM_PRINCIPAL_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_ROLE_PRINCIPAL_IDENTIFIER
+    {
+        LPCWSTR RoleName;
+        void * Reserved;
+
+    } FABRIC_SECURITY_ROLE_PRINCIPAL_IDENTIFIER;
+
+    typedef struct FABRIC_SECURITY_ACE
+    {
+        FABRIC_SECURITY_ACE_TYPE AceType;
+        const FABRIC_SECURITY_PRINCIPAL_IDENTIFIER * Principal;
+        DWORD AccessMask;
+        void * Reserved;
+
+    } FABRIC_SECURITY_ACE;
+
+    typedef struct FABRIC_SECURITY_ACL
+    {
+        ULONG AceCount;
+        [size_is(AceCount)] const FABRIC_SECURITY_ACE * AceItems;
+        void * Reserved;
+
+    } FABRIC_SECURITY_ACL;
+
+    typedef struct FABRIC_MOVE_PRIMARY_REPLICA_DESCRIPTION
+    {
+        LPCWSTR NodeName;
+        FABRIC_PARTITION_ID PartitionId;
+        void * Reserved;
+
+    } FABRIC_MOVE_PRIMARY_REPLICA_DESCRIPTION;
+
+    typedef struct FABRIC_MOVE_PRIMARY_REPLICA_DESCRIPTION_EX1
+    {
+        BOOLEAN IgnoreConstraints;
+        void * Reserved;
+
+    } FABRIC_MOVE_PRIMARY_REPLICA_DESCRIPTION_EX1;
+
+    typedef struct FABRIC_MOVE_SECONDARY_REPLICA_DESCRIPTION
+    {
+        LPCWSTR CurrentSecondaryNodeName;
+        LPCWSTR NewSecondaryNodeName;
+        FABRIC_PARTITION_ID PartitionId;
+        void * Reserved;
+
+    } FABRIC_MOVE_SECONDARY_REPLICA_DESCRIPTION;
+
+    typedef struct FABRIC_MOVE_SECONDARY_REPLICA_DESCRIPTION_EX1
+    {
+        BOOLEAN IgnoreConstraints;
+        void * Reserved;
+
+    } FABRIC_MOVE_SECONDARY_REPLICA_DESCRIPTION_EX1;
+
+    typedef struct FABRIC_OPERATION_DATA_BUFFER_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] FABRIC_OPERATION_DATA_BUFFER * Buffers;
+
+    } FABRIC_OPERATION_DATA_BUFFER_LIST;
+
+    typedef struct FABRIC_STATE_PROVIDER_FACTORY_ARGUMENTS
+    {
+        FABRIC_URI name;
+        LPCWSTR typeName;
+        FABRIC_PARTITION_ID partitionId;
+        FABRIC_REPLICA_ID replicaId;
+        FABRIC_STATE_PROVIDER_ID stateProviderId;
+        FABRIC_OPERATION_DATA_BUFFER_LIST * initializationParameters;
+        void * Reserved;
+    } FABRIC_STATE_PROVIDER_FACTORY_ARGUMENTS;
+
+    // ------------------------------------------------------------------------
+    // Docker Compose support structures.
+    // ------------------------------------------------------------------------
+
+    typedef struct FABRIC_COMPOSE_DEPLOYMENT_DESCRIPTION
+    {
+        LPCWSTR DeploymentName;
+        LPCWSTR ComposeFilePath;
+        LPCWSTR OverridesFilePath;
+        LPCWSTR ContainerRepositoryUserName;
+        LPCWSTR ContainerRepositoryPassword;
+        BOOLEAN IsPasswordEncrypted;
+        void * Reserved;
+
+    } FABRIC_COMPOSE_DEPLOYMENT_DESCRIPTION;
+
+    typedef struct FABRIC_COMPOSE_DEPLOYMENT_STATUS_QUERY_DESCRIPTION
+    {
+        LPCWSTR DeploymentNameFilter;
+        LPCWSTR ContinuationToken;
+        LONG MaxResults;
+        void *Reserved;
+
+    } FABRIC_COMPOSE_DEPLOYMENT_STATUS_QUERY_DESCRIPTION;
+
+    typedef struct FABRIC_COMPOSE_DEPLOYMENT_STATUS_QUERY_RESULT_ITEM
+    {
+        LPCWSTR DeploymentName;
+        FABRIC_URI ApplicationName;
+        FABRIC_COMPOSE_DEPLOYMENT_STATUS Status;
+        LPCWSTR StatusDetails;
+        void *Reserved;
+
+    } FABRIC_COMPOSE_DEPLOYMENT_STATUS_QUERY_RESULT_ITEM;
+
+    typedef struct FABRIC_COMPOSE_DEPLOYMENT_STATUS_QUERY_RESULT_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_COMPOSE_DEPLOYMENT_STATUS_QUERY_RESULT_ITEM * Items;
+
+    } FABRIC_COMPOSE_DEPLOYMENT_STATUS_QUERY_RESULT_LIST;
+
+    typedef struct FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_DESCRIPTION
+    {
+        LPCWSTR DeploymentName;
+        FABRIC_STRING_LIST ComposeFilePaths;
+        FABRIC_STRING_LIST ServiceFabricSettingsFilePaths;
+        LPCWSTR ContainerRegistryUserName;
+        LPCWSTR ContainerRegistryPassword;
+        BOOLEAN IsPasswordEncrypted;
+        FABRIC_APPLICATION_UPGRADE_KIND UpgradeKind;
+        void * UpgradePolicyDescription;
+        void * Reserved;
+
+    } FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_DESCRIPTION;
+
+    typedef struct FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_PROGRESS
+    {
+        LPCWSTR DeploymentName;
+        FABRIC_URI ApplicationName;
+        FABRIC_APPLICATION_UPGRADE_KIND UpgradeKind;
+        void * UpgradePolicyDescription;
+        LPCWSTR TargetApplicationTypeVersion;
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE UpgradeState;
+        LPCWSTR NextUpgradeDomain;
+        const FABRIC_UPGRADE_DOMAIN_STATUS_DESCRIPTION_LIST * UpgradeDomains;
+        DWORD UpgradeDurationInSeconds;
+        DWORD CurrentUpgradeDomainDurationInSeconds;
+        const FABRIC_HEALTH_EVALUATION_LIST * ApplicationUnhealthyEvaluations;
+        const FABRIC_UPGRADE_DOMAIN_PROGRESS * CurrentUpgradeDomainProgress;
+        FILETIME StartTimestampUtc;
+        FILETIME FailureTimestampUtc;
+        FABRIC_UPGRADE_FAILURE_REASON FailureReason;
+        const FABRIC_UPGRADE_DOMAIN_PROGRESS * UpgradeDomainProgressAtFailure;
+        LPCWSTR UpgradeStatusDetails;
+        LPCWSTR ApplicationUpgradeStatusDetails;
+        void * Reserved;
+
+    } FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_PROGRESS;
+
+    typedef struct FABRIC_DELETE_COMPOSE_DEPLOYMENT_DESCRIPTION
+    {
+        LPCWSTR DeploymentName;
+        void* Reserved;
+
+    } FABRIC_DELETE_COMPOSE_DEPLOYMENT_DESCRIPTION;
+
+    typedef struct FABRIC_COMPOSE_DEPLOYMENT_ROLLBACK_DESCRIPTION
+    {
+        LPCWSTR DeploymentName;
+        void* Reserved;
+
+    } FABRIC_COMPOSE_DEPLOYMENT_ROLLBACK_DESCRIPTION;
+
+    // ------------------------------------------------------------------------
+    // Unreliable Transport Structures
+    // ------------------------------------------------------------------------
+
+    typedef struct FABRIC_UNRELIABLETRANSPORT_BEHAVIOR
+    {
+        LPCWSTR Destination;
+        LPCWSTR Action;
+        DOUBLE ProbabilityToApply;
+        DOUBLE DelayInSeconds;
+        DOUBLE DelaySpanInSeconds;
+        INT Priority;
+        INT ApplyCount;
+        const FABRIC_STRING_PAIR_LIST * Filters;
+        void * Reserved;
+    }FABRIC_UNRELIABLETRANSPORT_BEHAVIOR;
+
+    typedef struct FABRIC_OPERATION_DATA_BUFFER_EX1
+    {
+        ULONG Offset;
+        ULONG Count;
+        BYTE * Buffer;
+    } FABRIC_OPERATION_DATA_BUFFER_EX1;
+
+    // ------------------------------------------------------------------------
+    // Service Communication Structures
+    // ------------------------------------------------------------------------
+    typedef struct FABRIC_SERVICE_TRANSPORT_SETTINGS
+    {
+        ULONG OperationTimeoutInSeconds;
+        ULONG KeepAliveTimeoutInSeconds;
+        ULONG MaxMessageSize;
+        ULONG MaxConcurrentCalls;
+        ULONG MaxQueueSize;
+        const FABRIC_SECURITY_CREDENTIALS  * SecurityCredentials;
+        void * Reserved;
+    }FABRIC_SERVICE_TRANSPORT_SETTINGS;
+
+    typedef struct FABRIC_SERVICE_TRANSPORT_SETTINGS_EX1
+    {
+        ULONG ConnectTimeoutInMilliseconds;
+        void * Reserved;
+    }FABRIC_SERVICE_TRANSPORT_SETTINGS_EX1;
+
+    typedef struct FABRIC_SERVICE_LISTENER_ADDRESS
+    {
+        LPCWSTR IPAddressOrFQDN;
+        ULONG Port;
+        LPCWSTR Path;
+    }FABRIC_SERVICE_LISTENER_ADDRESS;
+
+    typedef struct FABRIC_MESSAGE_BUFFER
+    {
+        ULONG BufferSize;
+        [size_is(BufferSize)] BYTE * Buffer;
+    } FABRIC_MESSAGE_BUFFER;
+
+    typedef struct FABRIC_MESSAGE_BODY_BUFFER
+    {
+        ULONG Count;
+        [size_is(Count)] FABRIC_MESSAGE_BUFFER * Items;
+    } FABRIC_MESSAGE_BODY_BUFFER;
+
+    typedef struct FABRIC_STOP_NODE_DESCRIPTION_INTERNAL
+    {
+        LPCWSTR NodeName;
+        FABRIC_NODE_INSTANCE_ID NodeInstanceId;
+        DWORD StopDurationInSeconds;
+        void * Reserved;
+    } FABRIC_STOP_NODE_DESCRIPTION_INTERNAL;
+
+    typedef struct FABRIC_CHAOS_CLIENT_TYPE
+    {
+        LPCWSTR ClientType;
+
+        void * Reserved;
+    } FABRIC_CHAOS_CLIENT_TYPE;
+
+    typedef struct FABRIC_KEY_VALUE_STORE_REPLICA_SETTINGS_V2
+    {
+        LPCWSTR WorkingDirectory;
+        const KTLLOGGER_SHARED_LOG_SETTINGS * SharedLogSettings;
+        FABRIC_KEY_VALUE_STORE_NOTIFICATION_MODE SecondaryNotificationMode;
+        void * Reserved;
+
+    } FABRIC_KEY_VALUE_STORE_REPLICA_SETTINGS_V2;
+
+    //--------------------------------
+    // Backup Restore Structures
+    //--------------------------------
+
+    typedef struct FABRIC_BACKUP_PARTITION_INFO
+    {
+        FABRIC_URI              ServiceName;
+        FABRIC_PARTITION_ID     PartitionId;
+        void*                   Reserved;
+    } FABRIC_BACKUP_PARTITION_INFO;
+
+    typedef struct FABRIC_BACKUP_STORE_INFORMATION
+    {
+        FABRIC_BACKUP_STORE_TYPE    StoreType;
+        void*                       StoreAccessInformation;
+        void*                       Reserved;
+    } FABRIC_BACKUP_STORE_INFORMATION;
+
+    typedef struct FABRIC_BACKUP_STORE_FILE_SHARE_INFORMATION
+    {
+        LPCWSTR                                     FileSharePath;
+        FABRIC_BACKUP_STORE_FILE_SHARE_ACCESS_TYPE  AccessType;
+        LPCWSTR                                     PrimaryUserName;
+        LPCWSTR                                     PrimaryPassword;
+        LPCWSTR                                     SecondaryUserName;
+        LPCWSTR                                     SecondaryPassword;
+        BOOLEAN                                     IsPasswordEncrypted;
+        void*                                       Reserved;
+    } FABRIC_BACKUP_STORE_FILE_SHARE_INFORMATION;
+
+    typedef struct FABRIC_BACKUP_STORE_AZURE_STORAGE_INFORMATION
+    {
+        LPCWSTR                     ConnectionString;
+        LPCWSTR                     ContainerName;
+        LPCWSTR                     FolderPath;
+        BOOLEAN                     IsConnectionStringEncrypted;
+        void*                       Reserved;
+    } FABRIC_BACKUP_STORE_AZURE_STORAGE_INFORMATION;
+
+    typedef struct FABRIC_BACKUP_STORE_DSMS_AZURE_STORAGE_INFORMATION
+    {
+        LPCWSTR                     StorageCredentialsSourceLocation;
+        LPCWSTR                     ContainerName;
+        LPCWSTR                     FolderPath;
+        void*                       Reserved;
+    } FABRIC_BACKUP_STORE_DSMS_AZURE_STORAGE_INFORMATION;
+
+    typedef struct FABRIC_BACKUP_POLICY
+    {
+        LPCWSTR                                         Name;
+        GUID                                            PolicyId;
+        FABRIC_BACKUP_POLICY_TYPE                       PolicyType;
+        void*                                           PolicyDescription;
+        BYTE                                            MaxIncrementalBackups;
+        const FABRIC_BACKUP_STORE_INFORMATION *         StoreInformation;
+        void*                                           Reserved;
+    } FABRIC_BACKUP_POLICY;
+
+    typedef struct FABRIC_BACKUP_SCHEDULE_RUNTIME_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] DWORD* RunTimes;
+    } FABRIC_BACKUP_SCHEDULE_RUNTIME_LIST;
+
+    typedef struct FABRIC_SCHEDULE_BASED_BACKUP_POLICY
+    {
+        FABRIC_BACKUP_POLICY_RUN_SCHEDULE_MODE          RunScheduleType;
+        const FABRIC_BACKUP_SCHEDULE_RUNTIME_LIST *     RunTimesList;
+        BYTE                                            RunDays;
+        void*                                           Reserved;
+    } FABRIC_SCHEDULE_BASED_BACKUP_POLICY;
+
+    typedef struct FABRIC_FREQUENCY_BASED_BACKUP_POLICY
+    {
+        FABRIC_BACKUP_POLICY_RUN_FREQUENCY_MODE RunFrequencyType;
+        USHORT                                  Value;
+        void*                                   Reserved;
+    } FABRIC_FREQUENCY_BASED_BACKUP_POLICY;
+
+    typedef struct FABRIC_BACKUP_CONFIGURATION
+    {
+        DWORD OperationTimeoutMilliseconds;
+        const FABRIC_BACKUP_STORE_INFORMATION * StoreInformation;
+        void* Reserved;
+    } FABRIC_BACKUP_CONFIGURATION;
+
+    typedef struct FABRIC_BACKUP_OPERATION_RESULT
+    {
+        FABRIC_URI                      ServiceName;
+        FABRIC_PARTITION_ID             PartitionId;
+        FABRIC_BACKUP_OPERATION_ID      OperationId;
+        HRESULT                         ErrorCode;
+        LPCWSTR                         Message;
+        GUID                            BackupId;
+        LPCWSTR                         BackupLocation;
+        FABRIC_EPOCH                    EpochOfLastBackupRecord;
+        FABRIC_SEQUENCE_NUMBER          LsnOfLastBackupRecord;
+        FILETIME                        TimeStampUtc;
+        void*                           Reserved;
+    } FABRIC_BACKUP_OPERATION_RESULT;
+
+    typedef struct FABRIC_RESTORE_OPERATION_RESULT
+    {
+        FABRIC_URI                      ServiceName;
+        FABRIC_PARTITION_ID             PartitionId;
+        FABRIC_RESTORE_OPERATION_ID     OperationId;
+        HRESULT                         ErrorCode;
+        LPCWSTR                         Message;
+        FILETIME                        TimeStampUtc;
+        void*                           Reserved;
+    } FABRIC_RESTORE_OPERATION_RESULT;
+
+    typedef struct FABRIC_RESTORE_POINT_DETAILS
+    {
+        FABRIC_RESTORE_OPERATION_ID             OperationId;
+        const FABRIC_STRING_LIST*               BackupLocations;
+        const FABRIC_BACKUP_STORE_INFORMATION*  StoreInformation;
+        BOOLEAN                                 UserInitiatedOperation;
+        void*                                   Reserved;
+    } FABRIC_RESTORE_POINT_DETAILS;
+
+    typedef struct FABRIC_BACKUP_UPLOAD_INFO
+    {
+        LPCWSTR                     BackupMetadataFilePath;
+        LPCWSTR                     LocalBackupPath;
+        LPCWSTR                     DestinationFolderName;
+        void*                       Reserved;
+    } FABRIC_BACKUP_UPLOAD_INFO;
+
+    typedef struct FABRIC_BACKUP_DOWNLOAD_INFO
+    {
+        const FABRIC_STRING_LIST*   BackupLocations;
+        LPCWSTR                     DestinationRootPath;
+        void*                       Reserved;
+    } FABRIC_BACKUP_DOWNLOAD_INFO;
+
+    [v1_enum, uuid(06341b35-92fd-45ab-8fd8-59620cbdf9b2)]
+    typedef enum FABRIC_CONTAINER_ISOLATION_MODE
+    {
+        FABRIC_CONTAINER_ISOLATION_MODE_UNKNOWN = 0x0000,
+        FABRIC_CONTAINER_ISOLATION_MODE_PROCESS = 0x0001,
+        FABRIC_CONTAINER_ISOLATION_MODE_HYPER_V = 0x0002,
+
+    } FABRIC_CONTAINER_ISOLATION_MODE;
+
+    [v1_enum, uuid(25CB781D-8183-4381-9E30-E7555E7235D6)]
+    typedef enum FABRIC_CONTAINER_NETWORK_TYPE
+    {
+        FABRIC_CONTAINER_NETWORK_TYPE_OTHER = 0x0000,
+        FABRIC_CONTAINER_NETWORK_TYPE_OPEN = 0x0001,
+        FABRIC_CONTAINER_NETWORK_TYPE_ISOLATED = 0x0002,
+
+    } FABRIC_CONTAINER_NETWORK_TYPE;
+
+    typedef struct FABRIC_CONTAINER_NETWORK_CONFIG_DESCRIPTION
+    {
+        LPCWSTR OpenNetworkAssignedIp;
+        FABRIC_STRING_PAIR_LIST * OverlayNetworkResources;
+        FABRIC_STRING_PAIR_LIST * PortBindings;
+        LPCWSTR NodeId;
+        LPCWSTR NodeName;
+        LPCWSTR NodeIpAddress;
+        FABRIC_CONTAINER_NETWORK_TYPE NetworkType;
+        void * Reserved;
+    } FABRIC_CONTAINER_NETWORK_CONFIG_DESCRIPTION;
+
+    typedef struct FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION
+    {
+        LPCWSTR Name;
+        LPCWSTR Value;
+        BOOLEAN IsEncrypted;
+        void * Reserved;
+    } FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION;
+
+    typedef struct FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_EX1
+    {
+        LPCWSTR Type;
+        void * Reserved;
+    } FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_EX1;
+
+    typedef struct FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION * Items;
+    } FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_LIST;
+
+    typedef struct FABRIC_CONTAINER_VOLUME_DESCRIPTION
+    {
+        LPCWSTR Source;
+        LPCWSTR Destination;
+        LPCWSTR Driver;
+        BOOLEAN IsReadOnly;
+        FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_LIST * DriverOpts;
+        void * Reserved;
+    } FABRIC_CONTAINER_VOLUME_DESCRIPTION;
+
+    typedef struct FABRIC_CONTAINER_VOLUME_DESCRIPTION_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_CONTAINER_VOLUME_DESCRIPTION * Items;
+    } FABRIC_CONTAINER_VOLUME_DESCRIPTION_LIST;
+
+    typedef struct FABRIC_CONTAINER_LABEL_DESCRIPTION
+    {
+        LPCWSTR Name;
+        LPCWSTR Value;
+        void * Reserved;
+    } FABRIC_CONTAINER_LABEL_DESCRIPTION;
+
+    typedef struct FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_CONTAINER_LABEL_DESCRIPTION * Items;
+    } FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST;
+
+    typedef struct FABRIC_CONTAINER_LOG_CONFIG_DESCRIPTION
+    {
+        LPCWSTR Driver;
+        FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_LIST * DriverOpts;
+        void * Reserved;
+    } FABRIC_CONTAINER_LOG_CONFIG_DESCRIPTION;
+
+    typedef struct FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION
+    {
+        LPCWSTR AccountName;
+        LPCWSTR Password;
+        LPCWSTR Email;
+        BOOLEAN IsPasswordEncrypted;
+        void * Reserved;
+    } FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION;
+
+    typedef struct FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION_EX1
+    {
+        LPCWSTR Type;
+        void * Reserved;
+    } FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION_EX1;
+
+    typedef struct FABRIC_CONTAINER_HEALTH_CONFIG_DESCRIPTION
+    {
+        BOOLEAN IncludeDockerHealthStatusInSystemHealthReport;
+        BOOLEAN RestartContainerOnUnhealthyDockerHealthStatus;
+        void * Reserved;
+    } FABRIC_CONTAINER_HEALTH_CONFIG_DESCRIPTION;
+
+    typedef struct FABRIC_CONTAINER_DESCRIPTION
+    {
+        LPCWSTR ApplicationName;
+        LPCWSTR ServiceName;
+        LPCWSTR ApplicationId;
+        LPCWSTR ContainerName;
+        LPCWSTR DeploymentFolder;
+        LPCWSTR NodeWorkFolder;
+        LPCWSTR AssignedIp;
+        LPCWSTR EntryPoint;
+        LPCWSTR HostName;
+        LPCWSTR GroupContainerName;
+        FABRIC_CONTAINER_ISOLATION_MODE IsolationMode;
+        FABRIC_STRING_PAIR_LIST * PortBindings;
+        FABRIC_CONTAINER_LOG_CONFIG_DESCRIPTION * LogConfig;
+        FABRIC_CONTAINER_VOLUME_DESCRIPTION_LIST * Volumes;
+        FABRIC_STRING_LIST * DnsServers;
+        FABRIC_STRING_LIST * SecurityOptions;
+        FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION * RepositoryCredential;
+        FABRIC_CONTAINER_HEALTH_CONFIG_DESCRIPTION * HealthConfig;
+        BOOLEAN AutoRemove;
+        BOOLEAN RunInteractive;
+        BOOLEAN IsContainerRoot;
+        LPCWSTR CodePackageName;
+        LPCWSTR ServicePackageActivationId;
+        LPCWSTR PartitionId;
+        void * Reserved;
+    } FABRIC_CONTAINER_DESCRIPTION;
+
+    typedef struct FABRIC_CONTAINER_DESCRIPTION_EX1
+    {
+        BOOLEAN UseDefaultRepositoryCredentials;
+        FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST * Labels;
+        BOOLEAN RemoveServiceFabricRuntimeAccess;
+        FABRIC_STRING_PAIR_LIST *BindMounts;
+        void * Reserved;
+    } FABRIC_CONTAINER_DESCRIPTION_EX1;
+
+    typedef struct FABRIC_CONTAINER_DESCRIPTION_EX2
+    {
+        BOOLEAN UseTokenAuthenticationCredentials;
+        void * Reserved;
+    } FABRIC_CONTAINER_DESCRIPTION_EX2;
+
+    typedef struct FABRIC_CONTAINER_DESCRIPTION_EX3
+    {
+        FABRIC_CONTAINER_NETWORK_CONFIG_DESCRIPTION * ContainerNetworkConfigDescription;
+        void * Reserved;
+    } FABRIC_CONTAINER_DESCRIPTION_EX3;
+
+    typedef struct FABRIC_PROCESS_DEBUG_PARAMETERS
+    {
+        LPCWSTR ExePath;
+        LPCWSTR Arguments;
+        LPCWSTR LockFile;
+        LPCWSTR WorkingFolder;
+        LPCWSTR DebugParametersFile;
+        FABRIC_STRING_PAIR_LIST * EnvVars;
+        FABRIC_STRING_LIST * ContainerEntryPoints;
+        FABRIC_STRING_LIST * ContainerMountedVolumes;
+        FABRIC_STRING_LIST * ContainerEnvironmentBlock;
+        void * Reserved;
+    } FABRIC_PROCESS_DEBUG_PARAMETERS;
+
+    typedef struct FABRIC_PROCESS_DEBUG_PARAMETERS_EX1
+    {
+        FABRIC_STRING_LIST * ContainerLabels;
+        void * Reserved;
+    } FABRIC_PROCESS_DEBUG_PARAMETERS_EX1;
+
+    typedef struct FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION
+    {
+        LPCWSTR CodePackageRef;
+        ULONG MemoryInMB;
+        ULONG MemorySwapInMB;
+        ULONG MemoryReservationInMB;
+        ULONG CpuShares;
+        ULONG CpuPercent;
+        ULONG MaximumIOps;
+        ULONG MaximumIOBytesps;
+        ULONG BlockIOWeight;
+        LPCWSTR CpusetCpus;
+        ULONGLONG NanoCpus;
+        ULONG CpuQuota;
+        void * Reserved;
+    } FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION;
+
+    typedef struct FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION_EX1
+    {
+        ULONGLONG DiskQuotaInMB;
+        ULONGLONG KernelMemoryInMB;
+        ULONGLONG ShmSizeInMB;
+        void * Reserved;
+    } FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION_EX1;
+
+    typedef struct FABRIC_SERVICE_PACKAGE_RESOURCE_GOVERNANCE_DESCRIPTION
+    {
+        BOOLEAN IsGoverned;
+        ULONG MemoryInMB;
+        DOUBLE CpuCores;
+        ULONG NotUsed;
+        void * Reserved;
+    } FABRIC_SERVICE_PACKAGE_RESOURCE_GOVERNANCE_DESCRIPTION;
+
+    typedef struct FABRIC_PROCESS_DESCRIPTION
+    {
+        LPCWSTR ExePath;
+        LPCWSTR Arguments;
+        LPCWSTR StartInDirectory;
+        FABRIC_STRING_PAIR_LIST * EnvVars;
+        LPCWSTR AppDirectory;
+        LPCWSTR TempDirectory;
+        LPCWSTR WorkDirectory;
+        LPCWSTR LogDirectory;
+        BOOLEAN RedirectConsole;
+        LPCWSTR RedirectedConsoleFileNamePrefix;
+        LONG ConsoleRedirectionFileRetentionCount;
+        LONG ConsoleRedirectionFileMaxSizeInKb;
+        BOOLEAN ShowNoWindow;
+        BOOLEAN AllowChildProcessDetach;
+        BOOLEAN NotAttachedToJob;
+        FABRIC_PROCESS_DEBUG_PARAMETERS * DebugParameters;
+        FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION * ResourceGovernancePolicy;
+        FABRIC_SERVICE_PACKAGE_RESOURCE_GOVERNANCE_DESCRIPTION * ServicePackageResourceGovernance;
+        LPCWSTR CgroupName;
+        BOOLEAN IsHostedServiceProcess;
+        void * Reserved;
+    } FABRIC_PROCESS_DESCRIPTION;
+
+    typedef struct FABRIC_PROCESS_DESCRIPTION_EX1
+    {
+        FABRIC_STRING_PAIR_LIST *EncryptedEnvironmentVariables;
+        void * Reserved;
+    } FABRIC_PROCESS_DESCRIPTION_EX1;
+
+    typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION
+    {
+        LPCWSTR ImageName;
+        FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION * RepositoryCredential;
+        void * Reserved;
+    } FABRIC_CONTAINER_IMAGE_DESCRIPTION;
+
+    typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX1
+    {
+        BOOLEAN UseDefaultRepositoryCredentials;
+        void * Reserved;
+    } FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX1;
+
+	typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX2
+	{
+        BOOLEAN UseTokenAuthenticationCredentials;
+	    void * Reserved;
+	} FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX2;
+
+    typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_CONTAINER_IMAGE_DESCRIPTION * Items;
+    } FABRIC_CONTAINER_IMAGE_DESCRIPTION_LIST;
+
+    typedef struct FABRIC_CONTAINER_ACTIVATION_ARGS
+    {
+        BOOLEAN IsUserLocalSystem;
+        LPCWSTR AppHostId;
+        LPCWSTR NodeId;
+        FABRIC_CONTAINER_DESCRIPTION * ContainerDescription;
+        FABRIC_PROCESS_DESCRIPTION * ProcessDescription;
+        LPCWSTR FabricBinPath;
+        LPCWSTR GatewayIpAddress;
+        void * Reserved;
+    } FABRIC_CONTAINER_ACTIVATION_ARGS;
+
+    typedef struct FABRIC_CONTAINER_ACTIVATION_ARGS_EX1
+    {
+        FABRIC_STRING_LIST *GatewayIpAddresses;
+        void * Reserved;
+    } FABRIC_CONTAINER_ACTIVATION_ARGS_EX1;
+
+    typedef struct FABRIC_CONTAINER_DEACTIVATION_ARGS
+    {
+        LPCWSTR ContainerName;
+        BOOLEAN ConfiguredForAutoRemove;
+        BOOLEAN IsContainerRoot;
+        LPCWSTR CgroupName;
+        BOOLEAN IsGracefulDeactivation;
+        void * Reserved;
+    } FABRIC_CONTAINER_DEACTIVATION_ARGS;
+
+    typedef struct FABRIC_HOSTING_SETTINGS
+    {
+        FABRIC_STRING_PAIR_LIST * SettingsMap;
+        void * Reserved;
+    } FABRIC_HOSTING_SETTINGS;
+
+    [v1_enum, uuid(98ef99cc-5e03-44a5-b32d-5f7313b3d59d)]
+    typedef enum FABRIC_CONTAINER_EVENT_TYPE
+    {
+        FABRIC_CONTAINER_EVENT_TYPE_NONE = 0x0000,
+        FABRIC_CONTAINER_EVENT_TYPE_STOP = 0x0001,
+        FABRIC_CONTAINER_EVENT_TYPE_DIE = 0x0002,
+        FABRIC_CONTAINER_EVENT_TYPE_HEALTH = 0x0003
+
+    } FABRIC_CONTAINER_EVENT_TYPE;
+
+	[v1_enum, uuid(1cbac63e-517f-4f4e-8a6e-bab1ac0db798)]
+	typedef enum FABRIC_GATEWAY_RESOURCE_STATUS
+	{
+		FABRIC_GATEWAY_RESOURCE_STATUS_INVALID = 0,
+		FABRIC_GATEWAY_RESOURCE_STATUS_CREATING = 1,
+		FABRIC_GATEWAY_RESOURCE_STATUS_READY = 2,
+		FABRIC_GATEWAY_RESOURCE_STATUS_DELETING = 3,
+		FABRIC_GATEWAY_RESOURCE_STATUS_FAILED = 4,
+		FABRIC_GATEWAY_RESOURCE_STATUS_UPGRADING = 5,
+
+	} FABRIC_GATEWAY_RESOURCE_STATUS;
+
+    typedef struct FABRIC_CONTAINER_EVENT_DESCRIPTION
+    {
+        FABRIC_CONTAINER_EVENT_TYPE EventType;
+        LPCWSTR ContainerId;
+        LPCWSTR ContainerName;
+        ULONGLONG TimeStampInSeconds;
+        BOOLEAN IsHealthy;
+        ULONG ExitCode;
+        void * Reserved;
+    } FABRIC_CONTAINER_EVENT_DESCRIPTION;
+
+    typedef struct FABRIC_CONTAINER_EVENT_DESCRIPTION_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] const FABRIC_CONTAINER_EVENT_DESCRIPTION * Items;
+    } FABRIC_CONTAINER_EVENT_DESCRIPTION_LIST;
+
+    typedef struct FABRIC_CONTAINER_EVENT_NOTIFICATION
+    {
+        ULONGLONG SinceTime;
+        ULONGLONG UntilTime;
+        FABRIC_CONTAINER_EVENT_DESCRIPTION_LIST * EventList;
+        void * Reserved;
+    } FABRIC_CONTAINER_EVENT_NOTIFICATION;
+
+    typedef struct FABRIC_CONTAINER_API_EXECUTION_ARGS
+    {
+        LPCWSTR ContainerName;
+        LPCWSTR HttpVerb;
+        LPCWSTR UriPath;
+        LPCWSTR ContentType;
+        LPCWSTR RequestBody;
+        void * Reserved;
+    } FABRIC_CONTAINER_API_EXECUTION_ARGS;
+
+    typedef struct FABRIC_CONTAINER_API_EXECUTION_RESPONSE
+    {
+        USHORT StatusCode;
+        LPCWSTR ContentType;
+        LPCWSTR ContentEncoding;
+        ULONG ResponseBodyBufferSize;
+        [size_is(ResponseBodyBufferSize)] BYTE * ResponseBodyBuffer;
+        void * Reserved;
+    } FABRIC_CONTAINER_API_EXECUTION_RESPONSE;
+
+    //--------------------------------
+    // Linux Structured Traces
+    //--------------------------------
+    typedef struct FABRIC_ETW_TRACE_EVENT_DATA_DESCRIPTOR_LIST
+    {
+        ULONG Count;
+        [size_is(Count)] void *UserDataDescriptor;
+    } FABRIC_ETW_TRACE_EVENT_DATA_DESCRIPTOR_LIST;
+
+    typedef struct FABRIC_ETW_TRACE_EVENT_PAYLOAD
+    {
+        void * EventDescriptor;
+        FABRIC_ETW_TRACE_EVENT_DATA_DESCRIPTOR_LIST EventDataDescriptorList;
+        void * Reserved;
+    } FABRIC_ETW_TRACE_EVENT_PAYLOAD;
+
+    typedef struct FABRIC_CONTAINER_UPDATE_ROUTE_ARGS
+    {
+        LPCWSTR ContainerId;
+        LPCWSTR ContainerName;
+        LPCWSTR ApplicationId;
+        LPCWSTR ApplicationName;
+        FABRIC_CONTAINER_NETWORK_TYPE NetworkType;
+        FABRIC_STRING_LIST *GatewayIpAddresses;
+        BOOLEAN AutoRemove;
+        BOOLEAN IsContainerRoot;
+        LPCWSTR CgroupName;
+        void * Reserved;
+    } FABRIC_CONTAINER_UPDATE_ROUTE_ARGS;
+
+    //--------------------------------
+	// Gateway Resource Manager
+	//--------------------------------
+	typedef struct NETWORK_REF
+	{
+		LPCWSTR Name;
+		void * Reserved;
+	} NETWORK_REF;
+
+	typedef struct TRAFFIC_ROUTING_DESTINATION
+	{
+		LPCWSTR ApplicationName;
+		LPCWSTR ServiceName;
+		LPCWSTR EndpointName;
+		void * Reserved;
+	} TRAFFIC_ROUTING_DESTINATION;
+
+	typedef struct FABRIC_GATEWAY_RESOURCE_TCP_CONFIG
+	{
+		LPCWSTR Name;
+		INT ListenPort;
+		TRAFFIC_ROUTING_DESTINATION Destination;
+		void * Reserved;
+	} FABRIC_GATEWAY_RESOURCE_TCP_CONFIG;
+
+	typedef struct FABRIC_GATEWAY_RESOURCE_TCP_CONFIG_LIST
+	{
+		ULONG Count;
+		[size_is(Count)] FABRIC_GATEWAY_RESOURCE_TCP_CONFIG * Items;
+	} FABRIC_GATEWAY_RESOURCE_TCP_CONFIG_LIST;
+
+	typedef struct FABRIC_GATEWAY_RESOURCE_DESCRIPTION
+	{
+		LPCWSTR Name;
+		LPCWSTR Description;
+		NETWORK_REF SourceNetwork;
+		NETWORK_REF DestinationNetwork;
+		FABRIC_GATEWAY_RESOURCE_STATUS Status;
+		LPCWSTR StatusDescription;
+		FABRIC_GATEWAY_RESOURCE_TCP_CONFIG_LIST Tcp;
+        LPCWSTR Http;
+		void * Reserved;
+	} FABRIC_GATEWAY_RESOURCE_DESCRIPTION;
+
+
+	typedef struct FABRIC_GATEWAY_RESOURCE_DESCRIPTION_LIST
+	{
+		ULONG Count;
+		[size_is(Count)] FABRIC_GATEWAY_RESOURCE_DESCRIPTION * Items;
+	} FABRIC_GATEWAY_RESOURCE_DESCRIPTION_LIST;
+
+    typedef struct FABRIC_GATEWAY_RESOURCE_QUERY_DESCRIPTION
+    {
+		LPCWSTR Name;
+        FABRIC_QUERY_PAGING_DESCRIPTION PagingDescription;
+        void * Reserved;
+    } FABRIC_GATEWAY_RESOURCE_QUERY_DESCRIPTION;
+
+    typedef struct FABRIC_GATEWAY_RESOURCE_QUERY_RESULT
+    {
+        FABRIC_GATEWAY_RESOURCE_DESCRIPTION_LIST Items;
+        LPCWSTR ContinuationToken;
+        void * Reserved;
+    } FABRIC_GATEWAY_RESOURCE_QUERY_RESULT;
+
+    #pragma pack (pop)
+}

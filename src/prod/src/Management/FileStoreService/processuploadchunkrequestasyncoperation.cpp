@@ -148,8 +148,13 @@ ProcessUploadChunkRequestAsyncOperation::ProcessUploadChunkRequestAsyncOperation
     , sessionId_(uploadChunkRequest.SessionId)
     , startPosition_(uploadChunkRequest.StartPosition)
     , endPosition_(uploadChunkRequest.EndPosition)
-    , stagingFullPath_(Path::Combine(requestManager.LocalStagingLocation, uploadChunkRequest.StagingRelativePath))
 {
+    stagingFullPath_ = Path::Combine(requestManager.LocalStagingLocation, uploadChunkRequest.StagingRelativePath);
+#if !defined(PLATFORM_UNIX)
+    // This takes care of staging file path that is greater than MAX_PATH chars.
+    // For more info: https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
+    stagingFullPath_.insert(0, L"\\\\?\\");
+#endif
 }
 
 ProcessUploadChunkRequestAsyncOperation::~ProcessUploadChunkRequestAsyncOperation()

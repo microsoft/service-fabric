@@ -22,7 +22,7 @@ namespace StateManagerTests
         K_WEAKREF_INTERFACE_IMP(ITransactionManager, MockLoggingReplicator)
 
     public:
-        static SPtr Create(__in KAllocator & allocator);
+        static SPtr Create(__in bool hasPersistedState, __in KAllocator & allocator);
 
     public:
         void Initialize(__in TxnReplicator::IStateProviderManager & stateManager);
@@ -51,6 +51,12 @@ namespace StateManagerTests
         void put_Role(FABRIC_REPLICA_ROLE newRole)
         {
             role_ = newRole;
+        }
+
+        __declspec(property(get = get_HasPersistedState)) bool HasPersistedState;
+        virtual bool get_HasPersistedState() const override
+        {
+            return hasPersistedState_;
         }
 
         ktl::Awaitable<NTSTATUS> OpenAsync(
@@ -198,10 +204,14 @@ namespace StateManagerTests
         NTSTATUS InjectFaultIfNecessary() noexcept;
 
     private:
+        MockLoggingReplicator(__in bool hasPersistedState);
+
+    private:
         FABRIC_REPLICA_ROLE role_ = FABRIC_REPLICA_ROLE_UNKNOWN;
         volatile LONG64 lastLSN_ = 0;
         volatile FABRIC_SEQUENCE_NUMBER safeLSN_ = 0;
         bool isReadable_ = false;
+        bool hasPersistedState_ = true;
 
     private:
         Data::Utilities::ConcurrentDictionary<LONG64, KSharedArray<TestReplicatedOperation>::SPtr>::SPtr inflightTransactionMapSPtr_;

@@ -37,6 +37,7 @@ set( LINUX_SOURCES
   ../ComGetApplicationListResult.cpp
   ../ComGetApplicationLoadInformationResult.cpp
   ../ComGetApplicationNameResult.cpp
+  ../ComGetApplicationNetworkListResult.cpp
   ../ComGetApplicationTypeListResult.cpp
   ../ComGetApplicationTypePagedListResult.cpp
   ../ComGetClusterHealthChunkResult.cpp
@@ -44,11 +45,16 @@ set( LINUX_SOURCES
   ../ComGetDeployedApplicationListResult.cpp
   ../ComGetDeployedApplicationPagedListResult.cpp
   ../ComGetDeployedCodePackageListResult.cpp
+  ../ComGetDeployedNetworkCodePackageListResult.cpp
+  ../ComGetDeployedNetworkListResult.cpp
   ../ComGetDeployedReplicaListResult.cpp
   ../ComGetDeployedServiceManifestListResult.cpp
   ../ComGetDeployedServiceReplicaDetailResult.cpp
   ../ComGetDeployedServiceTypeListResult.cpp
   ../ComGetComposeDeploymentStatusListResult.cpp
+  ../ComGetNetworkListResult.cpp
+  ../ComGetNetworkApplicationListResult.cpp
+  ../ComGetNetworkNodeListResult.cpp
   ../ComGetNodeListResult.cpp
   ../ComGetNodeLoadInformationResult.cpp
   ../ComGetPartitionListResult.cpp
@@ -148,6 +154,9 @@ set( LINUX_SOURCES
   ../ComFabricTransportClientConnection.cpp
   ../ComFabricChaosDescriptionResult.cpp
   ../ComFabricChaosScheduleDescriptionResult.cpp
+  ../ComGatewayResourceManagerAgent.cpp
+  ../ComGatewayResourceManagerAgentFactory.cpp
+  ../ComProxyGatewayResourceManager.cpp
 )
 
 include_directories("..")

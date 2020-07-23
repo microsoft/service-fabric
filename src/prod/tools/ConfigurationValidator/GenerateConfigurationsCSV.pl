@@ -335,6 +335,7 @@ sub GetSetupConfigurations
         "Setup,ServiceStartupType,string,\"\",NotAllowed,TEST,Setup\\FabricDeployer\\Constants.cs,\"The startup type of the fabric host service.\"" . "\n" .
         "Setup,SkipFirewallConfiguration,bool,false,NotAllowed,PUBLIC,Setup\\FabricDeployer\\Constants.cs,\"Whether to skip firewall settings.\"" . "\n" .
         "Setup,SkipContainerNetworkResetOnReboot,bool,false,NotAllowed,PUBLIC,Setup\\FabricDeployer\\Constants.cs,\"Whether to skip resetting container network on reboot.\"" . "\n" .
+        "Setup,SkipIsolatedNetworkResetOnReboot,bool,false,NotAllowed,PUBLIC,Setup\\FabricDeployer\\Constants.cs,\"Whether to skip resetting isolated network on reboot.\"" . "\n" .
         "Setup,ContainerDnsSetup,string,\"Allow\",Static,PUBLIC,Setup\\FabricDeployer\\Constants.cs,\"Allows controlling Docker/Container DNS related setup. Valid values are: Allow, Require, Disallow. Allow = install but continue on container DNS setup errors, Require = install but fail on container DNS setup errors, Disallow = don't install and try to clean up if container DNS setup was done previously.\"" . "\n" .
         "Setup,IsTestCluster,bool,false,NotAllowed,INTERNAL,Setup\\FabricDeployer\\Constants.cs,\"Set to true when creating test clusters to allow scale-min deployment in multiple machines. (Only for Standalone Deployments)\"" . "\n" .
         "",
@@ -347,6 +348,16 @@ sub GetUpgradeOrchestrationServiceConfigurations
         "UpgradeOrchestrationService,AutoupgradeInstallEnabled,bool,false,Static,PUBLIC,StandAloneFabricSettingsGenerator.cs,\"Automatic polling, provisioning and install of code upgrade action based on a goal-state file.\"" . "\n" .
         "UpgradeOrchestrationService,SkipInitialGoalStateCheck,bool,false,Static,PUBLIC,StandaloneGoalStateProvisioner.cs,\"Skips the initial check for goal state while setting up polling. Used in tests that verify auto code upgrades.\"" . "\n" .
         "UpgradeOrchestrationService,GoalStateExpirationReminderInDays,int,30,Static,PUBLIC,StandaloneGoalStateProvisioner.cs,\"Sets the number of remaining days after which goal state reminder should be shown.\"" . "\n" .
+        "",
+        "");
+}
+
+sub GetEventStoreServiceConfigurations
+{
+    return VerifyManagedConfigDefaultValuesMatchesWithTheCode(
+        "EventStoreService,PlacementConstraints,wstring,,Static,PUBLIC,src\\managed\\EventsStore\\EventStore.Service\\Settings.cs,\"The PlacementConstraints for EventStoreService\"" . "\n" .
+        "EventStoreService,TargetReplicaSetSize,int,0,Static,PUBLIC,src\\managed\\EventsStore\\EventStore.Service\\Settings.cs,\"The TargetReplicaSetSize for EventStoreService\"" . "\n" .
+        "EventStoreService,MinReplicaSetSize,int,0,Static,PUBLIC,src\\managed\\EventsStore\\EventStore.Service\\Settings.cs,\"The MinReplicaSetSize for EventStoreService\"" . "\n" .
         "",
         "");
 }
@@ -982,6 +993,7 @@ sub BuildConfigCSV
     $configurationsCSVText .= GetTStoreConfigurations();
     $configurationsCSVText .= GetNativeRunConfigurations();
     $configurationsCSVText .= GetUpgradeOrchestrationServiceConfigurations();
+    $configurationsCSVText .= GetEventStoreServiceConfigurations();
     
     my $linuxConfigurationsCSVText =
         "#This file contains all possible configurations. The only supported configurations are the public configurations.\n" .

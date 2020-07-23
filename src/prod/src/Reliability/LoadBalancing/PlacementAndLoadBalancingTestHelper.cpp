@@ -829,6 +829,49 @@ void PlacementAndLoadBalancingTestHelper::InduceRepartitioningFailure(std::wstri
     plb_.pendingAutoScalingFailedRepartitions_.push_back(make_pair(serviceId, error));
 }
 
+int64 PlacementAndLoadBalancingTestHelper::GetInBuildCountPerNode(int node, std::wstring metricName)
+{
+    if (plb_.serviceDomainTable_.size() == 0 || (metricName == L"" && plb_.serviceDomainTable_.size() != 1))
+    {
+        // Any negative number means that:
+        //  - Either there are no service domains.
+        //  - Or metric does not belong to any domain.
+        return -314;
+    }
+
+    auto itDomain = plb_.serviceDomainTable_.begin();
+
+    if (metricName != L"")
+    {
+        auto itMetricToDomain = plb_.metricToDomainTable_.find(metricName);
+        if (itMetricToDomain == plb_.metricToDomainTable_.end())
+        {
+            return -314;
+        }
+        itDomain = itMetricToDomain->second;
+    }
+
+    Federation::NodeId nodeId = Federation::NodeId(Common::LargeInteger(0, node));
+
+    auto itIndex = plb_.nodeToIndexMap_.find(nodeId);
+    if (itIndex == plb_.nodeToIndexMap_.end())
+    {
+        return -314;
+    }
+
+    uint64_t nodeIndex = itIndex->second;
+
+    auto itNode = itDomain->second.InBuildCountPerNode.find(nodeIndex);
+
+    if (itNode == itDomain->second.InBuildCountPerNode.end())
+    {
+        // No IB replicas on this node.
+        return 0;
+    }
+
+    return static_cast<int64>(itNode->second);
+}
+
 void PlacementAndLoadBalancingTestHelper::ResetTiming()
 {
     RefreshTime = 0;

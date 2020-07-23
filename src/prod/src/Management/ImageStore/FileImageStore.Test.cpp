@@ -36,19 +36,19 @@ protected:
     void DeleteFile(wstring const & fileName);
     void CleanupFoldersAndFiles();
 
+    static wstring GetDirFile1() { return Path::Combine(*Dir1, L"file1"); }
+    static wstring GetDirFile2() { return Path::Combine(*Dir1, L"file2"); }
+
+    static wstring GetDir2() { return Path::Combine(*Dir1, L"dir"); }
+    static wstring GetDir2File1() { return Path::Combine(GetDir2(), L"file1"); }
+    static wstring GetDir2File2() { return Path::Combine(GetDir2(), L"file2"); }
+
     static GlobalString Content;
     static GlobalWString ImageCacheRoot;    
     static GlobalWString StoreDir;
     static GlobalWString Dir1;
     static GlobalWString File1;
     static GlobalWString File2;
-    static GlobalWString DirFile1;
-    static GlobalWString DirFile2;
-    static GlobalWString Dir2;
-    static GlobalWString Dir2File1;
-    static GlobalWString Dir2File2;
-    static GlobalWString Dir12;
-    static GlobalWString Dir12File1;
 
     static Global<SecureString> StoreRootUri;
 };
@@ -59,13 +59,6 @@ GlobalWString FileImageStoreTests::StoreDir = make_global<wstring>(L"ImageStoreT
 GlobalWString FileImageStoreTests::Dir1 = make_global<wstring>(L"ImageStoreTestDir");
 GlobalWString FileImageStoreTests::File1 = make_global<wstring>(L"ImageStoreTestFile1");
 GlobalWString FileImageStoreTests::File2 = make_global<wstring>(L"ImageStoreTestFile2");
-GlobalWString FileImageStoreTests::DirFile1 = make_global<wstring>(L"ImageStoreTestDir\\file1");
-GlobalWString FileImageStoreTests::DirFile2 = make_global<wstring>(L"ImageStoreTestDir\\file2");
-GlobalWString FileImageStoreTests::Dir2 = make_global<wstring>(L"ImageStoreTestDir\\dir");
-GlobalWString FileImageStoreTests::Dir2File1 = make_global<wstring>(L"ImageStoreTestDir\\dir\\file1");
-GlobalWString FileImageStoreTests::Dir2File2 = make_global<wstring>(L"ImageStoreTestDir\\dir\\file2");
-GlobalWString FileImageStoreTests::Dir12 = make_global<wstring>(L"ImageStoreTestDir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\dir");
-GlobalWString FileImageStoreTests::Dir12File1 = make_global<wstring>(L"ImageStoreTestDir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\dir\\file1");
 
 Global<SecureString> FileImageStoreTests::StoreRootUri = make_global<SecureString>(L"file:ImageStoreTestStore");
 
@@ -202,20 +195,25 @@ BOOST_AUTO_TEST_CASE(TestRemoveRemoteContentNoCache)
     VERIFY_IS_TRUE(imageStoreUPtr->RemoveRemoteContent(*File1).IsSuccess());
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *File1)));
 
+    wstring dir2File1 = FileImageStoreTests::GetDir2File1();
+    wstring dir2File2 = FileImageStoreTests::GetDir2File2();
+
     GenerateFile(Path::Combine(*StoreDir, *File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
+    GenerateFile(Path::Combine(*StoreDir, dir2File1));
+    GenerateFile(Path::Combine(*StoreDir, dir2File2));
     vector<wstring> objects;
     objects.push_back(*File1);
-    objects.push_back(*Dir2);
+
+    wstring dir2 = FileImageStoreTests::GetDir2();
+    objects.push_back(dir2);
 
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
     VERIFY_IS_TRUE(imageStoreUPtr->RemoveRemoteContent(objects).IsSuccess());
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
 }
 
 BOOST_AUTO_TEST_CASE(TestRemoveRemoteContentWithCache)
@@ -225,6 +223,9 @@ BOOST_AUTO_TEST_CASE(TestRemoveRemoteContentWithCache)
         L"TestRemoveRemoteContentWithCache",
         "Start Test");
     InitializeTest();
+
+    wstring dir2File1 = FileImageStoreTests::GetDir2File1();
+    wstring dir2File2 = FileImageStoreTests::GetDir2File2();
 
     ImageStoreUPtr imageStoreUPtr;
     ErrorCode error = ImageStoreFactory::CreateImageStore(imageStoreUPtr, StoreRootUri, 1, *ImageCacheRoot);
@@ -237,28 +238,30 @@ BOOST_AUTO_TEST_CASE(TestRemoveRemoteContentWithCache)
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *File1)));
 
     GenerateFile(Path::Combine(*StoreDir, *File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
+    GenerateFile(Path::Combine(*StoreDir, dir2File1));
+    GenerateFile(Path::Combine(*StoreDir, dir2File2));
     GenerateFile(Path::Combine(*ImageCacheRoot, *File1));
-    GenerateFile(Path::Combine(*ImageCacheRoot, *Dir2File1));
-    GenerateFile(Path::Combine(*ImageCacheRoot, *Dir2File2));
+    GenerateFile(Path::Combine(*ImageCacheRoot, dir2File1));
+    GenerateFile(Path::Combine(*ImageCacheRoot, dir2File2));
     vector<wstring> objects;
     objects.push_back(*File1);
-    objects.push_back(*Dir2);
+
+    wstring dir2 = FileImageStoreTests::GetDir2();
+    objects.push_back(dir2);
 
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
     VERIFY_IS_TRUE(imageStoreUPtr->RemoveRemoteContent(objects).IsSuccess());
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File2)));
 }
 
 BOOST_AUTO_TEST_CASE(TestUploadContentWithCache)
@@ -271,22 +274,31 @@ BOOST_AUTO_TEST_CASE(TestUploadContentWithCache)
     ImageStoreUPtr imageStoreUPtr;
     ErrorCode error = ImageStoreFactory::CreateImageStore(imageStoreUPtr, StoreRootUri, 1, *ImageCacheRoot);
 
-    GenerateFile(*Dir2File1);
-    GenerateFile(*Dir2File2);
+    wstring dirFile1 = FileImageStoreTests::GetDirFile1();
+    wstring dirFile2 = FileImageStoreTests::GetDirFile2();
 
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
-    VERIFY_IS_TRUE(imageStoreUPtr->UploadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File2)));
+    wstring dir2File1 = FileImageStoreTests::GetDir2File1();
+    wstring dir2File2 = FileImageStoreTests::GetDir2File2();
+
+    GenerateFile(dir2File1);
+    GenerateFile(dir2File2);
+
+    wstring dir2 = FileImageStoreTests::GetDir2();
+
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
+    VERIFY_IS_TRUE(imageStoreUPtr->UploadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File2)));
 
     InitializeTest();
-    GenerateFile(*Dir2File1);
-    GenerateFile(*Dir2File2);
-    GenerateFile(*DirFile1);
-    GenerateFile(*DirFile2);
+    GenerateFile(dir2File1);
+    GenerateFile(dir2File2);
+    GenerateFile(dirFile1);
+    GenerateFile(dirFile2);
+
     GenerateFile(*File1);
     GenerateFile(*File2);
     vector<wstring> objects;
@@ -294,23 +306,23 @@ BOOST_AUTO_TEST_CASE(TestUploadContentWithCache)
     objects.push_back(*File1);
     objects.push_back(*File2);
 
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *DirFile1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *DirFile2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dirFile1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dirFile2)));
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *File1)));
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *File2)));
     VERIFY_IS_TRUE(imageStoreUPtr->UploadContent(objects, objects, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *DirFile1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *DirFile2)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dirFile1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dirFile2)));
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *File1)));
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *File2)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File2)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *DirFile1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *DirFile2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, dirFile1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, dirFile2)));
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *File1)));
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*ImageCacheRoot, *File2)));
 }
@@ -325,20 +337,30 @@ BOOST_AUTO_TEST_CASE(TestUploadContentNoCache)
     ImageStoreUPtr imageStoreUPtr;
     ErrorCode error = ImageStoreFactory::CreateImageStore(imageStoreUPtr, StoreRootUri, 1, L"");
 
-    GenerateFile(*Dir2File1);
-    GenerateFile(*Dir2File2);
+    wstring dir2File1 = FileImageStoreTests::GetDir2File1();
+    wstring dir2File2 = FileImageStoreTests::GetDir2File2();
 
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
-    VERIFY_IS_TRUE(imageStoreUPtr->UploadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
+    GenerateFile(dir2File1);
+    GenerateFile(dir2File2);
+
+    wstring dir2 = FileImageStoreTests::GetDir2();
+
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
+    VERIFY_IS_TRUE(imageStoreUPtr->UploadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
 
     InitializeTest();
-    GenerateFile(*Dir2File1);
-    GenerateFile(*Dir2File2);
-    GenerateFile(*DirFile1);
-    GenerateFile(*DirFile2);
+    GenerateFile(dir2File1);
+    GenerateFile(dir2File2);
+
+    wstring dirFile1 = FileImageStoreTests::GetDirFile1();
+    wstring dirFile2 = FileImageStoreTests::GetDirFile2();
+
+    GenerateFile(dirFile1);
+    GenerateFile(dirFile2);
+
     GenerateFile(*File1);
     GenerateFile(*File2);
     vector<wstring> objects;
@@ -346,17 +368,17 @@ BOOST_AUTO_TEST_CASE(TestUploadContentNoCache)
     objects.push_back(*File1);
     objects.push_back(*File2);
 
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *DirFile1)));
-    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *DirFile2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dirFile1)));
+    VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, dirFile2)));
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *File1)));
     VERIFY_IS_FALSE(File::Exists(Path::Combine(*StoreDir, *File2)));
     VERIFY_IS_TRUE(imageStoreUPtr->UploadContent(objects, objects, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *Dir2File2)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *DirFile1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *DirFile2)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dir2File2)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dirFile1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, dirFile2)));
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *File1)));
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*StoreDir, *File2)));
 }
@@ -372,50 +394,55 @@ BOOST_AUTO_TEST_CASE(TestDownloadContentWithCacheEcho)
     ImageStoreUPtr imageStoreUPtr;
     ErrorCode error = ImageStoreFactory::CreateImageStore(imageStoreUPtr, StoreRootUri, 1, *ImageCacheRoot);
 
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
+    wstring dir2File1 = FileImageStoreTests::GetDir2File1();
+    wstring dir2File2 = FileImageStoreTests::GetDir2File2();
 
-    VERIFY_IS_FALSE(File::Exists(*Dir2File1));
-    VERIFY_IS_FALSE(File::Exists(*Dir2File2));
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File2)));
+    GenerateFile(Path::Combine(*StoreDir, dir2File1));
+    GenerateFile(Path::Combine(*StoreDir, dir2File2));
+
+    wstring dir2 = FileImageStoreTests::GetDir2();
+
+    VERIFY_IS_FALSE(File::Exists(dir2File1));
+    VERIFY_IS_FALSE(File::Exists(dir2File2));
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File2)));
 
     // Delete store and delete edit copied files and then copy from cache. (To ensure it does copy from cache.)
     VERIFY_IS_TRUE(Directory::Delete(*StoreDir, true).IsSuccess());
-    VERIFY_IS_TRUE(Directory::Delete(*Dir2, true).IsSuccess());
-    File::Delete(*Dir2File1, NOTHROW());
-    GenerateFile(*Dir2File1);
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Echo).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+    VERIFY_IS_TRUE(Directory::Delete(dir2, true).IsSuccess());
+    File::Delete(dir2File1, NOTHROW());
+    GenerateFile(dir2File1);
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Echo).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
 
     // Recreate the store (not the copied local version) and redownload to ensure it works.
     VERIFY_IS_TRUE(Directory::Create2(*StoreDir).IsSuccess());
     VERIFY_IS_TRUE(Directory::Delete(*ImageCacheRoot, true).IsSuccess());
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Echo).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+    GenerateFile(Path::Combine(*StoreDir, dir2File1));
+    GenerateFile(Path::Combine(*StoreDir, dir2File2));
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Echo).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
 
     // Delete cache and make sure it is being copied from store.
-    VERIFY_IS_TRUE(Directory::Delete(*Dir2, true).IsSuccess());
-    VERIFY_IS_TRUE(Directory::Delete(Path::Combine(*ImageCacheRoot, *Dir2), true).IsSuccess());
-    File::Delete(*Dir2File1, NOTHROW());
-    GenerateFile(*Dir2File1);
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Echo).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+    VERIFY_IS_TRUE(Directory::Delete(dir2, true).IsSuccess());
+    VERIFY_IS_TRUE(Directory::Delete(Path::Combine(*ImageCacheRoot, dir2), true).IsSuccess());
+    File::Delete(dir2File1, NOTHROW());
+    GenerateFile(dir2File1);
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Echo).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
 
     // Delete store and delete copied directory and then copy from cache. (To ensure it does copy from cache.)
     VERIFY_IS_TRUE(Directory::Delete(*StoreDir, true).IsSuccess());
-    VERIFY_IS_TRUE(Directory::Delete(*Dir2, true).IsSuccess());
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Echo).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+    VERIFY_IS_TRUE(Directory::Delete(dir2, true).IsSuccess());
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Echo).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
 }
 
 BOOST_AUTO_TEST_CASE(TestDownloadContentWithCacheMultipleObjects)
@@ -427,11 +454,17 @@ BOOST_AUTO_TEST_CASE(TestDownloadContentWithCacheMultipleObjects)
     InitializeTest();
     ImageStoreUPtr imageStoreUPtr;
     ErrorCode error = ImageStoreFactory::CreateImageStore(imageStoreUPtr, StoreRootUri, 1, *ImageCacheRoot);
+    
+    wstring dirFile1 = FileImageStoreTests::GetDirFile1();
+    wstring dirFile2 = FileImageStoreTests::GetDirFile2();
+    
+    wstring dir2File1 = FileImageStoreTests::GetDir2File1();
+    wstring dir2File2 = FileImageStoreTests::GetDir2File2();
 
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
-    GenerateFile(Path::Combine(*StoreDir, *DirFile1));
-    GenerateFile(Path::Combine(*StoreDir, *DirFile2));
+    GenerateFile(Path::Combine(*StoreDir, dir2File1));
+    GenerateFile(Path::Combine(*StoreDir, dir2File2));
+    GenerateFile(Path::Combine(*StoreDir, dirFile1));
+    GenerateFile(Path::Combine(*StoreDir, dirFile2));
     GenerateFile(Path::Combine(*StoreDir, *File1));
     GenerateFile(Path::Combine(*StoreDir, *File2));
     vector<wstring> objects;
@@ -439,23 +472,23 @@ BOOST_AUTO_TEST_CASE(TestDownloadContentWithCacheMultipleObjects)
     objects.push_back(*File1);
     objects.push_back(*File2);
 
-    VERIFY_IS_FALSE(File::Exists(*Dir2File1));
-    VERIFY_IS_FALSE(File::Exists(*Dir2File2));
-    VERIFY_IS_FALSE(File::Exists(*DirFile1));
-    VERIFY_IS_FALSE(File::Exists(*DirFile2));
+    VERIFY_IS_FALSE(File::Exists(dir2File1));
+    VERIFY_IS_FALSE(File::Exists(dir2File2));
+    VERIFY_IS_FALSE(File::Exists(dirFile1));
+    VERIFY_IS_FALSE(File::Exists(dirFile2));
     VERIFY_IS_FALSE(File::Exists(*File1));
     VERIFY_IS_FALSE(File::Exists(*File2));
     VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(objects, objects, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
-    VERIFY_IS_TRUE(File::Exists(*DirFile1));
-    VERIFY_IS_TRUE(File::Exists(*DirFile2));
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
+    VERIFY_IS_TRUE(File::Exists(dirFile1));
+    VERIFY_IS_TRUE(File::Exists(dirFile2));
     VERIFY_IS_TRUE(File::Exists(*File1));
     VERIFY_IS_TRUE(File::Exists(*File2));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File2)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *DirFile1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *DirFile2)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File2)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, dirFile1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, dirFile2)));
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *File1)));
     VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *File2)));
 }
@@ -470,9 +503,18 @@ BOOST_AUTO_TEST_CASE(TestDownloadContentWithCache12LeveDir)
     InitializeTest();
     ImageStoreUPtr imageStoreUPtr;
     ErrorCode error = ImageStoreFactory::CreateImageStore(imageStoreUPtr, StoreRootUri, 1, *ImageCacheRoot);
-    GenerateFile(Path::Combine(*StoreDir, *Dir12File1));
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir12File1, *Dir12File1, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir12File1));
+
+    wstring dir12File1 = Path::Combine(*Dir1, L"dir");
+    for (int i = 0; i < 10; ++i)
+    {
+        dir12File1 = Path::Combine(dir12File1, L"dir");
+    }
+
+    dir12File1 = Path::Combine(dir12File1, L"file1");
+
+    GenerateFile(Path::Combine(*StoreDir, dir12File1));
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir12File1, dir12File1, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir12File1));
     VERIFY_IS_TRUE(Directory::Delete(*Dir1, true).IsSuccess());
 }
 
@@ -487,53 +529,71 @@ BOOST_AUTO_TEST_CASE(TestDownloadContentWithCache)
     ImageStoreUPtr imageStoreUPtr;
     ErrorCode error = ImageStoreFactory::CreateImageStore(imageStoreUPtr, StoreRootUri, 1, *ImageCacheRoot);
 
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
+    wstring dir2File1 = FileImageStoreTests::GetDir2File1();
+    wstring dir2File2 = FileImageStoreTests::GetDir2File2();
 
-    VERIFY_IS_FALSE(File::Exists(*Dir2File1));
-    VERIFY_IS_FALSE(File::Exists(*Dir2File2));
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File1)));
-    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, *Dir2File2)));
+    GenerateFile(Path::Combine(*StoreDir, dir2File1));
+    GenerateFile(Path::Combine(*StoreDir, dir2File2));
+
+    wstring dir2 = FileImageStoreTests::GetDir2();
+
+    VERIFY_IS_FALSE(File::Exists(dir2File1));
+    VERIFY_IS_FALSE(File::Exists(dir2File2));
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File1)));
+    VERIFY_IS_TRUE(File::Exists(Path::Combine(*ImageCacheRoot, dir2File2)));
 
     // Delete store and delete copied directory and then copy from cache. (To ensure it does copy from cache.)
     VERIFY_IS_TRUE(Directory::Delete(*StoreDir, true).IsSuccess());
-    VERIFY_IS_TRUE(Directory::Delete(*Dir2, true).IsSuccess());
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+    VERIFY_IS_TRUE(Directory::Delete(dir2, true).IsSuccess());
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
 
-    // Recreate the store (not the copied local version) and redownload to ensure it works.
+    // Recreate the store (not the copied local version) and re-download to ensure it works.
     // We have to delete the Cache too else copy will be from the cache.
     VERIFY_IS_TRUE(Directory::Create2(*StoreDir).IsSuccess());
     VERIFY_IS_TRUE(Directory::Delete(*ImageCacheRoot, true).IsSuccess());
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+
+    wstring storeDirDir2File1 = Path::Combine(*StoreDir, dir2File1);
+    GenerateFile(storeDirDir2File1);
+    
+    wstring storeDirDir2File2 = Path::Combine(*StoreDir, dir2File2);
+    GenerateFile(storeDirDir2File2);
+
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
+
     DateTime sourceTime, destTime;
-    VERIFY_IS_TRUE(File::GetLastWriteTime(*Dir2File1, sourceTime).IsSuccess());
-    VERIFY_IS_TRUE(File::GetLastWriteTime(Path::Combine(*StoreDir, *Dir2File1), destTime).IsSuccess());
+    VERIFY_IS_TRUE(File::GetLastWriteTime(dir2File1, sourceTime).IsSuccess());
+    VERIFY_IS_TRUE(File::GetLastWriteTime(storeDirDir2File1, destTime).IsSuccess());
+
+#if !defined(PLATFORM_UNIX)
     VERIFY_IS_TRUE(sourceTime == destTime);
-    VERIFY_IS_TRUE(File::GetLastWriteTime(*Dir2File2, sourceTime).IsSuccess());
-    VERIFY_IS_TRUE(File::GetLastWriteTime(Path::Combine(*StoreDir, *Dir2File2), destTime).IsSuccess());
+#endif
+
+    VERIFY_IS_TRUE(File::GetLastWriteTime(dir2File2, sourceTime).IsSuccess());
+    VERIFY_IS_TRUE(File::GetLastWriteTime(storeDirDir2File2, destTime).IsSuccess());
+
+#if !defined(PLATFORM_UNIX)
     VERIFY_IS_TRUE(sourceTime == destTime);
+#endif
 
     // Delete store and delete copied directory and then copy from cache. (To ensure it does copy from cache.)
     VERIFY_IS_TRUE(Directory::Delete(*StoreDir, true).IsSuccess());
-    VERIFY_IS_TRUE(Directory::Delete(*Dir2, true).IsSuccess());
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+    VERIFY_IS_TRUE(Directory::Delete(dir2, true).IsSuccess());
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
 
     // Overwrite from the cache.
-    VERIFY_IS_TRUE(Directory::Delete(*Dir2, true).IsSuccess());
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+    VERIFY_IS_TRUE(Directory::Delete(dir2, true).IsSuccess());
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
 }
 
 BOOST_AUTO_TEST_CASE(TestDownloadContentNoCache)
@@ -545,21 +605,29 @@ BOOST_AUTO_TEST_CASE(TestDownloadContentNoCache)
     InitializeTest();
     ImageStoreUPtr imageStoreUPtr;
     ErrorCode error = ImageStoreFactory::CreateImageStore(imageStoreUPtr, StoreRootUri, 1, L"");
+    
+    wstring dirFile1 = Path::Combine(*Dir1, L"file1");
+    wstring dirFile2 = Path::Combine(*Dir1, L"file2");
 
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
+    wstring dir2File1 = FileImageStoreTests::GetDir2File1();
+    wstring dir2File2 = FileImageStoreTests::GetDir2File2();
 
-    VERIFY_IS_FALSE(File::Exists(*Dir2File1));
-    VERIFY_IS_FALSE(File::Exists(*Dir2File2));
-    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(*Dir2, *Dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
+    GenerateFile(Path::Combine(*StoreDir, dir2File1));
+    GenerateFile(Path::Combine(*StoreDir, dir2File2));
 
+    wstring dir2 = FileImageStoreTests::GetDir2();
+
+    VERIFY_IS_FALSE(File::Exists(dir2File1));
+    VERIFY_IS_FALSE(File::Exists(dir2File2));
+    VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(dir2, dir2, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
+    
     InitializeTest();
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File1));
-    GenerateFile(Path::Combine(*StoreDir, *Dir2File2));
-    GenerateFile(Path::Combine(*StoreDir, *DirFile1));
-    GenerateFile(Path::Combine(*StoreDir, *DirFile2));
+    GenerateFile(Path::Combine(*StoreDir, dir2File1));
+    GenerateFile(Path::Combine(*StoreDir, dir2File2));
+    GenerateFile(Path::Combine(*StoreDir, dirFile1));
+    GenerateFile(Path::Combine(*StoreDir, dirFile2));
     GenerateFile(Path::Combine(*StoreDir, *File1));
     GenerateFile(Path::Combine(*StoreDir, *File2));
     vector<wstring> objects;
@@ -567,17 +635,17 @@ BOOST_AUTO_TEST_CASE(TestDownloadContentNoCache)
     objects.push_back(*File1);
     objects.push_back(*File2);
 
-    VERIFY_IS_FALSE(File::Exists(*Dir2File1));
-    VERIFY_IS_FALSE(File::Exists(*Dir2File2));
-    VERIFY_IS_FALSE(File::Exists(*DirFile1));
-    VERIFY_IS_FALSE(File::Exists(*DirFile2));
+    VERIFY_IS_FALSE(File::Exists(dir2File1));
+    VERIFY_IS_FALSE(File::Exists(dir2File2));
+    VERIFY_IS_FALSE(File::Exists(dirFile1));
+    VERIFY_IS_FALSE(File::Exists(dirFile2));
     VERIFY_IS_FALSE(File::Exists(*File1));
     VERIFY_IS_FALSE(File::Exists(*File2));
     VERIFY_IS_TRUE(imageStoreUPtr->DownloadContent(objects, objects, ServiceModelConfig::GetConfig().MaxFileOperationTimeout, CopyFlag::Overwrite).IsSuccess());
-    VERIFY_IS_TRUE(File::Exists(*Dir2File1));
-    VERIFY_IS_TRUE(File::Exists(*Dir2File2));
-    VERIFY_IS_TRUE(File::Exists(*DirFile1));
-    VERIFY_IS_TRUE(File::Exists(*DirFile2));
+    VERIFY_IS_TRUE(File::Exists(dir2File1));
+    VERIFY_IS_TRUE(File::Exists(dir2File2));
+    VERIFY_IS_TRUE(File::Exists(dirFile1));
+    VERIFY_IS_TRUE(File::Exists(dirFile2));
     VERIFY_IS_TRUE(File::Exists(*File1));
     VERIFY_IS_TRUE(File::Exists(*File2));
 }
@@ -723,7 +791,7 @@ BOOST_AUTO_TEST_CASE(TestParallelDownloadArchive)
 
     auto operationCount = 20;
     Common::ManualResetEvent downloadEvent;
-    atomic_long pendingCount(operationCount);
+    Common::atomic_long pendingCount(operationCount);
     
     for (auto ix=0; ix<operationCount; ++ix)
     {

@@ -1,0 +1,59 @@
+# Test cases to verify services with dnsnames meeting partition query scheme (if enabled) are not allowed.
+  
+set DummyPLBEnabled true
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 30
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+dnsservice true true
+cleantest
+
++10
+
+verify
+
+################################################################
+#
+# Testcase 1: Create service with DNS name not meeting partition query scheme
+#
+################################################################
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+
+app.servicepack versionTC1 ServicePackageA version=v1
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateless persist
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.upload versionTC1
+
+provisionapp versionTC1
+createapp fabric:/testcase1 TestAppTC1 vTC1
+createservice fabric:/testcase1/service1 ServiceTypeA n 1 1 persist appname=fabric:/testcase1 serviceDnsName=service1.foo
+
+nameexists fabric:/testcase1 true
+dnsnameexists service1.foo fabric:/testcase1/service1
+
+deleteservice fabric:/testcase1/service1
+deleteapp fabric:/testcase1
+
+################################################################
+#
+# Testcase 2: Create service with DNS name meeting partition query scheme
+#
+################################################################
+
+createapp fabric:/testcase2 TestAppTC1 vTC1
+
+createservice fabric:/testcase2/service1 ServiceTypeA n 1 1 persist appname=fabric:/testcase2 serviceDnsName=service2--test.foo errors=InvalidDnsName
+
+createservice fabric:/testcase2/service2 ServiceTypeA n 1 1 persist appname=fabric:/testcase2 serviceDnsName=service2--test errors=InvalidDnsName
+
+deleteapp fabric:/testcase2
+
+unprovisionapp TestAppTC1 vTC1
+
+!q

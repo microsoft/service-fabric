@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="CoreServices" Version="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>Package which supports all test service types</Description>
+    <ServiceTypes>
+        <StatelessServiceType ServiceTypeName="WcfAnagramService">
+            <LoadMetrics>
+                <LoadMetric Name="MetricA" PrimaryDefaultLoad="1" />
+            </LoadMetrics>
+        </StatelessServiceType>
+        <StatefulServiceType ServiceTypeName="WcfQueueService">
+            <PlacementConstraints>HasDisk=1 &amp;&amp; DiskSize&gt;20</PlacementConstraints>
+        </StatefulServiceType>
+        <StatefulServiceType ServiceTypeName="WcfGenericStoreService">
+            <LoadMetrics>
+                <LoadMetric Name="MetricA" PrimaryDefaultLoad="1" SecondaryDefaultLoad="1" />
+                <LoadMetric Name="MetricB" PrimaryDefaultLoad="1" SecondaryDefaultLoad="1" />
+            </LoadMetrics>
+        </StatefulServiceType>
+        <StatefulServiceType ServiceTypeName="WcfPerformanceStoreService" />
+    </ServiceTypes>
+    <CodePackage Name="UserServiceHost" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>Setup.exe</Program>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <DllHost>
+                <UnmanagedDll>System.Fabric.Management.CoreServices.dll</UnmanagedDll>
+            </DllHost>
+        </EntryPoint>
+    </CodePackage>
+    <CodePackage Name="UserServiceHost1" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>Setup.exe</Program>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <DllHost>
+                <UnmanagedDll>System.Fabric.Management.CoreServices.dll</UnmanagedDll>
+            </DllHost>
+        </EntryPoint>
+    </CodePackage>
+    <CodePackage Name="ZDummyProgram" Version="1.0">
+        <EntryPoint>
+            <ExeHost IsExternalExecutable="true">
+                <Program>idonot exist</Program>
+            </ExeHost>
+        </EntryPoint>
+	    <EnvironmentVariables>
+		  <EnvironmentVariable Name="TestEnvVar" Value="DefaultValue"/>
+          <EnvironmentVariable Name="TestEnvVar1" Value="SomeOtherValue" Type="Encrypted"/>
+          <EnvironmentVariable Name="TestEnvVar2" Value="DeafultValue2" Type="SecretsStoreRef" />
+          <EnvironmentVariable Name="TestEnvVar3" Value="DefaultValue" Type="PlainText" />
+		</EnvironmentVariables>
+    </CodePackage>
+    <CodePackage Name="ZDummyProgram2" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost IsExternalExecutable="true">
+                <Program>idonot exist</Program>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <DllHost>
+                <UnmanagedDll>System.Fabric.Management.CoreServices.dll</UnmanagedDll>
+            </DllHost>
+        </EntryPoint>
+    </CodePackage>
+    <CodePackage Name="ZDummyProgram3" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost IsExternalExecutable="true">
+                <Program>idonot exist</Program>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <ExeHost IsExternalExecutable="true">
+                <Program>idonot exist</Program>
+            </ExeHost>
+        </EntryPoint>
+	    <EnvironmentVariables>
+		  <EnvironmentVariable Name="TestEnvVar" Value="DefaultValue"/>
+          <EnvironmentVariable Name="TestEnvVar1" Value="SomeOtherValue" Type="Encrypted"/>
+          <EnvironmentVariable Name="TestEnvVar2" Value="DeafultValue2" Type="SecretsStoreRef" />
+          <EnvironmentVariable Name="TestEnvVar3" Value="DefaultValue" Type="PlainText" />
+		</EnvironmentVariables>
+    </CodePackage>
+  <CodePackage Name="XContainerHost" Version="1.0">
+    <EntryPoint>
+      <ContainerHost>
+        <ImageName>microsoft/iis:v1</ImageName>
+      </ContainerHost>
+    </EntryPoint>
+  </CodePackage>
+    <ConfigPackage Name="UserServiceHost.Config" Version="1.0" />
+    <DataPackage Name="UserServiceHost.Data" Version="1.0" />
+    <DataPackage Name="EtwManifest1.Data" Version="1.0" />
+    <DataPackage Name="EtwManifest2.Data" Version="1.0" />
+    <DataPackage Name="EtwManifest3.Data" Version="1.0" />
+    <Resources>
+        <Endpoints>
+            <Endpoint Name="EndpointResource" Protocol="http" Type="Input" />
+            <Endpoint Name="EndpointResource1" Protocol="tcp" Type="Internal" />
+            <Endpoint Name="EndpointResource2" Protocol="tcp" Type="Internal" />
+            <Endpoint Name="EndpointResource4" Protocol="https" />
+        </Endpoints>
+    </Resources>
+    <Diagnostics>
+        <ETW>
+            <ProviderGuids>
+                <ProviderGuid Value="EDD6957B-0876-4cdc-AA91-0FFD6256B7F9" />
+                <ProviderGuid Value="4B0F480E-561D-4137-8144-31EAA2AB87C8" />
+            </ProviderGuids>
+            <ManifestDataPackages>
+                <ManifestDataPackage Name="EtwManifest2.Data" Version="1.0"/>
+                <ManifestDataPackage Name="EtwManifest1.Data" Version="1.0"/>
+            </ManifestDataPackages>
+        </ETW>
+    </Diagnostics>
+</ServiceManifest>

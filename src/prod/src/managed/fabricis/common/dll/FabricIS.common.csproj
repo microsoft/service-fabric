@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{B2C86537-979A-473A-B5A0-F9D1082A7E22}</ProjectGuid>
+    <RootNamespace>FabricIS.common</RootNamespace>
+    <AssemblyName>FabricIS.common</AssemblyName>
+    <AssemblyDescription>Fabric Infrastructure Service Common</AssemblyDescription>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AppConfigStore.cs" />
+    <Compile Include="Arguments.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="AzureHelper.cs" />
+    <Compile Include="AzureModeDetection\AzureMode.cs" />
+    <Compile Include="AzureModeDetection\IAzureModeDetector.cs" />
+    <Compile Include="AzureModeDetection\IAzureModeDetectorFactory.cs" />
+    <Compile Include="CommandHandler.cs" />
+    <Compile Include="CommandHandlerEntry.cs" />
+    <Compile Include="CommandProcessor.cs" />
+    <Compile Include="ConfigSection.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="CoordinatorFactoryArgs.cs" />
+    <Compile Include="DelayLoadCoordinator.cs" />
+    <Compile Include="FinishTaskCommand.cs" />
+    <Compile Include="IConfigSection.cs" />
+    <Compile Include="InfrastructureServiceCommand.cs" />
+    <Compile Include="IVersionedPropertyStore.cs" />
+    <Compile Include="IVersionedKeyValue.cs" />
+    <Compile Include="NullInfrastructureAgent.cs" />
+    <Compile Include="RoleInstanceHealth\BaseRoleInstanceHealthPolicy.cs" />
+    <Compile Include="RoleInstanceHealth\DynamicRoleInstanceHealthPolicyManager.cs" />
+    <Compile Include="RoleInstanceHealth\IRoleInstanceHealthPolicy.cs" />
+    <Compile Include="RoleInstanceHealth\IRoleInstanceHealthPolicyManager.cs" />
+    <Compile Include="RoleInstanceHealth\IRoleInstanceHealthWatchdogFactory.cs" />
+    <Compile Include="RoleInstanceHealth\RoleInstanceHealthConstants.cs" />
+    <Compile Include="RoleInstanceHealth\RoleInstanceHealthWatchdogFactory.cs" />
+    <Compile Include="RoleInstanceHealth\RoleInstanceStatusMapHealthPolicy.cs" />
+    <Compile Include="RoleInstanceHealth\RoleInstanceStatusMaxAllowedHealthPolicy.cs" />
+    <Compile Include="StartTaskCommand.cs" />
+    <Compile Include="TaskUtility.cs" />
+    <Compile Include="TestInfrastructureCoordinator.cs" />
+    <Compile Include="VersionedPropertyStore.cs" />
+    <Compile Include="VersionedKeyValue.cs" />
+    <Compile Include="Wrappers\IHealthClient.cs" />
+    <Compile Include="Wrappers\IHealthReport.cs" />
+    <Compile Include="IInfrastructureAgentWrapper.cs" />
+    <Compile Include="IInfrastructureCoordinator.cs" />
+    <Compile Include="IInfrastructureCoordinatorFactory.cs" />
+    <Compile Include="IJobBlockingPolicyManager.cs" />
+    <Compile Include="InfrastructureServiceMaintenanceAction.cs" />
+    <Compile Include="IRetryPolicy.cs" />
+    <Compile Include="IRetryPolicyFactory.cs" />
+    <Compile Include="JobBlockingPolicy.cs" />
+    <Compile Include="JobBlockingPolicyManager.cs" />
+    <Compile Include="LinearRetryPolicyFactory.cs" />
+    <Compile Include="ManagementException.cs" />
+    <Compile Include="ProcessCloser.cs" />
+    <Compile Include="LinearRetryPolicy.cs" />
+    <Compile Include="Trace.cs" />
+    <Compile Include="Wrappers\INamedPropertyWrapper.cs" />
+    <Compile Include="Wrappers\INode.cs" />
+    <Compile Include="Wrappers\IPropertyBatchResultWrapper.cs" />
+    <Compile Include="Wrappers\IPropertyManagerWrapper.cs" />
+    <Compile Include="RoleInstanceHealth\IRoleInstanceHealthWatchdog.cs" />
+    <Compile Include="Wrappers\IQueryClient.cs" />
+    <Compile Include="Wrappers\NamedPropertyWrapper.cs" />
+    <Compile Include="Wrappers\PropertyBatchResultWrapper.cs" />
+    <Compile Include="Wrappers\PropertyManagerWrapper.cs" />
+    <Compile Include="Wrappers\RoleInstance.cs" />
+    <Compile Include="RoleInstanceHealth\RoleInstanceHealthWatchdog.cs" />
+    <Compile Include="Wrappers\ServiceFabricHealthClient.cs" />
+    <Compile Include="NullCoordinator.cs" />
+    <Compile Include="Wrappers\ServiceFabricQueryClient.cs" />
+    <Compile Include="Wrappers\InfrastructureAgentWrapper.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

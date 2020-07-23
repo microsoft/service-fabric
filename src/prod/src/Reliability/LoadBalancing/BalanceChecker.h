@@ -136,6 +136,7 @@ namespace Reliability
             void CreateGlobalMetricIndicesList();
             void CalculateMetricStatisticsForTracing(bool isBegin, const Score& score, const NodeMetrics& nodeChanges);
 
+            void UpdateNodeThrottlingLimit(int nodeIndex, int throttlingLimit);
         private:
             void InitializeEmptyDomainAccMinMaxTree(
                 size_t totalMetricCount,

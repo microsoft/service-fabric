@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ApplicationManifest
+    ApplicationTypeName="RunAsRootApplicationType"
+    ApplicationTypeVersion="2.0"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Description>RunAsRoot test application.</Description>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="RunAsRootServicePackage" ServiceManifestVersion="2.0"/>
+        <ConfigOverrides/>
+        <Policies>
+           <RunAsPolicy CodePackageRef="Code" EntryPointType="Main" UserRef="AdminRunner" />
+        </Policies>       
+    </ServiceManifestImport>
+    <DefaultServices>
+        <Service Name="RunAsRootService">
+            <StatefulService ServiceTypeName="RunAsRootServiceType" MinReplicaSetSize="1" TargetReplicaSetSize="3">
+                <NamedPartition>
+                    <Partition Name="P1"/>
+                </NamedPartition>
+            </StatefulService>
+        </Service>
+    </DefaultServices>
+    <Principals>
+        <Users>
+            <User Name="AdminRunner" AccountType="LocalSystem"/>
+        </Users>
+    </Principals>
+</ApplicationManifest>
+

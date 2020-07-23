@@ -786,6 +786,10 @@ namespace System.Fabric.Management.ImageStore
                 {
                     case XStoreFileOperationTask.XStoreTaskType.CopyFromXStoreToSMB:
                         dstUri = ConvertBlobReferenceToSMBPath(file, task.SrcUri, task.DstUri);
+                        if (task.OperationId != null)
+                        {
+                            XStoreCommon.AddDownloadContentEntry(task.OperationId.GetValueOrDefault(), file, dstUri);
+                        }
                         break;
                     case XStoreFileOperationTask.XStoreTaskType.CopyFromSMBToXStore:
                         dstUri = ConvertSMBPathToBlobReference(file, task.SrcUri, task.DstUri);
@@ -795,7 +799,7 @@ namespace System.Fabric.Management.ImageStore
                         break;
                 }
 
-                XStoreFileOperationTask newTask = new XStoreFileOperationTask(task.OpType, file, dstUri, false, 0, task.TimeoutHelper);
+                XStoreFileOperationTask newTask = new XStoreFileOperationTask(task.OpType, file, dstUri, false, 0, task.TimeoutHelper, task.OperationId);
                 newTask.FileCopyFlag = task.FileCopyFlag;
                 tasks.Enqueue(newTask);
             }

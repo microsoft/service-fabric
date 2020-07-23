@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="TestApplicationType" ApplicationTypeVersion="InitialAppTypeVersion" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>Test Application</Description>
+
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="TestServices" ServiceManifestVersion="1.0" />
+        <ConfigOverrides />
+    </ServiceManifestImport>
+
+</ApplicationManifest>

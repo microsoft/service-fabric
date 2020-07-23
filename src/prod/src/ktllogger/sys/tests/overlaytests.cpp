@@ -818,6 +818,7 @@ VOID ReadTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -1758,6 +1759,7 @@ VOID MultiRecordCornerCaseTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -2022,6 +2024,7 @@ VOID MultiRecordCornerCase2Test(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -2384,6 +2387,7 @@ VOID RecoveryTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -2578,6 +2582,7 @@ VOID Recovery2Test(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -4508,6 +4513,7 @@ VOID RecoveryViaOpenContainerTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -4764,6 +4770,7 @@ VOID RecoveryPartlyCreatedStreamTestWorker(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -4962,6 +4969,7 @@ VOID DestagedWriteTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -5818,7 +5826,7 @@ VOID WriteABunchOfRandomRecords(
     {
         version++;
 
-        dataSizeWritten = rand() % (maxIndividualRecordSize / numberWrites);
+        dataSizeWritten = (maxIndividualRecordSize / numberWrites) -1 ; // rand() % (maxIndividualRecordSize / numberWrites);
         status = SetupToWriteRecord(metadataKBuffer, dataIoBuffer,
             logStreamId, version, asn,
             dataBufferPtr + dataWritePosition, dataSizeWritten,
@@ -5919,6 +5927,7 @@ VOID CoalescedWriteTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -6016,7 +6025,7 @@ VOID CoalescedWriteTest(
     // checkpoint records so remove that as well.
     //
     ULONG maxIndividualRecordSize;
-    maxIndividualRecordSize = 3 * (maxContainerRecordSize / 4);
+    maxIndividualRecordSize = 2 * (maxContainerRecordSize / 4);
     maxIndividualRecordSize -= (2 * KLogicalLogInformation::FixedMetadataSize);
     maxIndividualRecordSize += KLogicalLogInformation::FixedMetadataSize - (coreLoggerOffset + reservedMetadataSize +
                                                                             sizeof(KLogicalLogInformation::MetadataBlockHeader) +
@@ -6969,6 +6978,7 @@ VOID CoalescedWrite2Test(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -7257,6 +7267,7 @@ VOID StreamQuotaTest(
         memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+        memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
         status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
             memoryThrottleLimits,
@@ -7333,6 +7344,7 @@ VOID StreamQuotaTest(
         memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+        memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
         status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
             memoryThrottleLimits,
@@ -7420,6 +7432,7 @@ VOID StreamQuotaTest(
         memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+        memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
         status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
             memoryThrottleLimits,
@@ -7520,6 +7533,7 @@ VOID StreamQuotaTest(
         memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+        memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
         status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
             memoryThrottleLimits,
@@ -7634,6 +7648,7 @@ VOID StreamQuotaTest(
         memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
         memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+        memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
         status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
             memoryThrottleLimits,
@@ -7886,6 +7901,12 @@ public:
     {
         return(RvdLogStreamShim::QueryCurrentReservation());
     }
+
+    NTSTATUS
+    SetTruncationCompletionEvent(__in_opt KAsyncEvent* const EventToSignal)
+    {
+        return(RvdLogStreamShim::SetTruncationCompletionEvent(EventToSignal));
+    }   
 
     NTSTATUS
     CreateAsyncWriteContext(__out AsyncWriteContext::SPtr& Context)
@@ -8373,6 +8394,7 @@ VOID ReadRaceConditionsTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -8845,6 +8867,7 @@ public:
     {
         KAsyncEvent* WaitEvent;
         NTSTATUS FailStatus;
+        volatile LONG FailedCount;
     };
 
     static NTSTATUS Create(WriteStuckRvdLogStream::SPtr& Context,
@@ -8897,6 +8920,12 @@ public:
         return(RvdLogStreamShim::QueryCurrentReservation());
     }
 
+    NTSTATUS
+    SetTruncationCompletionEvent(__in_opt KAsyncEvent* const EventToSignal)
+    {
+        return(RvdLogStreamShim::SetTruncationCompletionEvent(EventToSignal));
+    }   
+    
     NTSTATUS
     CreateAsyncReadContext(__out AsyncReadContext::SPtr& Context)
     {
@@ -9171,6 +9200,7 @@ public:
             //
             WaitForEventAndFailStruct* s = (WaitForEventAndFailStruct*)_LogStreamShim->GetTestCaseData();
             Complete(s->FailStatus);
+            InterlockedIncrement(&s->FailedCount);
         }
                 
         VOID
@@ -9463,6 +9493,7 @@ VOID WriteStuckConditionsTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -9772,7 +9803,6 @@ VOID WriteStuckConditionsTest(
 
 }
 
-//***
 VOID VerifySharedLogUsageThrottlingTest(
     KGuid& diskId
     )
@@ -9870,6 +9900,7 @@ VOID VerifySharedLogUsageThrottlingTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_NoSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -10095,8 +10126,9 @@ VOID VerifySharedLogUsageThrottlingTest(
         status = SetupToWriteRecord(metadataKBuffer, dataIoBuffer, logStreamId1, version1, asn1,
                                     dataBufferPtr, dataSizeWritten, coreLoggerOffset, reservedMetadataSize, TRUE);
         VERIFY_IS_TRUE(NT_SUCCESS(status));
+        KDbgPrintf("Write1 asn %llx, version %d\n", asn1, version1);
         writeContext1->Reuse();
-        writeContext1->StartWrite(asn, version, metadataKBuffer, dataIoBuffer, NULL, sync1);
+        writeContext1->StartWrite(asn1, version1, metadataKBuffer, dataIoBuffer, NULL, sync1);
 
         status = sync1.WaitForCompletion(1000);
         if (status == STATUS_IO_TIMEOUT)
@@ -10292,6 +10324,7 @@ VOID PeriodicTimerCloseRaceTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -10677,6 +10710,7 @@ VOID ReadFromCoalesceBuffersTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -11281,6 +11315,7 @@ VOID WriteThrottleUnitTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -11853,6 +11888,7 @@ VOID VerifySharedTruncateOnDedicatedFailureTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -12021,6 +12057,7 @@ VOID VerifySharedTruncateOnDedicatedFailureTest(
     WriteStuckRvdLogStream::WaitForEventAndFailStruct waitForEventAndFail;
     waitForEventAndFail.WaitEvent = &waitEvent;
     waitForEventAndFail.FailStatus = STATUS_UNSUCCESSFUL;
+    waitForEventAndFail.FailedCount = 0;
     dedicatedShim->SetTestCaseData(WriteStuckRvdLogStream::TestCaseIds::WaitForEventAndFail,
                                    &waitForEventAndFail);
 
@@ -12099,6 +12136,17 @@ VOID VerifySharedTruncateOnDedicatedFailureTest(
     //
     waitEvent.SetEvent();
 
+    //
+    // Wait for the first set of dedicated write failures to complete
+    // before doing any new writes
+    //
+    ULONG counter = 0;
+    while ((counter < 15) && (waitForEventAndFail.FailedCount == 0))
+    {
+        KNt::Sleep(1000);
+        counter++;
+    }
+    VERIFY_IS_TRUE(waitForEventAndFail.FailedCount > 0);
 
     //
     // Future writes should fail
@@ -12442,6 +12490,7 @@ VOID VerifyCopyFromSharedToBackupTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -12600,6 +12649,7 @@ VOID VerifyCopyFromSharedToBackupTest(
     WriteStuckRvdLogStream::WaitForEventAndFailStruct waitForEventAndFail;
     waitForEventAndFail.WaitEvent = &waitEvent;
     waitForEventAndFail.FailStatus = STATUS_UNSUCCESSFUL;
+    waitForEventAndFail.FailedCount = 0;
     dedicatedShim->SetTestCaseData(WriteStuckRvdLogStream::TestCaseIds::WaitForEventAndFail,
                                    &waitForEventAndFail);
     
@@ -12676,7 +12726,11 @@ VOID VerifyCopyFromSharedToBackupTest(
     //
     waitEvent.SetEvent();
 
-
+    //
+    // Allow time for destaging write to complete (fail)
+    //
+    KNt::Sleep(5 * 1000);
+	
     //
     // Future writes should fail
     //
@@ -13007,6 +13061,7 @@ VOID FlushAllRecordsForCloseWaitTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -13869,6 +13924,7 @@ VOID ReadFromCoalesceBuffersCornerCase1Test(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -14352,6 +14408,7 @@ VOID ReadFromCoalesceBuffersTruncateTailTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -15090,6 +15147,7 @@ DWORD __stdcall ReadWriteRaceTestThread(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -15449,6 +15507,7 @@ VOID DeleteTruncatedTailRecordsWorker(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -15691,6 +15750,7 @@ VOID RetryOnSharedLogFullTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,
@@ -16138,6 +16198,7 @@ VOID DiscontiguousRecordsRecoveryTest(
     memoryThrottleLimits.WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_NoLimit;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_NoAllocationTimeoutInMs;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     status = ThrottledKIoBufferAllocator::CreateThrottledKIoBufferAllocator(
         memoryThrottleLimits,

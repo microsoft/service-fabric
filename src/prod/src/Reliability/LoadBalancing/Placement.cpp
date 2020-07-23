@@ -12,6 +12,7 @@
 #include "Service.h"
 #include "BalanceChecker.h"
 #include "PLBSchedulerAction.h"
+#include "ThrottlingConstraint.h"
 
 using namespace std;
 using namespace Common;
@@ -26,6 +27,7 @@ Placement::Placement(
     vector<std::unique_ptr<PlacementReplica>> && allReplicas,
     vector<std::unique_ptr<PlacementReplica>> && standByReplicas,
     ApplicationReservedLoad && applicationReservedLoads,
+    InBuildCountPerNode && ibCountsPerNode,
     size_t partitionsInUpgradeCount,
     bool isSingletonReplicaMoveAllowedDuringUpgrade,
     int randomSeed,
@@ -73,9 +75,11 @@ Placement::Placement(
     settings_(balanceChecker_->Settings),
     partitionClosureType_(partitionClosureType),
     servicePackagePlacements_(move(servicePackagePlacement)),
+    inBuildCountPerNode_(move(ibCountsPerNode)),
     quorumBasedServicesCount_(quorumBasedServicesCount),
     quorumBasedPartitionsCount_(quorumBasedPartitionsCount),
-    quorumBasedServicesTempCache_(move(quorumBasedServicesTempCache))
+    quorumBasedServicesTempCache_(move(quorumBasedServicesTempCache)),
+    throttlingConstraintPriority_(-1)
 {
     // Remove down and deactivated nodes from eligible nodes!
     eligibleNodes_.DeleteNodeVecWithIndex(BalanceCheckerObj->DownNodes);
@@ -90,7 +94,9 @@ Placement::Placement(
         ComputeBeneficialTargetNodesForPlacementPerMetric();
     }
     CreateReplicaPlacement();
+    CreateNodePlacement();
     PrepareApplications();
+    UpdateAction(schedulerAction.Action, true);
 }
 
 void Placement::WriteTo(TextWriter& writer, FormatOptions const&) const
@@ -259,26 +265,121 @@ PlacementReplica const* Placement::SelectRandomPrimary(Common::Random & random, 
     }
 }
 
+size_t Placement::GetThrottledMoveCount() const
+{
+    size_t availableSlots = 0;
+    for (auto const& node : balanceChecker_->Nodes)
+    {
+        if (node.IsValid)
+        {
+            if (!node.IsThrottled)
+            {
+                // One non-throttled node is enough to have max slots.
+                return SIZE_MAX;
+            }
+            else
+            {
+                availableSlots += node.MaxConcurrentBuilds;
+            }
+        }
+    }
+    return availableSlots;
+}
+
+// Sometimes placement can be created without an action, so we need to update it when it is known.
+// Per-node throttling limits depend on the action type.
+void Placement::UpdateAction(PLBSchedulerActionType::Enum action, bool constructor)
+{
+    bool throttlingNeeded = false;
+    // Node placements are created only if node has capacity or throttling defined.
+    // Since we may change throttling limit in this function (0 -> >0) then we may need to recalculate.
+    bool recreateNodePlacements = false;
+    // If called from constructor, always update the action and set up throttling limits.
+    if (!constructor && action == action_)
+    {
+        return;
+    }
+    action_ = action;
+    if (   action_ != PLBSchedulerActionType::NoActionNeeded
+        && action_ != PLBSchedulerActionType::None)
+    {
+        for (auto const& node : balanceChecker_->Nodes)
+        {
+            int maxConcurrentBuilds = 0;
+            int globalConcurrentBuilds = INT_MAX;
+            int phaseConcurrentBuilds = INT_MAX;
+
+            auto const & throttlingLimitIt = settings_.MaximumInBuildReplicasPerNode.find(node.NodeTypeName);
+            if (throttlingLimitIt != settings_.MaximumInBuildReplicasPerNode.end())
+            {
+                globalConcurrentBuilds = throttlingLimitIt->second;
+            }
+
+            switch (action_)
+            {
+            case PLBSchedulerActionType::NewReplicaPlacement:
+            case PLBSchedulerActionType::NewReplicaPlacementWithMove:
+                {
+                    auto const & throttlingLimitPlacement = settings_.MaximumInBuildReplicasPerNodePlacementThrottle.find(node.NodeTypeName);
+                    if (throttlingLimitPlacement != settings_.MaximumInBuildReplicasPerNodePlacementThrottle.end())
+                    {
+                        phaseConcurrentBuilds = throttlingLimitPlacement->second;
+                    }
+                }
+                break;
+            case PLBSchedulerActionType::LoadBalancing:
+            case PLBSchedulerActionType::QuickLoadBalancing:
+                {
+                    auto const & throttlingLimitBalancing = settings_.MaximumInBuildReplicasPerNodeBalancingThrottle.find(node.NodeTypeName);
+                    if (throttlingLimitBalancing != settings_.MaximumInBuildReplicasPerNodeBalancingThrottle.end())
+                    {
+                        phaseConcurrentBuilds = throttlingLimitBalancing->second;
+                    }
+                }
+                break;
+            case PLBSchedulerActionType::ConstraintCheck:
+                {
+                    auto const & throttlingLimitConstraintCheck = settings_.MaximumInBuildReplicasPerNodeConstraintCheckThrottle.find(node.NodeTypeName);
+                    if (throttlingLimitConstraintCheck != settings_.MaximumInBuildReplicasPerNodeConstraintCheckThrottle.end())
+                    {
+                        phaseConcurrentBuilds = throttlingLimitConstraintCheck->second;
+                    }
+                }
+                break;
+            default:
+                break;
+            }
+
+            maxConcurrentBuilds = min(globalConcurrentBuilds, phaseConcurrentBuilds);
+            if (maxConcurrentBuilds != INT_MAX)
+            {
+                // If this node already had throttling or node capacity, node placements were created.
+                if (!node.HasCapacity && node.MaxConcurrentBuilds == 0)
+                {
+                    recreateNodePlacements = true;
+                }
+                balanceChecker_->UpdateNodeThrottlingLimit(node.NodeIndex, maxConcurrentBuilds);
+                throttlingNeeded = true;
+            }
+        }
+    }
+    if (throttlingNeeded)
+    {
+        throttlingConstraintPriority_ = ThrottlingConstraint::GetPriority(action_);
+    }
+    if (recreateNodePlacements)
+    {
+        // We need to recreate node placements since throttling limits have changed.
+        nodePlacements_.Clear();
+        CreateNodePlacement();
+    }
+}
+
 void Placement::PrepareServices()
 {
     for (auto itService = services_.begin(); itService != services_.end(); ++itService)
     {
         itService->RefreshIsBalanced();
-
-        // Increase placement movement slots during singleton replica upgrades,
-        // as for some partitions (e.g. which do not have new replicas),
-        // movement will be generated instead of creation
-        if (settings_.CheckAffinityForUpgradePlacement &&
-            itService->HasAffinityAssociatedSingletonReplicaInUpgrade &&
-            itService->DependentServices.size() > 0)
-        {
-            for (auto itChildService = (itService->DependentServices).begin();
-                itChildService != (itService->DependentServices).end(); ++itChildService)
-            {
-                const_cast<ServiceEntry*>(*itChildService)->HasAffinityAssociatedSingletonReplicaInUpgrade = true;
-                partitionsInUpgradePlacementCount_ += (*itChildService)->Partitions.size();
-            }
-        }
     }
 }
 
@@ -316,13 +417,27 @@ void Placement::PreparePartitions()
 
         serviceEntry.AddPartition(&partition);
 
+        // Increase placement movement slots during singleton replica upgrades,
+        // for partitions which do not have new replicas, but are in affinity correlation,
+        // with partitions in single replica upgrade
+        if (settings_.CheckAffinityForUpgradePlacement &&
+            partition.IsTargetOne &&                                                             // It is single replica service
+            !partition.IsInSingleReplicaUpgrade &&                                               // Partition is not in upgrade
+            ((serviceEntry.DependedService != nullptr &&                                         // Service has a parent service
+                serviceEntry.DependedService->HasAffinityAssociatedSingletonReplicaInUpgrade) || //    which has correlation with singleton upgrade
+            (serviceEntry.DependentServices.size() > 0 &&                                        // Service is parent service
+                serviceEntry.HasAffinityAssociatedSingletonReplicaInUpgrade)))                   //    which is in singleton upgrade correlation
+        {
+            serviceEntry.HasAffinityAssociatedSingletonReplicaInUpgrade = true;
+            partitionsInUpgradePlacementCount_++;
+        }
 
         // If partition belongs to the application which has singleton replicas in upgrade,
         // but it hasn't received request for additional replica yet (or it is stateless),
         // and relaxed scaleout during upgrade should be performed,
         // increase the required movement count for placement
         if (settings_.RelaxScaleoutConstraintDuringUpgrade &&
-            partition.IsTargetOne &&                                           // It is single replica service
+            partition.IsTargetOne &&                                                    // It is single replica service
             partition.Service->Application != nullptr &&                                // Partition has application
             partition.Service->Application->HasPartitionsInSingletonReplicaUpgrade &&   // Application has at least one partition in upgrade
             !partition.IsInSingleReplicaUpgrade)                                        // Partition is not in upgrade
@@ -349,7 +464,7 @@ void Placement::PreparePartitions()
 
         if (!serviceEntry.DependentServices.empty())
         {
-            ASSERT_IFNOT(partition.Order == 0, "Parent partition should have order 0");
+            ASSERT_IFNOT(partition.Order < 2, "Parent partition should have order 0 or 1.");
             parentPartitions_.push_back(&partition);
         }
 
@@ -1013,10 +1128,6 @@ void Placement::CreateReplicaPlacement()
         }
 
         NodeEntry const* n = r->Node;
-        if (n->HasCapacity)
-        {
-            nodePlacements_[n].Add(r);
-        }
 
         partitionPlacements_[r->Partition].Add(n, r);
 
@@ -1041,11 +1152,6 @@ void Placement::CreateReplicaPlacement()
         auto r = it->get();
         NodeEntry const* n = r->Node;
 
-        if (n->HasCapacity)
-        {
-            nodePlacements_[n].Add(r);
-        }
-
         ApplicationEntry const* app = r->Partition->Service->Application;
         if (app && app->HasScaleoutOrCapacity)
         {
@@ -1059,6 +1165,35 @@ void Placement::CreateReplicaPlacement()
         if (nullptr != servicePackage)
         {
             servicePackagePlacements_.AddReplicaToNode(servicePackage, r->Node, r);
+        }
+    }
+}
+
+void Placement::CreateNodePlacement()
+{
+    for (auto it = allReplicas_.begin(); it != allReplicas_.end(); ++it)
+    {
+        auto r = it->get();
+        if (r->IsNew)
+        {
+            continue;
+        }
+
+        NodeEntry const* n = r->Node;
+        if (n->HasCapacity || n->IsThrottled)
+        {
+            nodePlacements_[n].Add(r);
+        }
+    }
+
+    for (auto it = standByReplicas_.begin(); it != standByReplicas_.end(); ++it)
+    {
+        auto r = it->get();
+        NodeEntry const* n = r->Node;
+
+        if (n->HasCapacity || n->IsThrottled)
+        {
+            nodePlacements_[n].Add(r);
         }
     }
 }

@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <ProjectGuid>{C7AE5389-5609-43C1-BC39-EB7A52FE5DDD}</ProjectGuid>
+    <RootNamespace>FabricDCA.Test</RootNamespace>
+    <AssemblyName>FabricDCATests</AssemblyName>
+    <OutputType>Library</OutputType>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ContainerManagerTests.cs" />
+    <Compile Include="AppInstanceEtwDataReaderTests.cs" />
+    <Compile Include="AzureBlobEtwUploaderTests.cs" />
+    <Compile Include="BootstrapTraceProcessorTests.cs" />
+    <Compile Include="DcaSettingsTest.cs" />
+    <Compile Include="DiskSpaceManagerTests.cs" />
+    <Compile Include="EtlInMemoryProducerTests.cs" />
+    <Compile Include="EtlProducerTests.cs" />
+    <Compile Include="EtlReaderTests.cs" />
+    <Compile Include="EtlToCsvFileWriterTests.cs" />
+    <Compile Include="MdsFileUploaderTests.cs" />
+    <Compile Include="TelemetrySchedulerTests.cs" />
+    <Compile Include="TestUtility.cs" />
+    <Compile Include="_friends.cs" />
+    <Compile Include="ErrorAndWarningFreeTraceEventSource.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgWinFab_Test_KeyVaultWrapper_retail)\lib\net45\KeyVaultWrapper\KeyVaultWrapper.dll" />
+    <Reference Include="$(PkgGenevaMonitoringAgentLibs)\lib\net40\Microsoft.Cis.Monitoring.Query.dll" />
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <ProjectReference Include="..\product\host\exe\FabricDCA.csproj">
+      <Project>{E2A033DA-A524-49EB-A65C-2125F88E3581}</Project>
+      <Name>FabricDCA</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\EtlReader\EtlReader.csproj">
+      <Project>{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}</Project>
+      <Name>EtlReader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\product\plugins\azure\blobetw\dll\AzureBlobEtwUploader.csproj">
+      <Project>{b4b48eaa-ef54-4353-9154-94a6339bf01e}</Project>
+      <Name>AzureBlobEtwUploader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\product\plugins\azure\common\dll\AzureUploaderCommon.csproj">
+      <Project>{24f2befb-c57a-4c2e-99da-3c0335410f99}</Project>
+      <Name>AzureUploaderCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\product\plugins\etlinmemoryproducer\dll\EtlInMemoryProducer.csproj">
+      <Project>{2661a99b-1614-4f88-aaae-95b727985421}</Project>
+      <Name>EtlInMemoryProducer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\product\plugins\etlproducer\dll\EtlProducer.csproj">
+      <Project>{0b59ccf4-3802-4835-9cf0-7bee689a54c9}</Project>
+      <Name>EtlProducer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\product\plugins\mdsfileproducer\dll\MdsFileProducer.csproj">
+      <Project>{a7eb3ae1-2e80-4de4-bd9f-4b57a38d0a03}</Project>
+      <Name>MdsFileProducer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\product\system.fabric.dca\dll\System.Fabric.Dca.csproj">
+      <Project>{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}</Project>
+      <Name>System.Fabric.Dca</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+    <Reference Include="$(PkgMoq)\lib\net45\moq.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+    <None Include="$(PkgWinFab_Test_DcaTestArtifacts)\Data\TESTfabric_traces_5.0.217.100_131067946309401178_1.etl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(PkgWinFab_Test_DcaTestArtifacts)\Data\TESTfabric_traces_5.0.217.100_131067946415674592_1.etl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(PkgWinFab_Test_DcaTestArtifacts)\Manifests\Microsoft-ServiceFabric-Events.man">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(PkgWinFab_Test_DcaTestArtifacts)\Manifests\Microsoft-ServiceFabric-KtlEvents.man">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(PkgWinFab_Test_DcaTestArtifacts)\Manifests\Microsoft-ServiceFabric-LeaseEvents.man">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(PkgWinFab_Test_DcaTestArtifacts)\Manifests\Microsoft-ServiceFabric-ManagedEvents.man">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(PkgWinFab_Test_DcaTestArtifacts)\OutputData\abcd_TESTfabric_traces_5.0.217.100_131067946309401178_1_00635979178415551944_2147483647.dtr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(PkgWinFab_Test_DcaTestArtifacts)\OutputData\abcd_TESTfabric_traces_5.0.217.100_131067946415674592_1_00635979178519489535_2147483647.dtr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    -->
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)\**\*.*" Exclude="$(OutputPath)\**\*.pdb;$(OutputPath)\**\*.lib;$(OutputPath)\EtlProducerTests\**\*.*" />
+      <SymbolFiles Include="$(OutputPath)\*.pdb" />
+      <TestArtifacts Include="$(PkgWinFab_Test_DcaTestArtifacts)\**\*.*" Exclude="$(PkgWinFab_Test_DcaTestArtifacts)\**\*.nupkg" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(TestArtifacts)" DestinationFiles="@(TestArtifacts->'$(OutputPath)\DcaTestArtifacts\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(TestArtifacts)" DestinationFiles="@(TestArtifacts->'$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\DcaTestArtifacts\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

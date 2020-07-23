@@ -82,6 +82,14 @@ private:
         case QueryNames::GetCodePackageListDeployedOnNode:
             error = owner_.GetCodePackageListDeployedOnNode(queryArgs_, activityId_, result);
             break;
+        case QueryNames::GetDeployedNetworkList:
+            error = ProcessGetDeployedNetworkListAsync(thisSPtr);
+            completeAsyncOperation = error.IsSuccess() ? false : true;
+            break;
+        case QueryNames::GetDeployedNetworkCodePackageList:
+            error = ProcessGetDeployedNetworkCodePackageListAsync(thisSPtr);
+            completeAsyncOperation = error.IsSuccess() ? false : true;
+            break;
         case QueryNames::GetContainerInfoDeployedOnNode:
             error = ProcessGetContainerInfoAsync(thisSPtr);
             completeAsyncOperation = error.IsSuccess() ? false : true;
@@ -449,9 +457,276 @@ private:
         TryComplete(operation->Parent, error);
     }
 
+    ErrorCode ProcessGetDeployedNetworkCodePackageListAsync(AsyncOperationSPtr const & thisSPtr)
+    {
+        WriteInfo(
+            TraceType,
+            owner_.Root.TraceId,
+            "{0}: GetDeployedNetworkCodePackageList",
+            activityId_);
+
+        wstring applicationNameArgument;
+        queryArgs_.TryGetValue(QueryResourceProperties::Application::ApplicationName, applicationNameArgument);
+        
+        wstring serviceManifestNameArgument;
+        queryArgs_.TryGetValue(QueryResourceProperties::ServiceManifest::ServiceManifestName, serviceManifestNameArgument);
+
+        Application2SPtr applicationEntry;
+        auto error = owner_.GetApplicationEntry(applicationNameArgument, activityId_, applicationEntry);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        vector<ServicePackage2SPtr> servicePackages;
+        error = owner_.GetServicePackages(applicationEntry, serviceManifestNameArgument, activityId_, servicePackages);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        vector<wstring> servicePackageIds;
+        for (auto const & servicePackage : servicePackages)
+        {
+            servicePackageIds.push_back(servicePackage->Id.ToString());
+        }
+
+        wstring codePackageNameArgument;
+        queryArgs_.TryGetValue(QueryResourceProperties::CodePackage::CodePackageName, codePackageNameArgument);
+
+        wstring networkNameArgument;
+        queryArgs_.TryGetValue(QueryResourceProperties::Network::NetworkName, networkNameArgument);
+
+        vector<VersionedServicePackageSPtr> versionedServicePackages;
+        for (auto servicePackageIter = servicePackages.begin(); servicePackageIter != servicePackages.end(); ++servicePackageIter)
+        {
+            VersionedServicePackageSPtr versionedServicePackage = (*servicePackageIter)->GetVersionedServicePackage();
+            if (!versionedServicePackage)
+            {
+                WriteInfo(
+                    TraceType,
+                    owner_.Root.TraceId,
+                    "{0}: GetVersionedServicePackage for service package {1} failed",
+                    activityId_,
+                    serviceManifestNameArgument);
+                continue;
+            }
+
+            versionedServicePackages.push_back(versionedServicePackage);
+        }
+
+        std::map<std::wstring, std::wstring> codePackageInstanceAppHostMap;
+        std::map<std::wstring, CodePackageSPtr> codePackageInstanceCodePackageMap;
+        for (auto versionedServicePackageIter = versionedServicePackages.begin(); versionedServicePackageIter != versionedServicePackages.end(); ++versionedServicePackageIter)
+        {
+            vector<CodePackageSPtr> codePackages = (*versionedServicePackageIter)->GetCodePackages(codePackageNameArgument);
+            for (auto const & codePackage : codePackages)
+            {
+                auto codePackageInstanceId = codePackage->CodePackageInstanceId.ToString();
+                codePackageInstanceCodePackageMap[codePackageInstanceId] = codePackage;
+
+                ApplicationHostProxySPtr hostProxy;
+                error = owner_.hosting_.ApplicationHostManagerObj->FindApplicationHost(codePackageInstanceId, hostProxy);
+                if (error.IsSuccess())
+                {
+                    codePackageInstanceAppHostMap[codePackageInstanceId] = hostProxy->HostId;
+                }
+            }
+        }
+
+        auto operation = owner_.hosting_.FabricActivatorClientObj->BeginGetNetworkDeployedPackages(
+            servicePackageIds,
+            codePackageNameArgument,
+            networkNameArgument,
+            owner_.hosting_.NodeId,
+            codePackageInstanceAppHostMap,
+            this->get_RemainingTime(),
+            [this, codePackageInstanceCodePackageMap](AsyncOperationSPtr const & operation) {
+            OnGetNetworkDeployedPackagesCompleted(operation, codePackageInstanceCodePackageMap, false); },
+            thisSPtr);
+        OnGetNetworkDeployedPackagesCompleted(operation, codePackageInstanceCodePackageMap, true);
+
+        return ErrorCode();
+    }
+
+    void OnGetNetworkDeployedPackagesCompleted(
+        AsyncOperationSPtr operation, 
+        std::map<std::wstring, CodePackageSPtr> codePackageInstanceCodePackageMap, 
+        bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        std::map<std::wstring, std::map<std::wstring, std::vector<std::wstring>>> networkReservedCodePackages;
+        std::map<std::wstring, std::map<std::wstring, std::wstring>> codePackageInstanceIdentifierContainerInfoMap;
+        auto error = owner_.hosting_.FabricActivatorClientObj->EndGetNetworkDeployedPackages(operation, networkReservedCodePackages, codePackageInstanceIdentifierContainerInfoMap);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.Root.TraceId,
+            "End(GetNetworkDeployedPackagesCompleted): ErrorCode={0}",
+            error);
+
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+        }
+
+        std::vector<DeployedNetworkCodePackageQueryResult> deployedNetworkCodePackageQueryResultList;
+        for (auto const & network : networkReservedCodePackages)
+        {
+            auto networkName = network.first;
+            for (auto const & service : network.second)
+            {
+                ServicePackageInstanceIdentifier servicePackageInstanceIdentifier;
+                auto spError = ServicePackageInstanceIdentifier::FromString(service.first, __out servicePackageInstanceIdentifier);
+                if (!spError.IsSuccess())
+                {
+                    continue;
+                }
+
+                for (auto const & cp : service.second)
+                {
+                    CodePackageInstanceIdentifier codePackageInstanceIdentifier(servicePackageInstanceIdentifier, cp);
+                    wstring codePackageInstanceIdentifierStr = codePackageInstanceIdentifier.ToString();
+
+                    wstring containerId = L"";
+                    wstring containerAddress = L"";
+                    auto cpInstanceIter = codePackageInstanceIdentifierContainerInfoMap.find(codePackageInstanceIdentifierStr);
+                    if (cpInstanceIter != codePackageInstanceIdentifierContainerInfoMap.end())
+                    {
+                        if (!cpInstanceIter->second.empty())
+                        {
+                            auto containerInfoMap = cpInstanceIter->second.begin();
+                            containerId = containerInfoMap->first;
+                            containerAddress = containerInfoMap->second;
+                        }
+                    }
+
+                    wstring applicationName = L"";
+                    wstring codePackageName = L"";
+                    wstring codePackageVersion = L"";
+                    wstring serviceManifestName = L"";
+                    wstring servicePackageActivationId = L"";
+                    auto cpIter = codePackageInstanceCodePackageMap.find(codePackageInstanceIdentifierStr);
+                    if (cpIter != codePackageInstanceCodePackageMap.end())
+                    {
+                        applicationName = cpIter->second->Context.ApplicationName;
+                        codePackageName = cpIter->second->Description.CodePackage.Name;
+                        codePackageVersion = cpIter->second->Description.CodePackage.Version;
+                        serviceManifestName = cpIter->second->CodePackageInstanceId.ServicePackageInstanceId.ServicePackageName;
+                        servicePackageActivationId = cpIter->second->CodePackageInstanceId.ServicePackageInstanceId.PublicActivationId;
+                    }
+
+                    DeployedNetworkCodePackageQueryResult deployedNetworkCodePackageQueryResult(
+                        applicationName,
+                        networkName,
+                        codePackageName,
+                        codePackageVersion,
+                        serviceManifestName,
+                        servicePackageActivationId,
+                        containerId,
+                        containerAddress);
+
+                    deployedNetworkCodePackageQueryResultList.push_back(move(deployedNetworkCodePackageQueryResult));
+                }
+            }
+        }
+
+        wstring resultTraceString;
+        for (auto iter = deployedNetworkCodePackageQueryResultList.begin(); iter != deployedNetworkCodePackageQueryResultList.end(); ++iter)
+        {
+            resultTraceString.append(wformatString("\r\n{0}", iter->ToString()));
+        }
+
+        WriteNoise(
+            TraceType,
+            owner_.Root.TraceId,
+            "GetNetworkDeployedPackagesDeployedOnNode[{0}]: Result:{1}",
+            activityId_,
+            resultTraceString);
+
+        auto queryResult = QueryResult(move(deployedNetworkCodePackageQueryResultList));
+        reply_ = make_unique<Message>(queryResult);
+        TryComplete(operation->Parent, ErrorCode::Success());
+    }
+
+    ErrorCode ProcessGetDeployedNetworkListAsync(AsyncOperationSPtr const & thisSPtr)
+    {
+        wstring networkTypeArgument;
+        queryArgs_.TryGetValue(QueryResourceProperties::Network::NetworkType, networkTypeArgument);
+
+        NetworkType::Enum networkType;
+        if (!networkTypeArgument.empty())
+        {
+            NetworkType::FromString(networkTypeArgument, __out networkType);
+        }
+        else
+        {
+            networkType = NetworkType::Enum::Open | NetworkType::Enum::Isolated;
+        }
+
+        auto operation = owner_.hosting_.FabricActivatorClientObj->BeginGetDeployedNetworks(
+            networkType,
+            this->get_RemainingTime(),
+            [this](AsyncOperationSPtr const & operation) {
+            OnGetDeployedNetworkListCompleted(operation, false); },
+            thisSPtr);
+        OnGetDeployedNetworkListCompleted(operation, true);
+
+        return ErrorCode();
+    }
+
+    void OnGetDeployedNetworkListCompleted(
+        AsyncOperationSPtr operation,
+        bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        std::vector<std::wstring> networkNames;
+        auto error = owner_.hosting_.FabricActivatorClientObj->EndGetDeployedNetworks(operation, networkNames);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.Root.TraceId,
+            "End(GetDeployedNetworkListCompleted): ErrorCode={0}",
+            error);
+
+        std::vector<DeployedNetworkQueryResult> deployedNetworkQueryResultList;
+        for (auto const & networkName : networkNames)
+        {
+            DeployedNetworkQueryResult result(networkName);
+            deployedNetworkQueryResultList.push_back(move(result));
+        }
+
+        wstring resultTraceString;
+        for (auto iter = deployedNetworkQueryResultList.begin(); iter != deployedNetworkQueryResultList.end(); ++iter)
+        {
+            resultTraceString.append(wformatString("\r\n{0}", iter->ToString()));
+        }
+
+        WriteNoise(
+            TraceType,
+            owner_.Root.TraceId,
+            "GetDeployedNetworkListDeployedOnNode[{0}]: Result:{1}",
+            activityId_,
+            resultTraceString);
+
+        auto queryResult = QueryResult(move(deployedNetworkQueryResultList));
+        reply_ = make_unique<Message>(queryResult);
+        TryComplete(operation->Parent, ErrorCode::Success());
+    }
+
     ServiceModel::QueryArgumentMap queryArgs_;
     Query::QueryNames::Enum queryName_;
-    Common::ActivityId const &activityId_;
+    Common::ActivityId const & activityId_;
     HostingQueryManager & owner_;
     Transport::MessageUPtr reply_;
 };
@@ -831,8 +1106,8 @@ ErrorCode HostingQueryManager::GetApplicationPagedListDeployedOnNode(
         return error;
     }
 
-    unique_ptr<QueryPagingDescription> pagingDescription;
-    queryDescription.MovePagingDescription(pagingDescription);
+    QueryPagingDescriptionUPtr pagingDescription;
+    queryDescription.TakePagingDescription(pagingDescription);
 
     // Create list to store only the results we want to return
     ListPager<DeployedApplicationQueryResult> deployadeApplicationResultList;

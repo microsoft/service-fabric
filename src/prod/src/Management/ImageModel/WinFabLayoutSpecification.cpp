@@ -58,7 +58,7 @@ wstring WinFabStoreLayoutSpecification::GetPatchFileName(wstring const & version
 #if defined(PLATFORM_UNIX)
         Common::LinuxPackageManagerType::Enum packageManagerType;
         auto error = FabricEnvironment::GetLinuxPackageManagerType(packageManagerType);
-        ASSERT_IF(!error.IsSuccess(), "GetLinuxPackageManagerType failed. Type: {0}", packageManagerType);
+        ASSERT_IF(!error.IsSuccess(), "GetLinuxPackageManagerType failed. Type: {0}. Error: {1}", packageManagerType, error);
         CODING_ERROR_ASSERT(packageManagerType != Common::LinuxPackageManagerType::Enum::Unknown);
         switch (packageManagerType)
         {

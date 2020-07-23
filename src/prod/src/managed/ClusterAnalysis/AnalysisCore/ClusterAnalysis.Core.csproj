@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{9A8BCB7D-AE32-42A2-9DB5-529A81B932C1}</ProjectGuid>
+    <RootNamespace>ClusterAnalysis.Core</RootNamespace>
+    <ResourcesFileName>StringResources</ResourcesFileName>
+    <ResourcesClassName>$(ResourcesFileName)</ResourcesClassName>
+    <AssemblyName>ClusterAnalysis.Core</AssemblyName>
+    <OutputType>Library</OutputType>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BinaryPackagePath>.\$(BinaryPackageName)</BinaryPackagePath>
+    <BinaryPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\ClusterAnalysis</BinaryPackageDropPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\Common\ClusterAnalysis.Common.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\TraceAccessLayer\ClusterAnalysis.TraceAccessLayer.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Threading.Tasks" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="$(PkgSystem_Spatial)\lib\net40\System.Spatial.dll" />
+    <Reference Include="$(PkgMicrosoft_Tpl_Dataflow_4_5_23)\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(IntermediateOutputPath)Strings.cs" />
+    <Compile Include="Callback\BaseCallbackStore.cs" />
+    <Compile Include="Callback\Exceptions\CallbackNotRegisteredException.cs" />
+    <Compile Include="Callback\Exceptions\DuplicateSignalRecordException.cs" />
+    <Compile Include="Callback\Exceptions\SignalDispatchException.cs" />
+    <Compile Include="Callback\Exceptions\CallbackStoreBookmarkMissingException.cs" />
+    <Compile Include="Callback\Exceptions\TraceNotAvailableException.cs" />
+    <Compile Include="Callback\Extensions.cs" />
+    <Compile Include="Callback\ICallbackStore.cs" />
+    <Compile Include="Callback\NotifyFilter.cs" />
+    <Compile Include="Callback\Scenario.cs" />
+    <Compile Include="Callback\ScenarioData.cs" />
+    <Compile Include="Callback\SimpleCallbackStore.cs" />
+    <Compile Include="ClusterEntityDescription\ApplicationEntity.cs" />
+    <Compile Include="ClusterEntityDescription\ClusterEntity.cs" />
+    <Compile Include="ClusterEntityDescription\DeployedApplicationEntity.cs" />
+    <Compile Include="ClusterEntityDescription\DeployedCodePackageEntity.cs" />
+    <Compile Include="ClusterEntityDescription\DeployedServicePackageEntity.cs" />
+    <Compile Include="ClusterEntityDescription\EntityHealthEntity.cs" />
+    <Compile Include="ClusterEntityDescription\HealthEventEntity.cs" />
+    <Compile Include="ClusterEntityDescription\HealthInformationEntity.cs" />
+    <Compile Include="ClusterEntityDescription\BaseEntity.cs" />
+    <Compile Include="ClusterEntityDescription\NodeEntity.cs" />
+    <Compile Include="ClusterEntityDescription\PartitionEntity.cs" />
+    <Compile Include="ClusterEntityDescription\ReplicaEntity.cs" />
+    <Compile Include="ClusterEntityDescription\ServiceEntity.cs" />
+    <Compile Include="ClusterQuery\ClusterQuery.cs" />
+    <Compile Include="ClusterQuery\IClusterQuery.cs" />
+    <Compile Include="ClusterQuery\HealthQueryHelper.cs" />
+    <Compile Include="Exceptions\ClusterAnalysisAlreadyStartedException.cs" />
+    <Compile Include="Exceptions\ClusterAnalysisAlreadyStoppedException.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Helpers\FabricClientRetryErrors.cs" />
+    <Compile Include="Helpers\FabricClientRetryHelper.cs" />
+    <Compile Include="Helpers\HttpServiceClientHandler.cs" />
+    <Compile Include="Helpers\HttpServiceUriBuilder.cs" />
+    <Compile Include="Helpers\InsightsUtil.cs" />
+    <Compile Include="Insights\Agents\Agent.cs" />
+    <Compile Include="Insights\Agents\AgentConstants.cs" />
+    <Compile Include="Insights\Agents\AgentDirectory.cs" />
+    <Compile Include="Insights\Agents\AgentIdentifier.cs" />
+    <Compile Include="Insights\Agents\AgentTypes.cs" />
+    <Compile Include="Insights\Agents\AnalysisMetadata.cs" />
+    <Compile Include="Insights\Agents\AnalysisSchedulingInformation.cs" />
+    <Compile Include="Insights\Agents\AnalysisStatus.cs" />
+    <Compile Include="Insights\Agents\AnalysisScheduler.cs" />
+    <Compile Include="Insights\Agents\Continuation.cs" />
+    <Compile Include="Insights\Agents\InterestFilter.cs" />
+    <Compile Include="Insights\Agents\ProgressTracker.cs" />
+    <Compile Include="Insights\Agents\StopOptions.cs" />
+    <Compile Include="Insights\AnalysisEvents\FabricAnalysisEvent.cs" />
+    <Compile Include="Insights\BaseInsightGenerator.cs" />
+    <Compile Include="Insights\AnalysisContainer.cs" />
+    <Compile Include="Insights\ClusterEntityExtractor.cs" />
+    <Compile Include="Insights\ClusterLevelInsight\ClusterInsightGenerator.cs" />
+    <Compile Include="Insights\ConsumeOptions.cs" />
+    <Compile Include="Exceptions\SignalAlreadyPresentException.cs" />
+    <Compile Include="Insights\IAnalysisConsumer.cs" />
+    <Compile Include="Insights\IAnalysisEventTraceWriter.cs" />
+    <Compile Include="Insights\NodeInsight\NodeInsightGenerator.cs" />
+    <Compile Include="Insights\PartitionInsight\ReconfigAnalysisAgentConfig.cs" />
+    <Compile Include="Insights\Agents\TimeTriggeredAgent.cs" />
+    <Compile Include="Insights\Fix\IFix.cs" />
+    <Compile Include="Insights\Fix\FixContainer.cs" />
+    <Compile Include="Insights\Fix\SimpleFix.cs" />
+    <Compile Include="Insights\IInsightGenerator.cs" />
+    <Compile Include="ClusterAnalysisEngine.cs" />
+    <Compile Include="Insights\InsightType.cs" />
+    <Compile Include="Insights\NodeInfo.cs" />
+    <Compile Include="Insights\PartitionInsight\PartitionInsightGenerator.cs" />
+    <Compile Include="Insights\PartitionInsight\ReconfigAnalysisAgent.cs" />
+    <Compile Include="Insights\PartitionInsight\ReconfigurationAnalysisEvent.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\IPrimaryMoveAnalysisQueryStoreReader.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\IPrimaryReplicaContextPersistentStore.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryMoveAnalysisAgent.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryMoveAnalysisAgentConfig.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryMoveAnalysisEvent.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryMoveAnalysisQueryStoreReaderWrapper.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryMoveReason.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryReplicaContext.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryReplicaContextConstants.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryReplicaContextPersistentStoreWrapper.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\IPrimaryMoveAnalysisEventStoreReader.cs" />
+    <Compile Include="Insights\PartitionInsight\PrimaryMoveAnalysis\PrimaryMoveAnalysisEventStoreReaderWrapper.cs" />
+    <Compile Include="Insights\RootCause\IRootCause.cs" />
+    <Compile Include="Insights\RootCause\ReplicaOpenFailed.cs" />
+    <Compile Include="Insights\RootCause\RootCauseContainer.cs" />
+    <Compile Include="Insights\RootCause\SimpleRootCause.cs" />
+    <Compile Include="Insights\RootCause\NodeDown.cs" />
+    <Compile Include="Helpers\StoreExtensions.cs" />
+    <Compile Include="_friends.cs" />
+    <EmbeddedResource Include="Strings.resx">
+      <LogicalName>$(RootNamespace).Strings.resources</LogicalName>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Insights\Readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Insights\ReplicaInsight\" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="BeforeResGen" Inputs="Strings.resx" Outputs="$(IntermediateOutputPath)Strings.cs">
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe Strings.resx $(IntermediateOutputPath)$(RootNamespace).Strings.resources /str:csharp,$(RootNamespace),Strings,$(IntermediateOutputPath)Strings.cs" />
+  </Target>
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinaryPackageDropPath)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+</Project>

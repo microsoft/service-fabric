@@ -28,7 +28,7 @@ namespace System.Fabric.FabricDeployer
         /// Setting up a docker network needs the following steps:
         /// 1) Stopping the Docker NT service
         /// 2) Stopping the dockerd process
-        /// 3) Starting the dockerd process on localhost:2375
+        /// 3) Starting the dockerd process on provided container service arguments
         /// 4) Saving routing table information
         /// 5) Getting subnet and gateway information from nm agent
         /// 6) Creating docker network
@@ -48,112 +48,93 @@ namespace System.Fabric.FabricDeployer
         internal void ExecuteOperation(DeploymentParameters parameters, ClusterManifestType clusterManifest, Infrastructure infrastructure)
         {
 #if !DotNetCoreClrLinux
-
-            if (clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructureWindowsAzure ||
-                clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructurePaaS)
-            {
-                if (parameters.ContainerNetworkSetup)
-                {
-                    if (Utility.IsContainersFeaturePresent())
-                    {
-                        if (IsContainerServiceInstalled())
-                        {
-                            if (IsWireServerAvailable())
-                            {
-                                var networkName = (!string.IsNullOrEmpty(parameters.ContainerNetworkName)) ? (parameters.ContainerNetworkName) : (FlatNetworkConstants.NetworkName);
-
-                                DeployerTrace.WriteInfo("Container network set up invoked in context: {0}", parameters.Operation);
-
-                                bool containerServiceRunningOnCustomPort = false;
-                                if (parameters.Operation == DeploymentOperations.Update || parameters.Operation == DeploymentOperations.UpdateInstanceId)
-                                {
-                                    containerServiceRunningOnCustomPort = IsContainerServiceRunning();
-                                    DeployerTrace.WriteInfo("Container service running on custom port: {0}", containerServiceRunningOnCustomPort);
-                                }
-
-                                if (SetupContainerNetwork(networkName, containerServiceRunningOnCustomPort))
-                                {
-                                    DeployerTrace.WriteInfo("Successfully set up container network.");
-                                }
-                                else
-                                {
-                                    DeployerTrace.WriteError("Failed to set up container network.");
-                                    throw new InvalidDeploymentException("Failed to set up container network.");
-                                }
-                            }
-                            else
-                            {
-                                DeployerTrace.WriteInfo("Skipping container network set up since wire server is not available.");
-                            }
-                        }
-                        else
-                        {
-                            DeployerTrace.WriteInfo("Skipping container network set up since containers service is not installed.");
-                        }
-                    }
-                    else
-                    {
-                        DeployerTrace.WriteInfo("Skipping container network set up since containers feature has been disabled.");
-                    }
-                }
-                else
-                {
-                    DeployerTrace.WriteInfo("Skipping container network set up since it has been disabled.");
-                }
-            }
-            else
-            {
-                DeployerTrace.WriteInfo("Skipping container network set up since we are not on Azure.");
-            }
+            if (!(clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructureWindowsAzure) &&
+                !(clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructurePaaS))
 #else
-            if (clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructurePaaS)
-            {
-                if (parameters.ContainerNetworkSetup)
-                {
-                    var networkName = (!string.IsNullOrEmpty(parameters.ContainerNetworkName)) ? (parameters.ContainerNetworkName) : (FlatNetworkConstants.NetworkName);
-
-                    DeployerTrace.WriteInfo("Container network set up invoked in context: {0}", parameters.Operation);
-
-                    bool containerServiceRunningOnCustomPort = false;
-                    if (parameters.Operation == DeploymentOperations.Update || parameters.Operation == DeploymentOperations.UpdateInstanceId)
-                    {
-                        containerServiceRunningOnCustomPort = IsContainerServiceRunning();
-                        DeployerTrace.WriteInfo("Container service running on custom port: {0}", containerServiceRunningOnCustomPort);
-                    }
-
-                    if (SetupContainerNetwork(networkName, parameters.FabricBinRoot, containerServiceRunningOnCustomPort))
-                    {
-                        DeployerTrace.WriteInfo("Successfully set up container network.");
-                    }
-                    else
-                    {
-                        DeployerTrace.WriteError("Failed to set up container network.");
-                        throw new InvalidDeploymentException("Failed to set up container network.");
-                    }
-                }
-                else
-                {
-                    DeployerTrace.WriteInfo("Skipping container network set up since it has been disabled.");
-                }
-            }
-            else
+            if (!(clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructurePaaS))
+#endif            
             {
                 DeployerTrace.WriteInfo("Skipping container network set up since we are not on Azure.");
+                return;
+            }
+
+            if (!parameters.ContainerNetworkSetup)
+            {
+                DeployerTrace.WriteInfo("Skipping container network set up since it has been disabled.");
+                return;
+            }
+
+            if (!Utility.IsContainersFeaturePresent())
+            {
+                DeployerTrace.WriteInfo("Skipping container network set up since containers feature has been disabled.");
+                return;
+            }
+
+            if (!Utility.IsContainerServiceInstalled())
+            {
+                DeployerTrace.WriteInfo("Skipping container network set up since containers service is not installed.");
+                return;
+            }
+
+#if !DotNetCoreClrLinux
+            if (!Utility.IsContainerNTServicePresent())
+            {
+                DeployerTrace.WriteInfo("Skipping container network setup up since containers NT service is not installed.");
+                return;
             }
 #endif
+
+            if (!IsWireServerAvailable())
+            {
+                DeployerTrace.WriteInfo("Skipping container network set up since wire server is not available.");
+                return;
+            }
+
+            var networkName = (!string.IsNullOrEmpty(parameters.ContainerNetworkName)) ? (parameters.ContainerNetworkName)
+                : (FlatNetworkConstants.NetworkName);
+
+            var containerServiceArguments = (parameters.UseContainerServiceArguments) ? (parameters.ContainerServiceArguments) 
+                : (FlatNetworkConstants.ContainerServiceArguments);
+
+            DeployerTrace.WriteInfo("Container network set up invoked in context: {0}", parameters.Operation);
+
+            bool containerServiceRunning = false;
+            if (parameters.Operation == DeploymentOperations.Update || parameters.Operation == DeploymentOperations.UpdateInstanceId)
+            {
+                containerServiceRunning = IsContainerServiceRunning();
+                DeployerTrace.WriteInfo("Container service running : {0}", containerServiceRunning);
+            }
+
+#if !DotNetCoreClrLinux
+            containerServiceArguments = (parameters.EnableContainerServiceDebugMode) 
+                ? (string.Format("{0} {1}", containerServiceArguments, FlatNetworkConstants.ContainerProviderServiceDebugModeArg))
+                : containerServiceArguments;
+            if (SetupContainerNetwork(networkName, containerServiceArguments, parameters.FabricDataRoot, containerServiceRunning))
+#else
+            if (SetupContainerNetwork(networkName, containerServiceArguments, parameters.FabricDataRoot, parameters.FabricBinRoot, containerServiceRunning))
+#endif
+            {
+                DeployerTrace.WriteInfo("Successfully set up container network.");
+            }
+            else
+            {
+                string message = "Failed to set up container network.";
+                DeployerTrace.WriteError(message);
+                throw new InvalidDeploymentException(message);
+            }
         }
 
 #if DotNetCoreClrLinux
-        private bool SetupContainerNetwork(string networkName, string fabricBinRoot, bool containerServiceRunningOnCustomPort)
+        private bool SetupContainerNetwork(string networkName, string containerServiceArguments, string fabricDataRoot, string fabricBinRoot, bool containerServiceRunning)
         {
             bool success = false;
 
             bool containerServiceStopped = false;
             if (InstallNetworkDriver(fabricBinRoot))
             {
-                if (StopContainerService(containerServiceRunningOnCustomPort, out containerServiceStopped))
+                if (StopContainerService(containerServiceRunning, out containerServiceStopped))
                 {
-                    if (StartContainerProcess(containerServiceRunningOnCustomPort))
+                    if (StartContainerProcess(containerServiceArguments, fabricDataRoot, containerServiceRunning))
                     {
                         if (CreateNetwork(networkName))
                         {
@@ -183,7 +164,7 @@ namespace System.Fabric.FabricDeployer
             }
 
             bool cleanUpSuccess = false;
-            if (StopContainerProcess(containerServiceRunningOnCustomPort) && StartContainerService(containerServiceRunningOnCustomPort, containerServiceStopped))
+            if (StopContainerProcess(fabricDataRoot, containerServiceRunning) && StartContainerService(containerServiceRunning, containerServiceStopped))
             {
                 cleanUpSuccess = true;
             }
@@ -211,68 +192,65 @@ namespace System.Fabric.FabricDeployer
                 bool running;
                 int processId = 0;
                 IsProcessRunning(FlatNetworkConstants.NetworkDriverPlugin, out running, out processId);
-                if (!running)
+                if (running)
                 {
-                    // Remove the azure vnet sock file if it exists.
-                    var command = string.Format("sudo rm -f {0}", FlatNetworkConstants.AzureVnetPluginSockPath);
-                    int returnvalue = NativeHelper.system(command);
-                    if (returnvalue != 0)
-                    {
-                        DeployerTrace.WriteInfo("Failed to execute command {0} return value {1}", command, returnvalue);
-                    }
-                    else
-                    {
-                        DeployerTrace.WriteInfo("Successfully executed command \"{0}\".", command);
+                    DeployerTrace.WriteInfo("Skipping installation of network driver since it is already installed.");
+                    return true;
+                }
 
-                        // check ebtables dependency
-                        bool ebtablesInstalled = false;
-                        if (IsPackageInstalled(FlatNetworkConstants.EbtablesPackageName))
-                        {
-                            DeployerTrace.WriteInfo("Ebtables package installed.");
-                            ebtablesInstalled = true;
-                        }
-                        else
-                        {
-                            DeployerTrace.WriteInfo("Ebtables package not installed.");
-                        }
+                // Remove the azure vnet sock file if it exists.
+                var command = string.Format("sudo rm -f {0}", FlatNetworkConstants.AzureVnetPluginSockPath);
+                int returnvalue = NativeHelper.system(command);
+                if (returnvalue != 0)
+                {
+                    DeployerTrace.WriteInfo("Failed to execute command {0} return value {1}", command, returnvalue);
+                    return success;
+                }
+               
+                DeployerTrace.WriteInfo("Successfully executed command \"{0}\".", command);
 
-                        // start up cns plugin
-                        if (ebtablesInstalled)
-                        {
-                            command = string.Format("{0} {1}&", "sudo", pluginFullPath);
-                            returnvalue = NativeHelper.system(command);
-                            if (returnvalue != 0)
-                            {
-                                DeployerTrace.WriteInfo("Failed to execute command {0} with return value {1}.", command, returnvalue);
-                            }
-                            else
-                            {
-                                DeployerTrace.WriteInfo("Successfully executed command \"{0}\".", command);
-                                // Check if network driver is installed
-                                for (int i=0; i<3; i++)
-                                {
-                                   bool processRunning = false;
-                                   int pid = -1;
-                                   IsProcessRunning(FlatNetworkConstants.NetworkDriverPlugin, out processRunning, out pid);  
-                                   if (processRunning)
-                                   {
-                                      DeployerTrace.WriteInfo("Successfully installed network driver.");
-                                      success = true;
-                                      break;
-                                   }
-                                   else
-                                   {
-                                      Thread.Sleep(5000);
-                                   }
-                                }
-                            }
-                        }
-                    }
+                // check ebtables dependency
+                bool ebtablesInstalled = false;
+                if (IsPackageInstalled(FlatNetworkConstants.EbtablesPackageName))
+                {
+                    DeployerTrace.WriteInfo("Ebtables package installed.");
+                    ebtablesInstalled = true;
                 }
                 else
                 {
-                    DeployerTrace.WriteInfo("Skipping installation of network driver since it is already installed.");
-                    success = true;
+                    DeployerTrace.WriteInfo("Ebtables package not installed.");
+                }
+
+                // start up cns plugin
+                if (ebtablesInstalled)
+                {
+                    command = string.Format("{0} {1}&", "sudo", pluginFullPath);
+                    returnvalue = NativeHelper.system(command);
+                    if (returnvalue != 0)
+                    {
+                        DeployerTrace.WriteInfo("Failed to execute command {0} with return value {1}.", command, returnvalue);
+                        return success; 
+                    }
+
+                    DeployerTrace.WriteInfo("Successfully executed command \"{0}\".", command);
+
+                    // Check if network driver is installed
+                    for (int i = 0; i < Constants.ApiRetryAttempts; i++)
+                    {
+                        bool processRunning = false;
+                        int pid = -1;
+                        IsProcessRunning(FlatNetworkConstants.NetworkDriverPlugin, out processRunning, out pid);  
+                        if (processRunning)
+                        {
+                            DeployerTrace.WriteInfo("Successfully installed network driver.");
+                            success = true;
+                            break;
+                        }
+                        else
+                        {
+                            Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -298,82 +276,75 @@ namespace System.Fabric.FabricDeployer
             {
                 string dockerNetworkId = string.Empty;
                 string dockerNetworkName = string.Empty;
-                if (GetNetwork(networkName, out dockerNetworkName, out dockerNetworkId))
+                if (GetNetwork(networkName, out dockerNetworkName, out dockerNetworkId) && !string.IsNullOrEmpty(dockerNetworkId))
                 {
-                    if (string.IsNullOrEmpty(dockerNetworkId))
-                    {
-                        // Initialize network configuration
-                        var initReq = new InitializeRequest
-                        {
-                            Location = FlatNetworkConstants.NetworkEnvAzure,
-                            NetworkType = FlatNetworkConstants.UnderlayNetworkType
-                        };
-
-                        var initRes = httpClient.PostAsync(
-                                        FlatNetworkConstants.NetworkEnvInitializationUrl, 
-                                        new StringContent(JsonConvert.SerializeObject(initReq), Encoding.UTF8, "application/json")
-                                      ).GetAwaiter().GetResult();
-
-                        string response = initRes.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-
-                        if (!initRes.IsSuccessStatusCode)
-                        {
-                            DeployerTrace.WriteError("Failed to initialize network environment Name:{0} error details {1}.", networkName, response);
-                        }
-                        else
-                        {
-                            var initResult = JsonConvert.DeserializeObject<CnsResponse>(response);
-                            if(initResult.ReturnCode != 0)
-                            {
-                                DeployerTrace.WriteWarning(
-                                    "Network Name:{0} environment initialize returned error code {1}, message {2}",
-                                    networkName, 
-                                    initResult.ReturnCode, 
-                                    initResult.Message);
-                                return success;
-                            }
-
-                            // Create network
-                            var createNetworkReq = new CreateNetworkRequest
-                            {
-                                NetworkName = networkName
-                            };
-
-                            var createNetworkRes = httpClient.PostAsync(
-                                                    FlatNetworkConstants.NetworkCreateUrl, 
-                                                    new StringContent(JsonConvert.SerializeObject(createNetworkReq), Encoding.UTF8, "application/json")
-                                                   ).GetAwaiter().GetResult();
-                         
-                            response = createNetworkRes.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-
-                            if (!createNetworkRes.IsSuccessStatusCode)
-                            {
-                                DeployerTrace.WriteError("Failed to create network Name:{0} error details {1}.", networkName, response);
-                            }
-                            else
-                            {
-                                var createNetworkResult = JsonConvert.DeserializeObject<CnsResponse>(response);
-                                if(createNetworkResult.ReturnCode != 0)
-                                {
-                                    DeployerTrace.WriteWarning(
-                                        "Network Name:{0} network create returned error code {1}, message {2}", 
-                                        networkName, 
-                                        createNetworkResult.ReturnCode, 
-                                        createNetworkResult.Message);
-                                    return success;
-                                }
-
-                                success = true;
-                                DeployerTrace.WriteInfo("Network Name:{0} created successfully.", networkName);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        success = true;
-                        DeployerTrace.WriteInfo("Skipping network creation since network {0} already exists.", networkName);
-                    }
+                    DeployerTrace.WriteInfo("Skipping network creation since network {0} already exists.", networkName);
+                    return true;
                 }
+
+                // Initialize network configuration
+                var initReq = new InitializeRequest
+                {
+                    Location = FlatNetworkConstants.NetworkEnvAzure,
+                    NetworkType = FlatNetworkConstants.UnderlayNetworkType
+                };
+
+                var initRes = httpClient.PostAsync(
+                                FlatNetworkConstants.NetworkEnvInitializationUrl, 
+                                new StringContent(JsonConvert.SerializeObject(initReq), Encoding.UTF8, "application/json")
+                                ).GetAwaiter().GetResult();
+
+                string response = initRes.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (!initRes.IsSuccessStatusCode)
+                {
+                    DeployerTrace.WriteError("Failed to initialize network environment Name:{0} error details {1}.", networkName, response);
+                    return success;
+                }
+
+                var initResult = JsonConvert.DeserializeObject<CnsResponse>(response);
+                if(initResult.ReturnCode != 0)
+                {
+                    DeployerTrace.WriteWarning(
+                        "Network Name:{0} environment initialize returned error code {1}, message {2}",
+                        networkName, 
+                        initResult.ReturnCode, 
+                        initResult.Message);
+                    return success;
+                }
+
+                // Create network
+                var createNetworkReq = new CreateNetworkRequest
+                {
+                    NetworkName = networkName
+                };
+
+                var createNetworkRes = httpClient.PostAsync(
+                                        FlatNetworkConstants.NetworkCreateUrl, 
+                                        new StringContent(JsonConvert.SerializeObject(createNetworkReq), Encoding.UTF8, "application/json")
+                                        ).GetAwaiter().GetResult();
+                         
+                response = createNetworkRes.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (!createNetworkRes.IsSuccessStatusCode)
+                {
+                    DeployerTrace.WriteError("Failed to create network Name:{0} error details {1}.", networkName, response);
+                    return success; 
+                }
+                
+                var createNetworkResult = JsonConvert.DeserializeObject<CnsResponse>(response);
+                if(createNetworkResult.ReturnCode != 0)
+                {
+                    DeployerTrace.WriteWarning(
+                        "Network Name:{0} network create returned error code {1}, message {2}", 
+                        networkName, 
+                        createNetworkResult.ReturnCode, 
+                        createNetworkResult.Message);
+                    return success;
+                }
+
+                success = true;
+                DeployerTrace.WriteInfo("Network Name:{0} created successfully.", networkName);
             }
             catch (Exception ex)
             {
@@ -392,7 +363,8 @@ namespace System.Fabric.FabricDeployer
         {
             string subnet = string.Empty;
             string gateway = string.Empty;
-            if (Utility.RetrieveGatewayAndSubnet(true, out subnet, out gateway))
+            string macAddress = string.Empty;
+            if (Utility.RetrieveNMAgentInterfaceInfo(true, out subnet, out gateway, out macAddress))
             {
                 return (CreateIptableRule(subnet, ConnectivityDirection.Inbound) && CreateIptableRule(subnet, ConnectivityDirection.Outbound));
             }
@@ -450,14 +422,14 @@ namespace System.Fabric.FabricDeployer
            return success;
         }
 #else
-        private bool SetupContainerNetwork(string networkName, bool containerServiceRunningOnCustomPort)
+        private bool SetupContainerNetwork(string networkName, string containerServiceArguments, string fabricDataRoot, bool containerServiceRunning)
         {
             bool success = false;
-
+            
             bool containerNTServiceStopped;
-            if (StopContainerNTService(containerServiceRunningOnCustomPort, out containerNTServiceStopped))
+            if (StopContainerNTService(containerServiceRunning, out containerNTServiceStopped))
             {
-                if (StartContainerProviderService(containerServiceRunningOnCustomPort))
+                if (StartContainerProviderService(containerServiceArguments, fabricDataRoot, containerServiceRunning))
                 {
                     var oldIpForwardTable = default(NativeMethods.IPFORWARDTABLE);
                     if (RetrieveIPv4RoutingTable(out oldIpForwardTable))
@@ -491,7 +463,7 @@ namespace System.Fabric.FabricDeployer
             }
 
             bool cleanUpSuccess = false;
-            if (StopContainerProviderService(containerServiceRunningOnCustomPort) && StartContainerNTService(containerServiceRunningOnCustomPort, containerNTServiceStopped))
+            if (StopContainerProviderService(fabricDataRoot, containerServiceRunning) && StartContainerNTService(containerServiceRunning, containerNTServiceStopped))
             {
                 cleanUpSuccess = true;
             }
@@ -564,7 +536,8 @@ namespace System.Fabric.FabricDeployer
         {
             subnet = string.Empty;
             string gateway = string.Empty;
-            if (Utility.RetrieveGatewayAndSubnet(true, out subnet, out gateway))
+            string macAddress = string.Empty;
+            if (Utility.RetrieveNMAgentInterfaceInfo(true, out subnet, out gateway, out macAddress))
             {
                 uint subnetIp;
                 uint subnetMask;
@@ -598,74 +571,70 @@ namespace System.Fabric.FabricDeployer
 
             try
             {
-                string networkId = string.Empty;
-
                 string dockerNetworkId = string.Empty;
                 string dockerNetworkName = string.Empty;
                 if (GetNetwork(networkName, out dockerNetworkName, out dockerNetworkId))
                 {
-                    if (string.IsNullOrEmpty(dockerNetworkId))
-                    {
-                        var networkConfig = new NetworkConfig();
-                        networkConfig.Name = networkName;
-                        networkConfig.Driver = FlatNetworkConstants.NetworkDriver;
-                        networkConfig.CheckDuplicate = true;
-                        networkConfig.Ipam = new IpamConfig();
-                        networkConfig.Ipam.Config = new Config[] { new Config() { Subnet = subnet, Gateway = gateway } };
-
-                        // Add parameter that specifies the network interface to create the flat network on.
-                        networkConfig.Options = new ExpandoObject();
-                        ((IDictionary<String, Object>)networkConfig.Options).Add(FlatNetworkConstants.NetworkInterfaceParameterName, networkInterface.Name);
-
-                        var networkConfigJsonString = JsonConvert.SerializeObject(networkConfig);
-                        var content = new StringContent(networkConfigJsonString, Encoding.UTF8, "application/json");
-                        var networkCreateUrl = this.dockerClient.GetRequestUri(FlatNetworkConstants.NetworkCreateRequestPath);
-
-                        var task = this.dockerClient.HttpClient.PostAsync(networkCreateUrl, content);
-                        var httpResponseMessage = task.GetAwaiter().GetResult();
-                        string response = httpResponseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                        if (!httpResponseMessage.IsSuccessStatusCode)
-                        {
-                            DeployerTrace.WriteError("Failed to get network details for network Name:{0} error details {1}.", networkName, response);
-                        }
-                        else
-                        {
-                            IPAddress ipv4Address;
-                            IPAddress ipv4Mask;
-                            Utility.GetDefaultIPV4AddressAndMask(networkInterface, out ipv4Address, out ipv4Mask);
-                            if (ipv4Address == null)
-                            {
-                                DeployerTrace.WriteWarning("Failed to get default ip address for network interface {0}.", networkInterface.Name);
-                                return success;
-                            }
-
-                            var isIPAddressMatching = Utility.IsIPAddressMatching(networkInterface, ipv4Address);
-                            if (!isIPAddressMatching)
-                            {
-                                DeployerTrace.WriteWarning("Failed to get ip address for network interface {0} that matches {1}.", networkInterface.Name, ipv4Address.ToString());
-                                return success;
-                            }
-
-                            success = true;
-                            DeployerTrace.WriteInfo("Network Name:{0} Subnet:{1} Gateway:{2} created successfully.",
-                                                    networkName,
-                                                    subnet,
-                                                    gateway);
-                        }
-                    }
-                    else
+                    if (!string.IsNullOrEmpty(dockerNetworkId))
                     {
                         if (string.Equals(dockerNetworkName, networkName, StringComparison.OrdinalIgnoreCase))
                         {
-                            success = true;
                             DeployerTrace.WriteInfo("Skipping network creation since network {0} already exists.", networkName);
+                            return true;
                         }
                         else
                         {
                             DeployerTrace.WriteError("Removing network since it is not created with name {0}.", networkName);
                             RemoveNetwork(dockerNetworkName);
+                            return success;
                         }
                     }
+
+                    var networkConfig = new NetworkConfig();
+                    networkConfig.Name = networkName;
+                    networkConfig.Driver = FlatNetworkConstants.NetworkDriver;
+                    networkConfig.CheckDuplicate = true;
+                    networkConfig.Ipam = new IpamConfig();
+                    networkConfig.Ipam.Config = new Config[] { new Config() { Subnet = subnet, Gateway = gateway } };
+
+                    // Add parameter that specifies the network interface to create the flat network on.
+                    networkConfig.Options = new ExpandoObject();
+                    ((IDictionary<String, Object>)networkConfig.Options).Add(FlatNetworkConstants.NetworkInterfaceParameterName, networkInterface.Name);
+
+                    var networkConfigJsonString = JsonConvert.SerializeObject(networkConfig);
+                    var content = new StringContent(networkConfigJsonString, Encoding.UTF8, "application/json");
+                    var networkCreateUrl = this.dockerClient.GetRequestUri(FlatNetworkConstants.NetworkCreateRequestPath);
+
+                    var task = this.dockerClient.HttpClient.PostAsync(networkCreateUrl, content);
+                    var httpResponseMessage = task.GetAwaiter().GetResult();
+                    string response = httpResponseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    if (!httpResponseMessage.IsSuccessStatusCode)
+                    {
+                        DeployerTrace.WriteError("Failed to get network details for network Name:{0} error details {1}.", networkName, response);
+                        return success;
+                    }
+
+                    IPAddress ipv4Address;
+                    IPAddress ipv4Mask;
+                    Utility.GetDefaultIPV4AddressAndMask(networkInterface, out ipv4Address, out ipv4Mask);
+                    if (ipv4Address == null)
+                    {
+                        DeployerTrace.WriteWarning("Failed to get default ip address for network interface {0}.", networkInterface.Name);
+                        return success;
+                    }
+
+                    var isIPAddressMatching = Utility.IsIPAddressMatching(networkInterface, ipv4Address);
+                    if (!isIPAddressMatching)
+                    {
+                        DeployerTrace.WriteWarning("Failed to get ip address for network interface {0} that matches {1}.", networkInterface.Name, ipv4Address.ToString());
+                        return success;
+                    }
+
+                    success = true;
+                    DeployerTrace.WriteInfo("Network Name:{0} Subnet:{1} Gateway:{2} created successfully.",
+                                            networkName,
+                                            subnet,
+                                            gateway);
                 }
             }
             catch (Exception ex)
@@ -678,26 +647,6 @@ namespace System.Fabric.FabricDeployer
             }
 
             return success;
-        }
-
-        /// <summary>
-        /// Checks if docker container service is installed.
-        /// </summary>
-        /// <returns></returns>
-        private bool IsContainerServiceInstalled()
-        {
-            bool installed = false;
-
-            var programFilesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), FlatNetworkConstants.ContainerServiceName);
-            var containerServiceFullPath = Path.Combine(programFilesPath, FlatNetworkConstants.ContainerProviderProcessNameWithExtension);
-            if (File.Exists(containerServiceFullPath))
-            {
-                installed = true;
-            }
-            
-            DeployerTrace.WriteInfo("Container service installed {0}.", installed);
-
-            return installed;
         }
 #endif
     }

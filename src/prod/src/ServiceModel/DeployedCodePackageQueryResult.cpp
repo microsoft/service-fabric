@@ -96,19 +96,14 @@ void DeployedCodePackageQueryResult::WriteTo(Common::TextWriter& w, Common::Form
 
 std::wstring DeployedCodePackageQueryResult::ToString() const
 {
-    return wformatString(
-        "CodePackageName=[{0}], CodePackageVersion=[{1}], ServiceManifestName=[{2}], ServicePackageActivationId=[{3}], HostType=[{4}], HostIsolationMode=[{5}], Status=[{6}], RunFrequencyInterval=[{7}], SetupEntryPoint=[{8}], MainEntryPoint=[{9}], ServiceNameInternalUseOnly=[{10}].", 
-        codePackageName_, 
-        codePackageVersion_,
-        serviceManifestName_,
-        servicePackageActivationId_,
-        hostType_,
-        hostIsolationMode_,
-        deployedCodePackageStatus_,
-        runFrequencyInterval_,
-        hasSetupEntryPoint_ ? setupEntryPoint_.ToString() : L"",
-        mainEntryPoint_.ToString(),
-        serviceNameInternalUseOnly_);
+    wstring objectString;
+    auto error = JsonHelper::Serialize(const_cast<DeployedCodePackageQueryResult&>(*this), objectString);
+    if (!error.IsSuccess())
+    {
+        return wstring();
+    }
+
+    return objectString;
 }
 
 Common::ErrorCode DeployedCodePackageQueryResult::FromPublicApi(__in FABRIC_DEPLOYED_CODE_PACKAGE_QUERY_RESULT_ITEM const & publicDeployedCodePackageQueryResult)

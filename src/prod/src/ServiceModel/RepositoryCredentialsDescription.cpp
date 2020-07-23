@@ -12,12 +12,14 @@ using namespace ServiceModel;
 Common::WStringLiteral const RepositoryCredentialsDescription::AccountNameParameter(L"username");
 Common::WStringLiteral const RepositoryCredentialsDescription::PasswordParameter(L"password");
 Common::WStringLiteral const RepositoryCredentialsDescription::EmailParameter(L"email");
+Common::WStringLiteral const RepositoryCredentialsDescription::TypeParameter(L"Type");
 
 RepositoryCredentialsDescription::RepositoryCredentialsDescription()
     : AccountName(),
     Password(),
     IsPasswordEncrypted(false),
-    Email()
+    Email(),
+    Type(L"")
 {
 }
 
@@ -26,7 +28,8 @@ bool RepositoryCredentialsDescription::operator== (RepositoryCredentialsDescript
     return (StringUtility::AreEqualCaseInsensitive(AccountName, other.AccountName) &&
         StringUtility::AreEqualCaseInsensitive(Password, other.Password) &&
         StringUtility::AreEqualCaseInsensitive(Email, other.Email) &&
-        IsPasswordEncrypted == other.IsPasswordEncrypted);
+        (IsPasswordEncrypted == other.IsPasswordEncrypted) &&
+        StringUtility::AreEqualCaseInsensitive(Type, other.Type));
 }
 
 bool RepositoryCredentialsDescription::operator!= (RepositoryCredentialsDescription const & other) const
@@ -39,6 +42,7 @@ void RepositoryCredentialsDescription::WriteTo(TextWriter & w, FormatOptions con
     w.Write("RepositoryCredentialsDescription { ");
     w.Write("AccountName = {0}, ", AccountName);
     w.Write("Email = {0}, ", Email);
+    w.Write("Type = {0}, ", Type);
  
     w.Write("}");
 }
@@ -64,6 +68,12 @@ void RepositoryCredentialsDescription::ReadFromXml(
     {
         this->IsPasswordEncrypted = false;
     }
+
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_Type))
+    {
+        this->Type = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Type);
+    }
+
     // Read the rest of the empty element
     xmlReader->ReadElement();
 }
@@ -97,6 +107,13 @@ Common::ErrorCode RepositoryCredentialsDescription::WriteToXml(XmlWriterUPtr con
     {
         return er;
     }
+
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Type, this->Type);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+
     //</RepositoryCredentials>
     return xmlWriter->WriteEndElement();
 }
@@ -107,6 +124,7 @@ void RepositoryCredentialsDescription::clear()
     this->Password.clear();
     this->Email.clear();
     this->IsPasswordEncrypted = false;
+    this->Type.clear();
 }
 
 ErrorCode RepositoryCredentialsDescription::ToPublicApi(
@@ -118,7 +136,10 @@ ErrorCode RepositoryCredentialsDescription::ToPublicApi(
     fabricCredential.Email = heap.AddString(this->Email);
     fabricCredential.IsPasswordEncrypted = this->IsPasswordEncrypted;
 
-    fabricCredential.Reserved = nullptr;
+    auto ex1 = heap.AddItem<FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION_EX1>();
+    ex1->Type = heap.AddString(this->Type);
+
+    fabricCredential.Reserved = ex1.GetRawPointer();
 
     return ErrorCode::Success();
 }

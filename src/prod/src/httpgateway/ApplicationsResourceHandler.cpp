@@ -106,11 +106,19 @@ void ApplicationsResourceHandler::CreateOrUpdateApplication(AsyncOperationSPtr c
         return;
     }
 
-    if (!handlerOperation->Uri.GetItem(Constants::ApplicationIdString, description.Name))
+    wstring applicationNameInUri;
+    if (!handlerOperation->Uri.GetItem(Constants::ApplicationIdString, applicationNameInUri))
     {
         handlerOperation->OnError(thisSPtr, ErrorCodeValue::NameNotFound);
         return;
     }
+
+    if (!description.Name.empty() && description.Name != applicationNameInUri)
+    {
+        handlerOperation->OnError(thisSPtr, ErrorCode(ErrorCodeValue::InvalidArgument, wformatString(GET_COMMON_RC(Resource_Name_Mismatch), "Application", applicationNameInUri, description.Name)));
+        return;
+    }
+    description.Name = move(applicationNameInUri);
 
     error = argumentParser.TryGetApplicationName(description.ApplicationUri);
     if (!error.IsSuccess())
@@ -388,8 +396,15 @@ void ApplicationsResourceHandler::GetAllServices(AsyncOperationSPtr const& thisS
         return;
     }
 
+    QueryPagingDescription queryDescription;
+    queryDescription.ContinuationToken = move(continuationToken);
 
-    ServiceQueryDescription description(move(appNameUri), NamingUri(*EMPTY_URI_QUERY_FILTER), L"", move(continuationToken));
+    ServiceQueryDescription description(
+        move(appNameUri),
+        NamingUri(*EMPTY_URI_QUERY_FILTER),
+        L"",
+        move(queryDescription));
+
     AsyncOperationSPtr operation = client.ResourceMgmtClient->BeginGetServiceResourceList(
         description,
         handlerOperation->Timeout,
@@ -461,7 +476,7 @@ void ApplicationsResourceHandler::GetServiceByName(AsyncOperationSPtr const& thi
         return;
     }
 
-    ServiceQueryDescription description(move(appNameUri), move(serviceNameUri), L"", L"");
+    ServiceQueryDescription description(move(appNameUri), move(serviceNameUri), L"", QueryPagingDescription());
     AsyncOperationSPtr operation = client.ResourceMgmtClient->BeginGetServiceResourceList(
         description,
         handlerOperation->Timeout,

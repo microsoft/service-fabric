@@ -17,19 +17,79 @@
     {
       "Name": "Common.Test.exe",
       "Type": "ExeTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Tags": "Admin,Security,Common",
       "TestExecutionParameters": {
         "TaskName": "Common.Test.exe",
         "ExecutionTimeout": "1800",
-        "Params": "--detect_memory_leak=0",
+        "Params": "--detect_memory_leak=0 --run_test=!*Account*,*Bique*,*Endpoint*,*crc*,*Call*,*Monitoring*,*Guid*,*Ktl*,*Math*,*JobQueue*,*CabOperation*,*Environment*,*Certificate*,*Crypto*,*ParallelAsyncOp*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Common.Transport.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "nijiang,jefchen,zhol",
+      "Tags": "Admin,Security,Common",
+      "TestExecutionParameters": {
+        "TaskName": "Common.Test.exe",
+        "ExecutionTimeout": "1800",
+        "Params": "--detect_memory_leak=0 --run_test=*Account*,*Bique*,*Endpoint*,*crc*,*ParallelAsyncOp*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Common.Data.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "shalabhs,preethas",
+      "Tags": "Admin,Security,Common",
+      "TestExecutionParameters": {
+        "TaskName": "Common.Test.exe",
+        "ExecutionTimeout": "1800",
+        "Params": "--detect_memory_leak=0 --run_test=*Call*,*Monitoring*,*Guid*,*Ktl*,*Math*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Common.JobQueue.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "bharatn,abhisram",
+      "Tags": "Admin,Security,Common",
+      "TestExecutionParameters": {
+        "TaskName": "Common.Test.exe",
+        "ExecutionTimeout": "1800",
+        "Params": "--detect_memory_leak=0 --run_test=*JobQueue*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Common.Setup.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "maburlik",
+      "Tags": "Admin,Security,Common",
+      "TestExecutionParameters": {
+        "TaskName": "Common.Test.exe",
+        "ExecutionTimeout": "1800",
+        "Params": "--detect_memory_leak=0 --run_test=*CabOperation*,*Environment*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Common.Cert.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "dragosav",
+      "Tags": "Admin,Security,Common",
+      "TestExecutionParameters": {
+        "TaskName": "Common.Test.exe",
+        "ExecutionTimeout": "1800",
+        "Params": "--detect_memory_leak=0 --run_test=*Certificate*,*Crypto*",
         "SetupType": "XCopy"
       }
     },
     {
       "Name": "Transport.Test.exe",
       "Type": "ExeTest",
-      "Owners": "nijiang,jefchen",
+      "Owners": "nijiang,jefchen,dragosav",
       "Tags": "Admin,Security,Common",
       "Environment": "Iaas",
       "TestExecutionParameters": {
@@ -261,7 +321,7 @@
     {
       "Name": "ImplicitLease.test",
       "Type": "FederationTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Tags": "Federation",
       "TestExecutionParameters": {
         "TaskName": "ImplicitLease.test",
@@ -281,7 +341,7 @@
     {
       "Name": "MultiRing.test",
       "Type": "FederationTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Tags": "Federation",
       "TestExecutionParameters": {
         "TaskName": "MultiRing.test",
@@ -291,7 +351,7 @@
     {
       "Name": "VoterStore.test",
       "Type": "FederationTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Tags": "Federation",
       "TestExecutionParameters": {
         "TaskName": "VoterStore.test",
@@ -301,7 +361,7 @@
     {
       "Name": "GlobalTime.test",
       "Type": "FederationTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Tags": "Federation",
       "TestExecutionParameters": {
         "TaskName": "GlobalTime.test",
@@ -311,7 +371,7 @@
     {
       "Name": "OnewayAndOnewayArbitration.test",
       "Type": "FederationTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Tags": "Federation",
       "TestExecutionParameters": {
         "TaskName": "OnewayAndOnewayArbitration.test",
@@ -321,7 +381,7 @@
     {
       "Name": "OnewayAndTwowayArbitration.test",
       "Type": "FederationTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Tags": "Federation",
       "TestExecutionParameters": {
         "TaskName": "OnewayAndTwowayArbitration.test",
@@ -331,7 +391,7 @@
     {
       "Name": "Arbitration.test",
       "Type": "FederationTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Environment": "Iaas",
       "Tags": "Federation",
       "TestExecutionParameters": {
@@ -342,7 +402,7 @@
     {
       "Name": "BackupRestore.test",
       "Type": "FabricTest",
-      "Owners": "harahma,preethas",
+      "Owners": "raunakp,preethas",
       "Tags": "Store,Reliability",
       "TestExecutionParameters": {
         "TaskName": "BackupRestore.test",
@@ -352,7 +412,7 @@
     {
       "Name": "BackupRestore2.test",
       "Type": "FabricTest",
-      "Owners": "harahma,preethas",
+      "Owners": "raunakp,preethas",
       "Tags": "Store,Reliability",
       "TestExecutionParameters": {
         "TaskName": "BackupRestore2.test",
@@ -362,7 +422,7 @@
     {
       "Name": "BackupRestore4.test",
       "Type": "FabricTest",
-      "Owners": "harahma,preethas",
+      "Owners": "raunakp,preethas",
       "Tags": "Store,Reliability",
       "TestExecutionParameters": {
         "TaskName": "BackupRestore4.test",
@@ -372,7 +432,7 @@
     {
       "Name": "ReplicatedStoreRepairPolicy.test",
       "Type": "FabricTest",
-      "Owners": "harahma,preethas",
+      "Owners": "shalabhs,kailasl,preethas",
       "Tags": "Store,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicatedStoreRepairPolicy.test",
@@ -382,7 +442,7 @@
     {
       "Name": "Client.Test.exe",
       "Type": "ExeTest_Sequential",
-      "Owners": "oanapl,bharatn,bikang",
+      "Owners": "bharatn,bikang",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Client.Test.exe",
@@ -392,7 +452,7 @@
     {
       "Name": "Naming.Test.exe",
       "Type": "ExeTest_Sequential",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Naming.Test.exe",
@@ -402,7 +462,7 @@
     {
       "Name": "NamingBasic.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingBasic.test",
@@ -412,7 +472,7 @@
     {
       "Name": "NamingCache.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingCache.test",
@@ -422,7 +482,7 @@
     {
       "Name": "NamingClientCache.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingClientCache.test",
@@ -432,7 +492,7 @@
     {
       "Name": "NamingClientSettings.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingClientSettings.test",
@@ -442,7 +502,7 @@
     {
       "Name": "NamingErrorPaths.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingErrorPaths.test",
@@ -452,7 +512,7 @@
     {
       "Name": "NamingPropertyBatchBasic.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingPropertyBatchBasic.test",
@@ -462,7 +522,7 @@
     {
       "Name": "NamingPropertyBatchMultiOp.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingPropertyBatchMultiOp.test",
@@ -472,7 +532,7 @@
     {
       "Name": "NamingQuorumLoss.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingQuorumLoss.test",
@@ -482,7 +542,7 @@
     {
       "Name": "NamingRepair.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingRepair.test",
@@ -492,7 +552,7 @@
     {
       "Name": "NamingRecursiveNames.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "hsun,bharatn",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingRecursiveNames.test",
@@ -502,7 +562,7 @@
     {
       "Name": "NamingDataloss.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "hsun,bharatn",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingDataloss.test",
@@ -512,7 +572,7 @@
     {
       "Name": "NamingServiceNotificationServiceOffline.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "hsun,bharatn",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingServiceNotificationServiceOffline.test",
@@ -522,7 +582,7 @@
     {
       "Name": "NamingNamedPartitions.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingNamedPartitions.test",
@@ -532,7 +592,7 @@
     {
       "Name": "NamingUInt64Partitions.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingUInt64Partitions.test",
@@ -542,7 +602,7 @@
     {
       "Name": "NamingServiceNotificationAndResolve.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingServiceNotificationAndResolve.test",
@@ -552,7 +612,7 @@
     {
       "Name": "NamingServiceChangeNotification.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingServiceChangeNotification.test",
@@ -562,7 +622,7 @@
     {
       "Name": "NamingServiceMultiChangeNotification.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingServiceMultiChangeNotification.test",
@@ -572,7 +632,7 @@
     {
       "Name": "NamingServicePrimaryRecovery.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingServicePrimaryRecovery.test",
@@ -582,7 +642,7 @@
     {
       "Name": "NamingStaleMessages.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingStaleMessages.test",
@@ -592,7 +652,7 @@
     {
       "Name": "NamingEnumeration.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingEnumeration.test",
@@ -602,7 +662,7 @@
     {
       "Name": "NamingEnumeration2.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "NamingEnumeration2.test",
@@ -612,7 +672,7 @@
     {
       "Name": "RepartitionService.Add.test",
       "Type": "FabricTest",
-      "Owners": "bharatn,oanapl",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "RepartitionService.Add.test",
@@ -622,7 +682,7 @@
     {
       "Name": "RepartitionService.Remove.test",
       "Type": "FabricTest",
-      "Owners": "bharatn,oanapl",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "RepartitionService.Remove.test",
@@ -632,7 +692,7 @@
     {
       "Name": "RepartitionService.Errors.test",
       "Type": "FabricTest",
-      "Owners": "bharatn,oanapl",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,Failover",
       "TestExecutionParameters": {
         "TaskName": "RepartitionService.Errors.test",
@@ -642,7 +702,7 @@
     {
       "Name": "RepartitionService.Upgrade.test",
       "Type": "FabricTest",
-      "Owners": "bharatn,oanapl",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,FM,Failover,CM",
       "TestExecutionParameters": {
         "TaskName": "RepartitionService.Upgrade.test",
@@ -650,19 +710,9 @@
       }
     },
     {
-      "Name": "FMDataloss.test",
-      "Type": "FabricTest",
-      "Owners": "oanapl",
-      "Tags": "Naming,Reliability",
-      "TestExecutionParameters": {
-        "TaskName": "FMDataloss.test",
-        "SetupType": "XCopy"
-      }
-    },
-    {
       "Name": "TombstoneCleanup2.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Naming,CM,Reliability",
       "TestExecutionParameters": {
         "TaskName": "TombstoneCleanup2.test",
@@ -672,7 +722,7 @@
     {
       "Name": "FMChangeBeforeNSBoot.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Reliability",
       "TestExecutionParameters": {
         "TaskName": "FMChangeBeforeNSBoot.test",
@@ -682,7 +732,7 @@
     {
       "Name": "NonPartitionedService.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,bharatn",
+      "Owners": "bharatn,hsun",
       "Tags": "Reliability",
       "TestExecutionParameters": {
         "TaskName": "NonPartitionedService.test",
@@ -692,7 +742,7 @@
     {
       "Name": "GetServiceDescription.test",
       "Type": "FabricTest",
-      "Owners": "harahma,brcamina",
+      "Owners": "chuxin,abhisram",
       "Tags": "Naming,Failover",
       "TestExecutionParameters": {
         "TaskName": "GetServiceDescription.test",
@@ -702,7 +752,7 @@
     {
       "Name": "PrefixResolution.test",
       "Type": "FabricTest",
-      "Owners": "bharatn,oanapl",
+      "Owners": "bharatn,dariopb",
       "Tags": "Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "PrefixResolution.test",
@@ -712,7 +762,7 @@
     {
       "Name": "FM.Test.exe",
       "Type": "ExeTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM",
       "TestExecutionParameters": {
         "TaskName": "FM.Test.exe",
@@ -722,7 +772,7 @@
     {
       "Name": "RA.Test.exe",
       "Type": "ExeTest",
-      "Owners": "manojsi,chuxin,winfabfm",
+      "Owners": "chuxin,manojsi,winfabfm",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RA.Test.exe",
@@ -743,7 +793,7 @@
     {
       "Name": "ClientReportFault.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,manojsi",
       "Tags": "Failover,Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ClientReportFault.test",
@@ -753,7 +803,7 @@
     {
       "Name": "ReplicaUp.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,chuxin",
       "Tags": "FM,Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaUp.test",
@@ -823,7 +873,7 @@
     {
       "Name": "AdvancedReliabilityScenarios12.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios12.test",
@@ -833,7 +883,7 @@
     {
       "Name": "AdvancedReliabilityScenarios20.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios20.test",
@@ -843,7 +893,7 @@
     {
       "Name": "AdvancedReliabilityScenarios21.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios21.test",
@@ -853,7 +903,7 @@
     {
       "Name": "AdvancedReliabilityScenarios28.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios28.test",
@@ -863,7 +913,7 @@
     {
       "Name": "AdvancedReliabilityScenarios30.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios30.test",
@@ -873,7 +923,7 @@
     {
       "Name": "AdvancedReliabilityScenarios33.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios33.test",
@@ -883,7 +933,7 @@
     {
       "Name": "AdvancedReliabilityScenarios36.test",
       "Type": "FabricTest",
-      "Owners": "imang,yzha",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios36.test",
@@ -893,7 +943,7 @@
     {
       "Name": "AdvancedReliabilityScenarios37.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios37.test",
@@ -903,7 +953,7 @@
     {
       "Name": "Replicator.UpdateEpoch.Fail.Stuck.test",
       "Type": "FabricTest",
-      "Owners": "imang,yzha",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Replicator.UpdateEpoch.Fail.Stuck.test",
@@ -933,7 +983,7 @@
     {
       "Name": "AppUpgrade.Rollback.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover,Upgrade,Hosting",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade.Rollback.test",
@@ -943,7 +993,7 @@
     {
       "Name": "ClusterUpgrade.Rollback.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover,Upgrade",
       "TestExecutionParameters": {
         "TaskName": "ClusterUpgrade.Rollback.test",
@@ -1013,7 +1063,7 @@
     {
       "Name": "LocalRetryHealthEvents.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "LocalRetryHealthEvents.test",
@@ -1023,7 +1073,7 @@
     {
       "Name": "DropAfterLocalRetry.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "DropAfterLocalRetry.test",
@@ -1033,7 +1083,7 @@
     {
       "Name": "AdvancedReliabilityScenarios40.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios40.test",
@@ -1043,7 +1093,7 @@
     {
       "Name": "AdvancedReliabilityScenarios41.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios41.test",
@@ -1053,7 +1103,7 @@
     {
       "Name": "AdvancedReliabilityScenarios42.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios42.test",
@@ -1063,7 +1113,7 @@
     {
       "Name": "AdvancedReliabilityScenarios44.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "AdvancedReliabilityScenarios44.test",
@@ -1093,7 +1143,7 @@
     {
       "Name": "RAHealthReport.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RAHealthReport.test",
@@ -1103,7 +1153,7 @@
     {
       "Name": "RAPHealthReport.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RAPHealthReport.test",
@@ -1113,7 +1163,7 @@
     {
       "Name": "RAPCloseWithHigherInstanceId.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RAPCloseWithHigherInstanceId.test",
@@ -1123,7 +1173,7 @@
     {
       "Name": "RAPMonitoring1.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RAPMonitoring1.test",
@@ -1133,7 +1183,7 @@
     {
       "Name": "RAPMonitoring2.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RAPMonitoring2.test",
@@ -1143,7 +1193,7 @@
     {
       "Name": "RAPMonitoring3.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RAPMonitoring3.test",
@@ -1153,7 +1203,7 @@
     {
       "Name": "RAPMonitoring4.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RAPMonitoring4.test",
@@ -1163,7 +1213,7 @@
     {
       "Name": "RAPMonitoring5.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RAPMonitoring5.test",
@@ -1173,7 +1223,7 @@
     {
       "Name": "ReplicaLifeCycle.AppHostDown.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaLifeCycle.AppHostDown.test",
@@ -1183,7 +1233,7 @@
     {
       "Name": "ReplicaLifeCycle.ReplicaOpenMode.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,ReplicaLifeCycle,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaLifeCycle.ReplicaOpenMode.test",
@@ -1193,7 +1243,7 @@
     {
       "Name": "ReplicaLifecycle.Create.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,ReplicaLifeCycle,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaLifecycle.Create.test",
@@ -1203,7 +1253,7 @@
     {
       "Name": "ReplicaLifeCycle.Abort.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,ReplicaLifeCycle,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaLifeCycle.Abort.test",
@@ -1213,7 +1263,7 @@
     {
       "Name": "ReplicaLifeCycle.Drop.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,ReplicaLifeCycle,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaLifeCycle.Drop.test",
@@ -1223,7 +1273,7 @@
     {
       "Name": "ReplicaLifeCycle.NodeClose.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,ReplicaLifeCycle,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaLifeCycle.NodeClose.test",
@@ -1233,7 +1283,7 @@
     {
       "Name": "ReplicaLifeCycle.Restart.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,ReplicaLifeCycle,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaLifeCycle.Restart.test",
@@ -1243,7 +1293,7 @@
     {
       "Name": "ReplicaLifecycle.FSR.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,ReplicaLifeCycle,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaLifecycle.FSR.test",
@@ -1253,7 +1303,7 @@
     {
       "Name": "Reconfiguration.AddSecondary.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.AddSecondary.test",
@@ -1263,7 +1313,7 @@
     {
       "Name": "Reconfiguration.SwapPrimary.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.SwapPrimary.test",
@@ -1283,7 +1333,7 @@
     {
       "Name": "Reconfiguration.SwapPrimary.Abort.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.SwapPrimary.Abort.test",
@@ -1293,7 +1343,7 @@
     {
       "Name": "UnknownNodes.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "UnknownNodes.test",
@@ -1323,7 +1373,7 @@
     {
       "Name": "Reconfiguration.Phase1GetLSN.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase1GetLSN.test",
@@ -1333,7 +1383,7 @@
     {
       "Name": "Reconfiguration.Phase1GetLSN.DataLoss.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase1GetLSN.DataLoss.test",
@@ -1343,7 +1393,7 @@
     {
       "Name": "Reconfiguration.Phase1GetLSN.FalseProgress.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase1GetLSN.FalseProgress.test",
@@ -1353,7 +1403,7 @@
     {
       "Name": "Reconfiguration.Phase1GetLSN.SlowRemoteReplica.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase1GetLSN.SlowRemoteReplica.test",
@@ -1363,7 +1413,7 @@
     {
       "Name": "Reconfiguration.Phase1Deactivate.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase1Deactivate.test",
@@ -1373,7 +1423,7 @@
     {
       "Name": "Reconfiguration.Phase2Catchup.PrimaryChange.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase2Catchup.PrimaryChange.test",
@@ -1383,7 +1433,7 @@
     {
       "Name": "Reconfiguration.Phase2Catchup.SamePrimary.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase2Catchup.SamePrimary.test",
@@ -1393,7 +1443,7 @@
     {
       "Name": "Reconfiguration.Phase2Deactivate.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase2Deactivate.test",
@@ -1403,7 +1453,7 @@
     {
       "Name": "Reconfiguration.Phase3Deactivate.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase3Deactivate.test",
@@ -1413,7 +1463,7 @@
     {
       "Name": "Reconfiguration.Phase4Activate.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase4Activate.test",
@@ -1423,7 +1473,7 @@
     {
       "Name": "Reconfiguration.Phase4Activate.IdleToActive.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Phase4Activate.IdleToActive.test",
@@ -1433,7 +1483,7 @@
     {
       "Name": "Reconfiguration.ReadWriteStatus.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.ReadWriteStatus.test",
@@ -1443,7 +1493,7 @@
     {
       "Name": "FMRebuildHealthReport.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "FMRebuildHealthReport.test",
@@ -1453,7 +1503,7 @@
     {
       "Name": "Reconfiguration.ReadWriteStatusRevokeNotification.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.ReadWriteStatusRevokeNotification.test",
@@ -1463,7 +1513,7 @@
     {
       "Name": "Reconfiguration.Rebuild.test",
       "Type": "FabricTest",
-      "Owners": "manojsi,chuxin",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Reconfiguration,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Reconfiguration.Rebuild.test",
@@ -1473,7 +1523,7 @@
     {
       "Name": "ReliableMaster.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "ReliableMaster.test",
@@ -1533,7 +1583,7 @@
     {
       "Name": "ReplicatorReportFault2.test",
       "Type": "FabricTest",
-      "Owners": "imang,yzha",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicatorReportFault2.test",
@@ -1543,7 +1593,7 @@
     {
       "Name": "FullRebuild.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "FullRebuild.Test",
@@ -1553,7 +1603,7 @@
     {
       "Name": "FullRebuild2.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "FullRebuild2.test",
@@ -1563,7 +1613,7 @@
     {
       "Name": "Rebuild.Health.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "Rebuild.Health.test",
@@ -1583,7 +1633,7 @@
     {
       "Name": "ClusterRestart.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ClusterRestart.Test",
@@ -1593,7 +1643,7 @@
     {
       "Name": "QuorumLoss.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "QuorumLoss.Test",
@@ -1603,7 +1653,7 @@
     {
       "Name": "RecoverPartitions.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "RecoverPartitions.Test",
@@ -1613,7 +1663,7 @@
     {
       "Name": "RecoverPartition.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "RecoverPartition.Test",
@@ -1623,7 +1673,7 @@
     {
       "Name": "RecoverPartition2.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "RecoverPartition2.Test",
@@ -1633,7 +1683,7 @@
     {
       "Name": "RecoverServicePartitions.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "RecoverServicePartitions.Test",
@@ -1643,7 +1693,7 @@
     {
       "Name": "RecoverSystemPartitions.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "RecoverSystemPartitions.Test",
@@ -1653,7 +1703,7 @@
     {
       "Name": "DeactivateNode.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNode.test",
@@ -1663,7 +1713,7 @@
     {
       "Name": "DeactivateNodes.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover,IS",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNodes.test",
@@ -1673,7 +1723,7 @@
     {
       "Name": "DeactivateNode.HealthChecks.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNode.HealthChecks.test",
@@ -1693,7 +1743,7 @@
     {
       "Name": "DeactivateNode.Upgrade.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNode.Upgrade.test",
@@ -1703,7 +1753,7 @@
     {
       "Name": "RebuildFromReadySecondary.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "RebuildFromReadySecondary.Test",
@@ -1713,7 +1763,7 @@
     {
       "Name": "DataLossDuringRebuild.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "DataLossDuringRebuild.test",
@@ -1723,7 +1773,7 @@
     {
       "Name": "ReplicaOpenFailureHealth.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina,oanapl",
+      "Owners": "chuxin,abhisram",
       "Tags": "Failover,Health,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicaOpenFailureHealth.Test",
@@ -1733,7 +1783,7 @@
     {
       "Name": "FailoverUnitDeletion.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "FailoverUnitDeletion.test",
@@ -1743,7 +1793,7 @@
     {
       "Name": "MinReplicaSetSizeBasic.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "MinReplicaSetSizeBasic.test",
@@ -1753,7 +1803,7 @@
     {
       "Name": "UpdateService.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UpdateService.test",
@@ -1763,7 +1813,7 @@
     {
       "Name": "UpdateFMService.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "UpdateFMService.test",
@@ -1783,7 +1833,7 @@
     {
       "Name": "UpdateServiceGroup.test",
       "Type": "FabricTest",
-      "Owners": "abhisram,manojsi,chuxin,brcamina",
+      "Owners": "abhisram,manojsi,chuxin",
       "Tags": "Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UpdateServiceGroup.test",
@@ -1793,7 +1843,7 @@
     {
       "Name": "NodeStateRemoved.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "NodeStateRemoved.test",
@@ -1803,7 +1853,7 @@
     {
       "Name": "Failover.DataLoss.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Failover.DataLoss.test",
@@ -1813,7 +1863,7 @@
     {
       "Name": "FM.SavedLookupVersion.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "FM.SavedLookupVersion.test",
@@ -1823,7 +1873,7 @@
     {
       "Name": "DeactivateNode.Pause.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "IS,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNode.Pause.test",
@@ -1833,7 +1883,7 @@
     {
       "Name": "DeactivateNode.Restart.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "IS,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNode.Restart.test",
@@ -1843,7 +1893,7 @@
     {
       "Name": "DeactivateNode.RemoveData.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "IS,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNode.RemoveData.test",
@@ -1853,7 +1903,7 @@
     {
       "Name": "DeactivateNode.RemoveNode.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "IS,ReliabilityFunctionals",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNode.RemoveNode.test",
@@ -1863,7 +1913,7 @@
     {
       "Name": "DeactivateNode.Placement.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "IS,ReliabilityFunctionals",
       "TestExecutionParameters": {
         "TaskName": "DeactivateNode.Placement.test",
@@ -1895,7 +1945,7 @@
     {
       "Name": "ServiceAffinityChainErrors.test",
       "Type": "FabricTest",
-      "Owners": "v-anatra,sfplbtestfailures",
+      "Owners": "anatra,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ServiceAffinityChainErrors.test",
@@ -1925,7 +1975,7 @@
     {
       "Name": "ServicePlacementPolicy.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "mocolic,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ServicePlacementPolicy.test",
@@ -1945,7 +1995,7 @@
     {
       "Name": "PlbCapacityViolationsWithStandByReplicas.test",
       "Type": "FabricTest",
-      "Owners": "v-anatra,sfplbtestfailures",
+      "Owners": "anatra,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "PlbCapacityViolationsWithStandByReplicas.test",
@@ -1955,7 +2005,7 @@
     {
       "Name": "PlbCapacityWithBufferNodePercentage.test",
       "Type": "FabricTest",
-      "Owners": "v-anatra,sfplbtestfailures",
+      "Owners": "anatra,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "PlbCapacityWithBufferNodePercentage.test",
@@ -1985,7 +2035,7 @@
     {
       "Name": "PlbNodeLoad.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "v-ivned,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "PlbNodeLoad.test",
@@ -1995,7 +2045,7 @@
     {
       "Name": "PlbClusterLoad.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "v-ivned,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "PlbClusterLoad.test",
@@ -2015,7 +2065,7 @@
     {
       "Name": "PlbOnEveryNode.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "mmicic,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "PlbOnEveryNode.test",
@@ -2075,7 +2125,7 @@
     {
       "Name": "PLBViolationCorrectionWithDownStandbyReplicas.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "mocolic,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "PLBViolationCorrectionWithDownStandbyReplicas.test",
@@ -2165,7 +2215,7 @@
     {
       "Name": "PLBApplicationGroupBasic.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "nipuzovi,sfplbtestfailures",
       "Tags": "LoadBalancing,Reliability",
       "TestExecutionParameters": {
         "TaskName": "PLBApplicationGroupBasic.test",
@@ -2325,7 +2375,7 @@
     {
       "Name": "Replication.Test.exe",
       "Type": "ExeTest",
-      "Owners": "imang,yzha",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "Replication,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Replication.Test.exe",
@@ -2335,7 +2385,7 @@
     {
       "Name": "replicatorscenario1.test",
       "Type": "FabricTest",
-      "Owners": "imang,yzha",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "Replication,Reliability",
       "TestExecutionParameters": {
         "TaskName": "replicatorscenario1.test",
@@ -2345,7 +2395,7 @@
     {
       "Name": "ReplicatorPrimaryHealthReporting.test",
       "Type": "FabricTest",
-      "Owners": "imang",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "Replication,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicatorPrimaryHealthReporting.test",
@@ -2355,7 +2405,7 @@
     {
       "Name": "ReplicatorSecondaryHealthReporting.test",
       "Type": "FabricTest",
-      "Owners": "imang",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "Replication,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ReplicatorSecondaryHealthReporting.test",
@@ -2365,7 +2415,7 @@
     {
       "Name": "ServiceGroup.Test.exe",
       "Type": "ExeTest",
-      "Owners": "abhisram,manojsi,chuxin,brcamina",
+      "Owners": "abhisram,manojsi,chuxin",
       "Tags": "Reliability,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ServiceGroup.Test.exe",
@@ -2375,7 +2425,7 @@
     {
       "Name": "ServiceGroup.Basic.test",
       "Type": "FabricTest",
-      "Owners": "abhisram,manojsi,chuxin,brcamina",
+      "Owners": "abhisram,manojsi,chuxin",
       "Tags": "Reliability,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ServiceGroup.Basic.test",
@@ -2386,7 +2436,7 @@
     {
       "Name": "ServiceGroup.Resolution.test",
       "Type": "FabricTest",
-      "Owners": "oanapl,abhisram,manojsi,chuxin,brcamina",
+      "Owners": "abhisram,manojsi,chuxin",
       "Tags": "ServiceGroup,Naming,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ServiceGroup.Resolution.test",
@@ -2406,7 +2456,7 @@
     {
       "Name": "Upgrade.test",
       "Type": "FabricTest",
-      "Owners": "harahma",
+      "Owners": "manojsi,motanv",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "Upgrade.test",
@@ -2416,7 +2466,7 @@
     {
       "Name": "AppUpgradePLB.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "FM,Upgrade",
       "TestExecutionParameters": {
         "TaskName": "AppUpgradePLB.test",
@@ -2426,7 +2476,7 @@
     {
       "Name": "AppUpgrade1.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade1.test",
@@ -2436,7 +2486,7 @@
     {
       "Name": "AppUpgrade2.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade2.test",
@@ -2446,7 +2496,7 @@
     {
       "Name": "AppUpgrade3.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade3.test",
@@ -2456,7 +2506,7 @@
     {
       "Name": "AppUpgrade4.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade4.test",
@@ -2466,7 +2516,7 @@
     {
       "Name": "AppUpgrade5.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade5.test",
@@ -2476,7 +2526,7 @@
     {
       "Name": "AppUpgrade6.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade6.test",
@@ -2486,7 +2536,7 @@
     {
       "Name": "AppUpgrade7.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade7.test",
@@ -2496,7 +2546,7 @@
     {
       "Name": "AppUpgrade.Rebuild.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade.Rebuild.test",
@@ -2506,7 +2556,7 @@
     {
       "Name": "AppUpgrade.SwapPrimary.test",
       "Type": "FabricTest",
-      "Owners": "brcamina,harahma",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "AppUpgrade.SwapPrimary.test",
@@ -2516,7 +2566,7 @@
     {
       "Name": "ClusterUpgradePLB.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "ClusterUpgradePLB.test",
@@ -2526,7 +2576,7 @@
     {
       "Name": "ClusterUpgrade1.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "ClusterUpgrade1.test",
@@ -2536,7 +2586,7 @@
     {
       "Name": "ClusterUpgrade2.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "ClusterUpgrade2.test",
@@ -2546,7 +2596,7 @@
     {
       "Name": "ClusterUpgrade3.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "ClusterUpgrade3.test",
@@ -2556,7 +2606,7 @@
     {
       "Name": "ClusterUpgrade4.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "ClusterUpgrade4.test",
@@ -2566,7 +2616,7 @@
     {
       "Name": "ClusterAndAppUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "ClusterAndAppUpgrade.test",
@@ -2576,7 +2626,7 @@
     {
       "Name": "FabricUpgradeSafetyCheck.test",
       "Type": "FabricTest",
-      "Owners": "harahma",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,CM,Reliability",
       "TestExecutionParameters": {
         "TaskName": "FabricUpgradeSafetyCheck.test",
@@ -2586,7 +2636,7 @@
     {
       "Name": "FabricUpgradeSeedCheck.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "FabricUpgradeSeedCheck.test",
@@ -2596,7 +2646,7 @@
     {
       "Name": "UpgradeInQuorumLoss.test",
       "Type": "FabricTest",
-      "Owners": "harahma",
+      "Owners": "manojsi",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UpgradeInQuorumLoss.test",
@@ -2606,7 +2656,7 @@
     {
       "Name": "UpgradeApplicationPackage.test",
       "Type": "FabricTest_Sequential",
-      "Owners": "harahma",
+      "Owners": "manojsi",
       "Tags": "Admin,Upgrade,CM,Activation,RunAs,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UpgradeApplicationPackage.test",
@@ -2616,7 +2666,7 @@
     {
       "Name": "UpgradeApplicationParameters.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "motanv,jiqh,bharatn",
       "Tags": "Admin,Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UpgradeApplicationParameters.test",
@@ -2636,7 +2686,7 @@
     {
       "Name": "UpgradeInterruption.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,motanv",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UpgradeInterruption.test",
@@ -2646,7 +2696,7 @@
     {
       "Name": "ServiceCreationDuringUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,motanv",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ServiceCreationDuringUpgrade.test",
@@ -2656,7 +2706,7 @@
     {
       "Name": "RollbackApplicationUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,motanv",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RollbackApplicationUpgrade.test",
@@ -2666,7 +2716,7 @@
     {
       "Name": "RollbackFabricUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "motanv,bharatn",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "RollbackFabricUpgrade.test",
@@ -2686,7 +2736,7 @@
     {
       "Name": "UpgradeApplicationOpenFailure.test",
       "Type": "FabricTest_Sequential",
-      "Owners": "vaishnav,linggeng,bharatn",
+      "Owners": "vaishnav,motanv,bharatn",
       "Tags": "Upgrade,CM,Activation,RunAs,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UpgradeApplicationOpenFailure.test",
@@ -2696,7 +2746,7 @@
     {
       "Name": "UpgradeSkipDomains.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,motanv,bharatn",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UpgradeSkipDomains.test",
@@ -2706,7 +2756,7 @@
     {
       "Name": "ModifyUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,motanv,bharatn",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ModifyUpgrade.test",
@@ -2716,7 +2766,7 @@
     {
       "Name": "DeleteApplicationDuringUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,motanv,bharatn",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "DeleteApplicationDuringUpgrade.test",
@@ -2726,7 +2776,7 @@
     {
       "Name": "ModifyFabricUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "motanv,jiqh,bharatn",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "ModifyFabricUpgrade.test",
@@ -2756,7 +2806,7 @@
     {
       "Name": "MonitoredUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "vaishnav,linggeng,bharatn",
+      "Owners": "vaishnav,motanv,bharatn",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "MonitoredUpgrade.test",
@@ -2766,7 +2816,7 @@
     {
       "Name": "MonitoredUpgrade2.test",
       "Type": "FabricTest",
-      "Owners": "vaishnav,linggeng,bharatn",
+      "Owners": "vaishnav,motanv,bharatn",
       "Tags": "Upgrade,CM,Activation,Reliability",
       "TestExecutionParameters": {
         "TaskName": "MonitoredUpgrade2.test",
@@ -2776,7 +2826,7 @@
     {
       "Name": "MonitoredUpgradeRollback.test",
       "Type": "FabricTest_Sequential",
-      "Owners": "vaishnav,,linggeng,bharatn",
+      "Owners": "vaishnav,,motanv,bharatn",
       "Tags": "Upgrade,CM,Activation,RunAs,Reliability",
       "TestExecutionParameters": {
         "TaskName": "MonitoredUpgradeRollback.test",
@@ -2786,7 +2836,7 @@
     {
       "Name": "FabricUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "motanv,bharatn",
       "Tags": "Upgrade,CM,Reliability",
       "TestExecutionParameters": {
         "TaskName": "FabricUpgrade.test",
@@ -2806,7 +2856,7 @@
     {
       "Name": "MonitoredFabricUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "motanv,bharatn",
       "Tags": "Upgrade,CM,Reliability",
       "TestExecutionParameters": {
         "TaskName": "MonitoredFabricUpgrade.test",
@@ -2816,7 +2866,7 @@
     {
       "Name": "UnblockRollback.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,motanv,bharatn",
       "Tags": "Upgrade,CM,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UnblockRollback.test",
@@ -2826,7 +2876,7 @@
     {
       "Name": "UnmonitoredManualRollback.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,motanv,bharatn",
       "Tags": "Upgrade,CM,Reliability",
       "TestExecutionParameters": {
         "TaskName": "UnmonitoredManualRollback.test",
@@ -2836,7 +2886,7 @@
     {
       "Name": "UpgradeUD.Test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "UpgradeUD.Test",
@@ -2846,7 +2896,7 @@
     {
       "Name": "Upgrade.DynamicUD.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Upgrade,FM,Failover",
       "TestExecutionParameters": {
         "TaskName": "Upgrade.DynamicUD.test",
@@ -2936,6 +2986,16 @@
       }
     },
     {
+      "Name": "Hosting2.Networking.Test.exe",
+      "Type": "ExeTest_Sequential",
+      "Owners": "shkadam,dariopb",
+      "Tags": "Admin,Management",
+      "TestExecutionParameters": {
+        "TaskName": "Hosting2.Networking.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
       "Name": "HostingBasic.test",
       "Type": "FabricTest",
       "Owners": "tugup,harahma",
@@ -2979,7 +3039,7 @@
     {
       "Name": "ClusterManager.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,jiqh",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Activation,Management",
       "TestExecutionParameters": {
         "TaskName": "ClusterManager.test",
@@ -2989,7 +3049,7 @@
     {
       "Name": "ClusterManagerDefaultService.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,jiqh",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Upgrade,Management",
       "TestExecutionParameters": {
         "TaskName": "ClusterManagerDefaultService.test",
@@ -2999,7 +3059,7 @@
     {
       "Name": "ClusterManagerDefaultServiceDisabled.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,jiqh",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Upgrade,Management",
       "TestExecutionParameters": {
         "TaskName": "ClusterManagerDefaultServiceDisabled.test",
@@ -3009,7 +3069,7 @@
     {
       "Name": "ClusterManagerErrors.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,jiqh",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Activation,Management",
       "TestExecutionParameters": {
         "TaskName": "ClusterManagerErrors.test",
@@ -3019,7 +3079,7 @@
     {
       "Name": "ClusterManagerStaleMessage.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,jiqh",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Activation,Management",
       "TestExecutionParameters": {
         "TaskName": "ClusterManagerStaleMessage.test",
@@ -3030,7 +3090,7 @@
       "Name": "ClusterManagerServiceDnsName.test",
       "Type": "FabricTest",
       "Owners": "vivekagg,dariopb",
-      "Tags": "CM,Activation,Management",
+      "Tags": "CM,Management,DNS",
       "TestExecutionParameters": {
         "TaskName": "ClusterManagerServiceDnsName.test",
         "SetupType": "XCopy"
@@ -3040,7 +3100,7 @@
       "Name": "ClusterManagerDefaultServicesDnsName.test",
       "Type": "FabricTest",
       "Owners": "vivekagg,dariopb",
-      "Tags": "CM,Activation,Management",
+      "Tags": "CM,Management,DNS",
       "TestExecutionParameters": {
         "TaskName": "ClusterManagerDefaultServicesDnsName.test",
         "SetupType": "XCopy"
@@ -3050,16 +3110,26 @@
       "Name": "ClusterManagerDeletePendingDefaultServices.test",
       "Type": "FabricTest",
       "Owners": "vivekagg,dariopb",
-      "Tags": "CM,Activation,Management",
+      "Tags": "CM,Management,DNS",
       "TestExecutionParameters": {
         "TaskName": "ClusterManagerDeletePendingDefaultServices.test",
         "SetupType": "XCopy"
       }
     },
     {
+      "Name": "ClusterManagerPartitionedQuerySchemeCheck.test",
+      "Type": "FabricTest",
+      "Owners": "vivekagg,dariopb",
+      "Tags": "CM,Management,DNS",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManagerPartitionedQuerySchemeCheck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
       "Name": "DockerCompose.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Container,Management",
       "TestExecutionParameters": {
         "TaskName": "DockerCompose.test",
@@ -3069,10 +3139,20 @@
     {
       "Name": "ComposeUpgrade.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Container,Management",
       "TestExecutionParameters": {
         "TaskName": "ComposeUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ComposeRollbackUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "jiqh,bharatn",
+      "Tags": "CM,Container,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ComposeRollbackUpgrade.test",
         "SetupType": "XCopy"
       }
     },
@@ -3099,7 +3179,7 @@
     {
       "Name": "ImageStore.Test.exe",
       "Type": "ExeTest",
-      "Owners": "mialu,iyyappam,oanapl",
+      "Owners": "iyyappam,jeongham",
       "Tags": "Management,ImageStore",
       "TestExecutionParameters": {
         "TaskName": "ImageStore.Test.exe",
@@ -3109,7 +3189,7 @@
     {
       "Name": "NativeImageStore.Scenario.Test",
       "Type": "V2_ScriptTest",
-      "Owners": "mialu,iyyappam,oanapl",
+      "Owners": "iyyappam,jeongham",
       "Tags": "Management,ImageStore",
       "TestExecutionParameters": {
         "TaskName": "NativeImageStore.Scenario.Test",
@@ -3118,13 +3198,223 @@
       }
     },
     {
-      "Name": "System.Fabric.Management.Test.dll",
-      "Type": "TAEFTest_Isolated",
-      "Owners": "vaishnav,vipulm",
+      "Name": "SF.FabricDeployer.FabricDeployerDeploymentTests",
+      "Type": "TAEFTest",
+      "Owners": "maburlik,shkadam",
+      "Tags": "DeployAnywhere,Setup,Management,ImageBuilder",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/select:\"not(@ContainerFeatureRequired='true')\" /name:*FabricDeployerDeploymentTests*",
+        "SetupType": "XCopy",
+        "ExecutionTimeout": "3600"
+      }
+    },
+    {
+      "Name": "SF.FabricDeployer.FirewallTest",
+      "Type": "TAEFTest",
+      "Owners": "raunakp,maburlik,shkadam",
+      "Tags": "DeployAnywhere,Security,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FirewallTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SF.FabricDeployer.FabricDeployerValidatorTests",
+      "Type": "TAEFTest",
+      "Owners": "maburlik,shkadam",
+      "Tags": "DeployAnywhere,Setup,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FabricDeployerValidatorTests*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SF.FabricDeployer.FabricDeployerDeploymentParametersTest",
+      "Type": "TAEFTest",
+      "Owners": "maburlik,shkadam",
+      "Tags": "DeployAnywhere,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FabricDeployerDeploymentParametersTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.DcaSettingsTest",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "DCA,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*DcaSettingsTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.DockerComposeParserTest",
+      "Type": "TAEFTest",
+      "Owners": "jiqh,bharatn",
+      "Tags": "CM,Container,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*DockerComposeParserTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.FabricValidatorWrapperTest",
+      "Type": "TAEFTest",
+      "Owners": "vaishnav,zikaiw",
+      "Tags": "Setup,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FabricValidatorWrapperTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.FileImageStoreTest",
+      "Type": "TAEFTest",
+      "Owners": "iyyappam,jeongham",
+      "Tags": "ImageStore,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FileImageStoreTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.FileSignatureVerifierTest",
+      "Type": "TAEFTest",
+      "Owners": "iyyappam,jeongham",
+      "Tags": "ImageStore,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FileSignatureVerifierTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.ImageBuilderChecksumTest",
+      "Type": "TAEFTest",
+      "Owners": "iyyappam,motanv,jiqh",
+      "Tags": "ImageBuilder,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*ImageBuilderChecksumTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.ImageBuilderFabricUpgradeTest",
+      "Type": "TAEFTest",
+      "Owners": "motanv,iyyappam,jiqh",
+      "Tags": "ImageBuilder,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*ImageBuilderFabricUpgradeTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.ImageBuilderUpgradeTest",
+      "Type": "TAEFTest",
+      "Owners": "motanv,iyyappam,jiqh",
+      "Tags": "ImageBuilder,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*ImageBuilderUpgradeTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.ImageBuilderTest",
+      "Type": "TAEFTest",
+      "Owners": "iyyappam,jiqh",
+      "Tags": "ImageBuilder,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*ImageBuilderTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.FabricValidatorTest",
+      "Type": "TAEFTest",
+      "Owners": "vaishnav,zikaiw",
+      "Tags": "Setup,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FabricValidatorTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.FailoverManagerConfigurationValidatorTest",
+      "Type": "TAEFTest",
+      "Owners": "manojsi,chuxin",
+      "Tags": "FM,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FailoverManagerConfigurationValidatorTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.FileStoreServiceConfigurationValidatorTest",
+      "Type": "TAEFTest",
+      "Owners": "iyyappam,jeongham",
+      "Tags": "ImageStore,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*FileStoreServiceConfigurationValidatorTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.RASettingsValidatorTest",
+      "Type": "TAEFTest",
+      "Owners": "chuxin,manojsi",
       "Tags": "Admin,Security,Management",
       "TestExecutionParameters": {
         "TaskName": "System.Fabric.Management.Test.dll",
-        "Params": "/select:\"not(@ContainerFeatureRequired='true')\"",
+        "Params": "/name:*RASettingsValidatorTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.NativeRunConfigurationSettingValidatorTest",
+      "Type": "TAEFTest",
+      "Owners": "vaishnav,zikaiw",
+      "Tags": "Setup,Security,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*NativeRunConfigurationSettingValidatorTest*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SFM.Test.XStoreImageStore",
+      "Type": "TAEFTest",
+      "Owners": "iyyappam,jeongham",
+      "Tags": "ImageStore,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*XStoreImageStore*",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SF.CertificateManager.Test.CertificateManagerTest",
+      "Type": "TAEFTest",
+      "Owners": "dragosav,vaishnav,vipulm",
+      "Tags": "Admin,Security,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/name:*CertificateManagerTest*",
         "SetupType": "XCopy"
       }
     },
@@ -3231,7 +3521,7 @@
     {
       "Name": "FabricQueryPaging.test",
       "Type": "FabricTest",
-      "Owners": "bikang,bharatn,oanapl",
+      "Owners": "bikang,bharatn",
       "Tags": "Query,Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricQueryPaging.test",
@@ -3251,7 +3541,7 @@
     {
       "Name": "Reprovision.test",
       "Type": "FabricTest",
-      "Owners": "iyyappam,mialu,oanapl",
+      "Owners": "iyyappam,motanv,jeongham",
       "Tags": "ImageBuilder,Management",
       "TestExecutionParameters": {
         "TaskName": "Reprovision.test",
@@ -3261,7 +3551,7 @@
     {
       "Name": "DiffProvisioning.test",
       "Type": "FabricTest",
-      "Owners": "iyyappam,mialu,oanapl",
+      "Owners": "iyyappam,motanv,jeongham",
       "Tags": "ImageBuilder,Management",
       "TestExecutionParameters": {
         "TaskName": "DiffProvisioning.test",
@@ -3271,7 +3561,7 @@
     {
       "Name": "ClusterManager.SingleNode.Test.exe",
       "Type": "ExeTest",
-      "Owners": "linggeng,jiqh",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Management,ImageBuilder",
       "TestExecutionParameters": {
         "TaskName": "ClusterManager.SingleNode.Test.exe",
@@ -3281,7 +3571,7 @@
     {
       "Name": "ProvisionCaseSensitivity.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,iyyappam,oanapl",
+      "Owners": "iyyappam,jiqh,jeongham",
       "Tags": "CM,Management",
       "TestExecutionParameters": {
         "TaskName": "ProvisionCaseSensitivity.test",
@@ -3291,7 +3581,7 @@
     {
       "Name": "ParallelProvision.test",
       "Type": "FabricTest",
-      "Owners": "iyyappam,oanapl",
+      "Owners": "iyyappam,jiqh,jeongham",
       "Tags": "CM,Management,ImageBuilder",
       "TestExecutionParameters": {
         "TaskName": "ParallelProvision.test",
@@ -3301,7 +3591,7 @@
     {
       "Name": "ApplicationFail.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,jiqh,oanapl",
+      "Owners": "jiqh,motanv,bharatn",
       "Tags": "CM,Management",
       "TestExecutionParameters": {
         "TaskName": "ApplicationFail.test",
@@ -3311,7 +3601,7 @@
     {
       "Name": "ServiceFail.test",
       "Type": "FabricTest",
-      "Owners": "linggeng,jiqh",
+      "Owners": "jiqh,bharatn",
       "Tags": "CM,Management",
       "TestExecutionParameters": {
         "TaskName": "ServiceFail.test",
@@ -3361,7 +3651,7 @@
     {
       "Name": "FabricHealthAggregatedHealthCheck.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthAggregatedHealthCheck.test",
@@ -3371,7 +3661,7 @@
     {
       "Name": "FabricHealthStateChunks.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthStateChunks.test",
@@ -3381,7 +3671,7 @@
     {
       "Name": "FabricHealthSkipPersistSameReports.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthSkipPersistSameReports.test",
@@ -3391,7 +3681,7 @@
     {
       "Name": "FabricHealthAdvancedScenarios.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthAdvancedScenarios.test",
@@ -3401,7 +3691,7 @@
     {
       "Name": "FabricHealth.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealth.test",
@@ -3411,7 +3701,7 @@
     {
       "Name": "FabricHealthReportSystemNoInstance.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthReportSystemNoInstance.test",
@@ -3421,7 +3711,7 @@
     {
       "Name": "FabricHealthReportingComponent.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthReportingComponent.test",
@@ -3431,7 +3721,7 @@
     {
       "Name": "FabricHealthFailover.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthFailover.test",
@@ -3441,7 +3731,7 @@
     {
       "Name": "FabricHealthSequenceStream.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthSequenceStream.test",
@@ -3451,7 +3741,7 @@
     {
       "Name": "FabricHealthStress.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthStress.test",
@@ -3461,7 +3751,7 @@
     {
       "Name": "FabricHealthSystemUserReports.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricHealthSystemUserReports.test",
@@ -3471,7 +3761,7 @@
     {
       "Name": "FabricClusterHealthChecks.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricClusterHealthChecks.test",
@@ -3481,7 +3771,7 @@
     {
       "Name": "FabricClusterAppTypeHealthChecks.test",
       "Type": "FabricTest",
-      "Owners": "bikang,oanapl",
+      "Owners": "bikang,hsun",
       "Tags": "Health,Management",
       "TestExecutionParameters": {
         "TaskName": "FabricClusterAppTypeHealthChecks.test",
@@ -3491,7 +3781,7 @@
     {
       "Name": "FMHealthReport.test",
       "Type": "FabricTest",
-      "Owners": "brcamina,oanapl",
+      "Owners": "manojsi,abhisram",
       "Tags": "Health,Management,FM",
       "TestExecutionParameters": {
         "TaskName": "FMHealthReport.test",
@@ -3501,7 +3791,7 @@
     {
       "Name": "FMHealthSequence.test",
       "Type": "FabricTest",
-      "Owners": "brcamina,oanapl",
+      "Owners": "manojsi,abhisram",
       "Tags": "Health,Management,FM",
       "TestExecutionParameters": {
         "TaskName": "FMHealthSequence.test",
@@ -3511,7 +3801,7 @@
     {
       "Name": "FMPlacementHealth.test",
       "Type": "FabricTest",
-      "Owners": "brcamina",
+      "Owners": "manojsi,abhisram",
       "Tags": "Health,Management,FM",
       "TestExecutionParameters": {
         "TaskName": "FMPlacementHealth.test",
@@ -3732,7 +4022,7 @@
     {
       "Name": "Health.test",
       "Type": "V2_ScriptTest",
-      "Owners": "bikang,oanapl,bharatn",
+      "Owners": "bikang,bharatn,hsun",
       "Tags": "Admin,Health,EndToEnd",
       "TestExecutionParameters": {
         "TaskName": "Health.test",
@@ -3742,7 +4032,7 @@
     {
       "Name": "System.Fabric.Collections.Test.dll",
       "Type": "TAEFTest",
-      "Owners": "tyadam,yzha,imang,rajak",
+      "Owners": "tyadam,rahku,preethas",
       "Tags": "V2Replicator",
       "TestExecutionParameters": {
         "TaskName": "System.Fabric.Collections.Test.dll",
@@ -3752,7 +4042,7 @@
     {
       "Name": "System.Fabric.Data.Collections.Test.dll",
       "Type": "TAEFTest",
-      "Owners": "tyadam,yzha,rajak",
+      "Owners": "tyadam,rahku,preethas",
       "Tags": "V2Replicator",
       "TestExecutionParameters": {
         "TaskName": "System.Fabric.Data.Collections.Test.dll",
@@ -3762,7 +4052,7 @@
     {
       "Name": "System.Fabric.Store.Test.dll",
       "Type": "TAEFTest",
-      "Owners": "preethas,zuparvez",
+      "Owners": "zuparvez,preethas",
       "Tags": "V2Replicator",
       "TestExecutionParameters": {
         "TaskName": "System.Fabric.Store.Test.dll",
@@ -3773,7 +4063,7 @@
     {
       "Name": "System.Fabric.Replicator.Test.dll",
       "Type": "TAEFTest_V2Repl",
-      "Owners": "imang,preethas",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "V2Replicator",
       "TestExecutionParameters": {
         "TaskName": "System.Fabric.Replicator.Test.dll",
@@ -3783,7 +4073,7 @@
     {
       "Name": "System.Fabric.ReplicatorStack.Test.dll",
       "Type": "TAEFTest_V2Repl",
-      "Owners": "preethas,imang",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "V2Replicator",
       "TestExecutionParameters": {
         "TaskName": "System.Fabric.ReplicatorStack.Test.dll",
@@ -3793,7 +4083,7 @@
     {
       "Name": "System.Fabric.Common.Monitoring.Test.dll",
       "Type": "TAEFTest",
-      "Owners": "imang",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "V2Replicator",
       "TestExecutionParameters": {
         "TaskName": "System.Fabric.Common.Monitoring.Test.dll",
@@ -3803,7 +4093,7 @@
     {
       "Name": "Microsoft.ServiceFabric.Upgrade.Test.dll",
       "Type": "TAEFTest",
-      "Owners": "imang,preethas",
+      "Owners": "tyadam,kailasl,preethas",
       "IsEnabled": "false",
       "Tags": "V2Replicator",
       "TestExecutionParameters": {
@@ -3814,7 +4104,7 @@
     {
       "Name": "Backup-Nano.test",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,rajak",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "Admin,V2Replicator",
       "TestExecutionParameters": {
         "TaskName": "Backup-Nano.test",
@@ -3875,7 +4165,7 @@
     {
       "Name": "FailSecondaryReplicatorGetLSN.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "Tags": "Trace",
       "TestExecutionParameters": {
         "TaskName": "FailSecondaryReplicatorGetLSN.test",
@@ -3885,7 +4175,7 @@
     {
       "Name": "BlockDoReconfigurationRequest.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3896,7 +4186,7 @@
     {
       "Name": "BlockDoReconfigurationReply.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3907,7 +4197,7 @@
     {
       "Name": "FMLockFailure.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3918,7 +4208,7 @@
     {
       "Name": "BlockGetLSNReply.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3929,7 +4219,7 @@
     {
       "Name": "FailPrimaryReplicatorGetLSN.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3940,7 +4230,7 @@
     {
       "Name": "BlockDeactivateReply.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3951,7 +4241,7 @@
     {
       "Name": "BlockReplicaCloseReply.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3962,7 +4252,7 @@
     {
       "Name": "FailSecondaryChangeRole.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3973,7 +4263,7 @@
     {
       "Name": "FailPrimaryChangeRole.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3984,7 +4274,7 @@
     {
       "Name": "FailOpenInstance.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -3995,7 +4285,7 @@
     {
       "Name": "FailOpenReplica.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -4006,7 +4296,7 @@
     {
       "Name": "BlockReplicationDuringCatchUp.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -4017,7 +4307,7 @@
     {
       "Name": "BlockCopy.test",
       "Type": "FabricTraceTest",
-      "Owners": "qiyzheng",
+      "Owners": "zhol",
       "IsEnabled": "false",
       "Tags": "Trace",
       "TestExecutionParameters": {
@@ -4026,53 +4316,9 @@
       }
     },
     {
-      "Name": "ApplicationUpgradeBitsDownloadFailed.test",
-      "Type": "FabricTraceTest",
-      "Owners": "motanv",
-      "IsEnabled": "false",
-      "Tags": "Trace",
-      "TestExecutionParameters": {
-        "TaskName": "ApplicationUpgradeBitsDownloadFailed.test",
-        "SetupType": "XCopy"
-      }
-    },
-    {
-      "Name": "ApplicationUpgradeBitsDownloadStuck.test",
-      "Type": "FabricTraceTest",
-      "Owners": "motanv",
-      "IsEnabled": "false",
-      "Tags": "Trace",
-      "TestExecutionParameters": {
-        "TaskName": "ApplicationUpgradeBitsDownloadStuck.test",
-        "SetupType": "XCopy"
-      }
-    },
-    {
-      "Name": "FabricUpgradeBitsUpgradeStuck.test",
-      "Type": "FabricTraceTest",
-      "Owners": "motanv",
-      "IsEnabled": "false",
-      "Tags": "Trace",
-      "TestExecutionParameters": {
-        "TaskName": "FabricUpgradeBitsUpgradeStuck.test",
-        "SetupType": "XCopy"
-      }
-    },
-    {
-      "Name": "FabricUpgradeReplicaCloseStuck.test",
-      "Type": "FabricTraceTest",
-      "Owners": "motanv",
-      "IsEnabled": "false",
-      "Tags": "Trace",
-      "TestExecutionParameters": {
-        "TaskName": "FabricUpgradeReplicaCloseStuck.test",
-        "SetupType": "XCopy"
-      }
-    },
-    {
       "Name": "Microsoft.ServiceFabric.Services.Remoting.V2.Test",
       "Type": "XUnit",
-      "Owners": "suchia,amanbha,harahma",
+      "Owners": "suchia,amanbha",
       "Tags": "FabSrvTests",
       "TestExecutionParameters": {
         "TaskName": "Microsoft.ServiceFabric.Services.Remoting.V2.Test.dll",
@@ -4082,7 +4328,7 @@
     {
       "Name": "TcpServiceCommunication.Test.exe",
       "Type": "ExeTest",
-      "Owners": "suchia,amanbha,harahma",
+      "Owners": "suchia,amanbha",
       "Tags": "Security,FabSrvTests",
       "TestExecutionParameters": {
         "TaskName": "TcpServiceCommunication.Test.exe",
@@ -4092,7 +4338,7 @@
     {
       "Name": "Microsoft.ServiceFabric.FabricTransport.Test.dll",
       "Type": "TAEFTest",
-      "Owners": "suchia,amanbha,harahma",
+      "Owners": "suchia,amanbha",
       "Tags": "Security,FabSrvTests",
       "TestExecutionParameters": {
         "TaskName": "Microsoft.ServiceFabric.FabricTransport.Test.dll",
@@ -4152,7 +4398,7 @@
     {
       "Name": "logicallog.test.exe",
       "Type": "ExeTest_Sequential",
-      "Owners": "tyadam,alanwar",
+      "Owners": "tyadam,alanwar,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "logicallog.test.exe",
@@ -4162,7 +4408,7 @@
     {
       "Name": "loggingreplicator.test.exe",
       "Type": "ExeTest",
-      "Owners": "imang",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "loggingreplicator.test.exe",
@@ -4173,7 +4419,7 @@
     {
       "Name": "txnreplicator.test.exe",
       "Type": "ExeTest",
-      "Owners": "zhol",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "txnreplicator.test.exe",
@@ -4183,7 +4429,7 @@
     {
       "Name": "data.utilities.test.exe",
       "Type": "ExeTest",
-      "Owners": "preethas",
+      "Owners": "shalabhs,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "data.utilities.test.exe",
@@ -4193,7 +4439,7 @@
     {
       "Name": "data.integration.test.exe",
       "Type": "ExeTest",
-      "Owners": "zhol",
+      "Owners": "shalabhs,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "data.integration.test.exe",
@@ -4203,7 +4449,7 @@
     {
       "Name": "data.integration.upgrade.test.exe",
       "Type": "ExeTest",
-      "Owners": "imang",
+      "Owners": "shalabhs,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "data.integration.upgrade.test.exe",
@@ -4214,7 +4460,7 @@
     {
       "Name": "statemanager.test.exe",
       "Type": "ExeTest",
-      "Owners": "zhol",
+      "Owners": "zuparvez,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "statemanager.test.exe",
@@ -4225,7 +4471,7 @@
     {
       "Name": "TStore.Test.exe",
       "Type": "ExeTest",
-      "Owners": "preethas,zuparvez",
+      "Owners": "zuparvez,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "TStore.Test.exe",
@@ -4236,7 +4482,7 @@
     {
       "Name": "TXRAddRemove.test",
       "Type": "FabricTest",
-      "Owners": "imang",
+      "Owners": "tyadam,rahku,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "TXRAddRemove.test",
@@ -4246,7 +4492,7 @@
     {
       "Name": "TXRStateProviderFaults.test",
       "Type": "FabricTest",
-      "Owners": "zhol,imang",
+      "Owners": "tyadam,rahku,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "TXRStateProviderFaults.test",
@@ -4256,7 +4502,7 @@
     {
       "Name": "TXRBackupRestore.Basic.test",
       "Type": "FabricTest",
-      "Owners": "zhol",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "TXRBackupRestore.Basic.test",
@@ -4266,7 +4512,7 @@
     {
       "Name": "TStore.test",
       "Type": "FabricTest",
-      "Owners": "preethas,zuparvez",
+      "Owners": "zuparvez,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "TStore.test",
@@ -4276,7 +4522,7 @@
     {
       "Name": "ReliableCollectionRuntimeImpl.test",
       "Type": "ExeTest",
-      "Owners": "rahku",
+      "Owners": "rahku,preethas",
       "Tags": "V2StackPort",
       "TestExecutionParameters": {
         "TaskName": "ReliableCollectionRuntimeImpl.test.exe",
@@ -4306,7 +4552,7 @@
     {
       "Name": "KtlLogBvtKernel.Test.dll",
       "Type": "TAEFTest_Isolated",
-      "Owners": "alanwar,tyadam",
+      "Owners": "alanwar,tyadam,preethas",
       "Tags": "Admin,KtlLogger",
       "TestExecutionParameters": {
         "TaskName": "KtlLogBvtKernel.Test.dll",
@@ -4317,7 +4563,7 @@
     {
       "Name": "PLBReportLoad.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "v-brmilo,sfplbtestfailures",
       "Tags": "LoadBalancing",
       "TestExecutionParameters": {
         "TaskName": "PLBReportLoad.test",
@@ -4327,7 +4573,7 @@
     {
       "Name": "PLBPromoteToPrimary.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "apopadic,sfplbtestfailures",
       "Tags": "LoadBalancing",
       "TestExecutionParameters": {
         "TaskName": "PLBPromoteToPrimary.test",
@@ -4337,7 +4583,7 @@
     {
       "Name": "PLBResetPartitionLoad.test",
       "Type": "FabricTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "v-brmilo,sfplbtestfailures",
       "Tags": "LoadBalancing",
       "TestExecutionParameters": {
         "TaskName": "PLBResetPartitionLoad.test",
@@ -4445,6 +4691,46 @@
       "Tags": "CM,Volumes",
       "TestExecutionParameters": {
         "TaskName": "Volumes.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ContainerNetwork.NetworkCRUD.test",
+      "Type": "FabricTest",
+      "Owners": "zikaiw,dariopb,shkadam",
+      "Tags": "ContainerNetwork",
+      "TestExecutionParameters": {
+        "TaskName": "ContainerNetwork.NetworkCRUD.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ContainerNetwork.ImageBuilderValidation.test",
+      "Type": "FabricTest",
+      "Owners": "zikaiw,dariopb,shkadam",
+      "Tags": "ContainerNetwork",
+      "TestExecutionParameters": {
+        "TaskName": "ContainerNetwork.ImageBuilderValidation.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ContainerNetwork.NetworkReferenceCounting.test",
+      "Type": "FabricTest",
+      "Owners": "zikaiw,dariopb,shkadam",
+      "Tags": "ContainerNetwork",
+      "TestExecutionParameters": {
+        "TaskName": "ContainerNetwork.NetworkReferenceCounting.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ContainerNetwork.ApplicationCreation.test",
+      "Type": "FabricTest",
+      "Owners": "zikaiw,dariopb,shkadam",
+      "Tags": "ContainerNetwork",
+      "TestExecutionParameters": {
+        "TaskName": "ContainerNetwork.ApplicationCreation.test",
         "SetupType": "XCopy"
       }
     }

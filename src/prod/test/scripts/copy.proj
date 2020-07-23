@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <ItemGroup>
+    <BinplaceSet1 Include="UpdateGeneratedFiles.cmd" />    
+    <BinplaceSet1 Include="CopyCitLogs.cmd" />
+    <BinplaceSet1 Include="CITRuntimes.csv" />   
+    <BinplaceSet1 Include="$(PkgWinFab_Azure_Libs)\Microsoft.WindowsAzure.StorageClient\Microsoft.WindowsAzure.StorageClient.dll" /> 
+    <Robocopy Include="@(BinplaceSet1)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests</DestinationFolder>
+    </Robocopy>
+    <BinplaceSet2 Include="RunTriggerer.exe.config" />
+    <Robocopy Include="@(BinplaceSet2)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTestInfra</DestinationFolder>
+    </Robocopy>
+    <BinplaceSet3 Include="RunTests.cmd" />
+    <BinplaceSet3 Include="RunTestsV2Settings.json" />
+    <BinplaceSet3 Include="UploadBuildSettings.json" />
+    <BinplaceSet3 Include="CITRuntimes.csv" />
+    <BinplaceSet3 Include="CopyCitLogs.cmd" />
+    <Robocopy Include="@(BinplaceSet3)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\RunTests</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+</Project>

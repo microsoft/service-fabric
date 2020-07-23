@@ -1,0 +1,5 @@
+LIBRARY TracePointsServer
+EXPORTS
+    InterceptEventRegister
+    InterceptEventUnregister
+    InterceptEventWrite

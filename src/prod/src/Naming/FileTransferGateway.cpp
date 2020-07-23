@@ -340,7 +340,8 @@ private:
 
     void SendFileCreateMessageToFileStoreService(AsyncOperationSPtr const& thisSPtr)
     {
-        auto operation = owner_.fileStoreClient_->BeginCreateUploadSession(
+        auto operation = owner_.fileStoreServiceClient_->BeginCreateUploadSession(
+            owner_.fssPartitionGuid_,
             storeRelativePath_,
             operationId_,
             fileSize_,
@@ -362,7 +363,7 @@ private:
             return;
         }
 
-        auto error = owner_.fileStoreClient_->EndCreateUploadSession(operation);
+        auto error = owner_.fileStoreServiceClient_->EndCreateUploadSession(operation);
         if (!owner_.pendingOperations_.Contains(operationId_))
         {
             return;
@@ -472,7 +473,8 @@ private:
             operationId_);
 
         Management::FileStoreService::UploadChunkContentDescription uploadChunkContentDescription(operationId_, startPosition, endPosition);
-        auto operation = owner_.fileStoreClient_->BeginUploadChunkContent(
+        auto operation = owner_.fileStoreServiceClient_->BeginUploadChunkContent(
+            owner_.fssPartitionGuid_,
             message,
             uploadChunkContentDescription,
             timeoutHelper_.GetRemainingTime(),
@@ -494,7 +496,7 @@ private:
             return;
         }
 
-        auto error = owner_.fileStoreClient_->EndUploadChunkContent(operation);
+        auto error = owner_.fileStoreServiceClient_->EndUploadChunkContent(operation);
         if (!owner_.pendingOperations_.Contains(operationId_))
         {
             return;
@@ -523,7 +525,8 @@ private:
             storeRelativePath_,
             operationId_);
 
-        auto operation = owner_.fileStoreClient_->BeginCommitUploadSession(
+        auto operation = owner_.fileStoreServiceClient_->BeginCommitUploadSession(
+            owner_.fssPartitionGuid_,
             storeRelativePath_,
             operationId_,
             timeoutHelper_.GetRemainingTime(),
@@ -544,7 +547,7 @@ private:
             return;
         }
 
-        auto error = owner_.fileStoreClient_->EndCommitUploadSession(operation);
+        auto error = owner_.fileStoreServiceClient_->EndCommitUploadSession(operation);
         if (!owner_.pendingOperations_.Contains(operationId_))
         {
             return;
@@ -571,7 +574,8 @@ private:
             storeRelativePath_,
             operationId_);
 
-        auto operation = owner_.fileStoreClient_->BeginDeleteUploadSession(
+        auto operation = owner_.fileStoreServiceClient_->BeginDeleteUploadSession(
+            owner_.fssPartitionGuid_,
             operationId_,
             timeoutHelper_.GetRemainingTime(),
             [this](AsyncOperationSPtr const & operation)
@@ -591,7 +595,7 @@ private:
             return;
         }
 
-        auto error = owner_.fileStoreClient_->EndDeleteUploadSession(operation);
+        auto error = owner_.fileStoreServiceClient_->EndDeleteUploadSession(operation);
         if (owner_.pendingOperations_.Contains(operationId_))
         {
             WriteTrace(
@@ -1118,6 +1122,28 @@ Common::ErrorCode FileTransferGateway::OnOpen()
         *SystemServiceApplicationNameHelper::PublicImageStoreServiceName,
         clientFactorPtr_);
 
+    error = clientFactorPtr_->CreateInternalFileStoreServiceClient(fileStoreServiceClient_);
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "CreateInternalFileStoreServiceClient failed. Error:{0}",
+            error);
+
+        return error;
+    }
+
+    if (!Guid::TryParse(Constants::FileStoreServiceSingletonPartitionGuid, fssPartitionGuid_))
+    {
+        WriteWarning(
+            TraceComponent,
+            "Unable to parse fss partition guid from string:{0}",
+            Constants::FileStoreServiceSingletonPartitionGuid);
+
+        Assert::TestAssert("Unable to parse guid: {0}", Constants::FileStoreServiceSingletonPartitionGuid);
+        return ErrorCodeValue::OperationFailed;
+    }
+
     error = fileSender_->Open();
     if (!error.IsSuccess())
     {
@@ -1370,7 +1396,7 @@ void FileTransferGateway::OnFileReceiverMessageReceived(MessageUPtr && message, 
         message->Headers.TryReadFirst(versionHeader);
 
         // Check if we have to use chunk based protocol or the old protocol (single file upload)
-        if (versionHeader.Major <= 1 && versionHeader.Minor < 2)
+        if (!versionHeader.IsChunkedFileUploadSupported())
         {
             // If single file upload protocol is used, make sure that NTLM authentication is not disabled.
             if (FileStoreServiceConfig::GetConfig().DisableNtlmAuthentication)
@@ -1631,7 +1657,7 @@ bool FileTransferGateway::ValidateRequiredHeaders(Message & message)
         return false;
     }
 
-    if (!ClientProtocolVersionHeader::IsMinorAtLeast(versionHeader, 0))
+    if (!versionHeader.IsCompatibleVersion())
     {
         WriteWarning(
             TraceComponent,

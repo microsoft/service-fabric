@@ -9,40 +9,53 @@
 #include <iostream>
 #include <cstdio>
 #include <lttng/lttng.h>
+#include <babeltrace/context.h>
+#include <babeltrace/ctf/events.h>
+#include <babeltrace/iterator.h>
 #include <babeltrace/ctf/iterator.h>
 #include <babeltrace/list.h>
 #include <babeltrace/iterator.h>
 #include <babeltrace/format.h>
-#include "lttngreader_util.h"
 #include <lttng/tracepoint.h>
 #include <iomanip>
-
-// TODO - not thread safe
-unsigned char dataBuffer[64000];
+#include <evntprov.h>
+#include "lttngreader.h"
+#include "lttngreader_util.h"
 
 // TODO - remove just for debugging
 #include <cstdio>
 
-int read_event_vpid_vtid(
+
+// Prototypes /////////////////////////////////////////////////////////////////
+LttngReaderStatusCode initialize_trace_info(
+        LTTngTraceHandle &trace_handle);
+
+LttngReaderStatusCode read_current_timestamp(
+        bt_ctf_iter *ctf_iter,
+        uint64_t &timestamp);
+
+LttngReaderEventReadStatusCode read_event_vpid_vtid(
     const struct bt_ctf_event *event,
     int32_t &vpid,
     int32_t &vtid);
 
-unsigned int read_sequence_data(
-    const struct bt_ctf_event *event,
-    const struct bt_definition *field,
-    unsigned char *data);
+LttngReaderEventReadStatusCode read_sequence_data(
+        const struct bt_ctf_event *event,
+        const struct bt_definition *field,
+        unsigned char *data,
+        unsigned int &num_data_elements);
 
-int read_unstructured_event_fields(
+LttngReaderEventReadStatusCode read_unstructured_event_fields(
     const struct bt_ctf_event *event,
     const char **task_name,
     const char **event_name,
     const wchar_t **idField,
     const wchar_t **dataField);
 
-int read_event_timestamp(
+LttngReaderEventReadStatusCode read_event_descriptor(
     const struct bt_ctf_event *event,
-    uint64_t &timestamp_epoch);
+    const struct bt_definition *fields_def,
+    PEVENT_HEADER eventHeader);
 
 const char* get_loglevel_str(int loglevel);
 
@@ -65,11 +78,77 @@ void print_unstructured_event(
     const wchar_t *dataField,
     wchar_t *event_string_representation);
 
-int read_event_descriptor(const struct bt_ctf_event *event, const struct bt_definition *fields_def, PEVENT_HEADER eventHeader);
+// Implementations ////////////////////////////////////////////////////////////
 
-int read_event_vpid_vtid(const struct bt_ctf_event *event, int32_t &vpid, int32_t &vtid)
+// initialize the trace info and start and end time
+// Trace handle id and ctx must already be initialized through initialize_trace_processing function
+LttngReaderStatusCode initialize_trace(LTTngTraceHandle &trace_handle, uint64_t start_time, uint64_t end_time)
 {
-    // getting process id and thread id
+    LttngReaderStatusCode err = initialize_trace_info(trace_handle);
+
+    if (err != LttngReaderStatusCode::SUCCESS )
+        return err;
+
+    return set_start_end_time(trace_handle, start_time, end_time);
+}
+
+// initializes the info about the trace. Trace handle and ctx must already be initialized.
+// It first initializes the trace to include all traces then it reads the first, and last
+// getting their initial timestamp, lost events count and last timestamp.
+LttngReaderStatusCode initialize_trace_info(LTTngTraceHandle &trace_handle)
+{
+    LttngReaderStatusCode err = set_start_end_time(trace_handle, FIRST_TRACE_TIMESTAMP, LAST_TRACE_TIMESTAMP);
+
+    if (err != LttngReaderStatusCode::SUCCESS)
+    {
+        return err;
+    }
+
+    // reading first event
+    err = read_current_timestamp(trace_handle.ctf_iter, trace_handle.trace_info.start_time);
+
+    if (err != LttngReaderStatusCode::SUCCESS)
+    {
+        return err;
+    }
+
+    // moving to last event
+    bt_iter_pos *last_event_iter = create_bt_iter_pos(LAST_TRACE_TIMESTAMP);
+    int err_babeltrace = bt_iter_set_pos(bt_ctf_get_iter(trace_handle.ctf_iter), last_event_iter);
+
+    if (err_babeltrace != 0)
+    {
+        return LttngReaderStatusCode::FAILED_INITIALIZING_TRACEINFO;
+    }
+
+    trace_handle.trace_info.events_lost = bt_ctf_get_lost_events_count(trace_handle.ctf_iter);
+
+    return read_current_timestamp(trace_handle.ctf_iter, trace_handle.trace_info.end_time);
+}
+
+// reads the timestamp of the current event pointed by the iterator.
+// if you already have the event use read_event_timestamp.
+// Returns negative on error.
+LttngReaderStatusCode read_current_timestamp(bt_ctf_iter *ctf_iter, uint64_t &timestamp)
+{
+    bt_ctf_event *event = bt_ctf_iter_read_event(ctf_iter);
+
+    if (event == NULL)
+    {
+        return LttngReaderStatusCode::UNEXPECTED_END_OF_TRACE;
+    }
+
+    if (read_event_timestamp(event, timestamp) != LttngReaderEventReadStatusCode::SUCCESS)
+    {
+        return LttngReaderStatusCode::FAILED_INITIALIZING_TRACEINFO;
+    }
+
+    return LttngReaderStatusCode::SUCCESS;
+}
+
+// Reads events process id and thread id. Returns negative number on error.
+LttngReaderEventReadStatusCode read_event_vpid_vtid(const struct bt_ctf_event *event, int32_t &vpid, int32_t &vtid)
+{
     unsigned int count;
     struct bt_definition const* const* stream_context_fields_list;
 
@@ -77,11 +156,10 @@ int read_event_vpid_vtid(const struct bt_ctf_event *event, int32_t &vpid, int32_
 
     int err = bt_ctf_get_field_list(event, stream_context_scope_def, &stream_context_fields_list, &count);
 
-    if (err != 0)
-        return err;
-
-    if (count != 2)
-        return -1;
+    if (err != 0 || count != 2)
+    {
+        return LttngReaderEventReadStatusCode::FAILED_TO_READ_FIELD;
+    }
 
     vtid = -1;
     vpid = -1;
@@ -101,20 +179,27 @@ int read_event_vpid_vtid(const struct bt_ctf_event *event, int32_t &vpid, int32_
         vpid = bt_ctf_get_int64(vpid_def);
     }
 
-    return 0;
+    return LttngReaderEventReadStatusCode::SUCCESS;
 }
 
 // reads the binary data of the trace event into data buffer
 // returns the size of the sequence read
-unsigned int read_sequence_data(const struct bt_ctf_event *event, const struct bt_definition *field, unsigned char *data)
+LttngReaderEventReadStatusCode read_sequence_data(const struct bt_ctf_event *event, const struct bt_definition *field, unsigned char *data, unsigned int &num_data_elements)
 {
-    unsigned int num_data_elements;
+    num_data_elements = 0;
     struct bt_definition const* const* sequence_list;
 
+    // some trace events have no fields so this function returns an error and set
+    // num_data elements to 0. This is expected and is not an error.
     int err = bt_ctf_get_field_list(event, field, &sequence_list, &num_data_elements);
 
-    // some trace events have no fields so the method above will return an error and set
-    // num_data elements to 0. This is expected and is not an error.
+    // to avoid memory corruption set the max number of elements to MAX_LTTNG_EVENT_DATA_SIZE
+    // which is the maximum allowed to be written by a trace event
+    if (num_data_elements > MAX_LTTNG_EVENT_DATA_SIZE)
+    {
+        return LttngReaderEventReadStatusCode::UNEXPECTED_EVENT_SIZE;
+    }
+
     if (err == 0)
     {
         // needs to read each byte separately
@@ -124,10 +209,11 @@ unsigned int read_sequence_data(const struct bt_ctf_event *event, const struct b
         }
     }
 
-    return num_data_elements;
+    return LttngReaderEventReadStatusCode::SUCCESS;
 }
 
-int read_unstructured_event_fields(const struct bt_ctf_event *event, const char **task_name, const char **event_name, const wchar_t **idField, const wchar_t **dataField)
+// Reads the data from a trace written in the unstructured format
+LttngReaderEventReadStatusCode read_unstructured_event_fields(const struct bt_ctf_event *event, const char **task_name, const char **event_name, const wchar_t **idField, const wchar_t **dataField)
 {
     unsigned int count;
     struct bt_definition const* const* fields_list;
@@ -138,8 +224,7 @@ int read_unstructured_event_fields(const struct bt_ctf_event *event, const char 
 
     if (err < 0 )
     {
-        std::cerr << "Failed to get fields for unstructured event." << std::endl;
-        return -err;
+        return LttngReaderEventReadStatusCode::FAILED_TO_READ_FIELD;
     }
 
     // getting definitions of the TaskNameField and EventNameField
@@ -154,7 +239,7 @@ int read_unstructured_event_fields(const struct bt_ctf_event *event, const char 
     if (!(task_name_def && event_name_def && idField_def && dataField_def))
     {
         std::cerr << "Unable to find all fields from unstructured trace" << std::endl;
-        return -1;
+        return LttngReaderEventReadStatusCode::INVALID_NUM_FIELDS;
     }
 
     // reading taskNameField and EventNameField values
@@ -163,9 +248,10 @@ int read_unstructured_event_fields(const struct bt_ctf_event *event, const char 
     *idField = (wchar_t*)bt_ctf_get_string(idField_def);
     *dataField = (wchar_t*)bt_ctf_get_string(dataField_def);
 
-    return 0;
+    return LttngReaderEventReadStatusCode::SUCCESS;
 }
 
+// Returns the text representation of the loglevel
 const char* get_loglevel_str(int loglevel)
 {
     switch(loglevel)
@@ -181,6 +267,7 @@ const char* get_loglevel_str(int loglevel)
     }
 }
 
+// converts between LTTng's level codes to Service Fabric ETW error codes
 unsigned char get_loglevel_lttng_to_etw(int lttng_loglevel)
 {
     switch(lttng_loglevel)
@@ -196,36 +283,32 @@ unsigned char get_loglevel_lttng_to_etw(int lttng_loglevel)
     }
 }
 
-int read_event_timestamp(const struct bt_ctf_event *event, uint64_t &timestamp_epoch)
+// Read the timestamp of an event. Returns negative on error.
+LttngReaderEventReadStatusCode read_event_timestamp(const struct bt_ctf_event *event, uint64_t &timestamp_epoch)
 {
     // getting event time since epoch
     timestamp_epoch = bt_ctf_get_timestamp(event);
 
     if (timestamp_epoch == -1ULL)
     {
-        std::cerr << "Error trying to read timestamp from event" << std::endl;
-        return -1;
+        return LttngReaderEventReadStatusCode::FAILED_READING_TIMESTAMP;
     }
 
-    return 0;
+    return LttngReaderEventReadStatusCode::SUCCESS;
 }
 
+// converts Unix's epoch time in nanoseconds to Windows' file time
 LARGE_INTEGER get_filetime_from_unix_epoch(uint64_t epoch_timestamp)
 {
     // Windows fileTime is used in the rest of the code. It has a resolution of 100 nanoseconds.
     // 116444736000000 is the number of 100ns from filetime 1601-01-01 until epoch
     LARGE_INTEGER ret;
     ret.QuadPart = (epoch_timestamp / 100LL) + 116444736000000000LL;
- 
+
     return ret;
 }
 
-uint64_t get_epoch_from_filetime(LARGE_INTEGER filetime)
-{
-    uint64_t ufiletime = (uint64_t)filetime.QuadPart;
-    return (uint64_t)(ufiletime - 116444736000000000ULL) * 100ULL;
-}
-
+// formats unstructured event fields into Service Fabric's .dtr format
 void print_unstructured_event(
     uint64_t timestamp_epoch,
     int32_t vtid,
@@ -279,17 +362,19 @@ void print_unstructured_event(
     // copying entire event text to buffer
     std::wstring unstructured_event_string = event_text.str();
 
-    size_t copy_size = std::min(unstructured_event_string.size(), 64000 - sizeof(wchar_t));
+    size_t copy_size = std::min(unstructured_event_string.size(), MAX_LTTNG_UNSTRUCTURED_EVENT_LEN);
     wcsncpy(event_string_representation, unstructured_event_string.c_str(), copy_size+1);
+    event_string_representation[MAX_LTTNG_UNSTRUCTURED_EVENT_LEN] = L'\0';
 }
 
-int read_unstructured_event(const struct bt_ctf_event *event, uint64_t &timestamp_epoch, wchar_t *event_string_representation, char *taskname_eventname)
+// Reads unstructured event. Returns negative on error.
+LttngReaderEventReadStatusCode read_unstructured_event(const struct bt_ctf_event *event, uint64_t &timestamp_epoch, wchar_t *event_string_representation, char *taskname_eventname)
 {
 
     // reading event's timestamp
-    int err = read_event_timestamp(event, timestamp_epoch);
+    LttngReaderEventReadStatusCode err = read_event_timestamp(event, timestamp_epoch);
 
-    if (err < 0)
+    if (err != LttngReaderEventReadStatusCode::SUCCESS)
     {
         return err;
     }
@@ -299,7 +384,7 @@ int read_unstructured_event(const struct bt_ctf_event *event, uint64_t &timestam
 
     err = read_event_vpid_vtid(event, vpid, vtid);
 
-    if (err < 0)
+    if (err != LttngReaderEventReadStatusCode::SUCCESS)
     {
         vpid = vtid = -1;
          // not fatal
@@ -316,7 +401,12 @@ int read_unstructured_event(const struct bt_ctf_event *event, uint64_t &timestam
     const wchar_t *dataField;
 
     // read fields from event
-    read_unstructured_event_fields(event, &task_name, &event_name, &idField, &dataField);
+    err = read_unstructured_event_fields(event, &task_name, &event_name, &idField, &dataField);
+
+    if (err != LttngReaderEventReadStatusCode::SUCCESS)
+    {
+        return err;
+    }
 
     print_unstructured_event(timestamp_epoch, vtid, vpid, loglevel, task_name, event_name, idField, dataField, event_string_representation);
 
@@ -324,11 +414,11 @@ int read_unstructured_event(const struct bt_ctf_event *event, uint64_t &timestam
     // TODO - Should be removed after complete migration to structured events
     sprintf(taskname_eventname, "%s.%s", task_name, event_name);
 
-    return 0;
+    return LttngReaderEventReadStatusCode::SUCCESS;
 }
 
 // reads the EVENT_DESCRIPTOR of the trace event
-int read_event_descriptor(const struct bt_ctf_event *event, const struct bt_definition *fields_def, PEVENT_HEADER eventHeader)
+LttngReaderEventReadStatusCode read_event_descriptor(const struct bt_ctf_event *event, const struct bt_definition *fields_def, PEVENT_HEADER eventHeader)
 {
     // tries to find the ProviderId data
     const struct bt_definition *provider_id_def    = bt_ctf_get_field(event, fields_def, "ProviderId");
@@ -341,28 +431,31 @@ int read_event_descriptor(const struct bt_ctf_event *event, const struct bt_defi
 
     if (!(provider_id_def && id_def && version_def && channel_def && opcode_def && task_def && keyword_def))
     {
-        // TODO add more meaningful error numbers
-        std::cerr << "Unabled to get eventdescriptor info from trace" << std::endl;
-        return -1;
+        return LttngReaderEventReadStatusCode::INVALID_EVENT_DESCRIPTOR;
     }
 
     // reads the providerId data
-    unsigned int guidSize = bt_ctf_get_array_len(bt_ctf_get_decl_from_def(provider_id_def));
+    int lenGuid = bt_ctf_get_array_len(bt_ctf_get_decl_from_def(provider_id_def));
 
     // checks whether the size to be read is 16 bytes (GUID) to avoid buffer overflow
-    if (guidSize != 16)
+    if (lenGuid != 16)
     {
-        std::cerr << "Not expected GUID size of size " << guidSize << std::endl;
-        return -1;
+        return LttngReaderEventReadStatusCode::UNEXPECTED_FIELD_DATA_SIZE;
     }
 
-    guidSize = read_sequence_data(event, provider_id_def, (unsigned char*)&eventHeader->ProviderId);
+    unsigned int guidSize = lenGuid;
+
+    LttngReaderEventReadStatusCode err = read_sequence_data(event, provider_id_def, (unsigned char*)&eventHeader->ProviderId, guidSize);
+
+    if (err != LttngReaderEventReadStatusCode::SUCCESS)
+    {
+        return err;
+    }
 
     // checks the size of GUID again, this time it checks whether there were any issues reading the GUID
     if (guidSize != 16)
     {
-        std::cerr << "Problem reading GUID, expected size 16 but read " << guidSize << std::endl;
-        return -1;
+        return LttngReaderEventReadStatusCode::UNEXPECTED_FIELD_DATA_SIZE;
     }
 
     // reads the event descriptor from the event
@@ -373,19 +466,21 @@ int read_event_descriptor(const struct bt_ctf_event *event, const struct bt_defi
     eventHeader->EventDescriptor.Task    = bt_ctf_get_uint64(task_def);
     eventHeader->EventDescriptor.Keyword = bt_ctf_get_uint64(keyword_def);
 
-    return 0;
+    return LttngReaderEventReadStatusCode::SUCCESS;
 }
 
 // reads the trace event. Assumes it only tries to read events that are in the expected format
-int read_structured_event(const struct bt_ctf_event *event, PEVENT_RECORD eventRecord, uint64_t &epoch_timestamp)
+LttngReaderEventReadStatusCode read_structured_event(const struct bt_ctf_event *event, PEVENT_RECORD eventRecord, uint64_t &epoch_timestamp, unsigned char *data_buffer)
 {
-    int err;
+    LttngReaderEventReadStatusCode err;
 
     // getting event time since epoch
     epoch_timestamp = bt_ctf_get_timestamp(event);
 
     if (epoch_timestamp == -1ULL)
-        return -1;
+    {
+        return LttngReaderEventReadStatusCode::FAILED_READING_TIMESTAMP;
+    }
 
     // Windows fileTime is used in the rest of the code. It has a resolution of 100 nanoseconds. 116444736000000 is the number of 100ns from filetime 1601-01-01 until epoch
     eventRecord->EventHeader.TimeStamp.QuadPart = (long long)((epoch_timestamp / 100LL) + 116444736000000000LL);
@@ -393,11 +488,10 @@ int read_structured_event(const struct bt_ctf_event *event, PEVENT_RECORD eventR
     // getting process id and thread id
     int32_t vtid, vpid;
 
-    if (read_event_vpid_vtid(event, vpid, vtid) != 0)
+    if (read_event_vpid_vtid(event, vpid, vtid) != LttngReaderEventReadStatusCode::SUCCESS)
     {
         vpid = vtid = -1;
          // not fatal
-        std::cerr << "Failed to read vpid and vtid from event" << std::endl;
     }
 
     eventRecord->EventHeader.ThreadId = vtid;
@@ -408,16 +502,14 @@ int read_structured_event(const struct bt_ctf_event *event, PEVENT_RECORD eventR
 
     if (!fields_def)
     {
-        std::cerr << "Unable to read events fields" << std::endl;
-        return -1;
+        return LttngReaderEventReadStatusCode::FAILED_TO_READ_FIELD;
     }
 
     // reading eventDescriptor
     err = read_event_descriptor(event, fields_def, &eventRecord->EventHeader);
 
-    if (err != 0)
+    if (err != LttngReaderEventReadStatusCode::SUCCESS)
     {
-        std::cerr << "Failed to read EventDescriptor" << std::endl;
         return err;
     }
 
@@ -427,17 +519,46 @@ int read_structured_event(const struct bt_ctf_event *event, PEVENT_RECORD eventR
 
     if (!data_def)
     {
-        std::cerr << "Unable to find data field in structured trace" << std::endl;
-        return -1;
+        return LttngReaderEventReadStatusCode::FAILED_TO_READ_FIELD;
     }
 
-    dataNumBytes = read_sequence_data(event, data_def, dataBuffer);
+    err = read_sequence_data(event, data_def, data_buffer, dataNumBytes);
+
+    if (err != LttngReaderEventReadStatusCode::SUCCESS)
+    {
+        return err;
+    }
 
     eventRecord->UserDataLength = (unsigned short)dataNumBytes;
-    eventRecord->UserData = dataBuffer;
+    eventRecord->UserData = data_buffer;
 
     // reading loglevel
     eventRecord->EventHeader.EventDescriptor.Level = get_loglevel_lttng_to_etw(bt_ctf_event_loglevel(event));
 
-    return 0;
+    return LttngReaderEventReadStatusCode::SUCCESS;
+}
+
+// Create an new iterator based on the timestamp passed.
+// It handles getting the first trace and last timestamp through
+// the defined flags
+bt_iter_pos* create_bt_iter_pos(uint64_t timestamp_epoch)
+{
+    bt_iter_pos *iter_pos = bt_iter_create_time_pos(NULL, timestamp_epoch);
+
+    switch (timestamp_epoch)
+    {
+        // starting reading traces from beginning
+        case FIRST_TRACE_TIMESTAMP:
+            iter_pos->type = BT_SEEK_BEGIN;
+            break;
+        // starting reading traces from end (points to last event)
+        case LAST_TRACE_TIMESTAMP :
+            iter_pos->type = BT_SEEK_LAST;
+            break;
+        // starting reading traces from the specified timestamp
+        default:
+            break;
+    }
+
+    return iter_pos;
 }

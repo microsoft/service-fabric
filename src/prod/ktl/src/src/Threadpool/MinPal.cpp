@@ -68,6 +68,12 @@ namespace KtlThreadpool{
         return (DWORD)getpid();
     }
 
+#if __aarch64__
+     VOID YieldProcessor()
+    {
+        sched_yield();
+    }
+#else
     VOID YieldProcessor()
     {
         __asm__ __volatile__ (
@@ -75,6 +81,7 @@ namespace KtlThreadpool{
             "nop"
         );
     }
+#endif
 
     BOOL SwitchToThread()
     {

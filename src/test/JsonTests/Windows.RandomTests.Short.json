@@ -1,0 +1,57 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Func_Unreliable",
+      "Type": "RandomTest",
+      "Owners": "manojsi, chuxin, abhisram",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_391_UnreliableRandom_Sec_ON.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Unreliable",
+        "ExecutionTimeout": "32400",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Rebuild",
+      "Type": "RandomTest",
+      "Owners": "manojsi, chuxin, abhisram",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_392_RebuildRandom_Sec_ON.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Rebuild",
+        "ExecutionTimeout": "32400",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Upgrade",
+      "Type": "RandomTest",
+      "Owners": "chuxin, manojsi, abhisram",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_393_UpgradeRandom_Sec_ON.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Upgrade",
+        "ExecutionTimeout": "32400",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+  ]
+}

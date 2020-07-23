@@ -1,5 +1,5 @@
 #
-# [owner]- Hanagar
+# [owner]- tyadam
 # 
 # Scenario:
 #  - 3 replica set, primary on 40, secondaries on 20, 30

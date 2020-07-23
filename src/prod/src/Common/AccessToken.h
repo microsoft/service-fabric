@@ -62,6 +62,7 @@ namespace Common
             std::wstring const & serviceAccountName,
             std::wstring const & domain,
             std::wstring const & password,
+            bool loadProfile,
             PSID const & sid,
             __out AccessTokenSPtr & accessToken);
 

@@ -123,7 +123,8 @@ ErrorCode IpUtility::GetDnsServersPerAdapter(
 }
 
 ErrorCode IpUtility::GetIpAddressesPerAdapter(
-    __out std::map<std::wstring, std::vector<Common::IPPrefix>> & map
+    __out std::map<std::wstring, std::vector<Common::IPPrefix>> & map,
+    bool byFriendlyName
     )
 {
 #if !defined(PLATFORM_UNIX)
@@ -146,7 +147,7 @@ ErrorCode IpUtility::GetIpAddressesPerAdapter(
     IP_ADAPTER_ADDRESSES* pCurrAddresses = reinterpret_cast<IP_ADAPTER_ADDRESSES*>(buffer.data());
     while (pCurrAddresses != NULL)
     {
-        std::wstring adapterName = StringUtility::Utf8ToUtf16(pCurrAddresses->AdapterName);
+        std::wstring adapterName = !byFriendlyName ? StringUtility::Utf8ToUtf16(pCurrAddresses->AdapterName) : pCurrAddresses->FriendlyName;
         std::vector<IPPrefix> addresses;
 
         IP_ADAPTER_UNICAST_ADDRESS* pUnicast = pCurrAddresses->FirstUnicastAddress;
@@ -212,6 +213,38 @@ ErrorCode IpUtility::GetIpAddressesPerAdapter(
     freeifaddrs(ifaddr);
 #endif
     return ErrorCode::Success();
+}
+
+ErrorCode IpUtility::GetIpAddressOnAdapter(
+    __in std::wstring adapterName,
+    ADDRESS_FAMILY addressFamily,
+    __out std::wstring & ipAddress
+   )
+{
+    std::map<std::wstring, std::vector<IPPrefix>> adapterIpAddressMap;
+    auto error = GetIpAddressesPerAdapter(adapterIpAddressMap, true);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    for (auto const & ipAdapter : adapterIpAddressMap)
+    {
+        if (StringUtility::Contains(ipAdapter.first, adapterName))
+        {
+            for (auto const & ip : ipAdapter.second)
+            {
+                if ((addressFamily == AF_INET && ip.IsIPV4()) ||
+                    (addressFamily == AF_INET6 && ip.IsIPV6()))
+                {
+                    ipAddress = ip.GetAddress().GetIpString();
+                    return ErrorCode::Success();
+                }
+            }
+        }
+    }
+
+    return ErrorCode::FromWin32Error(ERROR_NOT_FOUND);
 }
 
 ErrorCode IpUtility::GetAdapterAddressOnTheSameNetwork(

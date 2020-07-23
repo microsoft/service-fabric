@@ -166,6 +166,10 @@ namespace Hosting2
 
         virtual AvailableContainerImagesEventHHandler RegisterSendAvailableContainerImagesEventHandler(AvailableContainerImagesEventHandler const & handler) = 0;
         virtual bool UnregisterSendAvailableContainerImagesEventHandler(AvailableContainerImagesEventHHandler const & hHandler) = 0;
+
+        __declspec(property(get = get_NetworkInventoryAgent, put = set_NetworkInventoryAgent)) NetworkInventoryAgentSPtr NetworkInventoryAgent;
+        virtual NetworkInventoryAgentSPtr const get_NetworkInventoryAgent() const = 0;
+        virtual void set_NetworkInventoryAgent(NetworkInventoryAgentSPtr value) = 0;
     };
 
     struct HostingSubsystemConstructorParameters

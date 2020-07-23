@@ -45,6 +45,13 @@ namespace Management
             Common::ErrorCode FromPublicApi(
                 FABRIC_BACKUP_STORE_AZURE_STORAGE_INFORMATION const * backupStoreInfo);
 
+            Common::ErrorCode ToPublicApi(
+                __in Common::ScopedHeap & heap,
+                __out FABRIC_BACKUP_STORE_DSMS_AZURE_STORAGE_INFORMATION & backupStoreInfo) const;
+
+            Common::ErrorCode FromPublicApi(
+                FABRIC_BACKUP_STORE_DSMS_AZURE_STORAGE_INFORMATION const * backupStoreInfo);
+
         private:
             wstring connectionString_;
             wstring containerName_;

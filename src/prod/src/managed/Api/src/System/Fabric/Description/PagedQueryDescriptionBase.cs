@@ -93,7 +93,7 @@ namespace System.Fabric.Description
             return pinCollection.AddBlittable(nativeDescription);
         }
 
-        static internal void ValidatePaging(ApplicationQueryDescription description)
+        static internal void ValidatePaging(PagedQueryDescriptionBase description)
         {
             if (description.MaxResults.HasValue && description.MaxResults.Value <= 0)
             {

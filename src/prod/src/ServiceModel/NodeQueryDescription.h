@@ -1,6 +1,7 @@
-//------------------------------------------------------------
+// ------------------------------------------------------------
 // Copyright (c) Microsoft Corporation.  All rights reserved.
-//------------------------------------------------------------
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 
 #pragma once
 
@@ -27,20 +28,20 @@ namespace ServiceModel
         DWORD const & get_NodeStatus() const { return nodeStatusFilter_; }
         void set_NodeStatus(DWORD & nodeStatus) { nodeStatusFilter_ = nodeStatus; }
 
-        __declspec(property(get = get_QueryPagingDescriptionUPtr, put = set_QueryPagingDescriptionUPtr)) std::unique_ptr<QueryPagingDescription> const & QueryPagingDescriptionUPtr;
-        std::unique_ptr<QueryPagingDescription> const & get_QueryPagingDescriptionUPtr() const { return queryPagingDescriptionUPtr_; }
-        void set_QueryPagingDescriptionUPtr(std::unique_ptr<QueryPagingDescription> && queryPagingDescription) { queryPagingDescriptionUPtr_ = std::move(queryPagingDescription); }
+        __declspec(property(get = get_QueryPagingDescription, put = set_QueryPagingDescription)) QueryPagingDescriptionUPtr const & PagingDescription;
+        QueryPagingDescriptionUPtr const & get_QueryPagingDescription() const { return queryPagingDescription_; }
+        void set_QueryPagingDescription(QueryPagingDescriptionUPtr && queryPagingDescription) { queryPagingDescription_ = std::move(queryPagingDescription); }
 
         Common::ErrorCode FromPublicApi(FABRIC_NODE_QUERY_DESCRIPTION const & deployedApplicationQueryDescription);
 
         void GetQueryArgumentMap(__out QueryArgumentMap & argMap) const;
 
-        void MovePagingDescription(__out unique_ptr<QueryPagingDescription> & pagingDescription) { pagingDescription = std::move(queryPagingDescriptionUPtr_); }
+        void TakePagingDescription(__out QueryPagingDescriptionUPtr & pagingDescription) { pagingDescription = std::move(queryPagingDescription_); }
 
     private:
         std::wstring nodeNameFilter_;
         DWORD nodeStatusFilter_;
-        std::unique_ptr<QueryPagingDescription> queryPagingDescriptionUPtr_;
+        QueryPagingDescriptionUPtr queryPagingDescription_;
     };
 }
 

@@ -89,6 +89,7 @@ namespace Hosting2
         void NotifyServices(CodePackageEventDescription && eventDesc);
         void TrackCodePackage(CodePackageEventDescription && eventDesc);
         Common::TimeSpan GetTimeout(DWORD timeoutMilliseconds);
+        bool IsFailureCountExceeded(CodePackageEventDescription const & eventDesc);
 
     private:
         class ActivateCodePackagesAsyncOperation;

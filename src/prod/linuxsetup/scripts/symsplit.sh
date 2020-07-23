@@ -9,6 +9,7 @@
 droproot="$1"
 filepath="${droproot}/$2"
 symroot="$3/.build-id"
+strip_cmd="$4"
 
 filedir=`dirname "$2"`
 filename=`basename "$2"`
@@ -37,9 +38,11 @@ fi
 
 sympath="${symdir}/${buildidtail}.debug"
 
+objcopy_cmd=$(echo ${strip_cmd} | sed 's/strip/objcopy/g')
+
 echo "stripping ${filepath}, symbols stored at ${symdir}"
-objcopy --only-keep-debug "${filepath}" "${sympath}"
-strip --strip-debug --strip-unneeded "${filepath}"
-objcopy --add-gnu-debuglink="${sympath}" "${filepath}"
+${objcopy_cmd} --only-keep-debug "${filepath}" "${sympath}"
+${strip_cmd} --strip-debug --strip-unneeded "${filepath}"
+${objcopy_cmd} --add-gnu-debuglink="${sympath}" "${filepath}"
 
 chmod -x "${sympath}"

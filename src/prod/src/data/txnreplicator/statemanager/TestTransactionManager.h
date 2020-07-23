@@ -44,6 +44,12 @@ namespace StateManagerTests
             throw ktl::Exception(STATUS_NOT_IMPLEMENTED);
         }
 
+        __declspec(property(get = get_HasPersistedState)) bool HasPersistedState;
+        bool get_HasPersistedState() const override
+        {
+            return loggingReplicatorSPtr_->HasPersistedState;
+        }
+
     public: // ITransactionalReplicator interface.
         Data::Utilities::IStatefulPartition::SPtr get_StatefulPartition() const override
         {

@@ -1318,7 +1318,7 @@ RvdLogStreamImp::AsyncWriteStream::OnStartUserRecordWrite()
             return;
         }
 
-		ULONGLONG dontCare;
+        ULONGLONG dontCare;
         status = _AsnIndex->AddOrUpdate(recordIndex, _AsnIndexEntry, _SavedAsnIndexEntry, _IsSavedAsnIndexEntryValid, dontCare);
         if (!NT_SUCCESS(status))
         {
@@ -2278,13 +2278,15 @@ RvdLogStreamImp::AsyncWriteStream::OnContinueTruncation()
         }
 
         //** No failures beyond this point
-#if 0
-        KDbgCheckpointWDataInformational((KActivityId)(_Log->_LogId.Get().Data1), "PerformCheckpoint", STATUS_SUCCESS,
+
+#ifdef EXTRA_TRACING
+        KDbgCheckpointWDataInformational((KActivityId)(_StreamInfo.LogStreamId.Get().Data1), "TRUNC** PerformCheckpoint", STATUS_SUCCESS,
                             (ULONGLONG)spaceFreed,
-                            (ULONGLONG)this,
+                            (ULONGLONG)_Log->_LowestLsn.Get(),
                             (ULONGLONG)newLowestUsedLsn.Get(),
                             (ULONGLONG)_Log->_NextLsnToWrite.Get());
 #endif
+        
         // Truncate log's LSN space (in-memory state)
         _Log->_LowestLsn = newLowestUsedLsn;
         KInvariant(_Log->_LowestLsn <= _Log->_NextLsnToWrite);
@@ -2391,28 +2393,12 @@ RvdLogStreamImp::AsyncWriteStream::OnContinueTruncation()
                 }
             }
 
-#if 0
-            KDbgCheckpointWDataInformational((KActivityId)(_Log->_LogId.Get().Data1), "WriteCPRecord", STATUS_SUCCESS,
-                                (ULONGLONG)spaceFreed,
-                                (ULONGLONG)this,
-                                (ULONGLONG)sizeOfCheckpointRecord,
-                                (ULONGLONG)_Log->_NextLsnToWrite.Get());
-#endif
-
             // Start the CP write - Continued @ TruncateCheckPointWriteComplete
             _TruncateCheckPointOp->StartPhysicalCheckPointWrite(this, _TruncateCheckPointWriteCompletion);
         }
     }
     else
     {
-#if 0
-        KDbgCheckpointWDataInformational((KActivityId)(_Log->_LogId.Get().Data1), "SkipCheckpoint", STATUS_SUCCESS,
-                            (ULONGLONG)spaceFreed,
-                            (ULONGLONG)this,
-                            (ULONGLONG)newLowestUsedLsn.Get(),
-                            (ULONGLONG)_Log->_LowestLsn.Get());
-#endif
-
         // No LSN space will be freed - reverse CP lowest LSN change and release Quanta held
         _AsyncActivitiesLeft = 1;       // only the compute continuation fork used
         _Log->_StreamWriteQuotaGate->ReleaseQuanta(_QuantaAcquired);
@@ -2437,7 +2423,7 @@ RvdLogStreamImp::AsyncWriteStream::TruncateCheckPointWriteComplete(
 {
     UNREFERENCED_PARAMETER(Parent);
 
-#if 0
+#ifdef EXTRA_TRACING
     KDbgCheckpointWDataInformational((KActivityId)(_Log->_LogId.Get().Data1), "CompleteCPRecord", CompletingSubOp.Status(),
                         (ULONGLONG)0,
                         (ULONGLONG)0,

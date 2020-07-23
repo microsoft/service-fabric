@@ -87,6 +87,13 @@ TruncateHeadLogRecord::SPtr TruncateHeadLogRecord::Create(
     return TruncateHeadLogRecord::SPtr(pointer);
 }
 
+std::wstring TruncateHeadLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}
+
 void TruncateHeadLogRecord::UpdateApproximateDiskSize()
 {
     ApproximateSizeOnDisk = ApproximateSizeOnDisk + DiskSpaceUsed;

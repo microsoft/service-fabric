@@ -1,0 +1,8 @@
+[Version]
+Signature="$WINDOWS NT$"
+
+[KSerialKernel.NT.Wdf]
+KmdfService = KSerialKernel, KmUnit_Service_kmdfInst
+
+[KmUnit_Service_kmdfInst]
+KmdfLibraryVersion = 1.9

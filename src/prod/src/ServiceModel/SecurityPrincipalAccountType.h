@@ -21,6 +21,7 @@ namespace ServiceModel
 
         void WriteToTextWriter(Common::TextWriter & w, Enum const & val);
         Common::ErrorCode FromString(std::wstring const & value, __out Enum & val);
-		std::wstring ToString(ServiceModel::SecurityPrincipalAccountType::Enum val);
+        std::wstring ToString(ServiceModel::SecurityPrincipalAccountType::Enum val);
+        void Validate(ServiceModel::SecurityPrincipalAccountType::Enum val);
     };
 }

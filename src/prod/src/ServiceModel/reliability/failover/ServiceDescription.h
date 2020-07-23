@@ -66,6 +66,8 @@ namespace Reliability
         bool operator == (ServiceDescription const & other) const;
         bool operator != (ServiceDescription const & other) const;
 
+        Common::ErrorCode Equals(ServiceDescription const& other) const;
+
         // properties
         __declspec (property(get = get_Name, put = put_Name)) std::wstring const& Name;
         std::wstring const& get_Name() const { return name_; }
@@ -195,7 +197,7 @@ namespace Reliability
 
         void AddDefaultMetrics();
 
-	FABRIC_FIELDS_25(
+        FABRIC_FIELDS_25(
             name_, instance_, type_, applicationName_, packageVersionInstance_,
             partitionCount_, targetReplicaSetSize_,
             minReplicaSetSize_, isStateful_, hasPersistedState_, initializationData_, isServiceGroup_,

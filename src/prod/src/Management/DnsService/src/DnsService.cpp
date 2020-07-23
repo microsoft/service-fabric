@@ -69,6 +69,7 @@ _fActive(false)
 
 DnsService::~DnsService()
 {
+    Tracer().Trace(DnsTraceLevel_Noise, "Destructing DnsService.");
 }
 
 
@@ -112,6 +113,8 @@ void DnsService::OnStart()
 
 void DnsService::OnCancel()
 {
+    Tracer().Trace(DnsTraceLevel_Info, "DnsService, OnCancel called.");
+
     _spHealthMonitor->Cancel();
     _spCacheMonitor->Cancel();
 
@@ -135,6 +138,8 @@ void DnsService::OnCancel()
 
 void DnsService::OnCompleted()
 {
+    Tracer().Trace(DnsTraceLevel_Info, "DnsService, OnCompleted called.");
+
     _arrOps.Clear();
     _completionCallback(STATUS_SUCCESS);
 }

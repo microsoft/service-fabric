@@ -115,7 +115,16 @@ protected:
         {
             WriteInfo(
                 Trace_ImageCacheManager,
-                "Primary completed for {0}", activityId_);
+                "Primary completed for id:{0}, remoteSourcePath:{1}, localDestinationPath: {2}, remoteChecksumObject:{3}, expectedChecksumValue:{4}, refreshCache:{5}, copyFlag:{6}, copyToLocalStoreLayoutOnly:{7}, checkForArchive:{8}",
+                activityId_,
+                remoteSourcePath_,
+                localDestinationPath_,
+                remoteChecksumObject_,
+                expectedChecksumValue_,
+                refreshCache_,
+                copyFlag_,
+                copyToLocalStoreLayoutOnly_,
+                checkForArchive_);
             owner_.RemoveActiveDownload(this->localDestinationPath_);
         }
         else
@@ -243,7 +252,6 @@ ImageCacheManager::ImageCacheManager(
 {
 }
 
-
 AsyncOperationSPtr ImageCacheManager::BeginDownload(
     wstring const & remoteSourcePath,
     wstring const & localDestinationPath,
@@ -268,8 +276,10 @@ AsyncOperationSPtr ImageCacheManager::BeginDownload(
         {
             WriteInfo(
                 Trace_ImageCacheManager,
-                "Creating primary operation {0}",
-                activityId);
+                "Creating primary operation:{0} for remoteSourcePath: {1}, localDestinationPath: {2}",
+                activityId,
+                remoteSourcePath,
+                localDestinationPath);
 
             linkedDownloadOperation = AsyncOperation::CreateAndStart<DownloadLinkedAsyncOperation>(
                 *this,
@@ -310,9 +320,11 @@ AsyncOperationSPtr ImageCacheManager::BeginDownload(
 
                 WriteInfo(
                     Trace_ImageCacheManager,
-                    "{0}: linked to primary {1}",
+                    "{0}: linked to primary:{1} for remoteSourcePath: {2}, localDestinationPath: {3}",
                     activityId,
-                    downloadPrimaryOperation->ActivityId);
+                    downloadPrimaryOperation->ActivityId,
+                    remoteSourcePath,
+                    localDestinationPath);
             }
             else
             {

@@ -79,7 +79,7 @@ namespace Reliability
             ~AutoScaler();
 
             // Called on each Refresh to process auto scaling
-            void Refresh(Common::StopwatchTime timestamp, ServiceDomain & serviceDomain_);
+            void Refresh(Common::StopwatchTime timestamp, ServiceDomain & serviceDomain_, size_t upNodeCount);
 
             // Add a new FT with auto scaling.
             void AddFailoverUnit(Common::Guid failoverUnitId, Common::StopwatchTime expiry);
@@ -99,7 +99,7 @@ namespace Reliability
             // Used for merging auto scalers from different service domains.
             void MergeAutoScaler(AutoScaler && other);
         private:
-            void RefreshFTs(Common::StopwatchTime timestamp, ServiceDomain & serviceDomain_);
+            void RefreshFTs(Common::StopwatchTime timestamp, ServiceDomain & serviceDomain_, size_t upNodeCount);
             void RefreshServices(Common::StopwatchTime timestamp, ServiceDomain & serviceDomain_);
 
             // we want to have access to the FU with the lowest expiry

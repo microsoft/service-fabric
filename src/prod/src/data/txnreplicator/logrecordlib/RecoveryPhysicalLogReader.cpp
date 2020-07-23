@@ -55,6 +55,26 @@ Task RecoveryPhysicalLogReader::DisposeReadStream()
     co_return;
 }
 
+ktl::Awaitable<LogRecord::SPtr> RecoveryPhysicalLogReader::GetLastCompletedBeginCheckpointRecord(LogRecord & record)
+{
+    PhysicalLogRecord::SPtr previousPhysicalLogRecord = co_await GetPreviousPhysicalRecord(record);
+    PhysicalLogRecord::SPtr possibleEndCheckpoint = co_await GetLinkedPhysicalRecord(*previousPhysicalLogRecord);
+
+    while (possibleEndCheckpoint->get_RecordType() != LogRecordType::Enum::EndCheckpoint)
+    {
+        possibleEndCheckpoint = co_await GetLinkedPhysicalRecord(*possibleEndCheckpoint);
+    }
+
+    LogRecord::SPtr nextLogRecord = co_await GetNextLogRecord(possibleEndCheckpoint->RecordPosition);
+    EndCheckpointLogRecord::SPtr lastEndCheckpointLogRecord = dynamic_cast<EndCheckpointLogRecord *>(nextLogRecord.RawPtr());
+    ASSERT_IF(lastEndCheckpointLogRecord == nullptr, "Null last end checkpoint record found");
+
+    BeginCheckpointLogRecord::SPtr lastCompletedBeginCheckpointRecord = co_await GetLastCompletedBeginCheckpointRecord(*lastEndCheckpointLogRecord);
+    LogRecord::SPtr logRecord = dynamic_cast< BeginCheckpointLogRecord *>(lastCompletedBeginCheckpointRecord.RawPtr());
+
+    co_return logRecord;
+}
+
 Awaitable<BeginCheckpointLogRecord::SPtr> RecoveryPhysicalLogReader::GetLastCompletedBeginCheckpointRecord(__inout EndCheckpointLogRecord & record)
 {
     EndCheckpointLogRecord::SPtr recordSPtr = &record;
@@ -132,8 +152,28 @@ Awaitable<PhysicalLogRecord::SPtr> RecoveryPhysicalLogReader::GetLinkedPhysicalR
     co_return linkedPhysicalRecord;
 }
 
+ULONG64 RecoveryPhysicalLogReader::GetNextLogRecordPosition(__in ULONG64 recordPosition)
+{   
+    readStream_->SetPosition((LONG64)recordPosition);
+    ULONG64 nextRecordPosition = 0;
+
+    LogRecord::SPtr logRecord = SyncAwait(LogRecord::ReadNextRecordAsync(
+        *readStream_,
+        *invalidLogRecords_,
+        GetThisAllocator(),
+        nextRecordPosition));
+
+    return nextRecordPosition;
+}
+
 Awaitable<LogRecord::SPtr> RecoveryPhysicalLogReader::GetNextLogRecord(__in ULONG64 recordPosition)
 {
+    if (recordPosition >= (ULONG64)readStream_->GetLength())
+    {
+        co_await suspend_never{};
+        co_return nullptr;
+    }
+
     readStream_->SetPosition((LONG64)recordPosition);
 
     LogRecord::SPtr logRecord = co_await LogRecord::ReadNextRecordAsync(
@@ -255,7 +295,6 @@ void RecoveryPhysicalLogReader::MoveStartingRecordPosition(
 Awaitable<LogRecord::SPtr> RecoveryPhysicalLogReader::SeekToLastRecord()
 {
     ASSERT_IFNOT(endingRecordPosition_ == MAXLONG64, "Expected invalid ending record position, current: {0}", endingRecordPosition_);
-    ASSERT_IFNOT(LogRecord::IsInvalid(endingRecord_.RawPtr()), "Ending log record should not be already valid when seeking to last record");
 
     readStream_->SetPosition(readStream_->GetLength());
 
@@ -267,4 +306,18 @@ Awaitable<LogRecord::SPtr> RecoveryPhysicalLogReader::SeekToLastRecord()
     endingRecord_ = logRecord.RawPtr();
 
     co_return endingRecord_;
+}
+
+Awaitable<LogRecord::SPtr> RecoveryPhysicalLogReader::SeekToFirstRecord(__in ULONG64 headTruncationPosition)
+{
+	readStream_->SetPosition(headTruncationPosition);
+
+	LogRecord::SPtr logRecord = co_await LogRecord::ReadNextRecordAsync(
+		*readStream_,
+		*invalidLogRecords_,
+		GetThisAllocator());
+
+	startingRecord_ = logRecord.RawPtr();
+
+	co_return startingRecord_;
 }

@@ -77,6 +77,7 @@ set( LINUX_SOURCES
     ../ReportFabricUpgradeHealthAsyncOperation.cpp
     ../ReportUpgradeHealthAsyncOperation.cpp
     ../RollbackApplicationUpgradeAsyncOperation.cpp
+    ../RollbackComposeDeploymentAsyncOperation.cpp
     ../RollbackFabricUpgradeAsyncOperation.cpp
     ../RolloutContext.cpp
     ../RolloutContextType.cpp

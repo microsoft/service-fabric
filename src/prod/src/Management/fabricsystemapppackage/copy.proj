@@ -1,0 +1,25 @@
+﻿<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$(EnvironmentConfig)" />
+  <!-- Please see comments inside the files as to why they are excluded and copied individually -->
+  <ItemGroup>
+    <Robocopy Include="__FabricSystem_App4294967295\*.xml" Exclude="__FabricSystem_App4294967295\App.1.0.prod.xml;__FabricSystem_App4294967295\App.1.0.prod.linux.xml;__FabricSystem_App4294967295\IS.package.1.0.prod.xml;__FabricSystem_App4294967295\App.1.0.test.xml;__FabricSystem_App4294967295\IS.package.1.0.test.xml;__FabricSystem_App4294967295\IS.Package.1.0.test.linux.xml;__FabricSystem_App4294967295\IS.Manifest.Current.linux.xml;__FabricSystem_App4294967295\IS.Package.1.0.test.linux.xml;__FabricSystem_App4294967295\DnsService.Package.1.0.prod.xml;__FabricSystem_App4294967295\DnsService.Package.1.0.test.xml;__FabricSystem_App4294967295\DnsService.Package.1.0.linux.xml;__FabricSystem_App4294967295\ResourceMonitorService.Package.1.0.test.xml;__FabricSystem_App4294967295\ResourceMonitorService.Package.1.0.prod.xml">
+       <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295</DestinationFolder>
+    </Robocopy>    
+    <Robocopy Include="__FabricSystem_App4294967295\*.xml" Exclude="__FabricSystem_App4294967295\App.1.0.prod.xml;__FabricSystem_App4294967295\App.1.0.prod.linux.xml;__FabricSystem_App4294967295\IS.package.1.0.prod.xml;__FabricSystem_App4294967295\App.1.0.test.xml;__FabricSystem_App4294967295\IS.package.1.0.test.xml;__FabricSystem_App4294967295\IS.Package.1.0.prod.linux.xml;__FabricSystem_App4294967295\IS.Manifest.Current.linux.xml;__FabricSystem_App4294967295\DnsService.Package.1.0.prod.xml;__FabricSystem_App4294967295\DnsService.Package.1.0.test.xml;__FabricSystem_App4294967295\DnsService.Package.1.0.linux.xml;__FabricSystem_App4294967295\ResourceMonitorService.Package.1.0.test.xml;__FabricSystem_App4294967295\ResourceMonitorService.Package.1.0.prod.xml">
+       <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Target Name="AfterBuild">
+    <Copy SourceFiles="__FabricSystem_App4294967295\App.1.0.prod.xml" DestinationFiles="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\App.1.0.xml" />
+    <Copy SourceFiles="__FabricSystem_App4294967295\IS.package.1.0.prod.xml" DestinationFiles="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\IS.package.1.0.xml" />
+    <Copy SourceFiles="__FabricSystem_App4294967295\DnsService.Package.1.0.prod.xml" DestinationFiles="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\DnsService.Package.1.0.xml" />
+    <Copy SourceFiles="__FabricSystem_App4294967295\RMS.Package.1.0.prod.xml" DestinationFiles="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\RMS.Package.1.0.xml" />
+    <Copy SourceFiles="__FabricSystem_App4294967295\App.1.0.test.xml" DestinationFiles="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\App.1.0.xml" />
+    <Copy SourceFiles="__FabricSystem_App4294967295\IS.package.1.0.test.xml" DestinationFiles="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.package.1.0.xml" />
+    <Copy SourceFiles="__FabricSystem_App4294967295\DnsService.Package.1.0.test.xml" DestinationFiles="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\DnsService.Package.1.0.xml" />
+    <Copy SourceFiles="__FabricSystem_App4294967295\RMS.Package.1.0.test.xml" DestinationFiles="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\RMS.Package.1.0.xml" />
+  </Target>
+</Project>

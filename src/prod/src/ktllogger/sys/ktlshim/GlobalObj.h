@@ -1196,6 +1196,12 @@ class OverlayStream : public OverlayStreamBase
             }
         }
 
+        NTSTATUS CreateTruncateCompletedWaiter(
+            __out KAsyncEvent::WaitContext::SPtr& WaitContext
+        );
+
+        VOID ResetTruncateCompletedEvent();
+        
         inline KLogicalLogInformation::StreamBlockHeader* GetRecoveredLogicalLogHeader()
         {
             return(&_RecoveredLogicalLogHeader);
@@ -1723,6 +1729,15 @@ class OverlayStream : public OverlayStreamBase
 
         ULONGLONG QueryCurrentReservation() override ;
 
+        NTSTATUS
+        SetTruncationCompletionEvent(__in_opt KAsyncEvent* const EventToSignal)
+        {
+            UNREFERENCED_PARAMETER(EventToSignal);
+            KInvariant(FALSE);
+            return(STATUS_SUCCESS);
+        }
+        
+        
         class AsyncDestagingWriteContextOverlay;
 
         class CoalesceRecords : public KObject<CoalesceRecords>, public KShared<CoalesceRecords>
@@ -1980,7 +1995,8 @@ class OverlayStream : public OverlayStreamBase
 
                 VOID
                 CompleteRequest(
-                    __in NTSTATUS Status);
+                    __in NTSTATUS Status
+                    );
 
                 VOID
                 StartAppend(
@@ -1999,6 +2015,11 @@ class OverlayStream : public OverlayStreamBase
                     // ParentAsync is always OverlayStream object to ensure proper ordering
                     __in_opt KAsyncContextBase::CompletionCallback CallbackPtr);
 
+                inline BOOLEAN IsFlushContext()
+                {
+                    return(_AppendState == AppendState::AppendUnassigned);
+                }
+                
                 inline BOOLEAN IsAppendContext()
                 {
                     return(_AppendState == AppendState::AppendInitial);
@@ -2496,6 +2517,8 @@ class OverlayStream : public OverlayStreamBase
                 __out KBuffer::SPtr& MetaDataBuffer,
                 __out KIoBuffer::SPtr& IoBuffer
             );
+            
+            VOID StartPeriodicFlush();
 
         private:
             //
@@ -2541,7 +2564,6 @@ class OverlayStream : public OverlayStreamBase
                 __in KAsyncContextBase& Async
                 );
 
-            VOID StartPeriodicFlush();
 
         private:
             OverlayStream::SPtr _OverlayStream;
@@ -2662,7 +2684,12 @@ class OverlayStream : public OverlayStreamBase
                 {
                     return(_OverlayStream->GetActivityId());
                 }
-                        
+
+                VOID SetOrResetTruncateOnCompletion(__in BOOLEAN DoTruncate)
+                {
+                    _TruncateOnDedicatedCompletion = DoTruncate;
+                }
+                                
                 static inline ULONG
                 GetDedicatedLinksOffset() { return FIELD_OFFSET(AsyncDestagingWriteContextOverlay, _DedicatedTableEntry); };
 
@@ -2864,6 +2891,7 @@ class OverlayStream : public OverlayStreamBase
                 NTSTATUS _SharedCompletionStatus;
                 KAsyncEvent _DedicatedCoalescedEvent;
                 KAsyncEvent::WaitContext::SPtr _DedicatedCoalescedWaitContext;
+                BOOLEAN _TruncateOnDedicatedCompletion;
         };
 
         NTSTATUS
@@ -3531,6 +3559,8 @@ class OverlayStream : public OverlayStreamBase
         KSpinLock _ThrottleWriteLock;
         ULONG _ThrottledAllocatorBytes;
 
+        KAsyncEvent _SharedTruncationEvent;
+        
         //
         // Open work
         //
@@ -3544,14 +3574,14 @@ class OverlayStream : public OverlayStreamBase
         RvdLogStream::AsyncReadContext::SPtr _TailReadContext;
         KBuffer::SPtr _TailMetadataBuffer;
         KIoBuffer::SPtr _TailIoBuffer;
-		
+        
         RvdLogStream::AsyncReadContext::SPtr _LastReadContext;
         KBuffer::SPtr _LastMetadataBuffer;
         KIoBuffer::SPtr _LastIoBuffer;
         ULONGLONG _LastVersion;
-		RvdLogAsn _LastDedicatedAsn;
-		RvdLogAsn _FirstSharedAsn;
-		
+        RvdLogAsn _LastDedicatedAsn;
+        RvdLogAsn _FirstSharedAsn;
+        
         KLogicalLogInformation::StreamBlockHeader _RecoveredLogicalLogHeader;
         BOOLEAN _GateAcquired;
         KSharedPtr<LogStreamOpenGateContext> _OpenGateContext;
@@ -4312,6 +4342,9 @@ class OverlayLog : public OverlayLogBase
             __in ThrottledKIoBufferAllocator& ThrottledAllocator
         );
 
+        NTSTATUS
+        CommonConstructor();
+        
     //
     // Methods needed to satisfy WrappedServiceBase
     //
@@ -4417,6 +4450,11 @@ class OverlayLog : public OverlayLogBase
             __in ULONGLONG TotalDedicatedSpace
             );
 
+        BOOLEAN IsAccelerateInActiveMode()
+        {
+            return(_IsAccelerateInActiveMode);
+        }
+        
         BOOLEAN
         IsUnderThrottleLimit(
             __out ULONGLONG& TotalSpace,
@@ -4427,7 +4465,10 @@ class OverlayLog : public OverlayLogBase
         ShouldThrottleSharedLog(
             __in OverlayStream::AsyncDestagingWriteContextOverlay& DestagingWriteContext,
             __out ULONGLONG& TotalSpace,
-            __out ULONGLONG& FreeSpace
+            __out ULONGLONG& FreeSpace,
+            __out LONGLONG& LowestLsn,
+            __out LONGLONG& HighestLsn,
+            __out RvdLogStreamId& LowestLsnStreamId
         );
 
         VOID
@@ -4435,6 +4476,27 @@ class OverlayLog : public OverlayLogBase
             __in BOOLEAN ReleaseOne
         );
 
+        VOID
+        AccelerateFlushesIfNeeded(
+            );
+
+        VOID
+        AccelerateFlushTimerCompletion(
+            __in_opt KAsyncContextBase* const,
+            __in KAsyncContextBase&
+        );
+
+        VOID
+        TruncateCompletedCompletion(
+            __in_opt KAsyncContextBase* const ParentAsync,
+            __in KAsyncContextBase& Async
+        );      
+        
+        ULONG
+        WaitingThrottledCount()
+        {
+            return(_ThrottledWritesList.Count());
+        }               
         
         LONGLONG* GetContainerDedicatedBytesWrittenPointer()
         {
@@ -4570,6 +4632,23 @@ class OverlayLog : public OverlayLogBase
         //
         KNodeList<OverlayStream::AsyncDestagingWriteContextOverlay> _ThrottledWritesList;
         KSpinLock _ThrottleWriteLock;
+
+        ULONG _AccelerateFlushActiveTimerInMs;
+        ULONG _AccelerateFlushPassiveTimerInMs;
+        ULONG _AccelerateFlushActivePercent;
+        ULONG _AccelerateFlushPassivePercent;
+        
+        ULONG _AccelerateFlushTimerInMs;
+        ULONGLONG _AcceleratedFlushActiveThreshold;
+        ULONGLONG _AcceleratedFlushPassiveThreshold;
+
+        BOOLEAN _IsAccelerateInActiveMode;
+        KTimer::SPtr _AccelerateFlushTimer;
+        KAsyncEvent::WaitContext::SPtr _AcceleratedFlushInProgress;
+        ULONGLONG _AcceleratedFlushInProgressTimestamp;
+        KtlLogStreamId _AcceleratedFlushInProgressStreamId;
+        volatile LONG _ActiveFlushCount;
+                
         
     //
     // Interface to the container should match that of the core logger
@@ -4598,6 +4677,13 @@ class OverlayLog : public OverlayLogBase
 
         ULONG QueryUserRecordSystemMetadataOverhead() override ;
 
+        VOID
+        QueryLsnRangeInformation(
+            __out LONGLONG& LowestLsn,
+            __out LONGLONG& HighestLsn,
+            __out RvdLogStreamId& LowestLsnStreamId
+            ) override ;
+        
         VOID
         QueryCacheSize(__out_opt LONGLONG* const ReadCacheSizeLimit, __out_opt LONGLONG* const ReadCacheUsage) override ;
 
@@ -5649,15 +5735,17 @@ class OverlayManager : public OverlayManagerBase
 
     public:
         OverlayManager::OverlayManager(
-            __in KtlLogManager::MemoryThrottleLimits* MemoryThrottleLimits,
-            __in KtlLogManager::SharedLogContainerSettings* SharedLogContainerSettings
+            __in KtlLogManager::MemoryThrottleLimits& MemoryThrottleLimits,
+            __in KtlLogManager::SharedLogContainerSettings& SharedLogContainerSettings,
+            __in KtlLogManager::AcceleratedFlushLimits& AcceleratedFlushLimits
             );
 
     public:
         static NTSTATUS Create(
            __out OverlayManager::SPtr& Result,
-           __in KtlLogManager::MemoryThrottleLimits* MemoryThrottleLimits,
-           __in KtlLogManager::SharedLogContainerSettings* SharedLogContainerSettings,
+           __in KtlLogManager::MemoryThrottleLimits& MemoryThrottleLimits,
+           __in KtlLogManager::SharedLogContainerSettings& SharedLogContainerSettings,
+           __in KtlLogManager::AcceleratedFlushLimits& AcceleratedFlushLimits,
            __in KAllocator& Allocator,
            __in ULONG AllocationTag
         );
@@ -6612,6 +6700,11 @@ class OverlayManager : public OverlayManagerBase
             return(_MemoryThrottleLimits.MaximumDestagingWriteOutstanding);
         }
 
+        ULONG GetSharedLogThrottleLimit()
+        {
+            return(_MemoryThrottleLimits.SharedLogThrottleLimit);
+        }
+        
         NTSTATUS MapSharedLogDefaultSettings(
             __inout KGuid& DiskId,
             __inout KString::CSPtr& Path,
@@ -6671,7 +6764,12 @@ class OverlayManager : public OverlayManagerBase
             }
             
             return(_PinnedIoBufferUsage >= GetPinnedIoBufferLimit());
-        }        
+        }
+
+        inline KtlLogManager::AcceleratedFlushLimits* GetAcceleratedFlushLimits()
+        {
+            return(&_AcceleratedFlushLimits);
+        }
 
 #if defined(UDRIVER) || defined(UPASSTHROUGH)
         LONG IncrementUsageCount()
@@ -6714,6 +6812,7 @@ class OverlayManager : public OverlayManagerBase
         ThrottledKIoBufferAllocator::SPtr _ThrottledAllocator;
         KtlLogManager::MemoryThrottleLimits _MemoryThrottleLimits;
         KtlLogManager::SharedLogContainerSettings _SharedLogContainerSettings;
+        KtlLogManager::AcceleratedFlushLimits _AcceleratedFlushLimits;
         
         volatile LONGLONG _PinnedIoBufferUsage;
 #if DBG

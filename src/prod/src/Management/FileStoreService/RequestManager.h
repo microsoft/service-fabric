@@ -104,9 +104,11 @@ namespace Management
             void OnProcessChunkRequestComplete(
                 Common::AsyncOperationSPtr const &,
                 Common::Guid const &,
-                std::wstring const &);
+                std::wstring const &,
+                int64);
 
             bool ValidateClientMessage(__in Transport::MessageUPtr & message, __out std::wstring & rejectReason);
+            bool IsChunkAction(std::wstring const& action);
 
             std::wstring localStagingLocation_;
             std::wstring stagingShareLocation_;

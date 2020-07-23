@@ -11,6 +11,7 @@ namespace System.Fabric.BackupRestore
         public const string SecurityConfigSectionName = "Security";
         public const string SecurityServerX509NamesConfigSectionName = "Security/ServerX509Names";
         public const string FabricNodeConfigSectionName = "FabricNode";
+        public const string FabricNodeRunAsSectionName = "RunAs";
 
         public const string TargetReplicaSetSizeKeyName = "TargetReplicaSetSize";
         public const string ApiTimeoutKeyName = "ApiTimeoutInSeconds";
@@ -21,6 +22,8 @@ namespace System.Fabric.BackupRestore
         public const string EnableCompressionKeyName = "EnableCompression";
         public const string JitterInBackupsKeyName = "JitterInBackupsInSeconds";
 
+        public const string DsmsAutopilotServiceNameKeyName = "DsmsAutopilotServiceName";
+
         public const string ServerAuthCredentialTypeName = "ServerAuthCredentialType";
         public const string ServerCertThumbprints = "ServerCertThumbprints";
         public const string ClusterIdentities = "ClusterIdentities";
@@ -29,6 +32,7 @@ namespace System.Fabric.BackupRestore
         public const string ServerAuthX509FindType = "ServerAuthX509FindType";
         public const string ServerAuthX509FindValue = "ServerAuthX509FindValue";
         public const string ServerAuthX509FindValueSecondary = "ServerAuthX509FindValueSecondary";
+        public const string RunAsAccountNameConfig = "RunAsAccountName";
 
         public const string RestEndPointName = "RestEndpoint";
 
@@ -47,6 +51,10 @@ namespace System.Fabric.BackupRestore
         public static readonly TimeSpan RestoreHealthInformationTimeToLive = TimeSpan.FromMinutes(120);
 
         public const int MaxHealthDescriptionLength = 4 * 1024 - 1;
+
+        public const string SystemFabricBackupRestoreDsmsAssemblyName = "System.Fabric.BackupRestore.Dsms";
+        public const string DsmsAzureStorageHelperClassFullName = "System.Fabric.BackupRestore.Dsms.DsmsAzureStorageHelper";
+        public const string DsmsGetStorageAccountMethodName = "GetStorageAccount";
 
     }
 }

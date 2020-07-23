@@ -1,0 +1,131 @@
+#
+# [owner] miradic, abhisram, manojsi, sfplbtestfailures, winfabfm
+#
+# This test case verifies the node deactivation with intent RemoveNode only does close after the safety checks have passed
+#
+
+votes 20 30 40
+
+fmservice 3 2
+cmservice 3 2
+namingservice 1 3 2
+cleantest
+
+set DummyPLBEnabled true
+set ExpectedClusterSize 3
+set UserReplicaRestartWaitDuration 3600
+set NamingOperationTimeout 10
+set RemoveNodeOrDataCloseStatelessInstanceAfterSafetyCheckComplete true
+set RemoveNodeOrDataUpReplicaTimeout 10
+
++20
++30
++40
++50
+verify
+
+#
+# Create app
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful persist
+
+app.servicepack version10 ServicePackageB version=1.0
+app.servicetypes version10 ServicePackageB ServiceTypeB stateless
+
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA version=1.0
+app.codepack version10 ServicePackageB CodeB1 types=ServiceTypeB version=1.0
+
+app.upload version10
+provisionapp version10
+verify
+
+createapp fabric:/app1 TestApp 1.0
+verify 
+
+createservice fabric:/app1/testA TestApp_App0:ServicePackageA:ServiceTypeA y 1 4 persist minreplicasetsize=3 appname=fabric:/app1
+createservice fabric:/app1/testB TestApp_App0:ServicePackageB:ServiceTypeB n 1 -1 appname=fabric:/app1
+createservice fabric:/app1/testC TestApp_App0:ServicePackageA:ServiceTypeA y 1 3 persist minreplicasetsize=3 appname=fabric:/app1
+verify
+
+# Verify the initial replica count on node 50
+!waitforstate RA.Replica.IsUp.fabric:/app1/testA.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/app1/testB.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/app1/testC.50.50 true
+
+addbehavior b0 * * DoReconfiguration
+
+# Deactivate node 50 with intent RemoveNode
+DeactivateNode 50 RemoveNode
+!waitforstate FM.Node.DeactivationIntent.50 RemoveNode
+
+!pause 10
+
+#reconfig is blocked so safety check cannot complete
+#no replicas should be closed at this point
+!waitforstate RA.Replica.IsUp.fabric:/app1/testA.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/app1/testB.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/app1/testC.50.50 true
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationSafetyCheckInProgress
+
+addbehavior b1 * * NodeDeactivateRequest
+removebehavior b0
+
+!pause 10
+
+#once primary swap reconfig finishes safety checks are done as up replica wait duration has expired
+#testB should remain up
+#testA replica is still in CC as there is no place to build replacement replica
+#testC should be removed from CC as a replacement replica on node 20 is built
+#deactivate message is blocked
+!waitforstate RA.Replica.IsUp.fabric:/app1/testA.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/app1/testB.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/app1/testC.50.50 false
+!waitforstate RA.Replica.IsUp.fabric:/app1/testC.20.20 true
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationSafetyCheckComplete
+
+addbehavior b4 * * ReplicaClose
+removebehavior b1
+
+!pause 10
+
+#now we have blocked replica close during deactivation
+#request is sent to the RA but no ack is received
+!waitforstate RA.Replica.IsUp.fabric:/app1/testA.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/app1/testB.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/app1/testC.50.50 false
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationSafetyCheckComplete
+
+#bring down the host without letting it reopen
+addbehavior b5 * * StatefulServiceReopen
+setcodepackagekillpending 50 TestApp_App0:ServicePackageA#CodeA1
+
+!pause 5
+
+removebehavior b4
+
+#now testB replica can be closed and no need to reopen testA in order to mark deactivation as complete
+!waitforstate RA.Replica.IsUp.fabric:/app1/testA.50.50 false
+!waitforstate RA.Replica.IsUp.fabric:/app1/testB.50.50 false
+!waitforstate RA.Replica.IsUp.fabric:/app1/testC.50.50 false
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+deleteservice fabric:/app1/testA
+
+activatenode 50
+
+!waitforstate FM.Replica.IsUp.fabric:/app1/testB.50 true
+
+addbehavior b6 * * NodeDeactivateRequest
+DeactivateNode 50 RemoveNode
+
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationSafetyCheckComplete
+!waitforstate RA.Replica.IsUp.fabric:/app1/testB.50.50 true
+
+removebehavior b6
+
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+!q

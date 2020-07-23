@@ -8,14 +8,12 @@ namespace System.Fabric.Management.ImageBuilder
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Diagnostics;
     using System.Fabric.Common;
     using System.Fabric.Common.ImageModel;
     using System.Fabric.Common.Tracing;
+    using System.Fabric.ImageStore;
     using System.Fabric.Management.ImageBuilder.DockerCompose;
     using System.Fabric.Management.ImageBuilder.SingleInstance;
-    using System.Fabric.ImageStore;
-
     using System.Fabric.Management.ServiceModel;
     using System.Fabric.Strings;
     using System.Globalization;
@@ -29,7 +27,7 @@ namespace System.Fabric.Management.ImageBuilder
     {
         private static FabricEvents.ExtensionsEvents traceSource;
         private static readonly string TraceType = "ImageBuilder";
-
+        
         private readonly string workingDirectory;
         private ImageStoreWrapper sourceImageStoreWrapper;        
         private ImageStoreWrapper destinationImageStoreWrapper;        
@@ -281,6 +279,8 @@ namespace System.Fabric.Management.ImageBuilder
             string localApplicationPackageFolder,
             string applicationOutputFolder,
             bool useOpenNetworkConfig,
+            bool useLocalNatNetworkConfig,
+            string mountPointForSettings,
             GenerationConfig generationConfig)
         {
             this.InnerBuildSingleInstanceApplication(
@@ -294,6 +294,8 @@ namespace System.Fabric.Management.ImageBuilder
                 localApplicationPackageFolder,
                 applicationOutputFolder,
                 useOpenNetworkConfig,
+                useLocalNatNetworkConfig,
+                mountPointForSettings,
                 generationConfig,
                 false);
         }
@@ -309,6 +311,8 @@ namespace System.Fabric.Management.ImageBuilder
             string localApplicationPackageFolder,
             string applicationOutputFolder,
             bool useOpenNetworkConfig,
+            bool useLocalNatNetworkConfig,
+            string mountPointForSettings,
             GenerationConfig generationConfig,
             bool validateOnly = false)
         {
@@ -339,6 +343,13 @@ namespace System.Fabric.Management.ImageBuilder
                 throw new ArgumentException(StringResources.ImageBuilderError_ArgumentNullOrEmpty, "LocalApplicationPackageFolder");
             }
 
+            if (application.services.Exists(s => s.codePackages.Exists(c => c.settings.Count > 0)) && string.IsNullOrEmpty(mountPointForSettings))
+            {
+                throw new ArgumentException(StringResources.ImageBuilderError_ArgumentNullOrEmpty, "mountPointForSettings");
+            }
+
+            generationConfig = PopulateTargetReplicaCount(generationConfig);
+
             ApplicationManifestType applicationManifest;
             IList<ServiceManifestType> serviceManifests;
             var generator = new SingleInstance.ApplicationPackageGenerator(
@@ -346,18 +357,22 @@ namespace System.Fabric.Management.ImageBuilder
                 applicationTypeVersion,
                 application,
                 useOpenNetworkConfig,
+                useLocalNatNetworkConfig,
+                mountPointForSettings,
                 generateDnsNames,
                 generationConfig);
 
-            generator.Generate(out applicationManifest, out serviceManifests);
-            DockerComposeUtils.GenerateApplicationPackage(applicationManifest, serviceManifests, localApplicationPackageFolder);
+            // Key is serviceManifest name
+            Dictionary<string, Dictionary<string, SettingsType>> settingsType;
+            generator.Generate(out applicationManifest, out serviceManifests, out settingsType);
+            DockerComposeUtils.GenerateApplicationPackage(applicationManifest, serviceManifests, settingsType, localApplicationPackageFolder);
             ApplicationProvisionOperation appProvisionOperation = new ApplicationProvisionOperation(
-                    localApplicationPackageFolder, // There is no remote build path, the build spec for local and remote are same.
-                    localApplicationPackageFolder,
-                    this.validatingXmlReaderSettings,
-                    this.destinationImageStoreWrapper,
-                    this.applicationValidators,
-                    true); // we are generating the files. 
+                localApplicationPackageFolder, // There is no remote build path, the build spec for local and remote are same.
+                localApplicationPackageFolder,
+                this.validatingXmlReaderSettings,
+                this.destinationImageStoreWrapper,
+                this.applicationValidators,
+                true); // we are generating the files. 
 
             appProvisionOperation.ProvisionApplicationAsync(
                 false,
@@ -582,7 +597,14 @@ namespace System.Fabric.Management.ImageBuilder
                 // so that the app is healthy through the upgrade. In the next upgrade, the service type will automatically be discarded.
                 //
 
-                AdjustSingleInstanceManifestsForUpgrade(applicationTypeName, currentTypeVersion, timeoutHelper, ref applicationManifest, ref serviceManifests, true);
+                AdjustSingleInstanceManifestsForUpgrade(
+                    applicationTypeName,
+                    currentTypeVersion,
+                    timeoutHelper,
+                    null, //settingsType
+                    ref applicationManifest,
+                    ref serviceManifests,
+                    true);
 
                 DockerComposeUtils.GenerateApplicationPackage(
                     applicationManifest, 
@@ -726,7 +748,6 @@ namespace System.Fabric.Management.ImageBuilder
                                     downloadPath));
                         }
                     }
-                    
                 }
                                
                 // In rare cases, the sfpkg downloaded doesn't exist, even if the client download didn't throw an error.
@@ -842,7 +863,10 @@ namespace System.Fabric.Management.ImageBuilder
             }
             finally
             {
-                ImageBuilderUtility.DeleteTempLocation(tempFolder);
+                // If the download from the external store times out, the client is cancelled.
+                // Sometimes, the abort takes some time and the folder may still be in use at the time of the delete.
+                // Add retries to make it more reliable.
+                ImageBuilderUtility.DeleteTempLocationWithRetry(tempFolder);
             }
         }
 
@@ -931,6 +955,27 @@ namespace System.Fabric.Management.ImageBuilder
                             StringResources.ImageBuilderError_ApplicationPackageFolderMissing,
                             buildPackagePath));
                 }
+                
+                // It is possible that content exists when checked initially but unable to download or package is deleted in the meantime, so make sure downloaded content exists.
+                if (!(Directory.Exists(localIncomingApplicationFolder) && Directory.GetFiles(localIncomingApplicationFolder).Length > 0))
+                {
+                    if (this.sourceImageStoreWrapper.IsXStoreBasedImageStore())
+                    {
+                        throw new DirectoryNotFoundException(
+                            string.Format(
+                                CultureInfo.CurrentCulture,
+                                StringResources.ImageBuilderError_UnableToDownloadApplicationPackageFromXStore,
+                                buildPackagePath));
+                    }
+                    else
+                    {
+                        throw new DirectoryNotFoundException(
+                            string.Format(
+                                CultureInfo.CurrentCulture,
+                                StringResources.ImageBuilderError_UnableToDownloadApplicationPackage,
+                                buildPackagePath));
+                    }
+                }
 
                 TraceSource.WriteInfo(
                     ImageBuilder.TraceType,
@@ -980,6 +1025,8 @@ namespace System.Fabric.Management.ImageBuilder
             string localApplicationPackageFolder,
             string applicationOutputFolder,
             bool useOpenNetworkConfig,
+            bool useLocalNatNetworkConfig,
+            string mountPointForSettings,
             GenerationConfig generationConfig)
         {
             TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
@@ -992,16 +1039,21 @@ namespace System.Fabric.Management.ImageBuilder
                     targetTypeVersion,
                     application,
                     useOpenNetworkConfig,
+                    useLocalNatNetworkConfig,
+                    mountPointForSettings,
                     generateDnsNames,
                     generationConfig);
 
-                generator.Generate(out applicationManifest, out serviceManifests);
+                // <serviceManifestName, <ConfigPackageName, settingsType>>
+                Dictionary<string, Dictionary<string, SettingsType>> settingsType;
+                generator.Generate(out applicationManifest, out serviceManifests, out settingsType);
 
-                AdjustSingleInstanceManifestsForUpgrade(applicationTypeName, currentTypeVersion, timeoutHelper, ref applicationManifest, ref serviceManifests);
+                AdjustSingleInstanceManifestsForUpgrade(applicationTypeName, currentTypeVersion, timeoutHelper, settingsType, ref applicationManifest, ref serviceManifests);
 
                 DockerComposeUtils.GenerateApplicationPackage(
                     applicationManifest,
                     serviceManifests,
+                    settingsType,
                     localApplicationPackageFolder);
 
                 ApplicationProvisionOperation appProvisionOperation = new ApplicationProvisionOperation(
@@ -1502,6 +1554,7 @@ namespace System.Fabric.Management.ImageBuilder
             string applicationTypeName,
             string currentTypeVersion,
             TimeoutHelper timeoutHelper,
+            Dictionary<string, Dictionary<string, SettingsType>> settingsType,
             ref ApplicationManifestType targetApplicationManifest,
             ref IList<ServiceManifestType> targetServiceManifests,
             bool retainDnsName = false)
@@ -1513,6 +1566,11 @@ namespace System.Fabric.Management.ImageBuilder
             var currentServiceManifests = this.GetAllServiceManifests(applicationTypeName, currentApplicationManifest, timeoutHelper);
 
             ImageBuilderUtility.CompareAndFixTargetManifestVersionsForUpgrade(
+                storeLayoutSpecification,
+                this.destinationImageStoreWrapper,
+                timeoutHelper,
+                settingsType,
+                applicationTypeName,
                 currentApplicationManifest,
                 targetApplicationManifest,
                 currentServiceManifests,
@@ -1610,6 +1668,26 @@ namespace System.Fabric.Management.ImageBuilder
                 serviceManifestVersion);
 
             return this.destinationImageStoreWrapper.GetFromStore<ServiceManifestType>(serviceManifestFile, timeoutHelper.GetRemainingTime());
+        }
+
+        private GenerationConfig PopulateTargetReplicaCount (GenerationConfig generationConfig)
+        {
+            var configStore = NativeConfigStore.FabricGetConfigStore();
+            var targetReplicaSetSize = configStore.ReadUnencryptedString(StringConstants.FailoverManagerSectionName, StringConstants.TargetReplicaSetSizeKeyName);
+
+            if (!String.IsNullOrEmpty(targetReplicaSetSize))
+            {
+                var replicaCount = int.Parse(targetReplicaSetSize);
+                if (generationConfig == null)
+                {
+                    generationConfig = new GenerationConfig() { TargetReplicaCount = replicaCount };
+                }
+                else
+                {
+                    generationConfig.TargetReplicaCount = replicaCount;
+                }
+            }
+            return generationConfig;
         }
 
     }

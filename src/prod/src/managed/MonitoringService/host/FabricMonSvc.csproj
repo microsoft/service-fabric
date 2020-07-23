@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <AssemblyName>FabricMonSvc</AssemblyName>
+    <RootNamespace>FabricMonSvc</RootNamespace>
+    <ProjectGuid>{D3C9553F-C977-470F-B079-CDF04D885054}</ProjectGuid>
+    <AssemblyDescription>Microsoft Azure Service Fabric Monitoring Service</AssemblyDescription>
+    <AssemblyTitle>Microsoft Azure Service Fabric Monitoring Service</AssemblyTitle>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BuildDropFolder>$(BinariesBuildTypeArchDirectory)\bin\MonitoringDrop</BuildDropFolder>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="NullStateProviderReplica.cs" />
+    <Compile Include="PrimaryElectionService.cs" />
+    <Compile Include="Service.cs" />
+    <Compile Include="ServiceHost.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\MonitoringService\HealthDataProducer\Microsoft.ServiceFabric.Monitoring.csproj">
+      <Project>{AC5A6453-2C75-4E83-BAA0-322B76EB454A}</Project>
+      <Name>Microsoft.ServiceFabric.Monitoring</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\MonitoringService\MdsHealthConsumer\Microsoft.ServiceFabric.Monitoring.Internal.csproj">
+      <Project>{D5F70BAC-1B98-4424-968D-A80DD8E33D9D}</Project>
+      <Name>Microsoft.ServiceFabric.Monitoring.Internal</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\Microsoft.ServiceFabric.Internal.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\Microsoft.ServiceFabric.Internal.Strings.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_Services_2_1)\lib\net45\Microsoft.ServiceFabric.Services.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_Data_2_1)\lib\net45\Microsoft.ServiceFabric.Data.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_Data_2_1)\lib\net45\Microsoft.ServiceFabric.Data.Interfaces.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\System.Fabric.dll">
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <!-- Files that need to have !FABRIC_VERSION! replaced with the build version at build time -->
+  <ItemGroup>
+    <!-- This is dumb but we have two drop folders, and three application packages, so COPY ALL THE THINGS -->
+    <!-- Non RC Drop -->
+    <FabricVerFile Include="ApplicationManifest.xml">
+      <TargetPath>$(BuildDropFolder)\MonitoringServiceApplication</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="ServiceManifest.xml">
+      <TargetPath>$(BuildDropFolder)\MonitoringServiceApplication\MonitoringServicePackage</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="ServiceManifest.xml">
+      <TargetPath>$(BuildDropFolder)\MAWithMonitoringServiceApplication\MonitoringServicePackage</TargetPath>
+    </FabricVerFile>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Non RC Drop -->
+    <PostBuildCopy Include="Settings.xml">
+      <DestinationFolder>$(BuildDropFolder)\MonitoringServiceApplication\MonitoringServicePackage\MonitoringService.Config\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="Settings.xml">
+      <DestinationFolder>$(BuildDropFolder)\MAWithMonitoringServiceApplication\MonitoringServicePackage\MonitoringService.Config\</DestinationFolder>
+    </PostBuildCopy>
+  </ItemGroup>
+  <!-- Copy built code -->
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BuildDropFolder)\MonitoringServiceApplication\MonitoringServicePackage\MonitoringService.Code</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileExclude>*.pdb *.lib</FileExclude>
+    </Robocopy>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BuildDropFolder)\MAWithMonitoringServiceApplication\MonitoringServicePackage\MonitoringService.Code</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileExclude>*.pdb *.lib</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

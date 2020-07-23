@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestSfpkgNegativeTestCases)
 {
     Trace.WriteInfo(TestSource, L"TestSfpkgNegativeTestCases", "Start Test");
 
-    wstring rootFolder(L"TestSfpkgNegativeTestCases");
+    wstring rootFolder = Path::GetFullPath(L"TestSfpkgNegativeTestCases");
     CreateNewDirectory(rootFolder);
 
     wstring sfPkgDestinationFolder(Path::Combine(rootFolder, L"SfpkgFolder"));
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestSfpkgNegativeTestCases)
     
     // Generate sfpkg from non-existing folder.
     GenerateSfpkgWithValidation(
-        L"C:\\NonExistingFolder",
+        Path::GetFullPath(L"NonExistingFolder"),
         sfPkgDestinationFolder,
         false /*applyCompression*/,
         L"",
@@ -113,14 +113,14 @@ BOOST_AUTO_TEST_CASE(TestSfpkgNegativeTestCases)
 
     // Expand sfpkg that doesn't exist.
     ExpandSfpkgWithValidation(
-        L"C:\\test\\NonExisting.sfpkg",
+        L"NonExisting.sfpkg",
         sfPkgDestinationFolder,
         false /*sfpkgShouldBeDeleted*/,
         ErrorCode(ErrorCodeValue::FileNotFound));
 
-    // Expand file with another extenstion fails because the sfpkg is not valid.
+    // Expand file with another extension fails because the sfpkg is not valid.
     ExpandSfpkgWithValidation(
-        L"C:\\test\\NonExisting.other",
+        L"NonExisting.other",
         sfPkgDestinationFolder,
         false /*sfpkgShouldBeDeleted*/,
         ErrorCode(ErrorCodeValue::InvalidArgument));
@@ -310,26 +310,35 @@ void ImageStoreUtilityTests::GenerateAppPackage(wstring const & appPackageFolder
     if (Environment::GetEnvironmentVariableW(L"_NTTREE", bins, Common::NOTHROW()))
     {
         srcDirectory = Path::Combine(bins, L"FabricUnitTests");
+        Trace.WriteInfo(TestSource, L"GenerateAppPackage", "_NTTREE set, initialize srcDirectory={0}, appPackageFolder={1}", srcDirectory, appPackageFolder);
     }
     // RunCITs will end up setting current directory to FabricUnitTests\log
-    else if (StringUtility::EndsWith<wstring>(srcDirectory, L"log"))
+    else if (StringUtility::CompareCaseInsensitive(Path::GetFileName(srcDirectory), L"log") == 0)
     {
-        srcDirectory = Path::Combine(srcDirectory, L"..\\");
+        // srcDirectory points to FabricUnitTests
+        srcDirectory = Path::GetDirectoryName(srcDirectory);
+        Trace.WriteInfo(TestSource, L"GenerateAppPackage", "_NTTREE NOT set, initialize srcDirectory={0}, appPackageFolder={1}", srcDirectory, appPackageFolder);
     }
-
+    else
+    {
+        Trace.WriteWarning(TestSource, L"GenerateAppPackage", "_NTTREE NOT set, and directory doesn't end with 'log'. Initialize srcDirectory={0}, appPackageFolder={1}", srcDirectory, appPackageFolder);
+    }
+    
     BuildLayoutSpecification buildLayout(appPackageFolder);
 
-    auto error = File::Copy(
-        Path::Combine(srcDirectory, srcAppManifestFile),
-        buildLayout.GetApplicationManifestFile());
-    VERIFY(error.IsSuccess(), "Copy app manifest {0} failed", srcAppManifestFile);
+    wstring appManifestPath = Path::Combine(srcDirectory, srcAppManifestFile);
+    wstring appManifestDestPath = buildLayout.GetApplicationManifestFile();
+    auto error = File::Copy(appManifestPath, appManifestDestPath);
+    Trace.WriteInfo(TestSource, L"GenerateAppPackage", "Copy application manifest from {0} to {1} completed with {2}", appManifestPath, appManifestDestPath, error);
+
+    VERIFY(error.IsSuccess(), "Copy app manifest from {0} to {1} failed with {2}", appManifestPath, appManifestDestPath, error.ErrorCodeValueToString());
 
     CreateNewDirectory(Path::Combine(appPackageFolder, serviceManifestName));
 
     error = File::Copy(
         Path::Combine(srcDirectory, srcServiceManifestFile),
         buildLayout.GetServiceManifestFile(serviceManifestName));
-    VERIFY(error.IsSuccess(), "Copy service manifest {0} failed", srcServiceManifestFile);
+    VERIFY(error.IsSuccess(), "Copy service manifest {0} failed with {1}", srcServiceManifestFile, error.ErrorCodeValueToString());
 
     Directory::CreateDirectory(buildLayout.GetCodePackageFolder(serviceManifestName, L"TestService.Code"));
     File::Copy(
@@ -345,7 +354,7 @@ void ImageStoreUtilityTests::CreateNewDirectory(wstring const & dirName)
     DeleteDirectory(dirName);
 
     auto error = Directory::Create2(dirName);
-    VERIFY(error.IsSuccess(), "Create directory {0} failed with {1}", dirName, error);
+    VERIFY(error.IsSuccess(), "Create directory {0} completed with {1}", dirName, error);
 }
 
 void ImageStoreUtilityTests::DeleteDirectory(wstring const & dirName)

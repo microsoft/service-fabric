@@ -38,8 +38,14 @@ namespace Common
         static Common::GlobalWString EnableUnsupportedPreviewFeaturesRegKeyName;
         static Common::GlobalWString IsSFVolumeDiskServiceEnabledRegKeyName;
         static Common::GlobalWString UseFabricInstallerSvcKeyName;
+        static Common::GlobalWString FabricHostServicePathRegKeyName;
+        static Common::GlobalWString UpdaterServicePathRegKeyName;
+#if defined(PLATFORM_UNIX)
+        static Common::GlobalWString SfInstalledMobyRegKeyName;
+#endif
 
         static Common::GlobalWString FabricDnsServerIPAddressRegKeyName;
+        static Common::GlobalWString FabricIsolatedNetworkInterfaceRegKeyName;
 
         static DWORD MaxFileSize;
     };

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+	
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>AzureFilesVolumePluginSetup</AssemblyName>
+    <PackageId>AzureFilesVolumePluginSetup</PackageId>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\VolumePluginDrop\$(CurrentRuntimeIdentifier)\AzureFiles</ApplicationPackageDropPath>
+    <ServicePackageName>AzureFilesVolumePluginPkg</ServicePackageName>
+    <CodePackageDropPath>$(ApplicationPackageDropPath)\$(ServicePackageName)\Code</CodePackageDropPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include=
+        "..\Program.cs;
+        ..\..\Common\AzureFilesVolumePluginSupportedOs.cs;
+        ..\..\Common\Utilities.cs;
+        ..\..\Common\Constants.cs"
+             Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Microsoft.ServiceFabric.Diagnostics\CoreCLR\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+  <!-- As CoreXT can not infer reference dependencies for deps.json : manually copy it here. -->
+  <ItemGroup Condition=" '$(TargetsLinux)' == true ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Private.Interop.dll" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" Condition=" $(CurrentRuntimeIdentifier) != ''"  />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  
+  <ItemGroup>
+    <Robocopy Include="$(PublishDir)">
+      <DestinationFolder>$(CodePackageDropPath)</DestinationFolder>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+
+  <!-- As Coreclr + CoreXt are not integrated properly together : this patch for robocopying files.   -->
+  <Target Name="RobocopyFiles" AfterTargets="Publish" DependsOnTargets="$(RobocopyFilesDependsOn)" Condition="'@(Robocopy)' != ''">
+    <Robocopy RetryCount="$(RobocopyRetryCount)" RetryWait="$(RobocopyRetryWait)" ShowDiagnosticTrace="$(RobocopyShowDiagnosticTrace)" ShowErrorOnRetry="$(RobocopyShowErrorOnRetry)" Sources="@(Robocopy)" Condition="'@(Robocopy)' != ''" />
+  </Target>
+
+</Project>

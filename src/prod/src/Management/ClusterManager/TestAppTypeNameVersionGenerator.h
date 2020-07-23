@@ -41,10 +41,11 @@ namespace Management
 
             virtual Common::ErrorCode GetNextVersion(
                 Store::StoreTransaction const &,
-                std::wstring const &appName,
+                std::wstring const &deploymentName,
                 ServiceModelVersion const &,
                 __out ServiceModelVersion &typeVersion)
             {
+                wstring appName = NamingUri(deploymentName).ToString();
                 auto typeVersionIter = mockTypeVersions_.find(appName);
                 ASSERT_IF(typeVersionIter == mockTypeVersions_.end(), "Mock type version does not container entry {0}", appName);
 

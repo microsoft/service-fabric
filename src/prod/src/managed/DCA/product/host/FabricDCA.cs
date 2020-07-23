@@ -224,18 +224,25 @@ namespace FabricDCA
                 initParam.ApplicationInstanceId = applicationInstanceId;
                 initParam.SectionName = producerInstanceInfo.SectionName;
                 initParam.LogDirectory = Utility.LogDirectory;
+                initParam.WorkDirectory = Utility.DcaWorkFolder;
 
                 if (ContainerEnvironment.IsContainerApplication(applicationInstanceId))
                 {
-                    if (producerInstanceInfo.TypeName != StandardPluginTypes.EtlFileProducer)
+#if DotNetCoreClrLinux
+                    string traceReaderProducerTypeName = StandardPluginTypes.LttProducer;
+#else
+                    string traceReaderProducerTypeName = StandardPluginTypes.EtlFileProducer;
+#endif
+                    if (producerInstanceInfo.TypeName != traceReaderProducerTypeName)
                     {
                         continue;
                     }
 
-                    initParam.LogDirectory = ContainerEnvironment.GetContainerLogFolder(applicationInstanceId);
+                    string containerLogFolder = ContainerEnvironment.GetContainerLogFolder(applicationInstanceId);
+                    initParam.LogDirectory = containerLogFolder;
+                    initParam.WorkDirectory = Utility.GetOrCreateContainerWorkDirectory(containerLogFolder);
                 }
 
-                initParam.WorkDirectory = Utility.DcaWorkFolder;
                 if (producerConsumerMap.ContainsKey(producerInstance))
                 {
                     initParam.ConsumerSinks = producerConsumerMap[producerInstance];
@@ -305,13 +312,15 @@ namespace FabricDCA
                 // if the application is a container move to container log folder.
                 if (ContainerEnvironment.IsContainerApplication(applicationInstanceId))
                 {
+                    string containerLogFolder = ContainerEnvironment.GetContainerLogFolder(applicationInstanceId);
+
                     initParam = new ConsumerInitializationParameters(
                         applicationInstanceId,
                         consumerInstanceInfo.SectionName,
                         Utility.FabricNodeId,
                         Utility.FabricNodeName,
-                        ContainerEnvironment.GetContainerLogFolder(applicationInstanceId),
-                        Utility.DcaWorkFolder,
+                        containerLogFolder,
+                        Utility.GetOrCreateContainerWorkDirectory(containerLogFolder),
                         diskSpaceManager);
                 }
 

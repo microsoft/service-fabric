@@ -49,10 +49,18 @@ namespace SystemServices
             return partitionInfo;
         }
 
-        // These services will have their endpoints wrapped in json, so parsing needs to be done differently.
-        static bool IsFabSrvService(ConsistencyUnitId& cuid)
+        // FabSrvServices will have their endpoints wrapped in json, so parsing needs to be done differently.
+        // FabSrvServices can have reserved or dynamic partition IDs 
+        static bool IsReservedIdFabSrvService(ConsistencyUnitId& cuid)
         {
-            return cuid.IsBackupRestoreService() || cuid.IsFaultAnalysisService() || cuid.IsUpgradeOrchestrationService();
+            return cuid.IsBackupRestoreService() || cuid.IsFaultAnalysisService() || cuid.IsUpgradeOrchestrationService() || cuid.IsEventStoreService();
+        }
+
+        // Check if it is a fabSrvService based on service name.
+        // This overload is applicable for system services with dynamic (non-reserved) partition IDs.
+        static bool IsDynamicIdFabSrvService(std::wstring& internalServiceName)
+        {
+            return StringUtility::AreEqualCaseInsensitive(internalServiceName, *SystemServiceApplicationNameHelper::PublicGatewayResourceManagerName);
         }
     };
 }
@@ -449,19 +457,24 @@ private:
 
         if (error.IsSuccess())
         {
+            bool isHttpOnly = false;
             bool parseSuccess = false;
 
             auto first = serviceEntries_.front();
             if (first.ServiceReplicaSet.IsPrimaryLocationValid)
             {
                 bool parseWasSuccessful = false;
-                if (!Utility::IsFabSrvService(cuid_))
+                if (cuid_.IsEventStoreService())
                 {
-                    parseWasSuccessful = SystemServiceLocation::TryParse(first.ServiceReplicaSet.PrimaryLocation, primaryLocation_);
+                    // A Temp solution, skip as parser always expects a tcp endpoint to exist,
+                    // however EventStoreService has only a http/https endpoint.
+                    isHttpOnly = true;
                 }
                 else
                 {
-                    parseWasSuccessful = SystemServiceLocation::TryParse(first.ServiceReplicaSet.PrimaryLocation, true, primaryLocation_); 
+                    // Check if it is a fabSrvService, based on fixed partition ID or by service name (when using dynamic partition IDs)
+                    bool isFabSrvService = Utility::IsReservedIdFabSrvService(cuid_) || Utility::IsDynamicIdFabSrvService(serviceName_);
+                    parseWasSuccessful = SystemServiceLocation::TryParse(first.ServiceReplicaSet.PrimaryLocation, isFabSrvService, primaryLocation_); 
                 }
 
                 if (parseWasSuccessful)
@@ -479,8 +492,11 @@ private:
                             cuid_,
                             locationVersion);
                     }
-                    parseSuccess = true;
+                }
 
+                if (isHttpOnly || parseWasSuccessful)
+                {
+                    parseSuccess = true;
                 }
             }
             

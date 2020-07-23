@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{9264E0EA-4631-4181-9FB6-8A2B20BAD9BE}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.FabricTransport.V2</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.FabricTransport.V2</AssemblyName>
+    <AssemblyTitle>Microsoft.ServiceFabric.FabricTransport.V2</AssemblyTitle>
+    <OutputType>Library</OutputType>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <ResourcesFileName>SR</ResourcesFileName>
+    <ResourcesClassName>$(ResourcesFileName)</ResourcesClassName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Name>System.Fabric</Name>
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Name>Microsoft.ServiceFabric.Internal</Name>
+      <Project>{EB728138-47AC-41CB-A2C7-53521B396AFD}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.ServiceFabric.FabricTransport\Microsoft.ServiceFabric.FabricTransport.csproj">
+      <Name>Microsoft.ServiceFabric.FabricTransport</Name>
+      <Project>{EB728138-47AC-41CB-A2C7-53521B396AFD}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Api\Dlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.strings.csproj">
+      <Name>Microsoft.ServiceFabric.Internal.strings</Name>
+      <Project>{3869599B-43ED-46EE-B2AC-FBE66657B858}</Project>
+      <Name>Microsoft.ServiceFabric.Internal.strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="FabricTransportSettingsExtension.cs" />
+    <Compile Include="NativeFabricTransportMessageDisposer.cs" />
+    <Compile Include="Runtime\FabricTransportCallbackClient.cs" />
+    <Compile Include="Client\FabricTransportCallbackMessageHandlerBroker.cs" />
+    <Compile Include="Client\FabricTransportClient.cs" />
+    <Compile Include="Client\FabricTransportClientConnectionEventHandlerBroker.cs" />
+    <Compile Include="Client\IFabricTransportCallbackMessageHandler.cs" />
+    <Compile Include="Client\IFabricTransportClientEventHandler.cs" />
+    <Compile Include="NativeFabricTransportMessage.cs" />
+    <Compile Include="FabricTransportMessage.cs" />
+    <Compile Include="NativeFabricTransport.cs" />
+    <Compile Include="NativeMessageStream.cs" />
+    <Compile Include="Runtime\FabricTransportListener.cs" />
+    <Compile Include="Runtime\FabricTransportMessageHandlerBroker.cs" />
+    <Compile Include="Runtime\FabricTransportRequestContext.cs" />
+    <Compile Include="Runtime\FabricTransportConnectionHandlerBroker.cs" />
+    <Compile Include="Runtime\IFabricTransportConnectionHandler.cs" />
+    <Compile Include="Runtime\IFabricTransportMessageHandler.cs" />
+    <Compile Include="_friends.cs" />
+    <Compile Include="$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(ResourcesFileName).resx" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(PkgMicrosoft_Diagnostics_Tracing_EventRegister)\build\Microsoft.Diagnostics.Tracing.EventRegister.targets" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <!-- DO NOT CHANGE Inputs to $(ResourcesFileName).resx. It is required to build incrementally as MSBUILD cannot
+       expand the Inputs tag correctly for BeforeResGen targets
+   -->
+  <Target Name="BeforeResGen" Inputs="SR.resx" Outputs="$(IntermediateOutputPath)$(ResourcesFileName).cs">
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe $(ResourcesFileName).resx $(IntermediateOutputPath)\$(RootNamespace).$(ResourcesFileName).resources /str:csharp,$(RootNamespace),$(ResourcesClassName),$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </Target>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -5,25 +5,24 @@
 
 namespace System.Fabric.ImageBuilderExe
 {
+    using Microsoft.Win32;
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Fabric.Common;
     using System.Fabric.Common.Tracing;
-    using System.Fabric.Interop;
     using System.Fabric.ImageStore;
-    using System.Fabric.Management;
+    using System.Fabric.Interop;
     using System.Fabric.Management.ImageBuilder;
-    using System.Fabric.Management.ImageStore;
     using System.Fabric.Management.ImageBuilder.SingleInstance;
+    using System.Fabric.Management.ImageStore;
     using System.Fabric.Management.WindowsFabricValidator;
     using System.Fabric.Strings;
     using System.Globalization;
     using System.IO;
-    using System.Linq;
+    using System.Net;
     using System.Text;
     using System.Threading;
-    using Newtonsoft.Json;
-    using Microsoft.Win32;
 
     internal class ImageBuilderExe
     {
@@ -84,13 +83,19 @@ namespace System.Fabric.ImageBuilderExe
             StringConstants.TargetAppTypeVersion,
             StringConstants.SingleInstanceApplicationDescription,
             StringConstants.UseOpenNetworkConfig,
-            StringConstants.GenerationConfig
+            StringConstants.UseLocalNatNetworkConfig,
+            StringConstants.GenerationConfig,
+            StringConstants.MountPointForSettings,
         };
 
         static ImageBuilderExe()
         {
             TraceConfig.InitializeFromConfigStore();
             ImageBuilderExe.TraceSource = new FabricEvents.ExtensionsEvents(FabricEvents.Tasks.ImageBuilder);
+
+#if !DotNetCoreClr
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+#endif
         }
 
         /// return 0 if program completes successfully, -1 otherwise.
@@ -322,6 +327,10 @@ namespace System.Fabric.ImageBuilderExe
                         ? ImageBuilderUtility.ConvertString<bool>(commandArgs[StringConstants.UseOpenNetworkConfig])
                         : false;
 
+                    bool useLocalNatNetworkConfig = commandArgs.ContainsKey(StringConstants.UseLocalNatNetworkConfig)
+                        ? ImageBuilderUtility.ConvertString<bool>(commandArgs[StringConstants.UseLocalNatNetworkConfig])
+                        : false;
+
                     Application application = null;
 
                     using (StreamReader file = File.OpenText(commandArgs[StringConstants.SingleInstanceApplicationDescription]))
@@ -356,6 +365,8 @@ namespace System.Fabric.ImageBuilderExe
                         commandArgs[StringConstants.BuildPath],
                         commandArgs[StringConstants.Output],
                         useOpenNetworkConfig,
+                        useLocalNatNetworkConfig,
+                        commandArgs[StringConstants.MountPointForSettings],
                         config);
                 }
                 else if (ImageBuilderUtility.Equals(operationValue, StringConstants.OperationBuildSingleInstanceApplicationForUpgrade))
@@ -366,6 +377,10 @@ namespace System.Fabric.ImageBuilderExe
 
                     bool useOpenNetworkConfig = commandArgs.ContainsKey(StringConstants.UseOpenNetworkConfig)
                         ? ImageBuilderUtility.ConvertString<bool>(commandArgs[StringConstants.UseOpenNetworkConfig])
+                        : false;
+
+                    bool useLocalNatNetworkConfig = commandArgs.ContainsKey(StringConstants.UseLocalNatNetworkConfig)
+                        ? ImageBuilderUtility.ConvertString<bool>(commandArgs[StringConstants.UseLocalNatNetworkConfig])
                         : false;
 
                     Application application = null;
@@ -402,6 +417,8 @@ namespace System.Fabric.ImageBuilderExe
                         commandArgs[StringConstants.BuildPath],
                         commandArgs[StringConstants.Output],
                         useOpenNetworkConfig,
+                        useLocalNatNetworkConfig,
+                        commandArgs[StringConstants.MountPointForSettings],
                         config);
 
                 }

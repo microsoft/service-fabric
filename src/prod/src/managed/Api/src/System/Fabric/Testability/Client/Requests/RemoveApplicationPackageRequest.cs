@@ -1,0 +1,66 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+// CS1591 - Missing XML comment for publicly visible type or member 'Type_or_Member' is disabled in this file because it does not ship anymore.
+#pragma warning disable 1591
+
+namespace System.Fabric.Testability.Client.Requests
+{
+    using System;
+    using System.Fabric.Testability.Common;
+    using System.Globalization;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    public class RemoveApplicationPackageRequest : FabricRequest
+    {
+        public RemoveApplicationPackageRequest(
+            IFabricClient fabricClient,
+            string imageStoreConnectionString,
+            string applicationPackagePathInImageStore,
+            TimeSpan timeout)
+            : base(fabricClient, timeout)
+        {
+            ThrowIf.Null(applicationPackagePathInImageStore, "applicationPackagePathInImageStore");
+
+            this.ImageStoreConnectionString = imageStoreConnectionString;
+            this.ApplicationPackagePathInImageStore = applicationPackagePathInImageStore;
+        }
+
+        public string ImageStoreConnectionString
+        {
+            get;
+            private set;
+        }
+
+        public string ApplicationPackagePathInImageStore
+        {
+            get;
+            private set;
+        }
+
+        public override string ToString()
+        {
+            return string.Format(
+                CultureInfo.InvariantCulture, 
+                "Remove application package request (ImagestoreConnectionString:{0}, ApplicationPackageInImageStore:{1}, TimeoutInSec:{2})", 
+                this.ImageStoreConnectionString, 
+                this.ApplicationPackagePathInImageStore, 
+                this.Timeout.TotalSeconds);
+        }
+
+        public override async Task PerformCoreAsync(CancellationToken cancellationToken)
+        {
+            this.OperationResult = await this.FabricClient.RemoveApplicationPackageAsync(
+                this.ApplicationPackagePathInImageStore, 
+                this.ImageStoreConnectionString, 
+                this.Timeout, 
+                cancellationToken);
+        }
+    }
+}
+
+
+#pragma warning restore 1591

@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{CA28055D-8D21-4BE9-AEBB-B90A72F1C385}</ProjectGuid>
+    <RootNamespace>ClusterAnalysis.TraceAccessLayer</RootNamespace>
+    <AssemblyName>ClusterAnalysis.TraceAccessLayer</AssemblyName>
+    <OutputType>Library</OutputType>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BinaryPackagePath>.\$(BinaryPackageName)</BinaryPackagePath>
+    <BinaryPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\ClusterAnalysis</BinaryPackageDropPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\Common\ClusterAnalysis.Common.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Readers\Microsoft.ServiceFabric.Instrumentation.Tracing.Readers.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Parsers\Microsoft.ServiceFabric.Instrumentation.Tracing.Parsers.csproj" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Threading.Tasks" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(PkgSystem_Spatial)\lib\net40\System.Spatial.dll" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Client)\lib\net45\System.Net.Http.Formatting.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinaryPackageDropPath)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BoundedTraceStoreReader.cs" />
+    <Compile Include="StoreConnection\AzureTableStoreStorageAccessInformation.cs" />
+    <Compile Include="StoreReaders\AzureStoreReader.cs" />
+    <Compile Include="StoreReaders\EventStoreReader\AzureTableEventStoreReader.cs" />
+    <Compile Include="StoreReaders\EventStoreReader\LocalEventStoreReader.cs" />
+    <Compile Include="Exceptions\FilterConditionAlreadyExist.cs" />
+    <Compile Include="ITraceStoreReader.cs" />
+    <Compile Include="StoreReaders\QueryStoreReader\AzureTableQueryStoreReader.cs" />
+    <Compile Include="StoreReaders\QueryStoreReader\LocalQueryStoreReader.cs" />
+    <Compile Include="ReadFilter.cs" />
+    <Compile Include="StoreConnection\AzureTraceStoreConnectionInformation.cs" />
+    <Compile Include="StoreConnection\TraceStoreConnection.cs" />
+    <Compile Include="StoreConnection\TraceStoreConnectionInformation.cs" />
+    <Compile Include="StoreConnection\LocalTraceStoreConnectionInformation.cs" />
+    <Compile Include="StoreReaders\LocalStoreReader.cs" />
+    <Compile Include="StoreReaders\TraceStoreReader.cs" />
+  </ItemGroup>
+  <ItemGroup />
+</Project>

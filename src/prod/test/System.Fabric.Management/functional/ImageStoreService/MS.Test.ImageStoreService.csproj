@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test_signing.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>3e076f33-33c7-4ded-a6bb-b53cd5e0c1ee</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Description>ImageStoreService used for testing ImageStore in CoreClr.</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>MS.Test.ImageStoreService</AssemblyName>
+    <RootNamespace>MS.Test.ImageStoreService</RootNamespace>
+    <AssemblyDescription>ImageStoreService used for testing ImageStore in CoreClr.</AssemblyDescription>
+    <ApplicationPrefix>ImageStoreTestService</ApplicationPrefix>
+    <PackageRoot>.\PackageRoot</PackageRoot>
+    <ApplicationPackageName>$(ApplicationPrefix)Pkg</ApplicationPackageName>
+    <ApplicationPackagePath>$(PackageRoot)\$(ApplicationPackageName)</ApplicationPackagePath>
+    <ServicePackagePrefix>Service</ServicePackagePrefix>
+    <ServicePackageName>$(ServicePackagePrefix)Pkg</ServicePackageName>
+    <ApplicationPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\CoreClr\$(CurrentRuntimeIdentifier)\$(ApplicationPackageName)</ApplicationPackageDropPath>
+    <CodePackageDropPath>$(ApplicationPackageDropPath)\$(ServicePackageName)\Code</CodePackageDropPath>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <ServiceManifestLinuxFile>$(ApplicationPackagePath)\$(ServicePackageName)\ServiceManifest_Linux.xml</ServiceManifestLinuxFile>
+    <ApplicationManifestLinuxFile>$(ApplicationPackagePath)\ApplicationManifest_Linux.xml</ApplicationManifestLinuxFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Controllers\WorkloadController.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Startup.cs" />
+    <Compile Include="ServiceEventListener.cs" />
+    <Compile Include="ServiceEventSource.cs" />
+    <Compile Include="TestImageStoreService.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.Data\CoreCLR\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\CoreCLR\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\CoreCLR\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+    <ProjectReference Include="$(SrcRoot)\test\current\framework\CoreClr\MS.Test.WinFabric.userclient\MS.Test.WinFabric.UserClient.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.3" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="4.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Standard)\Microsoft.ServiceFabric.Services.dll" />
+    <Reference Include="$(SF_AspNetCore_DotNet_Standard)\Microsoft.ServiceFabric.AspNetCore.Kestrel.dll" />
+    <Reference Include="$(SF_AspNetCore_DotNet_Standard)\Microsoft.ServiceFabric.AspNetCore.dll" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsLinux)' == true ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.FabricTransport\Microsoft.ServiceFabric.FabricTransport.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.FabricTransport.V2\Microsoft.ServiceFabric.FabricTransport.V2.McgInterop.dll" />
+  </ItemGroup>
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" Condition="'$(CurrentRuntimeIdentifier)' != ''"/>
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(ApplicationPackagePath)">
+      <DestinationFolder>$(ApplicationPackageDropPath)</DestinationFolder>
+    </Robocopy>
+    <Robocopy Include="$(PublishDir)">
+      <DestinationFolder>$(CodePackageDropPath)</DestinationFolder>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+  <!-- As Coreclr + CoreXt are not integrated properly together : this patch for robocopying files. -->
+  <Target Name="RobocopyFiles" AfterTargets="Publish" DependsOnTargets="$(RobocopyFilesDependsOn)" Condition="'@(Robocopy)' != ''">
+    <Robocopy RetryCount="$(RobocopyRetryCount)" RetryWait="$(RobocopyRetryWait)" ShowDiagnosticTrace="$(RobocopyShowDiagnosticTrace)" ShowErrorOnRetry="$(RobocopyShowErrorOnRetry)" Sources="@(Robocopy)" Condition="'@(Robocopy)' != ''" />
+  </Target>
+  <!-- Override manifest files for linux -->
+  <Target Name="AfterPublishCopy" AfterTargets="RobocopyFiles" Condition=" '$(TargetsLinux)' == true ">
+    <Copy SourceFiles="$(ServiceManifestLinuxFile)" DestinationFiles="$(ApplicationPackageDropPath)\$(ServicePackageName)\ServiceManifest.xml" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ApplicationManifestLinuxFile)" DestinationFiles="$(ApplicationPackageDropPath)\ApplicationManifest.xml" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

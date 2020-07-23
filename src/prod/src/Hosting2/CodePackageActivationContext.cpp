@@ -187,23 +187,40 @@ ErrorCode CodePackageActivationContext::EnsureData()
 
         WriteInfo(TraceType, contextId_, "NetworkingMode for container : {0}", networkingMode);
 
-        bool isMultiIp = StringUtility::AreEqualCaseInsensitive(networkingMode, NetworkType::EnumToString(NetworkType::Open));
+        // Networking mode can indicate multiple networks, so need to do a contains check.
+        bool hasOpen = StringUtility::ContainsCaseInsensitive(networkingMode, NetworkType::OpenStr);
+        bool hasIsolated = StringUtility::ContainsCaseInsensitive(networkingMode, NetworkType::IsolatedStr);
+        bool hasOther = StringUtility::ContainsCaseInsensitive(networkingMode, NetworkType::OtherStr);
+
         ASSERT_IF(serviceManifest_->Resources.Endpoints.size() < 1, "Atleast one endpoint must be specified in serviceManifest_->Resources.Endpoints");
 
-        if (isMultiIp)
+        if (hasIsolated)
+        {
+            // Use the first isolated network
+            auto endpointIsolatedNetworkMap = servicePackage_->GetEndpointNetworkMap(NetworkType::IsolatedStr);
+            for (auto iter = serviceManifest_->Resources.Endpoints.begin(); iter != serviceManifest_->Resources.Endpoints.end(); ++iter)
+            {
+                auto networkFromEndpoint = endpointIsolatedNetworkMap.find(iter->Name);
+                if (networkFromEndpoint != endpointIsolatedNetworkMap.end())
+                {
+                    serviceListenAddress_ = iter->IpAddressOrFqdn;
+                    servicePublishAddress_ = iter->IpAddressOrFqdn;
+                }
+            }
+        }
+        else if (hasOpen)
         {
             serviceListenAddress_ = serviceManifest_->Resources.Endpoints.begin()->IpAddressOrFqdn;
             servicePublishAddress_ = serviceManifest_->Resources.Endpoints.begin()->IpAddressOrFqdn;
-
-            WriteInfo(TraceType, contextId_, "ServiceListenAddress is {0} and ServicePublishAddress is {1}", serviceListenAddress_, servicePublishAddress_);
         }
-        else
+        else if (hasOther)
         {
+            // Use NAT
             map<wstring, vector<Common::IPPrefix>> ipAddressPerAdapter;
             error = IpUtility::GetIpAddressesPerAdapter(ipAddressPerAdapter);
 
             ASSERT_IF(!error.IsSuccess(), "Getting container IP failed - {0}", error);
-            ASSERT_IF(ipAddressPerAdapter.size() != 2, "Found more than two adapters in container");
+            ASSERT_IF(ipAddressPerAdapter.size() > 2, "Found more than two adapters in container");
 
             wstring localIp = L"";
             error = IpUtility::GetFirstNonLoopbackAddress(ipAddressPerAdapter, localIp);
@@ -213,13 +230,14 @@ ErrorCode CodePackageActivationContext::EnsureData()
 
             serviceListenAddress_ = localIp;
             servicePublishAddress_ = this->nodeContext_->IPAddressOrFQDN;
-
-            WriteInfo(
-                TraceType,
-                contextId_,
-                "ServiceListenAddress is {0} and ServicePublishAddress is {1}",
-                serviceListenAddress_,
-                servicePublishAddress_);
+        }
+        else
+        {
+            // This is not a valid situation to be in
+            ASSERT_IFNOT(
+                hasIsolated || hasOpen || hasOther,
+                "CodePackageActivationContext::EnsureData has reached an invalid state. Network is neither Isolated, Open, nor Other. networkingMode={0}",
+                networkingMode);
         }
     }
     else
@@ -228,9 +246,10 @@ ErrorCode CodePackageActivationContext::EnsureData()
         servicePublishAddress_ = this->nodeContext_->IPAddressOrFQDN;
     }
 
+    WriteInfo(TraceType, contextId_, "ServiceListenAddress is {0} and ServicePublishAddress is {1}", serviceListenAddress_, servicePublishAddress_);
+
     applicationTypeName_ = applicationPackageDescription.ApplicationTypeName;
     applicationName_ = applicationPackageDescription.ApplicationName;
-
 
     endpointResourceList_ = heap_.AddItem<FABRIC_ENDPOINT_RESOURCE_DESCRIPTION_LIST>();
     EndpointDescription::ToPublicApi(heap_, serviceManifest_->Resources.Endpoints, *endpointResourceList_);

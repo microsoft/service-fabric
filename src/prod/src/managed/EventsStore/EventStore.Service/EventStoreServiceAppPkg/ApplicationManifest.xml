@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest ApplicationTypeName="EventStoreAppType" ApplicationTypeVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>Cluster Analyzer Application</Description>
+  <Parameters>
+    <Parameter Name="PlacementConstraints" DefaultValue="" />
+    <Parameter Name="TempParam" DefaultValue="TempParam"/>
+  </Parameters>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="EventStoreServicePkg" ServiceManifestVersion="1.0"/>
+    <ConfigOverrides>
+      <ConfigOverride Name="Config">
+        <Settings>
+          <Section Name="EventStoreService">
+            <Parameter Name="TempParam" Value="[TempParam]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>    
+    <Policies>
+      <RunAsPolicy CodePackageRef="Code" UserRef="RunAsLocalSystem" />
+    </Policies>
+  </ServiceManifestImport>
+  <DefaultServices>
+    <Service Name="EventStoreService">
+      <StatefulService TargetReplicaSetSize="3" ServiceTypeName="EventStoreServiceType">
+        <SingletonPartition/>
+        <PlacementConstraints>[PlacementConstraints]</PlacementConstraints>
+      </StatefulService>
+    </Service>
+  </DefaultServices>
+  <Principals>
+    <Users>
+      <User Name="RunAsLocalSystem" AccountType="LocalSystem" />
+    </Users>
+  </Principals>
+</ApplicationManifest>

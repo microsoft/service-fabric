@@ -316,8 +316,37 @@ private:
         }
 
         WriteInfo(TraceLifeCycle, fabricNode_.TraceId, "hosting open succeeded");
-        OpenRuntimeSharingHelper(operation->Parent);
+        OpenNetworkInventoryAgentSubsystem(operation->Parent);
     }
+
+    void OpenNetworkInventoryAgentSubsystem(AsyncOperationSPtr const & thisSPtr)
+    {
+        WriteInfo(TraceLifeCycle, fabricNode_.TraceId, "opening NetworkInventoryAgentSubsystem subsystem");
+        auto operation = fabricNode_.networkInventoryAgent_->BeginOpen(
+            timeoutHelper_.GetRemainingTime(),
+            [this] (AsyncOperationSPtr const & operation) { this->FinishNetworkInventoryAgentOpen(operation, false); },
+            thisSPtr);
+        FinishNetworkInventoryAgentOpen(operation, true);
+    }
+
+    void FinishNetworkInventoryAgentOpen(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto errorCode = fabricNode_.hosting_->EndOpen(operation);
+        if (!errorCode.IsSuccess())
+        {
+            WriteError(TraceLifeCycle, fabricNode_.TraceId, "NetworkInventoryAgentSubsystem open failed with {0}", errorCode);
+            TryComplete(operation->Parent, errorCode);
+            return;
+        }
+
+        WriteInfo(TraceLifeCycle, fabricNode_.TraceId, "NetworkInventoryAgentSubsystem open succeeded");
+        OpenRuntimeSharingHelper(operation->Parent);
+    }    
 
     void OpenRuntimeSharingHelper(AsyncOperationSPtr const & thisSPtr)
     {
@@ -798,6 +827,41 @@ private:
         }
         
         WriteInfo(TraceLifeCycle, fabricNode_.TraceId, "hosting closed");
+        CloseNetworkInventoryAgent(operation->Parent);
+    }
+
+    void CloseNetworkInventoryAgent(AsyncOperationSPtr const & thisSPtr)
+    {
+         WriteInfo(TraceLifeCycle, fabricNode_.TraceId, "closing CloseNetworkInventoryAgent");
+
+        auto operation = fabricNode_.networkInventoryAgent_->BeginClose(
+            timeoutHelper_.GetRemainingTime(),
+            [this] (AsyncOperationSPtr const & asyncOperation) { FinishNetworkInventoryAgent(asyncOperation, false); },
+            thisSPtr);
+        FinishNetworkInventoryAgent(operation, true);
+    }
+
+    void FinishNetworkInventoryAgent(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+     
+        auto error = fabricNode_.networkInventoryAgent_->EndClose(operation);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(TraceLifeCycle, fabricNode_.TraceId, "closed NetworkInventoryAgent with error {0}", error);
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        
+        WriteInfo(TraceLifeCycle, fabricNode_.TraceId, "NetworkInventoryAgent closed");
+#if defined(PLATFORM_UNIX)
+        CloseIpcServer(operation->Parent);
+#else
+        CloseKtlLogger(operation->Parent);
+#endif        
 
         // KTL deactivation can't be called from a KTL thread
         //
@@ -1330,6 +1394,35 @@ protected:
     }
 };
 
+class FabricNode::InitializeEventStoreServiceAsyncOperation : public FabricNode::InitializeSystemServiceAsyncOperationBase
+{
+public:
+    InitializeEventStoreServiceAsyncOperation(
+        FabricNode & owner,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & root)
+        : InitializeSystemServiceAsyncOperationBase(
+            owner,
+            ServiceModel::SystemServiceApplicationNameHelper::InternalEventStoreServiceName,
+            ConsistencyUnitId::CreateFirstReservedId(*ConsistencyUnitId::EventStoreServiceIdRange),
+            callback,
+            root)
+    {
+    }
+
+protected:
+
+    virtual AsyncOperationSPtr BeginCreateSystemService(TimeSpan const timeout, AsyncCallback const & callback, AsyncOperationSPtr const & root)
+    {
+        return this->Owner.management_->BeginCreateEventStoreService(timeout, callback, root);
+    }
+
+    virtual ErrorCode EndCreateSystemService(AsyncOperationSPtr const & operation)
+    {
+        return this->Owner.management_->EndCreateEventStoreService(operation);
+    }
+};
+
 
 // ********************************************************************************************************************
 // FabricNode Implementation
@@ -1580,6 +1673,9 @@ FabricNode::FabricNode(
 
     auto reliability = Reliability::ReliabilitySubsystemFactory(reliabilityConstructorParameters);
 
+    auto networkInventoryAgent = std::make_shared<NetworkInventoryAgent>(*this, *federation, *reliability, hosting);
+    hosting->NetworkInventoryAgent = networkInventoryAgent;
+        
     auto communication = Common::make_unique<CommunicationSubsystem>(
         *reliability,
         *hosting,
@@ -1685,6 +1781,7 @@ FabricNode::FabricNode(
     ktlLogger_ = std::move(ktlLogger);
     ipcServer_ = move(ipcServer);
     hosting_ = hosting;
+    networkInventoryAgent_ = move(networkInventoryAgent);
     runtimeSharingHelper_ = move(runtimeSharingHelper);
     reliability_ = std::move(reliability);
     communication_ = std::move(communication);
@@ -2219,7 +2316,7 @@ ErrorCode FabricNode::SetClusterSecurity(SecuritySettings const & securitySettin
         }
     }
 
-    if (HostingConfig::GetConfig().FabricContainerAppsEnabled)
+    if (HostingConfig::GetConfig().FabricContainerAppsEnabled && SecurityConfig::GetConfig().UseClusterCertForIpcServerTlsSecurity)
     {
         SecuritySettings ipcServerTlsSecuritySettings;
         error = CreateIpcServerTlsSecuritySettings(ipcServerTlsSecuritySettings);
@@ -2690,6 +2787,8 @@ void FabricNode::OnFailoverManagerReady()
     this->StartInitializeCentralSecretService();
 
     this->StartInitializeBackupRestoreService();
+
+    this->StartInitializeEventStoreService();
 }
 
 bool FabricNode::TryStartSystemServiceOperation(AsyncOperationSPtr const & operation)
@@ -2853,6 +2952,21 @@ void FabricNode::StartInitializeBackupRestoreService()
     
         this->TryStartInitializeSystemService(operation);
      }
+}
+
+void FabricNode::StartInitializeEventStoreService()
+{
+    if (management_->IsEventStoreServiceEnabled)
+    {
+        WriteInfo(TraceLifeCycle, "Creating EventStoreService");
+
+        auto operation = AsyncOperation::CreateAndStart<InitializeEventStoreServiceAsyncOperation>(
+            *this,
+            [](AsyncOperationSPtr const & operation) { InitializeSystemServiceAsyncOperationBase::End(operation); },
+            this->CreateAsyncOperationRoot());
+
+        this->TryStartInitializeSystemService(operation);
+    }
 }
 
 void FabricNode::CreateDataDirectoryIfNeeded(

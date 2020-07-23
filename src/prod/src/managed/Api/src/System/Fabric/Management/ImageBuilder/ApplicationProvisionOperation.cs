@@ -170,7 +170,7 @@ namespace System.Fabric.Management.ImageBuilder
                 {
                     ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
                         TraceType,
-                        this.localBuildLayoutSpecification.GetApplicationManifestFile(),
+                        this.remoteBuildLayoutSpecification.GetApplicationManifestFile(),
                         StringResources.ImageBuilderError_InvalidServiceManifestRef,
                         "Name",
                         serviceManifestName,
@@ -182,7 +182,7 @@ namespace System.Fabric.Management.ImageBuilder
                 {
                     ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
                         TraceType,
-                        this.localBuildLayoutSpecification.GetApplicationManifestFile(),
+                        this.remoteBuildLayoutSpecification.GetApplicationManifestFile(),
                         StringResources.ImageBuilderError_InvalidServiceManifestRef,
                         "Version",
                         serviceManifestVersion,
@@ -203,6 +203,29 @@ namespace System.Fabric.Management.ImageBuilder
                         serviceManifest.ConflictingChecksum = storeServiceManifestChecksum;
                         if (!ImageBuilderUtility.Equals(serviceManifest.Checksum, serviceManifest.ConflictingChecksum))
                         {
+                            string currentWorkingDir = Directory.GetCurrentDirectory();
+                            var downloadedStoreServiceManifestFile = Path.Combine(currentWorkingDir, Guid.NewGuid().ToString());
+
+                            if (!this.imageStoreWrapper.DownloadIfContentExists(storeServiceManifestFile, downloadedStoreServiceManifestFile, timeoutHelper.GetRemainingTime()))
+                            {
+                                throw new FileNotFoundException(StringResources.Error_FileNotFound, storeServiceManifestFile);
+                            }
+
+                            string localServiceManifestContent = File.ReadAllText(serviceManifestFile);
+                            string storeServiceManifestContent = File.ReadAllText(downloadedStoreServiceManifestFile);
+
+                            ImageBuilder.TraceSource.WriteInfo(
+                                TraceType,
+                                "Checksum mismatch in ServiceManifest with Name:{0} and Version:{1}: LocalManifestFile:{2} StoreManifestFile:{3} localFileChecksum:{4} storeFileChecksum:{5}",
+                                serviceManifestName,
+                                serviceManifestVersion,
+                                localServiceManifestContent,
+                                storeServiceManifestContent,
+                                serviceManifest.Checksum,
+                                serviceManifest.ConflictingChecksum
+                                );
+                                ImageBuilderUtility.DeleteTempLocation(downloadedStoreServiceManifestFile);
+
                             ImageBuilderUtility.TraceAndThrowValidationError(
                                 TraceType,
                                 StringResources.ImageBuilderError_ServiceManifestModfiedWithoutChangingVersion,
@@ -239,12 +262,15 @@ namespace System.Fabric.Management.ImageBuilder
             }
             else
             {
+
+                string remoteServiceManifestFile = this.remoteBuildLayoutSpecification.GetServiceManifestFile(serviceManifestName);
+
                 // Service manifest is not provided and it's not in store either, validation fails
                 ImageBuilderUtility.TraceAndThrowValidationError(
                     TraceType,
                     StringResources.ImageBuilderError_InvalidBuildLayout_MissingResourceForService,
                     localPath,
-                    Path.GetFileName(serviceManifestFile),
+                    Path.GetFileName(remoteServiceManifestFile),
                     serviceManifestName);
                 return null;
             }
@@ -982,6 +1008,7 @@ namespace System.Fabric.Management.ImageBuilder
                     ImageBuilder.TraceSource.WriteInfo(
                         TraceType,
                         "Start writing service manifest checksum file {0}",
+                        this.remoteBuildLayoutSpecification.GetServiceManifestChecksumFile(serviceManifestType.Name),
                         sourceServiceManifestChecksumFile);
                     ImageBuilderUtility.WriteStringToFile(sourceServiceManifestChecksumFile, serviceManifest.Checksum);
                 }

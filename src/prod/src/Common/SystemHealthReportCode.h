@@ -58,6 +58,7 @@ namespace Common
             FM_NodeDeactivateStuck = 106,
             FM_RebuildStuck = 133,
             FM_RebuildHealthy = 132,
+            FM_SeedNodeDown = 141,
 
             // Source = FMM
             FMM_PartitionHealthy = 29,
@@ -173,7 +174,7 @@ namespace Common
             // Source = Native TransactionalReplicator
             TR_SlowIO = 129,
 
-            LAST_STATE = Hosting_DockerDaemonUnhealthy
+            LAST_STATE = FM_SeedNodeDown
         };
 
         void WriteToTextWriter(__in Common::TextWriter & w, Enum e);

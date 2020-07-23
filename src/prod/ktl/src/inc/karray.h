@@ -847,7 +847,7 @@ NTSTATUS KArray<T>::TestGrow()
             }
 
             // Blit all existing elements into new storage
-            RtlCopyMemory(tmp, _Array, _Size * sizeof(T));
+			KMemCpySafe(tmp, result, _Array, _Size * sizeof(T));
 
             // Then ctor the rest through NewSize
             // Must in-place ctor new objects beyond existing _Size

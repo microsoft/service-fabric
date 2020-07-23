@@ -103,6 +103,8 @@ namespace Naming
         bool operator == (PartitionedServiceDescriptor const & other) const;
         bool operator != (PartitionedServiceDescriptor const & other) const;
 
+        Common::ErrorCode Equals(PartitionedServiceDescriptor const & other) const;
+
         Common::ErrorCode Validate() const;
         Common::ErrorCode ValidateSkipName() const;
         static Common::ErrorCode IsUpdateServiceAllowed(

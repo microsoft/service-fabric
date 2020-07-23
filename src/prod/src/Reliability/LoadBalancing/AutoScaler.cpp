@@ -23,13 +23,13 @@ AutoScaler::~AutoScaler()
 
 }
 
-void AutoScaler::Refresh(Common::StopwatchTime timestamp, ServiceDomain & serviceDomain)
+void AutoScaler::Refresh(Common::StopwatchTime timestamp, ServiceDomain & serviceDomain, size_t upNodeCount)
 {
-    RefreshFTs(timestamp, serviceDomain);
+    RefreshFTs(timestamp, serviceDomain, upNodeCount);
     RefreshServices(timestamp, serviceDomain);
 }
 
-void AutoScaler::RefreshFTs(StopwatchTime timestamp, ServiceDomain & serviceDomain)
+void AutoScaler::RefreshFTs(StopwatchTime timestamp, ServiceDomain & serviceDomain, size_t upNodeCount)
 {
     while (!pendingAutoScaleSet_.empty())
     {
@@ -79,7 +79,8 @@ void AutoScaler::RefreshFTs(StopwatchTime timestamp, ServiceDomain & serviceDoma
             AveragePartitionLoadScalingTriggerSPtr trigger = static_pointer_cast<AveragePartitionLoadScalingTrigger>(service.ServiceDesc.AutoScalingPolicy.Trigger);
             InstanceCountScalingMechanismSPtr mechanism = static_pointer_cast<InstanceCountScalingMechanism>(service.ServiceDesc.AutoScalingPolicy.Mechanism);
 
-            auto nextExpiry = timestamp + TimeSpan::FromSeconds(trigger->ScaleIntervalInSeconds);
+            // Next autoScale check should not be scheduled immediately (if ScaleInterval is not set, or set to zero)
+            auto nextExpiry = timestamp + max(TimeSpan::FromSeconds(trigger->ScaleIntervalInSeconds), TimeSpan::FromSeconds(1));
 
             auto itOngoingUpdates = ongoingTargetUpdates_.find(itNext->FUid);
             if (itOngoingUpdates != ongoingTargetUpdates_.end())
@@ -87,19 +88,6 @@ void AutoScaler::RefreshFTs(StopwatchTime timestamp, ServiceDomain & serviceDoma
                 serviceDomain.plb_.Trace.AutoScaler(wformatString(
                     "Skipping partition {0} because it has pending update.",
                     itNext->FUid));
-                failoverUnit.NextScalingCheck = nextExpiry;
-                //remove this entry and add a new one
-                pendingAutoScaleSet_.erase(itNext);
-                pendingAutoScaleSet_.insert(FailoverUnitAndExpiry(failoverUnit.FUId, nextExpiry));
-                continue;
-            }
-
-            if (failoverUnit.FuDescription.ReplicaDifference != 0)
-            {
-                serviceDomain.plb_.Trace.AutoScaler(wformatString(
-                    "Skipping partition {0} because it has replica diff {1}",
-                    itNext->FUid,
-                    failoverUnit.FuDescription.ReplicaDifference));
                 failoverUnit.NextScalingCheck = nextExpiry;
                 //remove this entry and add a new one
                 pendingAutoScaleSet_.erase(itNext);
@@ -147,17 +135,44 @@ void AutoScaler::RefreshFTs(StopwatchTime timestamp, ServiceDomain & serviceDoma
                 }
 
                 if (metricLoad > highLimit)
-                {
+                {                    
+                    if (failoverUnit.FuDescription.ReplicaDifference > 0)
+                    {
+                        serviceDomain.plb_.Trace.AutoScaler(wformatString(
+                            "Skipping partition {0} because it has replica diff {1}",
+                            itNext->FUid,
+                            failoverUnit.FuDescription.ReplicaDifference));
+                        failoverUnit.NextScalingCheck = nextExpiry;
+                        //remove this entry and add a new one
+                        pendingAutoScaleSet_.erase(itNext);
+                        pendingAutoScaleSet_.insert(FailoverUnitAndExpiry(failoverUnit.FUId, nextExpiry));
+                        continue;
+                    }
+                    
                     auto maxInstanceCount = mechanism->MaximumInstanceCount;
                     //special case if the maximum is unlimited
                     if (maxInstanceCount == -1)
                     {
-                        maxInstanceCount = INT_MAX;
+                        //-1 should scaleup to all valid nodes, but shouldn't set target below minimum instance count
+                        maxInstanceCount = max((int)upNodeCount - (int)service.BlockList.Count, mechanism->MinimumInstanceCount);
                     }
                     newTargetInstanceCount = min(maxInstanceCount, failoverUnit.TargetReplicaSetSize + mechanism->ScaleIncrement);
                 }
                 if (metricLoad < lowLimit)
-                {
+                {                    
+                    if (failoverUnit.FuDescription.ReplicaDifference < 0)
+                    {
+                        serviceDomain.plb_.Trace.AutoScaler(wformatString(
+                            "Skipping partition {0} because it has replica diff {1}",
+                            itNext->FUid,
+                            failoverUnit.FuDescription.ReplicaDifference));
+                        failoverUnit.NextScalingCheck = nextExpiry;
+                        //remove this entry and add a new one
+                        pendingAutoScaleSet_.erase(itNext);
+                        pendingAutoScaleSet_.insert(FailoverUnitAndExpiry(failoverUnit.FUId, nextExpiry));
+                        continue;
+                    }
+                    
                     newTargetInstanceCount = max(mechanism->MinimumInstanceCount, failoverUnit.TargetReplicaSetSize - mechanism->ScaleIncrement);
                 }
                 if (newTargetInstanceCount != failoverUnit.TargetReplicaSetSize)
@@ -279,7 +294,8 @@ void AutoScaler::RefreshServices(Common::StopwatchTime timestamp, ServiceDomain 
             AverageServiceLoadScalingTriggerSPtr trigger = static_pointer_cast<AverageServiceLoadScalingTrigger>(service.ServiceDesc.AutoScalingPolicy.Trigger);
             AddRemoveIncrementalNamedPartitionScalingMechanismSPtr mechanism = static_pointer_cast<AddRemoveIncrementalNamedPartitionScalingMechanism>(service.ServiceDesc.AutoScalingPolicy.Mechanism);
 
-            auto nextExpiry = timestamp + service.ServiceDesc.AutoScalingPolicy.GetScalingInterval();
+            // Next autoScale check should not be scheduled immediately (if ScaleInterval is not set, or set to zero)
+            auto nextExpiry = timestamp + max(service.ServiceDesc.AutoScalingPolicy.GetScalingInterval(), TimeSpan::FromSeconds(1));
 
             auto itOngoingUpdates = ongoingServiceUpdates_.find(itNext->ServiceId);
             if (itOngoingUpdates != ongoingServiceUpdates_.end())

@@ -52,15 +52,21 @@ queryhealth cluster nodesfilter=error|ok|warning expectedhealthstate=error expec
 queryhealth cluster nodesfilter=none expectedhealthstate=error expectedstates=nodes-error:0,ok:0,warning:0
 queryhealth cluster nodesfilter=ok expectedhealthstate=error expectedstates=nodes-ok:4 includeSystemAppStats=false stats=nodes-ok:4,error:1;apps-0
 
-reporthealth node nodeid=10 sequencenumber=3 healthstate=warning timetoliveseconds=10 transient=true
+reporthealth node nodeid=10 sequencenumber=3 healthstate=warning timetoliveseconds=20 transient=true
 queryhealth node nodeid=10 expectedhealthstate=warning expectedreason=event,FabricTest_Source,FabricTest_Property
 queryhealth cluster expectedstates=nodes-ok:4,warning:1 includeSystemAppStats=false stats=nodes-ok:4,warning:1;apps-0
 
 queryhealth node nodeid=10 clusterpolicy=warningaserror expectedhealthstate=error expectedreason=event,FabricTest_Source,FabricTest_Property
 queryhealth cluster clusterpolicy=warningaserror expectedstates=nodes-ok:4,error:1
 
-# wait for the transient event to expire
-queryhealth cluster expectedstates=nodes-ok:5 stats=nodes-ok:5
+# wait for the transient event to expire.
+# increase the query retry time to allow for the longer timetolive to the last report. 
+# timetolive of last report was increased to accomodate slower test runs.
+set QueryOperationRetryCount 20
+queryhealth cluster expectedstates=nodes-ok:5 stats=nodes-ok:5 
+
+# set it back to the default:
+set QueryOperationRetryCount 15
 
 reporthealth node nodeid=10 sequencenumber=4 healthstate=warning timetoliveseconds=5
 # wait for the event to expire
@@ -404,7 +410,7 @@ queryhealth partition partitionguid=<string.SvcTypeB1Partition0> expectederror=E
 # Unhealthy evaluations have multiple children.
 # Description fits the message, the rest of the evaluation is trimmed.
 #
-set HMMessageContentBufferRatio 0.2
+set HMMessageContentBufferRatio 0.22
 
 queryhealth cluster expectederror=EntryTooLarge
 queryhealth application appname=fabric:/app1 expectederror=EntryTooLarge

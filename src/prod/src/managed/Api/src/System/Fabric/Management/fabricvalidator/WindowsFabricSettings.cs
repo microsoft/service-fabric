@@ -771,6 +771,22 @@ namespace System.Fabric.Management.WindowsFabricValidator
                     DoubleType
                 },
                 {
+                    FabricValidatorConstants.SectionNames.MaximumInBuildReplicasPerNode,
+                    IntType
+                },
+                {
+                    FabricValidatorConstants.SectionNames.MaximumInBuildReplicasPerNodeBalancingThrottle,
+                    IntType
+                },
+                {
+                    FabricValidatorConstants.SectionNames.MaximumInBuildReplicasPerNodeConstraintCheckThrottle,
+                    IntType
+                },
+                {
+                    FabricValidatorConstants.SectionNames.MaximumInBuildReplicasPerNodePlacementThrottle,
+                    IntType
+                },
+                {
                     FabricValidatorConstants.SectionNames.DefragmentationMetrics,
                     BoolType
                 },
@@ -813,6 +829,14 @@ namespace System.Fabric.Management.WindowsFabricValidator
                 {
                     FabricValidatorConstants.SectionNames.BalancingByPercentage,
                     BoolType
+                },
+                {
+                    FabricValidatorConstants.SectionNames.PlacementStrategy,
+                    UIntType
+                },
+                {
+                    FabricValidatorConstants.SectionNames.DefragmentationNonEmptyNodeWeight,
+                    DoubleType
                 }
             };
 

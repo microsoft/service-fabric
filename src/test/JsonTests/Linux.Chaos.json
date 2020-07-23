@@ -11,24 +11,11 @@
         "SetupType": "XCopy",
         "SetupTimeout": "900",
         "ServiceTimeout": "64800",
+        "ConfigName": "WinFabricTest\\Config\\Linux_Chaos.txt",
         "ExecutionTimeout": "80000",
         "CleanupType": "XCopy",
         "CleanupTimeout": "2100"
       }
-    },
-    {
-      "Name": "Linux.Chaos.SFRPRedHat",
-      "Type": "SFRPRedHat_Chaos",
-      "Owners": "motanv,likevi",
-      "ResourcesRequired": "Server:1&Azure:1",
-      "TestExecutionParameters": {
-        "SetupType": "XCopy",
-        "SetupTimeout": "900",
-        "ServiceTimeout": "64800",
-        "ExecutionTimeout": "80000",
-        "CleanupType": "XCopy",
-        "CleanupTimeout": "2100"
-      }
-    }    
+    }
   ]
 }

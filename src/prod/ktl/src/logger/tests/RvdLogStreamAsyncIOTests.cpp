@@ -2151,7 +2151,11 @@ SingleLogStreamAsyncIoTests(
                 //0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456
                 //0         1         2         3         4         5         6         7         8         9         0         1         2
                 //0         0         0         0         0         0         0         0         0         0         1         1         1
+#if defined(PLATFORM_UNIX)
+                KDbgPrintf("I:%s:%s:%s:%08u\n", Utf16To8((WCHAR*)logIdStr).c_str(), Utf16To8((WCHAR*)streamIdStr).c_str(), Utf16To8((WCHAR*)streamTypeStr).c_str(), noOfIoRequests);
+#else
                 KDbgPrintf("I:%S:%S:%S:%08u\n", (WCHAR*)logIdStr, (WCHAR*)streamIdStr, (WCHAR*)streamTypeStr, noOfIoRequests);
+#endif
 #endif
                 while (noOfIoRequests--)
                 {

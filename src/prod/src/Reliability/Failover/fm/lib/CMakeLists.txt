@@ -44,6 +44,9 @@ set( LINUX_SOURCES
     ../PerformanceCounters.cpp
     ../PlacementTask.cpp
     ../PlbApiCallName.cpp
+    ../InstrumentedPLB.cpp
+    ../FailoverUnitCountsContext.cpp
+    ../QueueCounts.cpp
     ../QueryHelper.cpp
     ../QueueCounts.cpp
     ../RebuildContext.cpp

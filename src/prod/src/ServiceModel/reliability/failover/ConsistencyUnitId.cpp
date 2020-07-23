@@ -18,6 +18,7 @@ namespace Reliability
     DEFINE_RESERVED_ID_RANGE(UpgradeOrchestrationServiceIdRange, 0x00006000, 0x00006FFF);
     DEFINE_RESERVED_ID_RANGE(BackupRestoreServiceIdRange,   0x00007000, 0x00007FFF);
     DEFINE_RESERVED_ID_RANGE(CentralSecretServiceIdRange,   0x00008000, 0x00008FFF);
+    DEFINE_RESERVED_ID_RANGE(EventStoreServiceIdRange,   0x00009000, 0x00009FFF);
 
     const ConsistencyUnitId ConsistencyUnitId::Zero(Common::Guid(L"00000000-0000-0000-0000-000000000000"));
 

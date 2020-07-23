@@ -402,6 +402,8 @@ FailoverUnitUPtr TestHelper::FailoverUnitFromString(wstring const& failoverUnitS
         FABRIC_INVALID_SEQUENCE_NUMBER,
         false);
 
+    serviceInfo->AddFailoverUnitId(FailoverUnitId());
+
     FailoverUnitUPtr failoverUnit = FailoverUnitUPtr(new FailoverUnit(
         FailoverUnitId(),
         ConsistencyUnitDescription(),
@@ -677,11 +679,20 @@ FailoverManagerSPtr TestHelper::CreateFauxFM(ComponentRoot const& root, bool use
     auto fmStore = make_unique<FailoverManagerStore>(move(replicatedStore));
     ComPointer<IFabricStatefulServicePartition> servicePartition;
 
+    auto fabricNodeConfig = make_shared<FabricNodeConfig>();
+    Api::IClientFactoryPtr clientFactoryPtr;
+    auto error = ClientTest::TestClientFactory::CreateLocalClientFactory(fabricNodeConfig, clientFactoryPtr);
+    if (!error.IsSuccess())
+    {
+        Assert::CodingError("Failed to create local client factory: error={0}", error);
+    }
+
     fm = FailoverManager::CreateFM(
         fs->shared_from_this(),
         healthClient,
         Api::IServiceManagementClientPtr(),
-        make_shared<FabricNodeConfig>(),
+        clientFactoryPtr,
+        fabricNodeConfig,
         move(fmStore),
         servicePartition,
         Guid(),

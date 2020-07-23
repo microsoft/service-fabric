@@ -15,7 +15,8 @@ namespace Management
             {
                 Invalid = 0,
                 FileShare = 1,
-                AzureStore = 2
+                AzureStore = 2,
+                DsmsAzureStore = 3
             };
 
             Common::ErrorCode Parse(std::wstring const & inputString, __out Enum & result);

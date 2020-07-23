@@ -14,6 +14,7 @@
 #include "FabricImageStore_.h"
 #include "FabricServiceCommunication_.h"
 #include "../ReliableCollectionRuntime/dll/ReliableCollectionRuntime.h"
+#include "../ReliableCollectionRuntime/dll/ReliableCollectionRuntime.Internal.h"
 #include "../../../ServiceModel/ServiceModel.h"
 
 
@@ -23,3 +24,4 @@
 #include "Factory.h"
 #include "ComFactory.h"
 #include "TestComProxyDataLossHandler.h"
+#include "Management/DnsService/config/DnsServiceConfig.h"

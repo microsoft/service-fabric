@@ -1,0 +1,63 @@
+//-----------------------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+//-----------------------------------------------------------------------------
+
+cpp_quote("//--------------------------------------------------------------------------")
+cpp_quote("//  Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("//--------------------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricRuntime.idl";
+
+// ----------------------------------------------------------------------------
+// Forward Declaration of interfaces
+
+interface IKtlInteropTestComponent;
+
+[
+    uuid(aa10bbdf-e2b3-44de-8725-0c97447544e7),
+    version(1.0),
+]
+library Service_Lib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // Enumerations
+
+    // ------------------------------------------------------------------------
+    // Structures
+
+    // ----------------------------------------------------------------------------
+    // List all interfaces to be included in the type library
+    
+    interface IKtlInteropTestComponent;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+#pragma pack (pop)
+
+}
+
+// ----------------------------------------------------------------------------
+// Interface Definitions
+
+[object, local, uuid(0E9EEC95-5FCE-4E8F-A67D-B44DB4FA28DA)]
+interface IKtlInteropTestComponent : IUnknown
+{
+    [] HRESULT BeginOperation(
+        [in] HRESULT beginResult,
+        [in] HRESULT endResult,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndOperation(
+        [in] IFabricAsyncOperationContext * context);
+}
+

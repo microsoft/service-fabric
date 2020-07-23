@@ -1,0 +1,24 @@
+#Block DoReconfiguration message so that reconfiguration does not start on primary
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 3 1
+namingservice 1 3 2
+fmservice 3 1
+cleantest
++10
++20
++30
+verify
++40
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+addbehavior b1 30 40 DoReconfiguration
+-20
+!pause,300
+removebehavior b1
+verify
+!q

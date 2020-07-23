@@ -29,11 +29,14 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             this.driverOptions = new Lazy<IEnumerable<DriverOptionType>>(
                 () =>
                 {
+                    var accountKeyValue = this.accountKey;
+                    var accountKeyType = TryMatchStorageAccountKeySecretRef(ref accountKeyValue);
+
                     return new DriverOptionType[]
                     {
                         new DriverOptionType() { Name = "shareName", Value = this.shareName },
                         new DriverOptionType() { Name = "storageAccountName", Value = this.accountName },
-                        new DriverOptionType() { Name = "storageAccountKey", Value = this.accountKey },
+                        new DriverOptionType() { Name = "storageAccountKey", Value = accountKeyValue, Type = accountKeyType }
                     };
                 },
                 LazyThreadSafetyMode.PublicationOnly);
@@ -76,6 +79,18 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             if (string.IsNullOrEmpty(this.shareName))
             {
                 throw new FabricApplicationException(String.Format("required parameter 'shareName' not specified for azure file parameter in code package {0}", codePackageName));
+            }
+        }
+
+        private string TryMatchStorageAccountKeySecretRef(ref string accountKeyValue)
+        {
+            if (ApplicationPackageGenerator.TryMatchSecretRef(ref accountKeyValue))
+            {
+                return EnvironmentVariableTypeType.SecretsStoreRef.ToString();
+            }
+            else
+            {
+                return EnvironmentVariableTypeType.PlainText.ToString();
             }
         }
     };

@@ -32,7 +32,8 @@ namespace Data
                 __in KAllocator & allocator,
                 __in_opt Data::StateManager::IStateProvider2Factory * const stateProviderFactory = nullptr,
                 __in_opt TRANSACTIONAL_REPLICATOR_SETTINGS const * const settings = nullptr,
-                __in_opt TxnReplicator::IDataLossHandler * const dataLossHandler = nullptr);
+                __in_opt TxnReplicator::IDataLossHandler * const dataLossHandler = nullptr,
+                __in_opt BOOLEAN hasPersistedState = TRUE);
 
         public:
             __declspec(property(get = get_TxnReplicator)) TxnReplicator::ITransactionalReplicator::SPtr TxnReplicator;
@@ -61,7 +62,8 @@ namespace Data
                 __in Data::Log::LogManager & logManager,
                 __in Data::StateManager::IStateProvider2Factory * stateProviderFactory,
                 __in TRANSACTIONAL_REPLICATOR_SETTINGS const * const settings,
-                __in_opt TxnReplicator::IDataLossHandler * const dataLossHandler);
+                __in_opt TxnReplicator::IDataLossHandler * const dataLossHandler,
+                __in_opt BOOLEAN hasPersistedState = TRUE);
 
         private:
             Data::TestCommon::TestComStatefulServicePartition::SPtr partition_;

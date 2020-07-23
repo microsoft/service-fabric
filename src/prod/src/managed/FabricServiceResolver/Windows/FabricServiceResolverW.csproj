@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>FabricServiceResolver</AssemblyName>
+    <PackageId>FabricServiceResolver</PackageId>
+    <NetStandardBuildLinux>false</NetStandardBuildLinux>
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GRMDataDropPath>$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\GRM.Data.Current\$(CurrentRuntimeIdentifier)</GRMDataDropPath>
+    <CodePackageDropPath>$(GRMDataDropPath)\Code</CodePackageDropPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile
+      Include="
+        ..\Program.cs;
+        ..\EnableResolveNotifications.cs;
+        ..\ServiceData.cs;
+        ..\Startup.cs;
+        ..\Controllers\v1.cs;
+        ..\envoymodels\EnvoyAccessLogConfig.cs;
+        ..\envoymodels\EnvoyCluster.cs;
+        ..\envoymodels\envoyclustersslcontext.cs;
+        ..\envoymodels\EnvoyFilterConfig.cs;
+        ..\envoymodels\EnvoyHost.cs;
+        ..\envoymodels\EnvoyHostTags.cs;
+        ..\envoymodels\EnvoyHTTPFilterConfig.cs;
+        ..\envoymodels\EnvoyHTTPListenerFilter.cs;
+        ..\envoymodels\EnvoyListener.cs;
+        ..\envoymodels\EnvoyListenerFilter.cs;
+        ..\envoymodels\EnvoyRDSConfig.cs;
+        ..\envoymodels\EnvoyRetryPolicy.cs;
+        ..\envoymodels\EnvoyRoute.cs;
+        ..\envoymodels\EnvoyTCPFilterConfig.cs;
+        ..\envoymodels\EnvoyTCPListenerFilter.cs;
+        ..\envoymodels\EnvoyTCPRoute.cs;
+        ..\envoymodels\EnvoyTCPRouteConfig.cs;
+        ..\envoymodels\EnvoyVirtualHost.cs;
+        ..\envoymodels\EvoyOutlierDetection.cs;
+        ..\models\GatewayDestination.cs;
+        ..\models\GatewayProperties.cs;
+        ..\models\HttpConfig.cs;
+        ..\models\HttpHostNameConfig.cs;
+        ..\models\HttpRouteConfig.cs;
+        ..\models\HttpRouteMatchHeader.cs;
+        ..\models\HttpRouteMatchPath.cs;
+        ..\models\HttpRouteMatchRule.cs;
+        ..\models\NetworkRef.cs;
+        ..\models\TcpConfig.cs;
+        "
+      Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\resolver.bat" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\resolver.sh" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\CoreCLR\\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Standard)\Microsoft.ServiceFabric.Services.dll" />
+    <Reference Include="$(SF_AspNetCore_DotNet_Standard)\Microsoft.ServiceFabric.AspNetCore.Kestrel.dll" />
+    <Reference Include="$(SF_AspNetCore_DotNet_Standard)\Microsoft.ServiceFabric.AspNetCore.dll" />
+  </ItemGroup>
+
+  <!-- As CoreXT can not infer reference dependencies for deps.json : manually copy it here. -->
+  <ItemGroup Condition=" '$(TargetsLinux)' == true ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Private.Interop.dll" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" Condition=" $(CurrentRuntimeIdentifier) != ''"  />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+
+  <!-- This has been overridden for csproj compilation on Linux -->
+  <ItemGroup>
+    <Robocopy Include="$(PublishDir)">
+      <DestinationFolder>$(CodePackageDropPath)</DestinationFolder>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+
+    <Robocopy Include="$(PublishDir)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\symbols</DestinationFolder>
+      <IsRecursive>False</IsRecursive>
+      <FileMatch>*.pdb</FileMatch>
+    </Robocopy>
+  </ItemGroup>
+
+  <!-- As Coreclr + CoreXt are not integrated properly together : this patch for robocopying files. -->
+  <Target Name="RobocopyFiles" AfterTargets="Publish" DependsOnTargets="$(RobocopyFilesDependsOn)" Condition="'@(Robocopy)' != ''">
+    <Robocopy RetryCount="$(RobocopyRetryCount)" RetryWait="$(RobocopyRetryWait)" ShowDiagnosticTrace="$(RobocopyShowDiagnosticTrace)" ShowErrorOnRetry="$(RobocopyShowErrorOnRetry)" Sources="@(Robocopy)" Condition="'@(Robocopy)' != ''" />
+  </Target>
+</Project>

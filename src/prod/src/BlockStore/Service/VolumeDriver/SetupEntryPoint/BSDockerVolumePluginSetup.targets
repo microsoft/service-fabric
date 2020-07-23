@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\prod\src\BlockStore\Service\VolumeDriver\service_fabric_volume_driver.props" />
+	
+  <PropertyGroup>
+    <AssemblyName>ServiceFabricVolumeDriverSetup</AssemblyName>
+    <PackageId>ServiceFabricVolumeDriverSetup</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include=
+        "..\Program.cs;
+        ..\..\Common\BSDockerVolumePluginSupportedOs.cs;
+        ..\..\Common\Utilities.cs;
+        ..\..\Common\Constants.cs"
+             Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+  </ItemGroup>
+  <!-- As CoreXT can not infer reference dependencies for deps.json : manually copy it here. -->
+  <ItemGroup Condition=" '$(TargetsLinux)' == true ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Private.Interop.dll" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" Condition=" $(CurrentRuntimeIdentifier) != ''"  />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  
+</Project>

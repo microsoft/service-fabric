@@ -22,6 +22,7 @@
       ..\..\AzureTableQueryableEventUploader.cs;
       ..\..\AzureTableTrimmer.cs;
       ..\..\AzureTableSelectiveEventUploader.cs;
+      ..\..\AzureTableOperationalEventUploader.cs;
       ..\..\CsvConfigFileHelper.cs;
       ..\..\CsvDataTypeHelper.cs"
 	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />

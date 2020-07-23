@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_common.props" />
+
+  <!-- Assembly Signing with windows.snk which has only public  key in it so assemblies can only be delay signed. -->
+  
+  <Import Project="$(SRCROOT)\properties\service_fabric_strong_name_keys.props" />
+  <PropertyGroup>
+    <TargetDir>$(OutDir)</TargetDir>
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>$(WindowsPublicKey)</AssemblyOriginatorKeyFile>
+	
+	<!-- Override the tools path to work with MsBuild15 -->
+    <SDK40ToolsPath>$(PkgDotNetFxTools_Corext_4_0_0)\x64</SDK40ToolsPath>
+  </PropertyGroup>
+  
+</Project>
+

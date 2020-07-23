@@ -1,0 +1,1 @@
+#include "..\KBlockFileNoPriv\KBlockFileNoPrivTests.cpp"

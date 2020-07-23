@@ -44,4 +44,7 @@ namespace HttpGateway
     typedef std::shared_ptr<ImageStoreHandler> ImageStoreHandlerSPtr;
     class ToolsHandler;
     typedef std::shared_ptr<ToolsHandler> ToolsHandlerSPtr;
+
+    class NetworksHandler;
+    typedef std::unique_ptr<NetworksHandler> NetworksHandlerUPtr;
 };

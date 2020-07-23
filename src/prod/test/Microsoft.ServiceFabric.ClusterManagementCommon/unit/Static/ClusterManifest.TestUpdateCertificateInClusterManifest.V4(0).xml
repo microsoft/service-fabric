@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClusterManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="WRP_Generated_ClusterManifest" Version="2.0" Description="This is a generated file. Do not modify." xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <NodeTypes>
+    <NodeType Name="NodeType0">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="19002" />
+        <ClusterConnectionEndpoint Port="19001" />
+        <HttpGatewayEndpoint Port="19080" Protocol="https" />
+        <ServiceConnectionEndpoint Port="19003" />
+        <ApplicationEndpoints StartPort="20001" EndPort="20031" />
+        <EphemeralEndpoints StartPort="20032" EndPort="20287" />
+      </Endpoints>
+      <Certificates>
+        <ClusterCertificate X509StoreName="My" X509FindValue="[Thumbprint]" X509FindValueSecondary="[Thumbprint]" Name="Certificate" />
+        <ServerCertificate X509StoreName="My" X509FindValue="0059B4D1357C30CD8FC65BE06484E4B2477764Q6" X509FindValueSecondary="B02E479EA14A8C832160CFCF0DBAE880A5EB40F4" Name="Certificate" />
+        <ClientCertificate X509StoreName="My" X509FindValue="[Thumbprint]" X509FindValueSecondary="[Thumbprint]" Name="Certificate" />
+      </Certificates>
+      <PlacementProperties>
+        <Property Name="NodeTypeName" Value="NodeType0" />
+      </PlacementProperties>
+    </NodeType>
+    <NodeType Name="NodeType1">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19004" />
+        <LeaseDriverEndpoint Port="19006" />
+        <ClusterConnectionEndpoint Port="19005" />
+        <HttpGatewayEndpoint Port="19082" Protocol="https" />
+        <ServiceConnectionEndpoint Port="19007" />
+        <ApplicationEndpoints StartPort="20288" EndPort="20318" />
+        <EphemeralEndpoints StartPort="20319" EndPort="20574" />
+      </Endpoints>
+      <Certificates>
+        <ClusterCertificate X509StoreName="My" X509FindValue="[Thumbprint]" X509FindValueSecondary="[Thumbprint]" Name="Certificate" />
+        <ServerCertificate X509StoreName="My" X509FindValue="0059B4D1357C30CD8FC65BE06484E4B2477764Q6" X509FindValueSecondary="B02E479EA14A8C832160CFCF0DBAE880A5EB40F4" Name="Certificate" />
+        <ClientCertificate X509StoreName="My" X509FindValue="[Thumbprint]" X509FindValueSecondary="[Thumbprint]" Name="Certificate" />
+      </Certificates>
+      <PlacementProperties>
+        <Property Name="NodeTypeName" Value="NodeType1" />
+      </PlacementProperties>
+    </NodeType>
+    <NodeType Name="NodeType2">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19008" />
+        <LeaseDriverEndpoint Port="19010" />
+        <ClusterConnectionEndpoint Port="19009" />
+        <HttpGatewayEndpoint Port="19084" Protocol="https" />
+        <ServiceConnectionEndpoint Port="19011" />
+        <ApplicationEndpoints StartPort="20575" EndPort="20605" />
+        <EphemeralEndpoints StartPort="20606" EndPort="20861" />
+      </Endpoints>
+      <Certificates>
+        <ClusterCertificate X509StoreName="My" X509FindValue="[Thumbprint]" X509FindValueSecondary="[Thumbprint]" Name="Certificate" />
+        <ServerCertificate X509StoreName="My" X509FindValue="0059B4D1357C30CD8FC65BE06484E4B2477764Q6" X509FindValueSecondary="B02E479EA14A8C832160CFCF0DBAE880A5EB40F4" Name="Certificate" />
+        <ClientCertificate X509StoreName="My" X509FindValue="[Thumbprint]" X509FindValueSecondary="[Thumbprint]" Name="Certificate" />
+      </Certificates>
+      <PlacementProperties>
+        <Property Name="NodeTypeName" Value="NodeType2" />
+      </PlacementProperties>
+    </NodeType>
+  </NodeTypes>
+  <Infrastructure>
+    <PaaS>
+      <Roles>
+        <Role RoleName="NodeType0" NodeTypeRef="NodeType0" RoleNodeCount="0" />
+        <Role RoleName="NodeType1" NodeTypeRef="NodeType1" RoleNodeCount="0" />
+        <Role RoleName="NodeType2" NodeTypeRef="NodeType2" RoleNodeCount="0" />
+      </Roles>
+      <Votes>
+        <Vote NodeName="vm0" IPAddressOrFQDN="localhost" Port="19001" />
+        <Vote NodeName="vm1" IPAddressOrFQDN="localhost" Port="19005" />
+        <Vote NodeName="vm2" IPAddressOrFQDN="localhost" Port="19009" />
+      </Votes>
+    </PaaS>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="ClusterManager">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="Diagnostics">
+      <Parameter Name="MaxDiskQuotaInMB" Value="5120" />
+    </Section>
+    <Section Name="FailoverManager">
+      <Parameter Name="IsSingletonReplicaMoveAllowedDuringUpgrade" Value="True" />
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="FaultAnalysisService">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="Federation">
+      <Parameter Name="NodeIdGeneratorVersion" Value="V4" />
+    </Section>
+    <Section Name="Hosting">
+      <Parameter Name="EndpointProviderEnabled" Value="true" />
+      <Parameter Name="FirewallPolicyEnabled" Value="true" />
+      <Parameter Name="RunAsPolicyEnabled" Value="true" />
+    </Section>
+    <Section Name="HttpGateway">
+      <Parameter Name="IsEnabled" Value="true" />
+    </Section>
+    <Section Name="ImageStoreService">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="Management">
+      <Parameter Name="ImageStoreConnectionString" Value="fabric:ImageStore" />
+    </Section>
+    <Section Name="NamingService">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="PlacementAndLoadBalancing">
+      <Parameter Name="QuorumBasedReplicaDistributionPerFaultDomains" Value="true" />
+      <Parameter Name="QuorumBasedReplicaDistributionPerUpgradeDomains" Value="true" />
+    </Section>
+    <Section Name="ReconfigurationAgent">
+      <Parameter Name="IsDeactivationInfoEnabled" Value="true" />
+    </Section>
+    <Section Name="Security">
+      <Parameter Name="ClientRoleEnabled" Value="true" />
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="DisableFirewallRuleForDomainProfile" Value="false" />
+      <Parameter Name="DisableFirewallRuleForPrivateProfile" Value="false" />
+      <Parameter Name="DisableFirewallRuleForPublicProfile" Value="false" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+    </Section>
+    <Section Name="Setup">
+      <Parameter Name="FabricDataRoot" Value="C:\ProgramData\SF" />
+      <Parameter Name="FabricLogRoot" Value="C:\ProgramData\SF\Log" />
+    </Section>
+    <Section Name="Trace/Etw">
+      <Parameter Name="Level" Value="4" />
+    </Section>
+    <Section Name="UpgradeOrchestrationService">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+  </FabricSettings>
+</ClusterManifest>

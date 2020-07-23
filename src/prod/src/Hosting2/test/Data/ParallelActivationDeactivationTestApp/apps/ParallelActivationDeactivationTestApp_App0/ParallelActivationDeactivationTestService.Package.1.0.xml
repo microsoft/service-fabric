@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    Name="ParallelActivationDeactivationTestService"
+    ManifestVersion="1.0"
+    RolloutVersion="1.0"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <DigestedServiceTypes RolloutVersion="1.0">
+        <ServiceTypes>
+            <StatelessServiceType ServiceTypeName="TestServiceType" />
+            <StatelessServiceType ServiceTypeName="TestImplicitServiceType" UseImplicitHost="true" />
+        </ServiceTypes>
+    </DigestedServiceTypes>
+    <DigestedCodePackage RolloutVersion="1.0">
+        <CodePackage Name="Code" Version="1.0">
+            <EntryPoint>
+                <ExeHost>
+                    <Program>FabricTypeHost.exe</Program>
+                <Arguments>/type:TestServiceType</Arguments>
+                </ExeHost>
+            </EntryPoint>
+        </CodePackage>
+    </DigestedCodePackage>
+    <DigestedResources RolloutVersion="1.0"/>
+    <Diagnostics />
+</ServicePackage>

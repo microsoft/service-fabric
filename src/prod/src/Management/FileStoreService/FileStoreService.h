@@ -73,3 +73,4 @@
 #include "Management/FileStoreService/FileCopyAsyncOperation.h"
 #include "Management/FileStoreService/FileDeleteAsyncOperation.h"
 #include "Management/FileStoreService/processuploadchunkcontentrequestasyncoperation.h"
+#include "Management/FileStoreService/FileStoreService.PerformanceCounters.h"

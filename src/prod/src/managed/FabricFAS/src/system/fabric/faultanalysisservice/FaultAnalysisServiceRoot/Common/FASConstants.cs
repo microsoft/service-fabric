@@ -6,6 +6,7 @@
 namespace System.Fabric.FaultAnalysis.Service.Common
 {
     using System.Collections.Generic;
+    using System.Fabric.Chaos.Common.Exceptions;
     using System.Fabric.Interop;
     using System.Threading.Tasks;
 
@@ -208,7 +209,8 @@ namespace System.Fabric.FaultAnalysis.Service.Common
             typeof(FabricTransientException),
             typeof(OperationCanceledException),
             typeof(TaskCanceledException),
-            typeof(FabricValidationException)
+            typeof(FabricValidationException),
+            typeof(ChaosInconsistentClusterSnapshotException)
         };
 
         public static readonly TimeSpan DefaultTestTimeout = TimeSpan.FromSeconds(10);

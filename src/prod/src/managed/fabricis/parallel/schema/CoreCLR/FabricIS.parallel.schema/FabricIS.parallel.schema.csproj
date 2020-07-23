@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(PkgBond_Compiler_CSharp)\build\netstandard1.6\Bond.Compiler.CSharp.props" />
+
+  <PropertyGroup>
+    <Description>Fabric Parallel Schema Project</Description>
+    <AssemblyName>FabricIS.parallel.schema</AssemblyName>
+    <PackageId>FabricIS.parallel.schema</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <PolicyAgentBondSchemaPath>$(PkgPolicyAgent_BondContract_Release_132_865_54)\Bond</PolicyAgentBondSchemaPath>
+    <BOND_INCLUDE_PATH>$(PkgBond_Compiler_CSharp)\tools\inc\bond\core</BOND_INCLUDE_PATH>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Bond.Core.CSharp" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <BondCodeGen Include="$(PolicyAgentBondSchemaPath)\ImpactInfo.bond" />
+    <BondCodeGen Include="$(PolicyAgentBondSchemaPath)\PolicyAgentDocument.bond" />
+    <BondCodeGen Include="$(PolicyAgentBondSchemaPath)\PolicyAgentDocumentCommon.bond" />
+    <BondCodeGen Include="$(PolicyAgentBondSchemaPath)\PolicyAgentDocumentForParallelJobs.bond" />
+    <BondCodeGen Include="$(PolicyAgentBondSchemaPath)\PolicyAgentDocumentForTenant.bond" />
+    <BondCodeGen Include="$(PolicyAgentBondSchemaPath)\PolicyAgentRequest.bond" />
+    <BondCodeGen Include="$(PolicyAgentBondSchemaPath)\PolicyEngineServiceRequest.bond" />
+    <BondCodeGen Include="$(PolicyAgentBondSchemaPath)\PolicyEngineServiceRespond.bond" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <CoreClrBondCodeDir>schema</CoreClrBondCodeDir>
+    <BondOutputDirectory>$(CoreClrBondCodeDir)\</BondOutputDirectory>
+  </PropertyGroup>
+  <Target Name="CoreClrMoveBondFiles" AfterTargets="BondCodegenCs"
+          Inputs="$(IntermediateOutputPath)\*.cs" Outputs="$(CoreClrBondCodeDir)\*.cs">
+    <CreateItem Include="$(IntermediateOutputPath)\*.cs"
+	  Exclude="$(IntermediateOutputPath)\*_types.cs;$(IntermediateOutputPath)\*AssemblyInfo.cs">
+      <Output TaskParameter="Include" ItemName="BondFilesToBeRemoved" />
+    </CreateItem>
+    <Delete Files="@(BondFilesToBeRemoved)" />
+  </Target>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <Import Project="$(PkgBond_Compiler_CSharp)\build\netstandard1.6\Bond.Compiler.CSharp.targets" />
+</Project>

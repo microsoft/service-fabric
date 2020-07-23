@@ -13,9 +13,11 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
         {
             this.port = 0;
             this.name = null;
+            this.useDynamicHostPort = false;
         }
 
         public string name;
         public int port;
+        public bool useDynamicHostPort;
     };
 }

@@ -1,4 +1,4 @@
-// ------------------------------------------------------------
+ // ------------------------------------------------------------
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
@@ -928,12 +928,11 @@ class KtlLogContainer abstract : public KObject<KtlLogContainer>, public KShared
         virtual
         BOOLEAN IsFunctional() = 0;     
 
-		//
-		// Define constants for throttling log container usage.
-		//
-		static const ULONG ThrottleFactor = 10;   // Start throttling when only 10% left
-		static const ULONG MinimumThrottleAmountInBytes = 4 * 1024 * 1024;  // 4MB
-		
+        //
+        // Define constants for throttling log container usage.
+        //
+        static const ULONG MinimumThrottleAmountInBytes = 16 * 1024 * 1024;  // 16MB
+        
         class AsyncCreateLogStreamContext abstract : public KAsyncContextBase
         {
             K_FORCE_SHARED_WITH_INHERITANCE(AsyncCreateLogStreamContext);
@@ -1149,12 +1148,12 @@ class KtlLogContainer abstract : public KObject<KtlLogContainer>, public KShared
                 __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) = 0;
 
 #if defined(K_UseResumable)
-			virtual ktl::Awaitable<NTSTATUS>
-			OpenLogStreamAsync(
-				__in const KtlLogStreamId& LogStreamId,
-				__out ULONG* MaximumMetaDataSize,
-				__out KtlLogStream::SPtr& LogStream,
-				__in_opt KAsyncContextBase* const ParentAsyncContext) = 0;
+            virtual ktl::Awaitable<NTSTATUS>
+            OpenLogStreamAsync(
+                __in const KtlLogStreamId& LogStreamId,
+                __out ULONG* MaximumMetaDataSize,
+                __out KtlLogStream::SPtr& LogStream,
+                __in_opt KAsyncContextBase* const ParentAsyncContext) = 0;
 #endif
         };
 
@@ -1711,8 +1710,10 @@ class KtlLogManager abstract : public KAsyncServiceBase
             ConfigureSharedLogContainerSettings,
             ConfigureMemoryThrottleLimits,
             ConfigureMemoryThrottleLimits2,
-			QueryMemoryThrottleUsage,
-			QueryDebugUnitTestInformation
+            QueryMemoryThrottleUsage,
+            QueryDebugUnitTestInformation,
+            ConfigureMemoryThrottleLimits3,
+            ConfigureAcceleratedFlushLimits
         } ConfigureCode;
 
         //
@@ -1863,28 +1864,60 @@ class KtlLogManager abstract : public KAsyncServiceBase
             ULONG PeriodicTimerIntervalInSec;
             ULONG AllocationTimeoutInMs;
 
-			// ConfigureMemoryThrottleLimits2
+            // ConfigureMemoryThrottleLimits2
 
             static const LONGLONG _DefaultMaximumDestagingWriteOutstanding = _NoLimit;
             static const LONGLONG _DefaultMaximumDestagingWriteOutstandingMin = 16 * (1024 * 1024);
-			LONGLONG MaximumDestagingWriteOutstanding;
-			
+            LONGLONG MaximumDestagingWriteOutstanding;
+            
+            // ConfigureMemoryThrottleLimits3
+
+            static const ULONG _NoSharedLogThrottleLimit = 100;      // 100% implies no throttling
+            static const ULONG _DefaultSharedLogThrottleLimit = 90;  //  90% shared log usage
+            ULONG SharedLogThrottleLimit;
+            ULONG Reserved;
+            
         } MemoryThrottleLimits;
 
-		typedef struct 
-		{
-			MemoryThrottleLimits ConfiguredLimits;
-			LONGLONG CurrentAllocations;
-			LONGLONG TotalAllocationLimit;
-			LONGLONG PinnedMemoryAllocations;
-			BOOLEAN IsUnderMemoryPressure;			
-		} MemoryThrottleUsage;
+        typedef struct 
+        {
+            MemoryThrottleLimits ConfiguredLimits;
+            LONGLONG CurrentAllocations;
+            LONGLONG TotalAllocationLimit;
+            LONGLONG PinnedMemoryAllocations;
+            BOOLEAN IsUnderMemoryPressure;          
+        } MemoryThrottleUsage;
 
-		typedef struct
-		{
-			LONG PinMemoryFailureCount;
-		} DebugUnitTestInformation;
-		
+        typedef struct
+        {
+            LONG PinMemoryFailureCount;
+        } DebugUnitTestInformation;
+
+        typedef struct _AcceleratedFlushLimits
+        {
+            static const ULONG AccelerateFlushActiveTimerInMsNoAction = 0;
+            static const ULONG AccelerateFlushActiveTimerInMsMin = 1000;
+            static const ULONG AccelerateFlushActiveTimerInMsMax = 10000;
+            static const ULONG DefaultAccelerateFlushActiveTimerInMs = 1000;
+            
+            static const ULONG AccelerateFlushPassiveTimerInMsMin = 1000;
+            static const ULONG AccelerateFlushPassiveTimerInMsMax = 60000;
+            static const ULONG DefaultAccelerateFlushPassiveTimerInMs = 15000;
+            
+            static const ULONG AccelerateFlushActivePercentMin = 1;
+            static const ULONG AccelerateFlushActivePercentMax = 99;
+            static const ULONG DefaultAccelerateFlushActivePercent = 70;
+            
+            static const ULONG AccelerateFlushPassivePercentMin = 1;
+            static const ULONG AccelerateFlushPassivePercentMax = 99;
+            static const ULONG DefaultAccelerateFlushPassivePercent = 30;
+            
+            ULONG AccelerateFlushActiveTimerInMs;
+            ULONG AccelerateFlushPassiveTimerInMs;
+            ULONG AccelerateFlushActivePercent;
+            ULONG AccelerateFlushPassivePercent;
+        } AcceleratedFlushLimits;
+        
         class AsyncConfigureContext abstract : public KAsyncContextBase
         {
             K_FORCE_SHARED_WITH_INHERITANCE(AsyncConfigureContext);

@@ -15,7 +15,6 @@ namespace FabricDCA
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Fabric.Dca;
-    using LttngReader;
     using Tools.EtlReader;
 
     internal class LttTraceProcessor
@@ -47,6 +46,13 @@ namespace FabricDCA
         // Whitelist of table events
         private readonly HashSet<string> tableEventsWhiteList;
 
+        private StreamWriter fileStreamDtr = null;
+        private StreamWriter fileStreamTable = null;
+        private ulong numEventsRead;
+        private long lastEventReadTimestampFileTime;
+
+        private long dataCorruptionStatistics;
+
         internal LttTraceProcessor(
             FabricEvents.ExtensionsEvents traceSource,
             string logSourceId,
@@ -64,7 +70,7 @@ namespace FabricDCA
             this.createTableFiles = sinksICsvFile.Any();
 
             this.winFabManifestMgr = this.InitializeWinFabManifestManager();
-            
+
             // initialize white list of table events from file
             if (this.createTableFiles)
             {
@@ -199,8 +205,14 @@ namespace FabricDCA
         }
 
         // TODO This eventually needs to be moved to its own Consumer so event is not decoded more than once.
-        private void WriteEventToCsvAndTableFiles(EventRecord eventRecord, string lttUnstructuredTextEventString, string taskNameEventNameFromUnstructured, bool isUnstructuredLtt, StreamWriter fileStreamDtr, StreamWriter fileStreamTable)
+        // EventRecord eventRecord, string lttUnstructuredTextEventString, string taskNameEventNameFromUnstructured, bool isUnstructuredLtt, StreamWriter fileStreamDtr, StreamWriter fileStreamTable)
+        private void WriteEventToCsvAndTableFiles(object sender, EventRecordEventArgs eventRecordEventArgs)
         {
+            EventRecord eventRecord = eventRecordEventArgs.Record;
+            string lttUnstructuredTextEventString = eventRecordEventArgs.UnstructuredRecord;
+            string taskNameEventNameFromUnstructured = eventRecordEventArgs.TaskNameEventName;
+            bool isUnstructuredLtt = eventRecordEventArgs.IsUnstructured;
+
             DecodedEtwEvent decodedEvent;
             string taskNameEventName = taskNameEventNameFromUnstructured;
 
@@ -246,13 +258,20 @@ namespace FabricDCA
                 // writing to dtr file
                 string replacedLFStringRepresentation = decodedEvent.StringRepresentation.Replace("\r\n", "\r\t").Replace("\n", "\t");
 
-                fileStreamDtr.Write(replacedLFStringRepresentation);
-                fileStreamDtr.Write("\r\n");
-
-                if (fileStreamTable != null && this.tableEventsWhiteList.Contains(taskNameEventName))
+                try
                 {
-                    fileStreamTable.Write(replacedLFStringRepresentation);
-                    fileStreamTable.Write("\r\n");
+                    this.fileStreamDtr.Write(replacedLFStringRepresentation);
+                    this.fileStreamDtr.Write("\r\n");
+
+                    if (this.fileStreamTable != null && this.tableEventsWhiteList.Contains(taskNameEventName))
+                    {
+                        this.fileStreamTable.Write(replacedLFStringRepresentation);
+                        this.fileStreamTable.Write("\r\n");
+                    }
+                }
+                catch (System.Text.EncoderFallbackException)
+                {
+                    this.dataCorruptionStatistics++;
                 }
             }
         }
@@ -294,40 +313,19 @@ namespace FabricDCA
 
         internal ulong ProcessTraces(string lttTracesDirectory, bool seekTimestamp, ulong timestampUnixEpochNanoSec)
         {
-            IntPtr ctx;
-            IntPtr ctf_iter;
-
             this.traceSource.WriteInfo(
                 this.logSourceId,
                 "Starting to process Ltt traces at: {0} - starting at timestamp: {1}",
                 lttTracesDirectory,
-                (new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((double)(timestampUnixEpochNanoSec/1000000)).ToString("o")));
+                LttngTraceFolderEventReader.ConvertFromUnixEpoch(timestampUnixEpochNanoSec).ToString("o"));
             StringBuilder lttTracesDir = new StringBuilder();
             lttTracesDir.Append(lttTracesDirectory);
 
-            // initializing for reading traces
-            int t_handle_id = LttngReaderBindings.initialize_trace_processing(lttTracesDir, out ctx, out ctf_iter, seekTimestamp, timestampUnixEpochNanoSec);
+            // reseting events read counter. This is incremented in DeliverEventToSinks.
+            this.numEventsRead = 0;
 
-            if (t_handle_id < 0)
-            {
-                this.traceSource.WriteError(
-                    this.logSourceId,
-                    "Error ({0}) occurred while trying to process Ltt trace folder file {1}",
-                    t_handle_id,
-                    lttTracesDir.ToString());
-                return timestampUnixEpochNanoSec;
-            }
-
-            // reading traces
-            int err;
-            EventRecord eventRecord = new EventRecord();
-            StringBuilder unstructuredTextString = new StringBuilder(64000);
-            ulong lastReadTimestamp = 0;
-            bool isUnstructured = false;
-            ulong numEventsRead = 0;
-
-            // needed for table event filtering for unstructured events in linux
-            StringBuilder taskNameEventName = new StringBuilder(200);
+            // reseting the counter for events failed to be written to .dtr file.
+            this.dataCorruptionStatistics = 0;
 
             string baseFileName = DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm:ss");
             string csvOutputFilePath = Path.Combine(this.dtrTracesDirectory, baseFileName + ".trace");
@@ -337,29 +335,65 @@ namespace FabricDCA
 
             csvOutputFilePath = Path.Combine(this.dtrTracesDirectory, csvOutputFilePath);
 
-            // reading event by event using libbabeltrace API and writing it to CSV file
-            using (StreamWriter fileStreamDtr = new StreamWriter(csvOutputFilePath))
-            using (StreamWriter fileStreamTable = (this.createTableFiles ? new StreamWriter(tableOutputFilePath) : null))
-            {
-                while ((err = LttngReaderBindings.read_next_event(ref eventRecord, unstructuredTextString, taskNameEventName, ctf_iter, ref lastReadTimestamp, ref isUnstructured)) == 0)
-                {
-                    numEventsRead++;
-                    timestampUnixEpochNanoSec = lastReadTimestamp;
+            TraceFileEventReaderFactory traceFileEventReaderFactory = new TraceFileEventReaderFactory();
 
-                    this.DeliverEventToSinks(ref eventRecord, unstructuredTextString, isUnstructured);
-                    this.WriteEventToCsvAndTableFiles(eventRecord, unstructuredTextString.ToString(), taskNameEventName.ToString(), isUnstructured, fileStreamDtr, fileStreamTable);
+            try
+            {
+                using (ITraceFileEventReader eventReader = traceFileEventReaderFactory.CreateTraceFileEventReader(lttTracesDirectory))
+                {
+                    try
+                    {
+                        TraceSessionMetadata metadata = eventReader.ReadTraceSessionMetadata();
+                        this.traceSource.WriteInfo(
+                            this.logSourceId,
+                            $"Total Number of events lost : {metadata.EventsLostCount}");
+
+                    }
+                    catch(InvalidDataException e)
+                    {
+                        this.traceSource.WriteError(
+                            this.logSourceId,
+                            e.Message);
+
+                        return LttngTraceFolderEventReader.ConvertToUnixEpoch(
+                            DateTime.FromFileTimeUtc(this.lastEventReadTimestampFileTime));
+                    }
+
+                    // reading event by event using libbabeltrace API and writing it to CSV file
+                    // The exception handling is separate from the above to prevent the creation of files
+                    // when an exception happens in the initialization
+                    using (this.fileStreamDtr = new StreamWriter(csvOutputFilePath))
+                    using (this.fileStreamTable = (this.createTableFiles ? new StreamWriter(tableOutputFilePath) : null))
+                    {
+                        eventReader.EventRead += this.DeliverEventToSinks;
+                        eventReader.EventRead += this.WriteEventToCsvAndTableFiles;
+                        try
+                        {
+                            eventReader.ReadEvents(
+                                LttngTraceFolderEventReader.ConvertFromUnixEpoch(timestampUnixEpochNanoSec),
+                                LttngTraceFolderEventReader.ConvertFromUnixEpoch((ulong)LTTngTraceTimestampFlag.LAST_TRACE_TIMESTAMP));
+                        }
+                        catch(Exception e)
+                        {
+                            this.traceSource.WriteError(
+                                this.logSourceId,
+                                e.Message);
+                        }
+                    }
+
+                    if (this.dataCorruptionStatistics > 0)
+                    {
+                        this.traceSource.WriteError(
+                            this.logSourceId,
+                            $"Failed to decode ${this.dataCorruptionStatistics} events. " +
+                            "This failure may indicate corrupted trace data or an mismatch in the manifest file used to decode events.");
+                    }
                 }
             }
-
-            // cleaning up
-            LttngReaderBindings.finalize_trace_processing(ctx, ctf_iter, t_handle_id);
-
-            // check for failure in iterator
-            if (err != -2)
+            catch (DirectoryNotFoundException e)
             {
-                this.traceSource.WriteError(
-                    this.logSourceId,
-                    "Error ({0}) when trying to get next ctf_iterator", err);
+                // TODO - make this a warning
+                this.traceSource.WriteExceptionAsWarning(this.logSourceId, e, "Error processing traces.");
                 return timestampUnixEpochNanoSec;
             }
 
@@ -389,19 +423,28 @@ namespace FabricDCA
                 this.logSourceId,
                 "Finished to process Ltt traces at: {0} - finished at timestamp: {1} - {2} events read",
                 lttTracesDirectory,
-                (new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((double)(timestampUnixEpochNanoSec/1000000)).ToString("o")),
-                numEventsRead);
+                LttngTraceFolderEventReader.ConvertFromUnixEpoch(timestampUnixEpochNanoSec).ToString("o"),
+                this.numEventsRead);
 
 
-            return timestampUnixEpochNanoSec;
+            return LttngTraceFolderEventReader.ConvertToUnixEpoch(
+                DateTime.FromFileTimeUtc(this.lastEventReadTimestampFileTime));
         }
 
         // TODO - Uncomment code below when totally transitioned to structured traces
-        private void DeliverEventToSinks(ref EventRecord eventRecord, StringBuilder unstructuredTextString, bool isUnstructured)
+        //ref EventRecord eventRecord, StringBuilder unstructuredTextString, bool isUnstructured)
+        private void DeliverEventToSinks(object sender, EventRecordEventArgs eventRecordEventArgs)
         {
             var decodedEvent = new DecodedEtwEvent();
             var decodingAttempted = false;
             var decodingFailed = false;
+
+            this.numEventsRead++;
+            this.lastEventReadTimestampFileTime = eventRecordEventArgs.Record.EventHeader.TimeStamp;
+
+            EventRecord eventRecord = eventRecordEventArgs.Record;
+            StringBuilder unstructuredTextString = new StringBuilder(eventRecordEventArgs.UnstructuredRecord);
+            bool isUnstructured = eventRecordEventArgs.IsUnstructured;
 
             List<EventRecord> rawEventList = null;
             List<DecodedEtwEvent> decodedEventList = null;
@@ -455,7 +498,7 @@ namespace FabricDCA
                         }
 
                         decodingAttempted = true;
-                        
+
                     }
 
                     if (false == decodingFailed)
@@ -593,7 +636,7 @@ namespace FabricDCA
                 Utility.PerformIOWithRetries(
                     this.LoadManifestWorker,
                     manifestFileName);
-                
+
                 this.traceSource.WriteInfo(
                     this.logSourceId,
                     "Loaded manifest {0}",
@@ -646,9 +689,9 @@ namespace FabricDCA
 
             Group version = Regex.Match(folderName, @"(fabric_traces_\d+\.\d+\.\d+\.\d+)_").Groups[1];
 
-            // extracting version 
+            // extracting version
             //( if no match, e.g. traces coming from 6.2 the return value is string.Empty)
             return version.ToString();
         }
     }
-} 
+}

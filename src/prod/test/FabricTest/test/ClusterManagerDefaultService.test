@@ -58,6 +58,7 @@ app.reqservices version11 defaultservice1 ServiceTypeA stateful partition=1 repl
 app.reqservices version11 defaultservice1b ServiceTypeB stateless partition=1 instance=1 servicecorrelations=fabric:/MyApp/defaultservice3,affinity defaultmovecost=Low constraint=servicenode==1 placementPolicies=fd:/dc0,requiredDomain
 app.reqservices version11 defaultservicestatic ServiceTypeB stateless partition=1 instance=1
 app.reqservices version11 MySvc1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 placementPolicies=fd:/dc0,requiredDomain quorumlosswaitduration=801
+app.reqservices version11 MySvc1less ServiceTypeB stateless partition=1 instance=-1
 # defaultservice3/3in10 to create
 app.reqservices version11 defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
 app.reqservices version11 defaultservice3in10 ServiceTypeB stateless partition=1 instance=2
@@ -75,8 +76,9 @@ verify
 #   Default service overriden by 1.1
 ##############################################################
 
-# MySvc1 would be updated and not deleted
+# MySvc1 and MySvc1less would be updated and not deleted
 createservice fabric:/MyApp/MySvc1 ServiceTypeA y 1 3 persist appname=fabric:/MyApp
+createservice fabric:/MyApp/MySvc1less ServiceTypeB n 1 1 appname=fabric:/MyApp
 
 deleteservice fabric:/MyApp/defaultservice2notactive
 deleteservice fabric:/MyApp/defaultservice3in10
@@ -271,7 +273,7 @@ app.reqservices versioninvalid2 defaultservice3 ServiceTypeA stateful partition=
 app.upload versioninvalid2
 provisionapp versioninvalid2
 
-upgradeapp fabric:/MyApp invalid2 Rolling upgrademode=manual
+upgradeapp fabric:/MyApp invalid2 Rolling upgrademode=auto
 setrollbackapp fabric:/MyApp 1.1
 verifyupgradeapp fabric:/MyApp
 

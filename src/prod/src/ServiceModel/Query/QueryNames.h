@@ -90,7 +90,15 @@ namespace Query
             GetReplicaResourceList = 76,
             GetApplicationUnhealthyEvaluation = 77,
             GetVolumeResourceList = 78,
-            LAST_QUERY_PLUS_ONE = 79
+            GetClusterVersion = 79,
+            GetNetworkList = 80,
+            GetNetworkApplicationList = 81,
+            GetNetworkNodeList = 82,
+            GetApplicationNetworkList = 83,
+            GetDeployedNetworkList = 84,
+            GetDeployedNetworkCodePackageList = 85,
+            GetGatewayResourceList = 86,
+            LAST_QUERY_PLUS_ONE = 87
         };
 
         std::wstring ToString(Enum const & val);

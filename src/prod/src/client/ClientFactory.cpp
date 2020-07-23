@@ -37,9 +37,9 @@ ErrorCode ClientFactory::CreateClientFactory(
     __out IClientFactoryPtr &clientFactoryPtr)
 {
     return CreateClientFactory(
-        connectionStringSize, 
-        connectionStrings, 
-        IServiceNotificationEventHandlerPtr(), 
+        connectionStringSize,
+        connectionStrings,
+        IServiceNotificationEventHandlerPtr(),
         IClientConnectionEventHandlerPtr(),
         clientFactoryPtr);
 }
@@ -63,12 +63,12 @@ ErrorCode ClientFactory::CreateClientFactory(
         connectionStringList);
 
     if (!error.IsSuccess()) { return error; }
-    
+
     return CreateClientFactory(
         make_shared<FabricClientImpl>(
-            move(connectionStringList), 
-            notificationHandler, 
-            connectionHandler), 
+            move(connectionStringList),
+            notificationHandler,
+            connectionHandler),
         clientFactoryPtr);
 }
 
@@ -83,8 +83,8 @@ ErrorCode ClientFactory::CreateClientFactory(
     FabricClientImplSPtr const & fabricClientImpl,
     __out IClientFactoryPtr & clientFactoryPtr)
 {
-    shared_ptr<ClientFactory> clientFactorySPtr(new ClientFactory(fabricClientImpl));       
-        
+    shared_ptr<ClientFactory> clientFactorySPtr(new ClientFactory(fabricClientImpl));
+
     clientFactoryPtr = RootedObjectPointer<IClientFactory>(clientFactorySPtr.get(), clientFactorySPtr->CreateComponentRoot());
 
     return ErrorCode::Success();
@@ -114,7 +114,7 @@ ErrorCode ClientFactory::CreateLocalClientFactory(
 {
     return CreateClientFactory(
         make_shared<FabricClientImpl>(
-            config, 
+            config,
             clientRole,
             notificationHandler,
             connectionHandler),
@@ -128,9 +128,9 @@ ErrorCode ClientFactory::CreateLocalClientFactory(
 {
     return CreateClientFactory(
         make_shared<FabricClientImpl>(
-            namingMessageProcessor, 
+            namingMessageProcessor,
             notificationHandler,
-            IClientConnectionEventHandlerPtr()), 
+            IClientConnectionEventHandlerPtr()),
         clientFactoryPtr);
 }
 
@@ -190,7 +190,7 @@ ErrorCode ClientFactory::ValidateFabricClient()
     if (!fabricClientSPtr_)
     {
         return ErrorCodeValue::NotImplemented;
-    }    
+    }
 
     if (fabricClientSPtr_->State.Value == FabricComponentState::Closing ||
         fabricClientSPtr_->State.Value == FabricComponentState::Closed ||
@@ -198,7 +198,7 @@ ErrorCode ClientFactory::ValidateFabricClient()
     {
         return ErrorCodeValue::FabricComponentAborted;
     }
-    
+
     return ErrorCode::Success();
 }
 
@@ -511,5 +511,30 @@ ErrorCode ClientFactory::CreateResourceManagerClient(__out IResourceManagerClien
             this->CreateComponentRoot());
     }
 
+    return error;
+}
+
+ErrorCode ClientFactory::CreateNetworkManagementClient(__out INetworkManagementClientPtr &clientPtr)
+{
+    auto error = ValidateFabricClient();
+    if (error.IsSuccess())
+    {
+        clientPtr = RootedObjectPointer<INetworkManagementClient>(
+            fabricClientSPtr_.get(),
+            this->CreateComponentRoot());
+    }
+
+    return error;
+}
+
+ErrorCode ClientFactory::CreateGatewayResourceManagerClient(__out IGatewayResourceManagerClientPtr &clientPtr)
+{
+    auto error = ValidateFabricClient();
+    if (error.IsSuccess())
+    {
+        clientPtr = RootedObjectPointer<IGatewayResourceManagerClient>(
+            fabricClientSPtr_.get(),
+            this->CreateComponentRoot());
+    }
     return error;
 }

@@ -12,6 +12,9 @@ set UpgradeHealthCheckInterval 5
 set NamingOperationTimeout 60
 set NamingOperationRetryTimeout 180
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 +10
 +20
 +30

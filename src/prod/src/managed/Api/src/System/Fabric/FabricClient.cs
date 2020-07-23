@@ -1,4 +1,4 @@
-// ------------------------------------------------------------
+﻿// ------------------------------------------------------------
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
@@ -54,6 +54,7 @@ namespace System.Fabric
         private NativeClient.IFabricSecretStoreClient nativeSecretStoreClient;
         private NativeClient.IFabricRepairManagementClient2 nativeRepairClient;
         private NativeClient.IFabricFaultManagementClientInternal nativeFaultManagementClientInternal;
+        private NativeClient.IFabricNetworkManagementClient nativeNetworkManagementClient;
 
         private ApplicationManagementClient applicationManager;
         private ComposeDeploymentClient composeDeploymentManager;
@@ -69,6 +70,7 @@ namespace System.Fabric
         private SecretStoreClient secretStoreClient;
         private TestManagementClient testManagementClient;
         private FaultManagementClient faultManagementClient;
+        private NetworkManagementClient networkManagementClient;
         private SecurityCredentials credential;
         private string[] hostEndpoints;
 
@@ -270,6 +272,20 @@ namespace System.Fabric
             get
             {
                 return this.faultManagementClient;
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="System.Fabric.FabricClient.NetworkManagementClient"/> to manage container networks.
+        /// </summary>
+        /// <value>
+        /// <para>Returns <see cref="System.Fabric.FabricClient.NetworkManagementClient" />.</para>
+        /// </value>
+        public NetworkManagementClient NetworkManager
+        {
+            get
+            {
+                return this.networkManagementClient;
             }
         }
 
@@ -671,9 +687,10 @@ namespace System.Fabric
             this.infraServiceClient = new InfrastructureServiceClient(this, this.nativeInfraServiceClient);
             this.testManagementClient = new TestManagementClient(this, this.nativeTestManagementClient, this.nativeTestManagementClientInternal);
             this.faultManagementClient = new FaultManagementClient(this, this.nativeFaultManagementClient, this.nativeFaultManagementClientInternal);
-            this.repairManager = new RepairManagementClient(this, this.nativeRepairClient);
+            this.repairManager = new RepairManagementClient(this, this.nativeRepairClient);            
             this.imageStoreClient = new ImageStoreClient(this);
             this.secretStoreClient = new SecretStoreClient(this, this.nativeSecretStoreClient);
+            this.networkManagementClient = new NetworkManagementClient(this, this.nativeNetworkManagementClient);
         }
 
         private void CreateNativeClient(IEnumerable<string> connectionStringsLocal)
@@ -721,6 +738,7 @@ namespace System.Fabric
             this.nativeSecretStoreClient = (NativeClient.IFabricSecretStoreClient)this.nativePropertyClient;
             this.nativeRepairClient = (NativeClient.IFabricRepairManagementClient2)this.nativePropertyClient;
             this.nativeFaultManagementClientInternal = (NativeClient.IFabricFaultManagementClientInternal)this.nativePropertyClient;
+            this.nativeNetworkManagementClient = (NativeClient.IFabricNetworkManagementClient)this.nativePropertyClient;
 
             // ReSharper enable SuspiciousTypeConversion.Global
         }
@@ -754,6 +772,7 @@ namespace System.Fabric
             this.nativeSecretStoreClient = (NativeClient.IFabricSecretStoreClient)this.nativePropertyClient;
             this.nativeRepairClient = (NativeClient.IFabricRepairManagementClient2)this.nativePropertyClient;
             this.nativeFaultManagementClientInternal = (NativeClient.IFabricFaultManagementClientInternal)this.nativePropertyClient;
+            this.nativeNetworkManagementClient = (NativeClient.IFabricNetworkManagementClient)this.nativePropertyClient;
         }
 
         /// <summary>

@@ -644,6 +644,19 @@ namespace Common
         return *this;
     } // op =
 
+
+    //
+    // Adds the new path value at the end of the current path value
+    //
+    wstring EnvironmentVariable::AppendDirectoryToPathEnvVarValue(wstring const& currentPathValue, wstring const& pathValueToBeAdded)
+    {
+#ifndef PLATFORM_UNIX
+        return wformatString(L"{0};{1}", currentPathValue, pathValueToBeAdded);
+#else
+        return wformatString(L"{0}:{1}", currentPathValue, pathValueToBeAdded);
+#endif
+    }
+
     DateTime Environment::GetLastRebootTime()
     {
 #if defined(PLATFORM_UNIX)

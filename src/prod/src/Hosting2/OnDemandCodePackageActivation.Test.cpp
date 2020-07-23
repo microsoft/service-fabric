@@ -816,6 +816,8 @@ void OnDemandCodePackageActivationTestClass::VerifyOnDemandActivationWithStatefu
         Guid::NewGuid(),
         123456);
 
+    this->OpenServiceReplica(serviceReplica);
+
     //
     // Activate would be no-op
     //
@@ -1263,6 +1265,7 @@ bool OnDemandCodePackageActivationTestClass::Setup()
 {
     HostingConfig::GetConfig().EnableActivateNoWindow = true;
     HostingConfig::GetConfig().EndpointProviderEnabled = true;
+    HostingConfig::GetConfig().DeployedServiceFailoverContinuousFailureThreshold = 1;
 
     wstring nttree;
     if (!Environment::GetEnvironmentVariableW(L"_NTTREE", nttree, Common::NOTHROW()))

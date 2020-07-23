@@ -3241,6 +3241,71 @@ Return Value:
     return NULL;
 }
 
+PREMOTE_LEASE_AGENT_CONTEXT
+FindArbitrationNeutralRemoteLeaseAgent(
+    __in PLEASE_AGENT_CONTEXT LeaseAgentContext,
+    __in PREMOTE_LEASE_AGENT_CONTEXT RemoteLeaseAgentContextMatch
+)
+
+/*++
+
+Routine Description:
+
+Retrieves remote lease agent with arbitration neutral set on this lease agent.
+
+Arguments:
+
+LeaseAgentContext - channel that requires the remote lease agent.
+
+RemoteLeaseAgentContextMatch - matching remote lease agent.
+
+Return Value:
+
+NULL if no remote lease agent was found.
+
+--*/
+
+{
+    PREMOTE_LEASE_AGENT_CONTEXT RemoteLeaseAgentContext = NULL;
+    PVOID IterRemoteLeaseAgent = NULL;
+
+    //
+    // Check to see if a remote lease agent with arbitration neutral set exist 
+    //
+    for(PREMOTE_LEASE_AGENT_CONTEXT RemoteLeaseAgentContext: LeaseAgentContext->RemoteLeaseAgentContextHashTable){
+        //
+        // Compare the remote lease agent address.
+        //
+        if (0 == wcscmp(
+            RemoteLeaseAgentContext->RemoteLeaseAgentIdentifier,
+            RemoteLeaseAgentContextMatch->RemoteLeaseAgentIdentifier))
+        {
+            //
+            // Search for arbitration neutral remote lease agent
+            //
+            if (RemoteLeaseAgentContext->IsInArbitrationNeutral == TRUE)
+            {
+                EventWriteArbitrationNeutralRemoteLeaseAgentFound(
+                    NULL,
+                    RemoteLeaseAgentContext->RemoteLeaseAgentIdentifier,
+                    RemoteLeaseAgentContext->Instance.QuadPart,
+                    RemoteLeaseAgentContext->LeaseRelationshipContext->SubjectIdentifier.QuadPart,
+                    RemoteLeaseAgentContext->LeaseRelationshipContext->MonitorIdentifier.QuadPart,
+                    GetLeaseAgentState(RemoteLeaseAgentContext->State),
+                    GetLeaseState(RemoteLeaseAgentContext->LeaseRelationshipContext->SubjectState),
+                    GetLeaseState(RemoteLeaseAgentContext->LeaseRelationshipContext->MonitorState),
+                    RemoteLeaseAgentContext->IsActive,
+                    RemoteLeaseAgentContext->RemoteLeaseAgentInstance.QuadPart
+                    );
+
+                return RemoteLeaseAgentContext;
+            }
+        }
+    }
+
+    return NULL;
+}
+
 BOOLEAN
 CheckForStaleMessage(
     __in PREMOTE_LEASE_AGENT_CONTEXT RemoteLeaseAgentContext,
@@ -3423,6 +3488,79 @@ Return Value:
             LeaseAgentContext,
             RemoteLeaseAgentContext
             );
+
+        //
+        // This block is to check if we have received an lease message from the old lease relationship.
+        // When the lease relationship received an arbitration neutral result, and new lease was created,
+        // we could receive an old lease message from the old lease relationship. We have to stale such
+        // message, or there could be inconsistent issue, that old lease identifier being stored in new
+        // lease relationship.
+        //
+        if (RemoteLeaseAgentContextIter != NULL &&
+            IsReceivedRequest(LeaseMessageHeader->MessageType) &&
+            RemoteLeaseAgentContext->LeaseRelationshipContext->MonitorState == LEASE_STATE_INACTIVE)
+        {
+            PREMOTE_LEASE_AGENT_CONTEXT RemoteLeaseAgentContextArbitrationNeutral = NULL;
+
+            RemoteLeaseAgentContextArbitrationNeutral = FindArbitrationNeutralRemoteLeaseAgent(
+                LeaseAgentContext,
+                RemoteLeaseAgentContext
+                );
+
+            if (RemoteLeaseAgentContextArbitrationNeutral != NULL)
+            {
+                if (IS_LARGE_INTEGER_EQUAL_TO_LARGE_INTEGER(
+                        LeaseMessageHeader->LeaseInstance,
+                        RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->MonitorIdentifier))
+                {
+                    //
+                    // If the lease instance match the one from the arbitration neutral remote lease agent,
+                    // we know the message was from the previous lease relationship.
+                    //
+                    EventWriteProcessArbitrationNeutralStaleMessage(
+                        NULL,
+                        RemoteLeaseAgentContextArbitrationNeutral->RemoteLeaseAgentIdentifier,
+                        RemoteLeaseAgentContextArbitrationNeutral->Instance.QuadPart,
+                        RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->SubjectIdentifier.QuadPart,
+                        RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->MonitorIdentifier.QuadPart,
+                        GetLeaseAgentState(RemoteLeaseAgentContextArbitrationNeutral->State),
+                        GetLeaseState(RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->SubjectState),
+                        GetLeaseState(RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->MonitorState),
+                        RemoteLeaseAgentContextArbitrationNeutral->IsActive,
+                        RemoteLeaseAgentContextArbitrationNeutral->RemoteLeaseAgentInstance.QuadPart,
+                        LeaseMessageHeader->MessageIdentifier.QuadPart,
+                        GetMessageType(LeaseMessageHeader->MessageType),
+                        LeaseMessageHeader->LeaseInstance.QuadPart
+                        );
+
+                    //
+                    // Remove the newly created RLA
+                    //
+                    RemoteLeaseAgentDestructor(RemoteLeaseAgentContext);
+
+                    *result = NULL;
+                    return STATUS_UNSUCCESSFUL;
+                }
+                else
+                {
+                    EventWriteProcessNonArbitrationNeutralStaleMessage(
+                        NULL,
+                        RemoteLeaseAgentContextArbitrationNeutral->RemoteLeaseAgentIdentifier,
+                        RemoteLeaseAgentContextArbitrationNeutral->Instance.QuadPart,
+                        RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->SubjectIdentifier.QuadPart,
+                        RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->MonitorIdentifier.QuadPart,
+                        GetLeaseAgentState(RemoteLeaseAgentContextArbitrationNeutral->State),
+                        GetLeaseState(RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->SubjectState),
+                        GetLeaseState(RemoteLeaseAgentContextArbitrationNeutral->LeaseRelationshipContext->MonitorState),
+                        RemoteLeaseAgentContextArbitrationNeutral->IsActive,
+                        RemoteLeaseAgentContextArbitrationNeutral->RemoteLeaseAgentInstance.QuadPart,
+                        LeaseMessageHeader->MessageIdentifier.QuadPart,
+                        GetMessageType(LeaseMessageHeader->MessageType),
+                        LeaseMessageHeader->LeaseInstance.QuadPart
+                        );
+                }
+            }
+        }
 
         if (NULL != RemoteLeaseAgentContextIter && 0 == RemoteLeaseAgentContextIter->RemoteLeaseAgentInstance.QuadPart)
         {

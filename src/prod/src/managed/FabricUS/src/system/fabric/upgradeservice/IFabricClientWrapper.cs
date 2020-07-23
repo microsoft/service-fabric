@@ -23,7 +23,7 @@ namespace System.Fabric.UpgradeService
 
         Task<NodeList> GetNodeListAsync(TimeSpan timeout, CancellationToken token);
 
-        Task<Dictionary<string, ReplicaSetSize>> GetSystemServiceReplicaSetSize(TimeSpan timeout, CancellationToken token);
+        Task<Dictionary<string, ServiceRuntimeDescription>> GetSystemServiceRuntimeDescriptionsAsync(TimeSpan timeout, CancellationToken token);
 
         Task<FabricUpgradeProgress> GetFabricUpgradeProgressAsync(TimeSpan timeout, CancellationToken cancellationToken);
 
@@ -35,12 +35,12 @@ namespace System.Fabric.UpgradeService
 
         Task<string> GetCurrentClusterManifestFile();
 
-        Task UpdateSystemServicesReplicaSizeAsync(
-            Dictionary<string, ReplicaSetSize> systemServicesSize,
+        Task UpdateSystemServicesDescriptionAsync(
+            Dictionary<string, ServiceRuntimeDescription> systemServiceDescritpions,
             TimeSpan timeout,
             CancellationToken cancellationToken);
 
-        Task UpdateServiceDescriptionAsync(Uri serviceName, ReplicaSetSize replicaSetSize, TimeSpan timeout, CancellationToken cancellationToken);
+        Task UpdateServiceDescriptionAsync(Uri serviceName, ServiceRuntimeDescription description, TimeSpan timeout, CancellationToken cancellationToken);
 
         Task DisableNodesAsync(List<PaasNodeStatusInfo> nodesToDisable, TimeSpan timeout, CancellationToken cancellationToken);
 

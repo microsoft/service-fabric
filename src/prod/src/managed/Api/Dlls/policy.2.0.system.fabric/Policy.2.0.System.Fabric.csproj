@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Policy.2.0.System.Fabric</AssemblyName>
+    <AssemblyDescription>Fabric Policy assembly</AssemblyDescription>
+    <RootNamespace>Policy.2.0.System.Fabric</RootNamespace>
+    <ProjectGuid>{1033BB6B-D531-4B17-88B9-4497C22CB292}</ProjectGuid>
+    <CoverageDisabled>true</CoverageDisabled>
+    <HighEntropyVA>true</HighEntropyVA>
+  </PropertyGroup>
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(CONFROOT)\FabricVersions.Targets "/>
+  <Target Name="Build" Inputs="Policy.2.0.System.Fabric.config" Outputs="$(OutputPath)\$(AssemblyName).dll" DependsOnTargets="GetFabricVersions">
+    <MakeDir Directories="$(OutputPath)" />
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\AL.exe /link:Policy.2.0.System.Fabric.config /out:$(OutputPath)\$(AssemblyName).dll /keyfile:$(WindowsPublicKey) /delay+ /platform:x64 /version:$(FabricRuntimeProductMajorVersion).0.0.0" />
+  </Target>
+  <Target Name="Binplace" AfterTargets="Build">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)\**\*" Exclude="$(OutputPath)\**\*.pdb;$(OutputPath)**\*.lib" />
+      <BinplaceFiles Include="Policy.2.0.System.Fabric.config" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

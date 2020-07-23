@@ -95,13 +95,13 @@ void NodePlacement::ChangeMovement(Movement const& oldMovement, Movement const& 
 {
     if (oldMovement.IsValid)
     {
-        if (oldMovement.TargetNode != nullptr && oldMovement.TargetNode->HasCapacity)
+        if (oldMovement.TargetNode != nullptr && (oldMovement.TargetNode->HasCapacity || oldMovement.TargetNode->IsThrottled))
         {
             ReplicaSet & rset = this->operator[](oldMovement.TargetNode);
             rset.Delete(oldMovement.TargetToBeAddedReplica);
             rset.Add(oldMovement.TargetToBeDeletedReplica);
         }
-        if (oldMovement.SourceNode != nullptr && oldMovement.SourceNode->HasCapacity)
+        if (oldMovement.SourceNode != nullptr && (oldMovement.SourceNode->HasCapacity || oldMovement.SourceNode->IsThrottled))
         {
             ReplicaSet & rset = this->operator[](oldMovement.SourceNode);
             rset.Add(oldMovement.SourceToBeDeletedReplica);
@@ -111,13 +111,13 @@ void NodePlacement::ChangeMovement(Movement const& oldMovement, Movement const& 
 
     if (newMovement.IsValid)
     {
-        if (newMovement.SourceNode != nullptr && newMovement.SourceNode->HasCapacity)
+        if (newMovement.SourceNode != nullptr && (newMovement.SourceNode->HasCapacity || newMovement.SourceNode->IsThrottled))
         {
             ReplicaSet & rset = this->operator[](newMovement.SourceNode);
             rset.Delete(newMovement.SourceToBeDeletedReplica);
             rset.Add(newMovement.SourceToBeAddedReplica);
         }
-        if (newMovement.TargetNode != nullptr && newMovement.TargetNode->HasCapacity)
+        if (newMovement.TargetNode != nullptr && (newMovement.TargetNode->HasCapacity || newMovement.TargetNode->IsThrottled))
         {
             ReplicaSet & rset = this->operator[](newMovement.TargetNode);
             rset.Add(newMovement.TargetToBeAddedReplica);

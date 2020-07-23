@@ -21,6 +21,7 @@ class KtlLoggerNode::InitializeKtlLoggerAsyncOperation : public KtlProxyAsyncOpe
         KtlLoggerInitializationContext& asyncContext,
         BOOLEAN useInprocLogger,
         KtlLogManager::MemoryThrottleLimits const & memoryLimit,
+        KtlLogManager::AcceleratedFlushLimits const & accelerateFlushLimit,
         KtlLogManager::SharedLogContainerSettings const & sharedLogSettings,
         std::wstring const & fabricDataRoot,
         AsyncCallback const& callback,
@@ -28,6 +29,7 @@ class KtlLoggerNode::InitializeKtlLoggerAsyncOperation : public KtlProxyAsyncOpe
         : KtlProxyAsyncOperation(&asyncContext, nullptr, callback, parent)
         , useInprocLogger_(useInprocLogger)
         , memoryLimits_(memoryLimit)
+        , accelerateFlushLimits_(accelerateFlushLimit)
         , sharedLogSettings_(sharedLogSettings)
         , fabricDataRoot_(fabricDataRoot)
         , asyncContext_(&asyncContext)
@@ -52,6 +54,7 @@ class KtlLoggerNode::InitializeKtlLoggerAsyncOperation : public KtlProxyAsyncOpe
         asyncContext_->StartInitializeKtlLogger(
             useInprocLogger_,                                               
             memoryLimits_,
+            accelerateFlushLimits_,
             sharedLogSettings_,
             fabricDataRoot_.c_str(),
             parentAsyncContext,
@@ -63,7 +66,8 @@ class KtlLoggerNode::InitializeKtlLoggerAsyncOperation : public KtlProxyAsyncOpe
 private:   
     KtlLoggerInitializationContext::SPtr asyncContext_;
     BOOLEAN useInprocLogger_;
-    KtlLogManager::MemoryThrottleLimits memoryLimits_;
+    KtlLogManager::MemoryThrottleLimits memoryLimits_;  
+    KtlLogManager::AcceleratedFlushLimits accelerateFlushLimits_;   
     KtlLogManager::SharedLogContainerSettings sharedLogSettings_;
     std::wstring fabricDataRoot_;
 };
@@ -147,6 +151,7 @@ void KtlLoggerNode::OpenAsyncOperation::OnStart(AsyncOperationSPtr const & thisS
     KtlLoggerConfig& config = KtlLoggerConfig::GetConfig();
     ServiceModel::ServiceModelConfig& smConfig = ServiceModel::ServiceModelConfig::GetConfig();
     KtlLogManager::MemoryThrottleLimits memoryLimits;
+    KtlLogManager::AcceleratedFlushLimits accelerateFlushLimits;
 
     static const LONGLONG oneKB = 1024;
     static const LONG oneKBL = 1024;
@@ -435,7 +440,8 @@ void KtlLoggerNode::OpenAsyncOperation::OnStart(AsyncOperationSPtr const & thisS
     {
         memoryLimits.MaximumDestagingWriteOutstanding = KtlLogManager::MemoryThrottleLimits::_DefaultMaximumDestagingWriteOutstanding;
     }
-    else {
+    else
+    {
         memoryLimits.MaximumDestagingWriteOutstanding = value * oneKB;
     }
 
@@ -450,6 +456,60 @@ void KtlLoggerNode::OpenAsyncOperation::OnStart(AsyncOperationSPtr const & thisS
     valueI64 = config.AllocationTimeout.TotalMilliseconds();
     memoryLimits.AllocationTimeoutInMs = (ULONG)valueI64;
 
+    value = config.SharedLogThrottleLimitInPercentUsed;
+    if (value == 0)
+    {
+        memoryLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
+    }
+    else if (value == 100) {
+        memoryLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_NoSharedLogThrottleLimit;
+    }
+    else if ((value < 0) || (value > 100))
+    {
+        memoryLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
+    }
+    else 
+    {
+        memoryLimits.SharedLogThrottleLimit = (ULONG)value;
+    }
+
+
+    value = config.AccelerateFlushActiveTimerInMs;
+    if ((value != KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActiveTimerInMsNoAction) &&
+        ((value < KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActiveTimerInMsMin) ||
+         (value > KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActiveTimerInMsMax)))
+    {
+        accelerateFlushLimits.AccelerateFlushActiveTimerInMs = KtlLogManager::AcceleratedFlushLimits::DefaultAccelerateFlushActiveTimerInMs;
+    } else {
+        accelerateFlushLimits.AccelerateFlushActiveTimerInMs = (ULONG)value;
+    }
+    
+    value = config.AccelerateFlushPassiveTimerInMs;
+    if ((value < KtlLogManager::AcceleratedFlushLimits::AccelerateFlushPassiveTimerInMsMin) ||
+        (value > KtlLogManager::AcceleratedFlushLimits::AccelerateFlushPassiveTimerInMsMax))
+    {
+        accelerateFlushLimits.AccelerateFlushPassiveTimerInMs = KtlLogManager::AcceleratedFlushLimits::DefaultAccelerateFlushPassiveTimerInMs;
+    } else {
+        accelerateFlushLimits.AccelerateFlushPassiveTimerInMs = (ULONG)value;
+    }
+    
+    value = config.AccelerateFlushActivePercent;
+    if ((value < KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActivePercentMin) ||
+        (value > KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActivePercentMax))
+    {
+        accelerateFlushLimits.AccelerateFlushActivePercent = KtlLogManager::AcceleratedFlushLimits::DefaultAccelerateFlushActivePercent;
+    } else {
+        accelerateFlushLimits.AccelerateFlushActivePercent = (ULONG)value;
+    }
+    
+    value = config.AccelerateFlushPassivePercent;
+    if ((value < KtlLogManager::AcceleratedFlushLimits::AccelerateFlushPassivePercentMin) ||
+        (value > KtlLogManager::AcceleratedFlushLimits::AccelerateFlushPassivePercentMax))
+    {
+        accelerateFlushLimits.AccelerateFlushPassivePercent = KtlLogManager::AcceleratedFlushLimits::DefaultAccelerateFlushPassivePercent;
+    } else {
+        accelerateFlushLimits.AccelerateFlushPassivePercent = (ULONG)value;
+    }   
     
     auto operation = shared_ptr<InitializeKtlLoggerAsyncOperation>(
         new(owner_.GetAllocator()) InitializeKtlLoggerAsyncOperation(
@@ -460,6 +520,7 @@ void KtlLoggerNode::OpenAsyncOperation::OnStart(AsyncOperationSPtr const & thisS
             FALSE,
 #endif
             memoryLimits,
+            accelerateFlushLimits,
             *applicationSharedLogSettings_,
             fabricDataRoot_,
             [this](AsyncOperationSPtr const& operation)

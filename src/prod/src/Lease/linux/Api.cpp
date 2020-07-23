@@ -770,7 +770,7 @@ Return Value:
         }
     }
 
-    Common::FabricGlobals::Get().GetCrashLeasingApplicationCallback().Set(CrashLeasingApplication);
+    Common::Assert::SetCrashLeasingApplicationCallback(CrashLeasingApplication);
 
     return TRUE;
 }

@@ -56,6 +56,7 @@ namespace FabricTest
         bool CreateComposeDeployment(Common::StringCollection const & params);
         bool DeleteComposeDeployment(Common::StringCollection const & params);
         bool UpgradeComposeDeployment(Common::StringCollection const & params);
+        bool RollbackComposeDeployment(Common::StringCollection const & params);
 
         bool ProvisionFabric(Common::StringCollection const & params);
         bool UnprovisionFabric(Common::StringCollection const & params);        
@@ -84,6 +85,7 @@ namespace FabricTest
         DECLARE_CREATE_COM_CLIENT( IFabricClusterManagementClient4, FabricClusterClient4 )
 
         DECLARE_CREATE_COM_CLIENT( IInternalFabricApplicationManagementClient, InternalFabricApplicationClient )
+        DECLARE_CREATE_COM_CLIENT( IInternalFabricApplicationManagementClient2, InternalFabricApplicationClient2 )
 
     private:
         class ApplicationUpgradeContext;
@@ -121,6 +123,7 @@ namespace FabricTest
         void CreateComposeDeploymentImpl(FABRIC_COMPOSE_DEPLOYMENT_DESCRIPTION const &, HRESULT expectedErrors);
         void DeleteComposeDeploymentImpl(std::wstring const & name, HRESULT expectedErrors);
         void UpgradeComposeDeploymentImpl(FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_DESCRIPTION &, Common::TimeSpan const, std::vector<HRESULT>);
+        void RollbackComposeDeploymentImpl(std::wstring const & name, HRESULT expectedErrors);
 
         void UpgradeApplicationImpl(FABRIC_APPLICATION_UPGRADE_DESCRIPTION & upgradeDescription, Common::TimeSpan const timeout, std::vector<HRESULT> expectedErrors);
         void UpdateApplicationUpgradeImpl(FABRIC_APPLICATION_UPGRADE_UPDATE_DESCRIPTION &, HRESULT expectedError);

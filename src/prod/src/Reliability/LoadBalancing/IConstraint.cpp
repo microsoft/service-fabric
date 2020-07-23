@@ -39,6 +39,8 @@ void Reliability::LoadBalancingComponent::WriteToTextWriter(Common::TextWriter &
             w << "ScaleoutCount"; return;
         case IConstraint::ApplicationCapacity:
             w << "ApplicationCapacity"; return;
+        case IConstraint::Throttling:
+            w << "Throttling"; return;
         default:
             Common::Assert::CodingError("Unknown Constraint Type {0}", val);
     }
@@ -395,7 +397,7 @@ ConstraintCheckResult IStaticConstraint::CheckSolutionAndGenerateSubspace(
         }
     }
 
-    return ConstraintCheckResult(make_unique<StaticSubspace>(this), move(invalidReplicas));
+    return ConstraintCheckResult(make_unique<StaticSubspace>(this, relaxed), move(invalidReplicas));
 }
 
 bool IStaticConstraint::AllowedPlacementOnDeactivatedNode(
@@ -501,6 +503,12 @@ PlacementReplicaSet IStaticConstraint::GetInvalidReplicas(
     return invalidReplicas;
 }
 
+StaticSubspace::StaticSubspace(IStaticConstraint const* constraint, bool relaxed)
+    : constraint_(constraint),
+      relaxed_(relaxed)
+{
+}
+
 void StaticSubspace::GetTargetNodes(
     TempSolution const& tempSolution,
     PlacementReplica const* replica,
@@ -510,6 +518,17 @@ void StaticSubspace::GetTargetNodes(
 {
     UNREFERENCED_PARAMETER(useNodeBufferCapacity);
     UNREFERENCED_PARAMETER(nodeToConstraintDiagnosticsDataMapSPtr);
+
+    // NodeBlocklistConstraint should allow the replica to return to original node when relaxed.
+    // If this is not done, then we can fix either all violations or none.
+    // In case when throttling is enabled, or when there is no capacity then we will not allow partial fix.
+    bool allowReturnToOriginalNode = false;
+    NodeEntry const* baseNode = tempSolution.BaseSolution.GetReplicaLocation(replica);
+
+    if (relaxed_ && constraint_->Type == IConstraint::Enum::PlacementConstraint && baseNode != nullptr)
+    {
+        allowReturnToOriginalNode = candidateNodes.Check(baseNode);
+    }
 
     if (!replica->IsNew)
     {
@@ -536,6 +555,11 @@ void StaticSubspace::GetTargetNodes(
     }
 
     constraint_->GetTargetNodes(tempSolution, replica, candidateNodes);
+
+    if (allowReturnToOriginalNode)
+    {
+        candidateNodes.Add(baseNode);
+    }
 }
 
 bool StaticSubspace::PromoteSecondary(TempSolution const& tempSolution, PartitionEntry const* partition, NodeSet & candidateNodes) const

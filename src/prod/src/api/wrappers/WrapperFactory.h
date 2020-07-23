@@ -93,7 +93,8 @@ namespace Api
         DEFINE_CREATE_COM_WRAPPER(IClientConnection, IFabricTransportClientConnection, ComFabricTransportClientConnection)
         DEFINE_CREATE_COM_WRAPPER(IStatefulServiceReplicaStatusResult, IFabricStatefulServiceReplicaStatusResult, ComStatefulServiceReplicaStatusResult)
         DEFINE_CREATE_COM_WRAPPER(IUpgradeOrchestrationServiceAgent, IFabricUpgradeOrchestrationServiceAgent, ComUpgradeOrchestrationServiceAgent)
-        DEFINE_CREATE_COM_WRAPPER(IContainerActivatorServiceAgent, IFabricContainerActivatorServiceAgent, ComContainerActivatorServiceAgent)
+        DEFINE_CREATE_COM_WRAPPER(IContainerActivatorServiceAgent, IFabricContainerActivatorServiceAgent2, ComContainerActivatorServiceAgent)
+        DEFINE_CREATE_COM_WRAPPER(IGatewayResourceManagerAgent, IFabricGatewayResourceManagerAgent, ComGatewayResourceManagerAgent)
 
         //
         // COM proxy wrapper creation methods
@@ -121,6 +122,7 @@ namespace Api
         DEFINE_CREATE_ROOTED_COM_PROXY(IFabricServiceConnectionEventHandler, IServiceConnectionEventHandler, ComProxyServiceConnectionEventHandler)
         DEFINE_CREATE_ROOTED_COM_PROXY(IFabricUpgradeOrchestrationService, IUpgradeOrchestrationService, ComProxyUpgradeOrchestrationService)
         DEFINE_CREATE_ROOTED_COM_PROXY(IFabricNativeImageStoreProgressEventHandler, INativeImageStoreProgressEventHandler, ComProxyNativeImageStoreProgressEventHandler)
-        DEFINE_CREATE_ROOTED_COM_PROXY(IFabricContainerActivatorService, IContainerActivatorService, ComProxyContainerActivatorService)
+        DEFINE_CREATE_ROOTED_COM_PROXY(IFabricContainerActivatorService2, IContainerActivatorService, ComProxyContainerActivatorService)
+        DEFINE_CREATE_ROOTED_COM_PROXY(IFabricGatewayResourceManager, IGatewayResourceManager, ComProxyGatewayResourceManager)
     };
 }

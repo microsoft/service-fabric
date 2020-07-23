@@ -483,3 +483,12 @@ namespace Data
     class ComTransactionalReplicatorFactory;
 }
 
+
+namespace Management
+{
+    namespace NetworkInventoryManager
+    {
+        class NetworkInventoryService;
+        typedef std::unique_ptr<NetworkInventoryService> NetworkInventoryServiceUPtr;
+    }
+}

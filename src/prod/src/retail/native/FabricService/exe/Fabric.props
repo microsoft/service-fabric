@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\service_fabric_native_user_exe.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
+        $(SrcRoot)\prod\src\retail\native\FabricService;
+        $(SrcRoot)\prod\src\retail\native\FabricService\exe;
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>
+        %(AdditionalDependencies);
+        $(KtlUserLib);
+        $(KtlLoggerUserLib);
+        $(UuidLib);
+        advapi32.lib;
+        kernel32.lib;
+        vccomsup.lib;
+        delayimp.lib;
+        Shell32.lib;
+        Fwpuclnt.lib;
+        iphlpapi.lib;
+        Httpapi.lib;
+        userenv.lib;
+        ntdll.lib;
+        Ntdsapi.lib;
+        netapi32.lib;
+        rpcrt4.lib;
+        strsafe.lib;
+        dbghelp.lib;
+        ws2_32.lib;
+        secur32.lib;
+        Crypt32.lib;
+        user32.lib;
+        ole32.lib;
+        oleaut32.lib;
+        XmlLite.lib;
+        shlwapi.lib;
+        KtmW32.lib;
+        websocket.lib;
+        cabinet.lib;
+        winhttp.lib;
+        Httpapi.lib;
+        version.lib;
+        dnsapi.lib;
+        dhcpcsvc.lib;
+        $(BinariesBuildTypeArchDirectory)\FabricZip\FabricZip.lib;
+        $(BinariesBuildTypeArchDirectory)\FabricAad.Client\FabricAad.Client.lib;
+        $(BinariesBuildTypeArchDirectory)\FabricAad.Server\FabricAad.Server.lib;
+        wintrust.lib;
+        $(EseLib);
+      </AdditionalDependencies>
+      <DelayLoadDLLs>
+        websocket.dll;
+        winhttp.dll;
+      </DelayLoadDLLs>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\api\wrappers\lib\ApiWrappers.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Communication\lib\Communication.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\FabricNode\lib\FabricNode.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\ImageModel\lib\ImageModel.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\RepairManager\lib\RepairManager.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\HttpTransport\lib\HttpTransport.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Reliability\Replication\lib\Replication.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\data\txnreplicator\lib\txnreplicator.vcxproj">
+      <Project>{dda59e0b-d053-48a3-ac14-6a518e8a3de9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\data\utilities\lib\data.utilities.vcxproj">
+      <Project>{d8ecc4c2-ee97-4f89-abb3-018ae3ccea2d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\data\txnreplicator\loggingreplicator\lib\loggingreplicator.vcxproj">
+      <Project>{1b1273bf-4d17-4013-8dbf-1a858ca69ba3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\data\txnreplicator\statemanager\lib\statemanager.vcxproj">
+      <Project>{d8ecc4c2-ee97-4f89-abb3-018ae3ccea26}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\shared\ktlwf\com\src\lib\KComAdapter.vcxproj">
+      <Project>{bfd6429b-41bd-4a56-b18b-4492bb4a5bcc}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\Lease\api\LeaseLayer.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\resources\dll\FabricResources.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\retail\native\FabricCommon\dll\FabricCommon.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\client\ClientServerTransport\lib\ClientServerTransport.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\client\lib\Client.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Common\lib\Common.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\FabricGateway\lib\Gateway.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Federation\lib\Federation.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Hosting2\lib\Hosting2.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Testability\lib\Testability.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\httpgateway\lib\HttpGateway.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\LeaseAgent\lib\LeaseAgent.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\ClusterManager\lib\ClusterManager.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\Common\lib\ManagementCommon.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\FileStoreService\lib\FileStoreService.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\healthmanager\lib\HealthManager.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\ImageStore\lib\ImageStore.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\ManagementSubsystem\lib\ManagementSubsystem.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\ApplicationGateway\Http\lib\HttpApplicationGateway.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\NetworkInventoryManager\lib\NetworkInventoryManager.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Naming\EntreeService\entreeservice.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Naming\StoreService\StoreService.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\query\lib\Query.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Reliability\Common\lib\Reliability.Common.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Reliability\Failover\lib\Failover.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Reliability\LoadBalancing\lib\LoadBalancing.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\retail\native\FabricUUID\FabricUUID.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\retail\native\InternalFabricUUID\InternalFabricUUID.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\ServiceModel\lib\ServiceModel.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Store\lib\Store.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Store\RepairPolicy\Store.RepairPolicy.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\systemservices\lib\SystemServices.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Transport\lib\Transport.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\shared\serialization\src\user\SerializationUser.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\ServiceGroup\Service\lib\ServiceGroup.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\UpgradeService\lib\UpgradeService.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\BackupRestoreService\lib\BackupRestoreService.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\BackupRestore\BA\lib\BA.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\FaultAnalysisService\lib\FaultAnalysisService.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\AzureActiveDirectory\wrapper.client\Wrapper.Client.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\AzureActiveDirectory\native.server\FabricAad.Server.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\AzureActiveDirectory\native.client\FabricAad.Client.vcxproj" />    
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\UpgradeOrchestrationService\lib\UpgradeOrchestrationService.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\CentralSecretService\lib\CentralSecretService.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\LocalSecretService\lib\LocalSecretService.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\ktllogger\lib\KtlLoggerNode.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\DnsService\config\DnsServiceConfig.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Management\GatewayResourceManager\lib\GatewayResourceManager.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\Reliability\Replication\lib\Replication.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\data\tstore\lib\tstore.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\test\TestHooks\lib\TestHooks.vcxproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\ktllogger\sys\ktlshim\unify\KtlLogShimUnify.vcxproj">
+      <Project>{B8A36635-33EF-442d-95D3-828F90ECACDD}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\stdafx.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\fabricserviceresource.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\FabricServiceResource.h"/>
+    <ClInclude Include="..\resource.h"/>
+    <ClInclude Include="..\stdafx.h"/>
+  </ItemGroup>
+</Project>

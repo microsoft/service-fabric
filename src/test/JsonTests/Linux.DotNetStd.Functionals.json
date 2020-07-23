@@ -5,7 +5,7 @@
     {
       "Name": "BasicStatefulActorKvsTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -21,7 +21,7 @@
     {
       "Name": "BasicStatefulActorRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -37,7 +37,7 @@
     {
       "Name": "BasicStatefulActorVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -53,7 +53,7 @@
     {
       "Name": "BasicStatelessActorTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -69,7 +69,7 @@
     {
       "Name": "ActorEventsTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -85,7 +85,7 @@
     {
       "Name": "FabActGCtestonKvsTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -101,7 +101,7 @@
     {
       "Name": "FabActGCtestonRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -117,7 +117,7 @@
     {
       "Name": "FabActGCtestonVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -133,7 +133,7 @@
     {
       "Name": "FabActRemindersKvsTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -149,7 +149,7 @@
     {
       "Name": "FabActRemindersRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -165,7 +165,7 @@
     {
       "Name": "FabActRemindersVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -181,7 +181,7 @@
     {
       "Name": "ActorDirtyStateKVSTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -197,7 +197,7 @@
     {
       "Name": "ActorDirtyStateRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -213,7 +213,7 @@
     {
       "Name": "ActorDirtyStateVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -229,7 +229,7 @@
     {
       "Name": "PolymorphicStateActorTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,harahma",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -245,7 +245,7 @@
     {
       "Name": "ActorQueryKVSTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -261,7 +261,7 @@
     {
       "Name": "ActorQuerywithPagingKVSTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -277,7 +277,7 @@
     {
       "Name": "ActorQueryRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -293,7 +293,7 @@
     {
       "Name": "ActorQuerywithPagingRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -309,7 +309,7 @@
     {
       "Name": "ActorQueryVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -325,7 +325,7 @@
     {
       "Name": "ActorQueryPagingVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -341,7 +341,7 @@
     {
       "Name": "ActorQueryStatelesstestTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -357,7 +357,7 @@
     {
       "Name": "ActorQueryPagingStatelessTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -373,7 +373,7 @@
     {
       "Name": "DeleteStatefulActorKVSTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -389,7 +389,7 @@
     {
       "Name": "DeleteStatefulActorRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -405,7 +405,7 @@
     {
       "Name": "DeleteStatefulActorVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -421,7 +421,7 @@
     {
       "Name": "DeleteStatelessActorTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -437,7 +437,7 @@
     {
       "Name": "ActorservicepolymorphismTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,harahma",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -453,7 +453,7 @@
     {
       "Name": "ReminderContinuityKVSTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,harahma",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -469,7 +469,7 @@
     {
       "Name": "ReminderContinuityRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,harahma",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -485,7 +485,7 @@
     {
       "Name": "ReminderContinuityVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,harahma",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -501,7 +501,7 @@
     {
       "Name": "BasicStatefulActorRD2TRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -517,7 +517,7 @@
 	  {
       "Name": "DeleteStatefulActorRD2TRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -533,7 +533,7 @@
     {
       "Name": "TestRunnerServiceLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
+      "Owners": "asnegi,amanbha,suchia",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",

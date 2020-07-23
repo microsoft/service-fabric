@@ -805,7 +805,7 @@
     <value>Timed out waiting for {0} lock on table; id={1}, timeout={2}ms</value>
   </data>
   <data name="LockTimeout_TStore_KeyLock" xml:space="preserve">
-    <value>Timed out waiting for {0} lock on key; id={1}, timeout={2}ms, txn={3}, lockResourceNameHash={4}</value>
+    <value>Timed out waiting for {0} lock on key; id={1}, timeout={2}ms, txn={3}, lockResourceNameHash={4}; oldest txn with lock={5}</value>
   </data>
   <data name="LockTimeout_TStore_TableLock" xml:space="preserve">
     <value>Timed out waiting for {0} lock on table; id={1}, timeout={2}ms, txn={3}</value>

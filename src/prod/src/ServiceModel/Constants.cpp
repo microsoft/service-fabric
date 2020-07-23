@@ -166,6 +166,7 @@ namespace ServiceModel
     Common::WStringLiteral const Constants::DomainName(L"DomainName");
     Common::WStringLiteral const Constants::ManifestVersion(L"ManifestVersion");
     Common::WStringLiteral const Constants::NodeName(L"NodeName");
+    Common::WStringLiteral const Constants::NodeNameCamelCase(L"nodeName");
     Common::WStringLiteral const Constants::NodeId(L"NodeId");
     Common::WStringLiteral const Constants::NodeInstanceId(L"NodeInstanceId");
     Common::WStringLiteral const Constants::Content(L"Content");
@@ -389,6 +390,8 @@ namespace ServiceModel
     Common::WStringLiteral const Constants::ExpiryDate(L"ExpiryDate");
     Common::WStringLiteral const Constants::StartTime(L"StartTime");
     Common::WStringLiteral const Constants::EndTime(L"EndTime");
+    Common::WStringLiteral const Constants::StartTimeUtc(L"StartTimeUtc");
+    Common::WStringLiteral const Constants::EndTimeUtc(L"EndTimeUtc");
     Common::WStringLiteral const Constants::ChaosParametersMap(L"ChaosParametersDictionary");
     Common::WStringLiteral const Constants::Jobs(L"Jobs");
     Common::WStringLiteral const Constants::Days(L"Days");
@@ -582,7 +585,7 @@ namespace ServiceModel
     Common::WStringLiteral const Constants::UploadSessions(L"UploadSessions");
     Common::WStringLiteral const Constants::IsRecursive(L"IsRecursive");
     Common::WStringLiteral const Constants::ChunkContent(L"ChunkContent");
-    
+
     // Health Reporting
     // HealthReport SourceId
     GlobalWString const Constants::HealthReportFMMSource = make_global<std::wstring>(L"System.FMM");
@@ -693,6 +696,15 @@ namespace ServiceModel
     Common::WStringLiteral const Constants::NodeResult(L"NodeResult");
 
     //
+    // Secret Store Service
+    //
+    int const Constants::SecretNameMaxLength(256);
+    int const Constants::SecretVersionMaxLength(256);
+    int const Constants::SecretKindMaxLength(256);
+    int const Constants::SecretContentTypeMaxLength(256);
+    int const Constants::SecretValueMaxSize(4 * 1024 * 1024); //4MB
+
+    //
     // Compose Deployment
     //
     Common::WStringLiteral const Constants::RegistryUserName(L"RegistryUserName");
@@ -714,7 +726,7 @@ namespace ServiceModel
     Common::WStringLiteral const Constants::applicationName(L"applicationName");
     Common::WStringLiteral const Constants::applicationUri(L"applicationUri");
     Common::WStringLiteral const Constants::status(L"status");
-    Common::WStringLiteral const Constants::statusDetails(L"statusDetails");    
+    Common::WStringLiteral const Constants::statusDetails(L"statusDetails");
     Common::WStringLiteral const Constants::properties(L"properties");
     Common::WStringLiteral const Constants::instanceCount(L"instanceCount");
     Common::WStringLiteral const Constants::containerRegistryServer(L"server");
@@ -757,9 +769,27 @@ namespace ServiceModel
     Common::WStringLiteral const Constants::volumeDescriptionForImageBuilder(L"volumeDescription");
     Common::WStringLiteral const Constants::volumeParameters(L"parameters");
     Common::WStringLiteral const Constants::osType(L"osType");
+    Common::WStringLiteral const Constants::doNotPersistState(L"doNotPersistState");
+    Common::WStringLiteral const Constants::gatewayName(L"gatewayName");
+
+    Common::WStringLiteral const Constants::autoScalingPolicies(L"autoScalingPolicies");
+    Common::WStringLiteral const Constants::autoScalingName(L"name");
+    Common::WStringLiteral const Constants::autoScalingTrigger(L"trigger");
+    Common::WStringLiteral const Constants::autoScalingTriggerKind(L"kind");
+    Common::WStringLiteral const Constants::autoScalingMetric(L"metric");
+    Common::WStringLiteral const Constants::autoScalingMetricKind(L"kind");
+    Common::WStringLiteral const Constants::autoScalingMetricName(L"name");
+    Common::WStringLiteral const Constants::autoScalingLowerLoadThreshold(L"lowerLoadThreshold");
+    Common::WStringLiteral const Constants::autoScalingUpperLoadThreshold(L"upperLoadThreshold");
+    Common::WStringLiteral const Constants::autoScaleIntervalInSeconds(L"scaleIntervalInSeconds");
+    Common::WStringLiteral const Constants::autoScalingMechanism(L"mechanism");
+    Common::WStringLiteral const Constants::autoScalingMechanismKind(L"kind");
+    Common::WStringLiteral const Constants::autoScalingMinInstanceCount(L"minCount");
+    Common::WStringLiteral const Constants::autoScalingMaxInstanceCount(L"maxCount");
+    Common::WStringLiteral const Constants::autoScaleIncrement(L"scaleIncrement");
 
     //
-    // In the mesh environment we use the given service name and application name to generate the dns name. The behavior of dns queries 
+    // In the mesh environment we use the given service name and application name to generate the dns name. The behavior of dns queries
     // across operating system's when 'dots' are present in the dns names is not consistent. So we prevent users from specifying 'dot' in
     // the service name and application name.
     // Eg: Linux behavior can be read here(https://linux.die.net/man/5/resolv.conf).
@@ -781,6 +811,26 @@ namespace ServiceModel
         v->push_back(L"V4");
         return v;
     } ();
+
+    //
+    // Container Network
+    //
+    Common::WStringLiteral const Constants::NetworkType(L"NetworkType");
+    Common::WStringLiteral const Constants::NetworkTypeCamelCase(L"networkType");
+    Common::WStringLiteral const Constants::NetworkName(L"NetworkName");
+    Common::WStringLiteral const Constants::NetworkNameCamelCase(L"networkName");
+    Common::WStringLiteral const Constants::NetworkAddressPrefix(L"NetworkAddressPrefix");
+    Common::WStringLiteral const Constants::NetworkAddressPrefixCamelCase(L"networkAddressPrefix");
+    Common::WStringLiteral const Constants::NetworkStatus(L"NetworkStatus");
+    Common::WStringLiteral const Constants::NetworkDescription(L"NetworkDescription");
+    Common::WStringLiteral const Constants::CodePackageVersion(L"CodePackageVersion");
+    Common::WStringLiteral const Constants::ContainerAddress(L"ContainerAddress");
+    Common::WStringLiteral const Constants::ContainerId(L"ContainerId");
+    Common::WStringLiteral const Constants::ContainerNetworkPolicies(L"ContainerNetworkPolicies");
+    Common::WStringLiteral const Constants::NetworkRef(L"NetworkRef");
+    Common::WStringLiteral const Constants::EndpointBindings(L"EndpointBindings");
+    Common::WStringLiteral const Constants::EndpointRef(L"EndpointRef");
+    Common::WStringLiteral const Constants::endpointRefsCamelCase(L"endpointRefs");
 
     //
     // ContinuationToken Constants

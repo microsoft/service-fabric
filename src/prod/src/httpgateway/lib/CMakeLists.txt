@@ -7,6 +7,7 @@ set( LINUX_SOURCES
     ../Constants.cpp                       
     ../ComposeDeploymentsHandler.cpp
     ../VolumesHandler.cpp
+    ../GatewaysResourceHandler.cpp
     ../ErrorBody.cpp
     ../FabricClientWrapper.cpp             
     ../FabricUpgradeProgress.cpp         
@@ -24,12 +25,14 @@ set( LINUX_SOURCES
     ../HttpServer.cpp                             
     ../HttpServer.CreateAndOpenAsyncOperation.cpp 
     ../imagestorehandler.cpp
-    ../HttpServer.OpenAsyncOperation.cpp          
+    ../HttpServer.OpenAsyncOperation.cpp   
+    ../NetworksHandler.cpp     
     ../NodesHandler.cpp
     ../RequestHandlerBase.cpp
     ../RequestHandlerBase.HandlerAsyncOperation.cpp
     ../stdafx.cpp
     ../UriArgumentParser.cpp
+    ../SecretsResourceHandler.cpp
     ../InvokeQuorumLossProgress.cpp
     ../InvokeDataLossProgress.cpp
     ../RestartPartitionProgress.cpp

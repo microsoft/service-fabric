@@ -15,7 +15,9 @@ using namespace std;
 using namespace Common;
 using namespace Reliability::LoadBalancingComponent;
 
-PlacementReplica::PlacementReplica(size_t index, ReplicaRole::Enum role)
+PlacementReplica::PlacementReplica(size_t index,
+    ReplicaRole::Enum role,
+    bool canBeThrottled)
     : index_(index),
     partitionEntry_(nullptr),
     role_(role),
@@ -27,7 +29,8 @@ PlacementReplica::PlacementReplica(size_t index, ReplicaRole::Enum role)
     isMoveInProgress_(false),
     isToBeDropped_(false),
     isInUpgrade_(false),
-    isSingletonReplicaMovableDuringUpgrade_(true)
+    isSingletonReplicaMovableDuringUpgrade_(true),
+    canBeThrottled_(canBeThrottled)
 {
 }
 
@@ -42,7 +45,8 @@ PlacementReplica::PlacementReplica(
     bool isMoveInProgress,
     bool isToBeDropped,
     bool isInUpgrade,
-    bool isSingletonReplicaMovableDuringUpgrade)
+    bool isSingletonReplicaMovableDuringUpgrade,
+    bool canBeThrottled)
     : index_(index),
     partitionEntry_(nullptr),
     role_(role),
@@ -54,7 +58,8 @@ PlacementReplica::PlacementReplica(
     isMoveInProgress_(isMoveInProgress),
     isToBeDropped_(isToBeDropped),
     isInUpgrade_(isInUpgrade),
-    isSingletonReplicaMovableDuringUpgrade_(isSingletonReplicaMovableDuringUpgrade)
+    isSingletonReplicaMovableDuringUpgrade_(isSingletonReplicaMovableDuringUpgrade),
+    canBeThrottled_(canBeThrottled)
 {
 }
 

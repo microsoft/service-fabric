@@ -8,6 +8,9 @@ add_custom_target(runtimedeb
     COMMAND cp -R ${FABRIC_DROP_DIR}/tools/. ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/tools/.
     COMMAND cp -R ${Linux_Setup_Dir}/runtime/scripts/servicefabric.service ${Runtime_Deb_Folder}/usr/share/servicefabric/scripts/
     COMMAND cp -R ${Linux_Setup_Dir}/runtime/scripts/servicefabricupdater.service ${Runtime_Deb_Folder}/usr/share/servicefabric/scripts/
+    COMMAND mkdir -p ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/AddonServices
+    COMMAND cp -R ${FABRIC_DROP_DIR}/../coreclr/bin/BlockStore/VolumeDriver/ubuntu.16.04-x64 ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/AddonServices/ServiceFabricVolumeDriver
+    COMMAND cp -R ${FABRIC_DROP_DIR}/../coreclr/bin/VolumePluginDrop/ubuntu.16.04-x64/AzureFiles ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/AddonServices/AzureFilesVolumePlugin    
 
     COMMAND strip ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/FabricHost
     COMMAND strip ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/Fabric/Fabric.Code/Fabric
@@ -33,11 +36,19 @@ add_custom_target(runtimedeb
     COMMAND ${Linux_Setup_Dir}/debian/helpers/writeeula_to_templates.pl ${Runtime_Deb_Folder}/DEBIAN/templates.template ${Linux_Setup_Dir}/crossplatsetup/runtime/copyright_runtime_deb REPLACE_COPYRIGHT_BUILDTIME > ${Runtime_Deb_Folder}/DEBIAN/templates
     COMMAND rm -f ${Runtime_Deb_Folder}/DEBIAN/templates.template
 
+    #[[ Write upgrade script to debian control data so it can be promptly extracted (perf optimization) as part of upgrade. This enables single-phase upgrade. ]]
+    #[[ Old version naming formats have to be duplicated in the new deb such that new version can be found using old Hosting code. ]]
+    #[[ New version format is added in cases of breaking changes in the upgrade process where we need to use the new logic for downgrade/rollback. ]]
+    COMMAND cp ${FABRIC_DROP_DIR}/bin/doupgrade.sh ${Runtime_Deb_Folder}/DEBIAN/meta_doupgrade.sh
+    COMMAND cp ${FABRIC_DROP_DIR}/bin/doupgrade.sh ${Runtime_Deb_Folder}/DEBIAN/meta_doupgrade.v2.sh
+
     COMMAND chmod 0755 ${Runtime_Deb_Folder}/DEBIAN/postinst
     COMMAND chmod 0755 ${Runtime_Deb_Folder}/DEBIAN/preinst
     COMMAND chmod 0755 ${Runtime_Deb_Folder}/DEBIAN/postrm
     COMMAND chmod 0755 ${Runtime_Deb_Folder}/DEBIAN/prerm
     COMMAND chmod 0755 ${Runtime_Deb_Folder}/DEBIAN/config
+    COMMAND chmod 0755 ${Runtime_Deb_Folder}/DEBIAN/meta_doupgrade.sh
+    COMMAND chmod 0755 ${Runtime_Deb_Folder}/DEBIAN/meta_doupgrade.v2.sh
     COMMAND dpkg-deb --build ${Runtime_Deb_Folder}
     )
 

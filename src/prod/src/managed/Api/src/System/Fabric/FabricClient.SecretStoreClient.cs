@@ -153,6 +153,48 @@ namespace System.Fabric
             }
 
             #endregion
+
+            #region GetSecretVersionsAsync()
+
+            public Task<SecretReference[]> GetSecretVersionsAsync(
+                SecretReference[] secretReferences,
+                TimeSpan timeout,
+                CancellationToken cancellationToken)
+            {
+                this.fabricClient.ThrowIfDisposed();
+
+                return Utility.WrapNativeAsyncInvokeInMTA(
+                   (callback) => this.GetSecretVersionsAsyncBegin(
+                       secretReferences,
+                       timeout,
+                       callback),
+                   this.GetSecretVersionsAsyncEnd,
+                   cancellationToken,
+                   "SecretStoreClient.GetSecretVersionsAsync");
+            }
+
+            private NativeCommon.IFabricAsyncOperationContext GetSecretVersionsAsyncBegin(
+                SecretReference[] secretReferences,
+                TimeSpan timeout,
+                NativeCommon.IFabricAsyncOperationCallback callback)
+            {
+                using (var pin = new PinCollection())
+                {
+                    return this.nativeClient.BeginGetSecretVersions(
+                        SecretReference.ToNativeArray(pin, secretReferences),
+                        Utility.ToMilliseconds(timeout, "timeout"),
+                        callback);
+                }
+            }
+
+            private SecretReference[] GetSecretVersionsAsyncEnd(NativeCommon.IFabricAsyncOperationContext context)
+            {
+                var result = this.nativeClient.EndGetSecretVersions(context);
+
+                return SecretReference.FromNativeArray(result.get_SecretReferences());
+            }
+
+            #endregion
         }
     }
 }

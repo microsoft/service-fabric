@@ -144,6 +144,7 @@ IpcServer::TransportUnit::TransportUnit(
     transport_->DisableSecureSessionExpiration();
     transport_->DisableThrottle();
     transport_->SetMaxIncomingFrameSize(TransportConfig::GetConfig().IpcMaxMessageSize);
+    transport_->SetKeepAliveTimeout(TransportConfig::GetConfig().IpcKeepaliveIdleTime);
 
     demuxer_.SetReplyHandler(requestReply_);
 

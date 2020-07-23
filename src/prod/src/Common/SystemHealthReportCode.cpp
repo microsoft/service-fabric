@@ -57,6 +57,7 @@ namespace Common
             case FM_NodeDeactivateStuck: w << "FM_NodeDeactivateStuck"; return;
             case FM_RebuildStuck: w << "FM_RebuildStuck"; return;
             case FM_RebuildHealthy: w << "FM_RebuildHealthy"; return;
+            case FM_SeedNodeDown: w << "FM_SeedNodeDown"; return;
             case FMM_PartitionHealthy: w << "FMM_PartitionHealthy"; return;
             case FMM_PartitionQuorumLoss: w << "FMM_PartitionQuorumLoss"; return;
             case FMM_PartitionBuildStuckBelowMinReplicaCount: w << "FMM_PartitionBuildStuckBelowMinReplicaCount"; return;

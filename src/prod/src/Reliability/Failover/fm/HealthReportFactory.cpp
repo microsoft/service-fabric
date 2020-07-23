@@ -48,7 +48,13 @@ HealthReport HealthReportFactory::GenerateClearRebuildStuckHealthReport()
     return HealthReport::CreateSystemRemoveHealthReport(healthReportCode, EntityHealthInformation::CreateClusterEntityHealthInformation(), L"");
 }
 
-HealthReport HealthReportFactory::GenerateNodeInfoHealthReport(NodeInfoSPtr nodeInfo, bool isUpgrade)
+bool HealthReportFactory::ShouldIncludeDocumentationUrl(SystemHealthReportCode::Enum reportCode)
+{
+    return ((reportCode == SystemHealthReportCode::FM_NodeDown) ||
+        (reportCode == SystemHealthReportCode::FM_SeedNodeDown));
+}
+
+HealthReport HealthReportFactory::GenerateNodeInfoHealthReport(NodeInfoSPtr nodeInfo, bool isSeedNode, bool isUpgrade)
 {
     auto nodeEntityInfo = EntityHealthInformation::CreateNodeEntityHealthInformation(
         nodeInfo->Id.IdValue,
@@ -66,16 +72,22 @@ HealthReport HealthReportFactory::GenerateNodeInfoHealthReport(NodeInfoSPtr node
     AttributeList attributeList;
     PopulateNodeAttributeList(attributeList, nodeInfo);
     
-    auto reportCode = nodeInfo->IsUp ? SystemHealthReportCode::FM_NodeUp : (isUpgrade ? SystemHealthReportCode::FM_NodeDownDuringUpgrade : SystemHealthReportCode::FM_NodeDown);
+    auto reportCode = nodeInfo->IsUp ?
+        SystemHealthReportCode::FM_NodeUp :
+        (isUpgrade ?
+            SystemHealthReportCode::FM_NodeDownDuringUpgrade :
+            isSeedNode ? SystemHealthReportCode::FM_SeedNodeDown : SystemHealthReportCode::FM_NodeDown);
     return HealthReport::CreateSystemHealthReport(
         reportCode,
         move(nodeEntityInfo),
-        L"" /*extraDescription*/,
+        ShouldIncludeDocumentationUrl(reportCode) ?
+          documentationUrl_ :
+          L"" /*extraDescription*/,
         nodeInfo->HealthSequence,
         move(attributeList));
 }
 
-HealthReport HealthReportFactory::GenerateNodeDeactivationHealthReport(NodeInfoSPtr nodeInfo, bool isDeactivationComplete)
+HealthReport HealthReportFactory::GenerateNodeDeactivationHealthReport(NodeInfoSPtr nodeInfo, bool isSeedNode, bool isDeactivationComplete)
 {
     FABRIC_SEQUENCE_NUMBER sequence = (isFMM_ ? SequenceNumber::GetNext() : nodeInfo->HealthSequence);
     TimeSpan ttl = (isFMM_ ? TimeSpan::FromTicks(stateTraceIntervalEntry_.GetValue().Ticks * 3) : TimeSpan::MaxValue);
@@ -98,7 +110,9 @@ HealthReport HealthReportFactory::GenerateNodeDeactivationHealthReport(NodeInfoS
                 sequence);
         }
 
-        reportCode = nodeInfo->IsUp ? SystemHealthReportCode::FM_NodeUp : SystemHealthReportCode::FM_NodeDown;
+        reportCode = nodeInfo->IsUp ?
+            SystemHealthReportCode::FM_NodeUp :
+            isSeedNode ? SystemHealthReportCode::FM_SeedNodeDown : SystemHealthReportCode::FM_NodeDown;
     }
     else
     {
@@ -111,7 +125,9 @@ HealthReport HealthReportFactory::GenerateNodeDeactivationHealthReport(NodeInfoS
     return HealthReport::CreateSystemHealthReport(
         reportCode,
         move(nodeEntityInfo),
-        wstring(),
+        ShouldIncludeDocumentationUrl(reportCode) ?
+          documentationUrl_ :
+          L"" /*extraDescription*/,
         sequence,
         ttl,
         move(attributeList));

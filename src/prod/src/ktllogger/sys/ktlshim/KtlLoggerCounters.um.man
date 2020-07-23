@@ -1,0 +1,185 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes'?>
+<instrumentationManifest
+    xmlns="http://schemas.microsoft.com/win/2004/08/events"
+    xmlns:trace="http://schemas.microsoft.com/win/2004/08/events/trace"
+    xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://schemas.microsoft.com/win/2004/08/events eventman.xsd"
+    >
+  <instrumentation>
+    <counters
+        xmlns="http://schemas.microsoft.com/win/2005/12/counters"
+        xmlns:auto-ns1="http://schemas.microsoft.com/win/2004/08/events"
+        schemaVersion="1.1"
+        >
+            <provider callback            = "custom"
+                      applicationIdentity = "KtlLogUser.Test.Dll"
+                      providerName        = "KtlLoggerUMCounters"
+                      providerType        = "userMode"
+                      symbol              = "KTLLogger"
+                      providerGuid        = "{A1E3BBB1-1E5D-4e95-9E79-952AEF1206C3}">
+
+              <counterSet guid        = "{CA572CEF-72B1-4933-8449-F51FB094BC3B}"
+                          uri         = "Microsoft.KtlLoggerUM.LogStream"
+                          name        = "KTL Log Stream UM"
+                          description = "This counter set relates to a physical log stream instance. The instance name corresponds to the GUID that represents the log stream."
+                          symbol      = "KtlLoggerUMLogStream"
+                          instances   = "multiple">
+
+                <structs>
+                  <struct name="KtlLoggerLogStream" type="KTL_LOG_STREAM"/>
+                </structs>
+
+                <counter id           = "1"
+                       uri          = "Microsoft.KtlLogger.LogStream.ApplicationBytesWritten"
+                       name         = "Application Write Bytes/sec"
+                       field        = "ApplicationBytesWrittenPerSecond"
+                       description  = "This counter displays the number of bytes the application has written to a log stream per second."
+                       type         = "perf_counter_bulk_count"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "2"
+                       uri          = "Microsoft.KtlLogger.LogStream.DedicatedBytesWritten"
+                       name         = "Dedicated Writes Bytes/sec"
+                       field        = "DedicatedBytesWrittenPerSecond"
+                       description  = "This counter displays the number of bytes written to the dedicated log stream."
+                       type         = "perf_counter_bulk_count"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "3"
+                       uri          = "Microsoft.KtlLogger.LogStream.SharedBytesWritten"
+                       name         = "Shared Writes/sec"
+                       field        = "SharedBytesWrittenPerSecond"
+                       description  = "This counter displays the number of bytes written to the shared log stream."
+                       type         = "perf_counter_bulk_count"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "4"
+                       uri          = "Microsoft.KtlLogger.LogStream.DedicatedLogBacklogLimit"
+                       name         = "Dedicated Log Backlog Limit Bytes"
+                       field        = "DedicatedLogBacklogLimitBytes"
+                       description  = "This counter displays the number of bytes that is the current allowed limit for the backlog of writes to the dedicated log stream before throttling application writes."
+                       type         = "perf_counter_large_rawcount"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "5"
+                       uri          = "Microsoft.KtlLogger.LogStream.DedicatedLogBacklog"
+                       name         = "Dedicated Log Backlog Bytes"
+                       field        = "DedicatedLogBacklogBytes"
+                       description  = "This counter displays the number of bytes that is pending being written to the dedicated log stream."
+                       type         = "perf_counter_large_rawcount"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "6"
+                       uri          = "Microsoft.KtlLogger.LogStream.SharedLogQuota"
+                       name         = "SharedLog Quota Bytes"
+                       field        = "SharedLogQuota"
+                       description  = "This counter displays the current allowed limit for the number of bytes related to this log stream that can be present in the shared log stream before throttling application writes."
+                       type         = "perf_counter_large_rawcount"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "7"
+                       uri          = "Microsoft.KtlLogger.LogStream.SharedLogQuotaInUse"
+                       name         = "SharedLog In Use Bytes"
+                       field        = "SharedLogQuotaInUse"
+                       description  = "This counter displays the number of bytes related to this log stream currently present in the shared log stream."
+                       type         = "perf_counter_large_rawcount"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "8"
+                       uri          = "Microsoft.KtlLogger.LogStream.SharedWriteLatencyTime"
+                       name         = "SharedLog Write Latency"
+                       field        = "SharedLogWriteLatency"
+                       description  = "This counter displays the number of 100ns intervals that is the average latency when writing to the shared log."
+                       type         = "perf_counter_large_rawcount"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "9"
+                       uri          = "Microsoft.KtlLogger.LogStream.DedicatedWriteLatencyTime"
+                       name         = "DedicatedLog Write Latency"
+                       field        = "DedicatedLogWriteLatency"
+                       description  = "This counter displays the number of 100ns intervals that is the average latency when writing to the dedicated log."
+                       type         = "perf_counter_large_rawcount"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+              </counterSet>
+
+              <counterSet guid        = "{CB2A261E-CDB7-413e-A5DA-1BE3C3DFFF0C}"
+                          uri         = "Microsoft.KtlLoggerUM.LogContainer"
+                          name        = "Ktl Log Container UM"
+                          description = "This counter set relates to a physical log container instance. The name of each instance corresponds to the GUID of the shared log id."
+                          symbol      = "KtlLoggerUMLogContainer"
+                          instances   = "multiple">
+
+                <structs>
+                  <struct name="KtlLoggerLogContainer" type="KTL_LOG_CONTAINER"/>
+                </structs>
+
+                <counter id           = "1"
+                       uri          = "Microsoft.KtlLogger.LogContainer.DedicatedBytesWritten"
+                       name         = "Dedicated Writes Bytes/sec"
+                       field        = "DedicatedBytesWrittenPerSecond"
+                       description  = "This counter displays the number of bytes written to all of the dedicated log streams for the container per second"
+                       type         = "perf_counter_bulk_count"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+                <counter id           = "2"
+                       uri          = "Microsoft.KtlLogger.LogContainer.SharedBytesWritten"
+                       name         = "Shared Writes Bytes/sec"
+                       field        = "SharedBytesWrittenPerSecond"
+                       description  = "This counter displays the number of bytes written to all of the shared log streams for the container per second"
+                       type         = "perf_counter_bulk_count"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+              </counterSet>
+
+              <counterSet guid        = "{FF633C70-DF1B-4c22-BB64-4EBC0568BC38}"
+                          uri         = "Microsoft.KtlLoggerUM.LogManager"
+                          name        = "Ktl Log Manager UM"
+                          description = "This counter set relates to a physical log manager instance"
+                          symbol      = "KtlLoggerUMLogManager"
+                          instances   = "multiple">
+
+                <structs>
+                  <struct name="KtlLoggerLogManager" type="KTL_LOG_MANAGER"/>
+                </structs>
+
+                <counter id           = "1"
+                       uri          = "Microsoft.KtlLogger.Manager.WriteBufferMemoryPoolLimit"
+                       name         = "Write Buffer Memory Pool Limit Bytes"
+                       field        = "WriteBufferMemoryPoolLimit"
+                       description  = "This counter displays the limit for the number of bytes available in the Write Buffer Memory Pool before throttling occurs."
+                       type         = "perf_counter_large_rawcount"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+
+                <counter id           = "2"
+                       uri          = "Microsoft.KtlLogger.Manager.WriteBufferMemoryPoolInUse"
+                       name         = "Write Buffer Memory Pool In Use Bytes"
+                       field        = "WriteBufferMemoryPoolInUse"
+                       description  = "This counter displays the number of bytes in use by the Write Buffer Memory Pool"
+                       type         = "perf_counter_large_rawcount"
+                       detailLevel  = "standard"
+                       >
+                </counter>
+              </counterSet>
+
+            </provider>
+        </counters>
+    </instrumentation>
+</instrumentationManifest>
+
+

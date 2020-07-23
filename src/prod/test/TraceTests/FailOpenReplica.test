@@ -1,0 +1,18 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cleantest
+namingservice 1 5 3
++10
++20
++30
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestStoreServiceType y 1 4
+verify
+
+injectfailure 40 fabric:/test1 service.beginopen
++40
+!pause,300
+!q
+

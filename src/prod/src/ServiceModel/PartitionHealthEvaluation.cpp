@@ -85,7 +85,6 @@ Common::ErrorCode PartitionHealthEvaluation::FromPublicApi(
 void PartitionHealthEvaluation::SetDescription()
 {
     description_ = wformatString(
-        "{0} PartitionId='{1}', AggregatedHealthState='{2}'.",
         HMResource::GetResources().HealthEvaluationUnhealthyPartition,
         partitionId_,
         aggregatedHealthState_);

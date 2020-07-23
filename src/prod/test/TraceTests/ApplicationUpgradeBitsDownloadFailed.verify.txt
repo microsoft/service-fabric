@@ -1,0 +1,43 @@
+###Upgrade for time range 11/13/2014 1:02:13 AM-11/13/2014 1:04:25 AM
+
+TestApp_App0
+Upgrade:
+	Version = 1.1
+	Instance = ###130603141569473826
+	3 upgrade domains have been completed: ud0, ud1, ud2, 
+	1 upgrade domains still pending: ud3, 
+	Current upgrade domain is ud3### and it started at 11/13/2014 1:03:15 AM.
+	CM was waiting for FM to complete.
+
+	Following nodes are stuck:
+	Node Id = 40
+		Node Name = nodeid:40
+		Phase = In Progress (look into RA upgrade traces)
+
+
+	What RA/Hosting were doing:
+	Node Id = 40
+		RA was trying to download
+		Hosting trace does not contain an error or warning.
+
+TestApp_App0
+Rollback:
+	Version = 1.0
+	Instance = ###130603141569473827
+	3 upgrade domains have been completed: ud0, ud1, ud2, 
+	1 upgrade domains still pending: ud3, 
+	Current upgrade domain is ud3### and it started at 11/13/2014 1:04:06 AM.
+	CM was waiting for FM to complete.
+
+	Following nodes are stuck:
+	Node Id = 40
+		Node Name = nodeid:40
+		Phase = In Progress (look into RA upgrade traces)
+
+
+	What RA/Hosting were doing:
+	Node Id = 40
+		RA was trying to download
+		Hosting trace does not contain an error or warning.
+
+

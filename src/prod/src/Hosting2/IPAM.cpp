@@ -115,8 +115,8 @@ void IPAM::OnNewIpamData(FlatIPConfiguration &config)
 
     AcquireExclusiveLock lock(this->lock_);
     {
-        // Traverses the configuration to get gateway ip address.
-        this->gatewayIpAddress_ = this->GetGatewayIpAddressFromConfig(config);
+        // Traverses the configuration to get subnet(CIDR)and gateway ip address.
+        this->GetSubnetAndGatewayIpAddressFromConfig(config, this->subnetCIDR_, this->gatewayIpAddress_);
 
         // Construct the list of IPs from the configuration
         // 
@@ -199,21 +199,18 @@ list<uint> IPAM::GetIpsFromConfig(FlatIPConfiguration &config)
     return ips;
 }
 
-uint IPAM::GetGatewayIpAddressFromConfig(FlatIPConfiguration &config)
+void IPAM::GetSubnetAndGatewayIpAddressFromConfig(FlatIPConfiguration &config, wstring &subnetCIDR, uint &gatewayIp)
 {
-    uint gatewayip = 0;
-
     for (auto & inter : config.Interfaces)
     {
         if (inter->Primary && inter->Subnets.size() > 0)
         {
             auto subnet = inter->Subnets.front();
-            gatewayip = subnet->GatewayIp;
+            gatewayIp = subnet->GatewayIp;
+            subnetCIDR = subnet->SubnetCIDR;
             break;
         }
     }
-
-    return gatewayip;
 }
 
 void IPAM::RemoveGhostIf(wstring const &reservationId)
@@ -247,7 +244,7 @@ wstring IPAM::FormatSetAsWString(unordered_set<wstring> const &entries)
     return ss.str();
 }
 
-ErrorCode IPAM::GetGatewayIpAddress(uint &gatewayIpAddress)
+ErrorCode IPAM::GetSubnetAndGatewayIpAddress(wstring &subnetCIDR, uint &gatewayIpAddress)
 {
     if (!this->initialized_)
     {
@@ -255,6 +252,7 @@ ErrorCode IPAM::GetGatewayIpAddress(uint &gatewayIpAddress)
     }
 
     gatewayIpAddress = this->gatewayIpAddress_;
+    subnetCIDR = this->subnetCIDR_;
 
     return ErrorCode(ErrorCodeValue::Success);
 }

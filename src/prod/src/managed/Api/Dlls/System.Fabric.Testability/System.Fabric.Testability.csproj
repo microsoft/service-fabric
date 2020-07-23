@@ -1,0 +1,813 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_winfabrictest.props" />
+  <PropertyGroup>
+    <ProjectGuid>{A9C6ADD1-3AE4-48BF-BB84-B8E272D1A579}</ProjectGuid>
+    <RootNamespace>System.Fabric.Testability</RootNamespace>
+    <AssemblyName>System.Fabric.Testability</AssemblyName>
+    <AssemblyDescription>Microsoft Azure Service Fabric Testability Subsystem</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationByIdRestRequest.cs">
+      <Link>Client\Requests\GetApplicationByIdRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationNameRequest.cs">
+      <Link>Client\Requests\GetApplicationNameRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServiceByIdRestRequest.cs">
+      <Link>Client\Requests\GetServiceByIdRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServiceNameRequest.cs">
+      <Link>Client\Requests\GetServiceNameRequest.cs</Link>
+    </Compile>
+    <Compile Include="_friends.cs" />
+    <Compile Include="..\..\src\System\Fabric\Testability\UnreliableTransportBehavior.cs">
+      <Link>UnreliableTransportBehavior.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\IRequest.cs">
+      <Link>Client\Requests\IRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Constants.cs">
+      <Link>Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\ApplicationResource.cs">
+      <Link>Client\Structures\ApplicationResource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\ApplicationResourceList.cs">
+      <Link>Client\Structures\ApplicationResourcetList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\CancelData.cs">
+      <Link>Client\Structures\CancelData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\InvokeDataLossData.cs">
+      <Link>Client\Structures\InvokeDataLossData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\InvokeQuorumLossData.cs">
+      <Link>Client\Structures\InvokeQuorumLossData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\RestartPartitionData.cs">
+      <Link>Client\Structures\RestartPartitionData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\ReplicaResource.cs">
+      <Link>Client\Structures\ReplicaResource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\ReplicaResourceList.cs">
+      <Link>Client\Structures\ReplicaResourceList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\ServicePartitionResolutionChangeEventArgs.cs">
+      <Link>Client\Structures\ServicePartitionResolutionChangeEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\ServiceResource.cs">
+      <Link>Client\Structures\ServiceResource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\ServiceResourceList.cs">
+      <Link>Client\Structures\ServiceResourceList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\StartCallDataBase.cs">
+      <Link>Client\Structures\StartCallDataBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\TestServicePartitionInfo.cs">
+      <Link>Client\Structures\TestServicePartitionInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricNameEnumerationResult.cs">
+      <Link>Client\Structures\WinFabricNameEnumerationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricPropertyBatchResult.cs">
+      <Link>Client\Structures\WinFabricPropertyBatchResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricPropertyEnumerationResult.cs">
+      <Link>Client\Structures\WinFabricPropertyEnumerationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricServiceResolutionChangeEventArgs.cs">
+      <Link>Client\Structures\WinFabricServiceResolutionChangeEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricCreateServiceFromTemplate.cs">
+      <Link>Client\Structures\WinFabricCreateServiceFromTemplate.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricManifestResult.cs">
+      <Link>Client\Structures\WinFabricManifestResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricProvisionFabric.cs">
+      <Link>Client\Structures\WinFabricProvisionFabric.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricUnprovisionApplication.cs">
+      <Link>Client\Structures\WinFabricUnprovisionApplication.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricCopyImageStoreContentDescription.cs">
+      <Link>Client\Structures\WinFabricCopyImageStoreContentDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricUnprovisionFabric.cs">
+      <Link>Client\Structures\WinFabricUnprovisionFabric.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricServicePackageSharingType.cs">
+      <Link>Client\Structures\WinFabricServicePackageSharingType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTargetDescription.cs">
+      <Link>Client\Structures\WinFabricRepairTargetDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTask.cs">
+      <Link>Client\Structures\WinFabricRepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTaskState.cs">
+      <Link>Client\Structures\WinFabricRepairTaskState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTaskFlags.cs">
+      <Link>Client\Structures\WinFabricRepairTaskFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTaskResult.cs">
+      <Link>Client\Structures\WinFabricRepairTaskResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairImpactDescription.cs">
+      <Link>Client\Structures\WinFabricRepairImpactDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricServiceModelExtensions.cs">
+      <Link>Client\Structures\WinFabricServiceModelExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricNodeControlData.cs">
+      <Link>Client\Structures\WinFabricNodeControlData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRestartNodeControlData.cs">
+      <Link>Client\Structures\WinFabricRestartNodeControlData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricStartNodeData.cs">
+      <Link>Client\Structures\WinFabricStartNodeData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Structures\WinFabricCodePackageControlData.cs">
+      <Link>Client\Structures\WinFabricCodePackageControlData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ActivateNodeRequest.cs">
+      <Link>Client\Requests\ActivateNodeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CopyImageStoreContentRequest.cs">
+      <Link>Client\Requests\CopyImageStoreContentRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ListUploadSessionRequest.cs">
+      <Link>Client\Requests\ListUploadSessionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeleteUploadSessionRequest.cs">
+      <Link>Client\Requests\DeleteUploadSessionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CommitUploadSessionRequest.cs">
+      <Link>Client\Requests\CommitUploadSessionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UploadChunkRequest.cs">
+      <Link>Client\Requests\UploadChunkRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\AddUnreliableTransportBehaviorRequest.cs">
+      <Link>Client\Requests\AddUnreliableTransportBehaviorRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\AddUnreliableLeaseBehaviorRequest.cs">
+      <Link>Client\Requests\AddUnreliableLeaseBehaviorRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CancelTestCommandRequest.cs">
+      <Link>Client\Requests\CancelTestCommandRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RemoveApplicationPackageRequest.cs">
+      <Link>Client\Requests\RemoveApplicationPackageRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CopyApplicationPackageRequest.cs">
+      <Link>Client\Requests\CopyApplicationPackageRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CopyClusterPackageRequest.cs">
+      <Link>Client\Requests\CopyClusterPackageRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CopyWindowsFabricServicePackageToNodeRequest.cs">
+      <Link>Client\Requests\CopyWindowsFabricServicePackageToNodeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CreateApplicationRequest.cs">
+      <Link>Client\Requests\CreateApplicationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CreateBackupPolicyRequest.cs">
+      <Link>Client\Requests\CreateBackupPolicyRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CreateNameRequest.cs">
+      <Link>Client\Requests\CreateNameRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CreateServiceFromTemplateRequest.cs">
+      <Link>Client\Requests\CreateServiceFromTemplateRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CreateServiceGroupRequest.cs">
+      <Link>Client\Requests\CreateServiceGroupRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CreateServiceRequest.cs">
+      <Link>Client\Requests\CreateServiceRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ConfigurationUpgradeFabricRequest.cs">
+      <Link>Client\Requests\ConfigurationUpgradeFabricRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeactivateNodeInitialRequest.cs">
+      <Link>Client\Requests\DeactivateNodeInitialRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeactivateNodeRequest.cs">
+      <Link>Client\Requests\DeactivateNodeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeleteApplicationRequest.cs">
+      <Link>Client\Requests\DeleteApplicationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeleteApplicationResourceRequest.cs">
+      <Link>Client\Requests\DeleteApplicationResourceRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\PutApplicationResourceRequest.cs">
+      <Link>Client\Requests\PutApplicationResourceRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ListImageStoreContentRequest.cs">
+      <Link>Client\Requests\ListImageStoreContentRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ListImageStorePagedContentRequest.cs">
+      <Link>Client\Requests\ListImageStorePagedContentRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeleteImageStoreContentRequest.cs">
+      <Link>Client\Requests\DeleteImageStoreContentRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeleteNameRequest.cs">
+      <Link>Client\Requests\DeleteNameRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeletePropertyRequest.cs">
+      <Link>Client\Requests\DeletePropertyRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeleteServiceGroupRequest.cs">
+      <Link>Client\Requests\DeleteServiceGroupRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DeleteServiceRequest.cs">
+      <Link>Client\Requests\DeleteServiceRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\EnableBackupProtectionRequest.cs">
+      <Link>Client\Requests\EnableBackupProtectionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\EnumerateSubNamesRequest.cs">
+      <Link>Client\Requests\EnumerateSubNamesRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\FabricRequest.cs">
+      <Link>Client\Requests\FabricRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\FabricRequestExtensions.cs">
+      <Link>Client\Requests\FabricRequestExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationHealthRequest.cs">
+      <Link>Client\Requests\GetApplicationHealthRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationListRequest.cs">
+      <Link>Client\Requests\GetApplicationListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UpdateApplicationRequest.cs">
+      <Link>Client\Requests\UpdateApplicationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationLoadRequest.cs">
+      <Link>Client\Requests\GetApplicationLoadRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationManifestRequest.cs">
+      <Link>Client\Requests\GetApplicationManifestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationRequest.cs">
+      <Link>Client\Requests\GetApplicationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationTypeListRequest.cs">
+      <Link>Client\Requests\GetApplicationTypeListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationTypePagedListRequest.cs">
+      <Link>Client\Requests\GetApplicationTypePagedListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedApplicationPagedListRequest.cs">
+      <Link>Client\Requests\GetDeployedApplicationPagedListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetClusterVersionRequest.cs">
+      <Link>Client\Requests\GetClusterVersionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationTypeRequest.cs">
+      <Link>Client\Requests\GetApplicationTypeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationResourceRequest.cs">
+      <Link>Client\Requests\GetApplicationResourceRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationUpgradeProgressRequest.cs">
+      <Link>Client\Requests\GetApplicationUpgradeProgressRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetClusterManifestRequest.cs">
+      <Link>Client\Requests\GetClusterManifestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetClusterLoadRequest.cs">
+      <Link>Client\Requests\GetClusterLoadRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetClusterHealthRequest.cs">
+      <Link>Client\Requests\GetClusterHealthRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetClusterHealthChunkRequest.cs">
+      <Link>Client\Requests\GetClusterHealthChunkRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedApplicationListRequest.cs">
+      <Link>Client\Requests\GetDeployedApplicationListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedApplicationHealthRequest.cs">
+      <Link>Client\Requests\GetDeployedApplicationHealthRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedServicePackageHealthRequest.cs">
+      <Link>Client\Requests\GetDeployedServicePackageHealthRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedCodePackageListRequest.cs">
+      <Link>Client\Requests\GetDeployedCodePackageListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedReplicaListRequest.cs">
+      <Link>Client\Requests\GetDeployedReplicaListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedServicePackageListRequest.cs">
+      <Link>Client\Requests\GetDeployedServicePackageListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedServiceTypeListRequest.cs">
+      <Link>Client\Requests\GetDeployedServiceTypeListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetFabricUpgradeProgressRequest.cs">
+      <Link>Client\Requests\GetFabricUpgradeProgressRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetFabricConfigUpgradeProgressRequest.cs">
+      <Link>Client\Requests\GetFabricConfigUpgradeProgressRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetFabricConfigurationRequest.cs">
+      <Link>Client\Requests\GetFabricConfigurationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetUpgradeOrchestrationServiceStateRequest.cs">
+      <Link>Client\Requests\GetUpgradeOrchestrationServiceStateRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\SetUpgradeOrchestrationServiceStateRequest.cs">
+      <Link>Client\Requests\SetUpgradeOrchestrationServiceStateRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetNodeHealthRequest.cs">
+      <Link>Client\Requests\GetNodeHealthRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetNodeListRequest.cs">
+      <Link>Client\Requests\GetNodeListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetNodeLoadRequest.cs">
+      <Link>Client\Requests\GetNodeLoadRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetNodeRequest.cs">
+      <Link>Client\Requests\GetNodeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetNodeTransitionProgressRequest.cs">
+      <Link>Client\Requests\GetNodeTransitionProgressRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionHealthRequest.cs">
+      <Link>Client\Requests\GetPartitionHealthRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionListRequest.cs">
+      <Link>Client\Requests\GetPartitionListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionListRestRequest.cs">
+      <Link>Client\Requests\GetPartitionListRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionLoadRequest.cs">
+      <Link>Client\Requests\GetPartitionLoadRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionDataLossProgressRequest.cs">
+      <Link>Client\Requests\GetPartitionDataLossProgressRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionDataLossProgressRestRequest.cs">
+      <Link>Client\Requests\GetPartitionDataLossProgressRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionQuorumLossProgressRequest.cs">
+      <Link>Client\Requests\GetPartitionQuorumLossProgressRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionQuorumLossProgressRestRequest.cs">
+      <Link>Client\Requests\GetPartitionQuorumLossProgressRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionRestartProgressRequest.cs">
+      <Link>Client\Requests\GetPartitionRestartProgressRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionRestartProgressRestRequest.cs">
+      <Link>Client\Requests\GetPartitionRestartProgressRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServiceResourceRequest.cs">
+      <Link>Client\Requests\GetServiceResourceRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartChaosRequest.cs">
+      <Link>Client\Requests\StartChaosRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetChaosEventsSegmentRequest.cs">
+      <Link>Client\Requests\GetChaosEventsSegmentRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetChaosReportRequest.cs">
+      <Link>Client\Requests\GetChaosReportRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StopChaosRequest.cs">
+      <Link>Client\Requests\StopChaosRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetChaosDescriptionRequest.cs">
+      <Link>Client\Requests\GetChaosDescriptionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\SetChaosScheduleDescriptionRequest.cs">
+      <Link>Client\Requests\SetChaosScheduleDescriptionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetChaosScheduleDescriptionRequest.cs">
+      <Link>Client\Requests\GetChaosScheduleDescriptionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetPropertyRequest.cs">
+      <Link>Client\Requests\GetPropertyRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetReplicaHealthRequest.cs">
+      <Link>Client\Requests\GetReplicaHealthRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetReplicaListRequest.cs">
+      <Link>Client\Requests\GetReplicaListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetReplicaListRestRequest.cs">
+      <Link>Client\Requests\GetReplicaListRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetReplicaLoadRequest.cs">
+      <Link>Client\Requests\GetReplicaLoadRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServiceDescriptionRequest.cs">
+      <Link>Client\Requests\GetServiceDescriptionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServiceHealthRequest.cs">
+      <Link>Client\Requests\GetServiceHealthRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServiceListRequest.cs">
+      <Link>Client\Requests\GetServiceListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServiceManifestRequest.cs">
+      <Link>Client\Requests\GetServiceManifestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServicePartitionReplicaRequest.cs">
+      <Link>Client\Requests\GetServicePartitionReplicaRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServicePartitionRequest.cs">
+      <Link>Client\Requests\GetServicePartitionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetServiceTypeListRequest.cs">
+      <Link>Client\Requests\GetServiceTypeListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetSystemServicesListRequest.cs">
+      <Link>Client\Requests\GetSystemServicesListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetTestCommandStatusListRequest.cs">
+      <Link>Client\Requests\GetTestCommandStatusListRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\InvokeEncryptSecretRequest.cs">
+      <Link>Client\Requests\InvokeEncryptSecretRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\MoveNextApplicationUpgradeDomainRequest.cs">
+      <Link>Client\Requests\MoveNextApplicationUpgradeDomainRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\MoveNextDomainRequest.cs">
+      <Link>Client\Requests\MoveNextDomainRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\MoveNextFabricUpgradeDomainRequest.cs">
+      <Link>Client\Requests\MoveNextFabricUpgradeDomainRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\NewNodeConfigurationRequest.cs">
+      <Link>Client\Requests\NewNodeConfigurationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\NodeControlRequest.cs">
+      <Link>Client\Requests\NodeControlRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ProvisionApplicationRequest.cs">
+      <Link>Client\Requests\ProvisionApplicationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ProvisionFabricRequest.cs">
+      <Link>Client\Requests\ProvisionFabricRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\PutCustomPropertyRequest.cs">
+      <Link>Client\Requests\PutCustomPropertyRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\PutPropertyRequest.cs">
+      <Link>Client\Requests\PutPropertyRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RecoverPartitionsRequest.cs">
+      <Link>Client\Requests\RecoverPartitionsRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RecoverServicePartitionRequest.cs">
+      <Link>Client\Requests\RecoverServicePartitionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RecoverSystemPartitionRequest.cs">
+      <Link>Client\Requests\RecoverSystemPartitionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RemoveNodeStateRequest.cs">
+      <Link>Client\Requests\RemoveNodeStateRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ResolveServiceRequest.cs">
+      <Link>Client\Requests\ResolveServiceRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RestartCodePackageRequest.cs">
+      <Link>Client\Requests\RestartCodePackageRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RestartNodeRequest.cs">
+      <Link>Client\Requests\RestartNodeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ReplicaControlRequest.cs">
+      <Link>Client\Requests\ReplicaControlRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RestartReplicaRequest.cs">
+      <Link>Client\Requests\RestartReplicaRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RemoveReplicaRequest.cs">
+      <Link>Client\Requests\RemoveReplicaRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RemoveUnreliableTransportBehaviorRequest.cs">
+      <Link>Client\Requests\RemoveUnreliableTransportBehaviorRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RemoveUnreliableLeaseBehaviorRequest.cs">
+      <Link>Client\Requests\RemoveUnreliableLeaseBehaviorRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartNodeRequest.cs">
+      <Link>Client\Requests\StartNodeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartNodeTransitionRequest.cs">
+      <Link>Client\Requests\StartNodeTransitionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionDataLossRequest.cs">
+      <Link>Client\Requests\StartPartitionDataLossRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionDataLossRestRequest.cs">
+      <Link>Client\Requests\StartPartitionDataLossRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionQuorumLossRequest.cs">
+      <Link>Client\Requests\StartPartitionQuorumLossRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionQuorumLossRestRequest.cs">
+      <Link>Client\Requests\StartPartitionQuorumLossRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionRestartRequest.cs">
+      <Link>Client\Requests\StartPartitionRestartRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionRestartRestRequest.cs">
+      <Link>Client\Requests\StartPartitionRestartRestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\StopNodeRequest.cs">
+      <Link>Client\Requests\StopNodeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\SubmitPropertyBatchRequest.cs">
+      <Link>Client\Requests\SubmitPropertyBatchRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\TestApplicationPackageRequest.cs">
+      <Link>Client\Requests\TestApplicationPackageRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\TestClusterConnectionRequest.cs">
+      <Link>Client\Requests\TestClusterConnectionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\TestClusterManifestRequest.cs">
+      <Link>Client\Requests\TestClusterManifestRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UnprovisionApplicationRequest.cs">
+      <Link>Client\Requests\UnprovisionApplicationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UnprovisionFabricRequest.cs">
+      <Link>Client\Requests\UnprovisionFabricRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UpdateServiceGroupRequest.cs">
+      <Link>Client\Requests\UpdateServiceGroupRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UpdateServiceRequest.cs">
+      <Link>Client\Requests\UpdateServiceRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UpgradeApplicationRequest.cs">
+      <Link>Client\Requests\UpgradeApplicationRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UpgradeFabricRequest.cs">
+      <Link>Client\Requests\UpgradeFabricRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UpdateFabricUpgradeRequest.cs">
+      <Link>Client\Requests\UpdateFabricUpgradeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RegisterServiceNotificationFilterRequest.cs">
+      <Link>Client\Requests\RegisterServiceNotificationFilterRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UnregisterServiceNotificationFilterRequest.cs">
+      <Link>Client\Requests\UnregisterServiceNotificationFilterRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\FabricRequestProcessor.cs">
+      <Link>Client\Requests\FabricRequestProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\IRetryContext.cs">
+      <Link>Client\Requests\IRetryContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\TimeBasedCondition.cs">
+      <Link>Client\Requests\TimeBasedCondition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RetryCountBasedCondition.cs">
+      <Link>Client\Requests\RetryCountBasedCondition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RequestPerformer.cs">
+      <Link>Client\Requests\RequestPerformer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\DelayStrategy.cs">
+      <Link>Client\Requests\DelayStrategy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ConditionalStrategy.cs">
+      <Link>Client\Requests\ConditionalStrategy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\CompositeStrategy.cs">
+      <Link>Client\Requests\CompositeStrategy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\ICondition.cs">
+      <Link>Client\Requests\ICondition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\IStrategy.cs">
+      <Link>Client\Requests\IStrategy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UpdateApplicationUpgradeRequest.cs">
+      <Link>Client\Requests\UpdateApplicationUpgradeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\UpgradeProgressRequest.cs">
+      <Link>Client\Requests\UpgradeProgressRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetEventsStoreEventsRequest.cs">
+      <Link>Client\Requests\GetEventsStoreEventsRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\GetEventsStorePartitionEventsRequest.cs">
+      <Link>Client\Requests\GetEventsStorePartitionEventsRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\Requests\RetryLoop.cs">
+      <Link>Client\Requests\RetryLoop.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\FabricClientObject.cs">
+      <Link>Client\FabricClientObject.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\FabricClientState.cs">
+      <Link>Client\FabricClientState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\FabricClientTypes.cs">
+      <Link>Client\FabricClientTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\FabricClientHelper.cs">
+      <Link>Client\FabricClientHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\FabricClientWrapperInfo.cs">
+      <Link>Client\FabricClientWrapperInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\FabricClientWrapperCollection.cs">
+      <Link>Client\FabricClientWrapperCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\IFabricClient.cs">
+      <Link>Client\IFabricClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\IFabricTestabilityClient.cs">
+      <Link>Client\IFabricTestabilityClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\OperationResult.cs">
+      <Link>Client\OperationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\OperationResult.TResult.cs">
+      <Link>Client\OperationResult.TResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\SystemFabricClient.cs">
+      <Link>Client\SystemFabricClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\AsyncWaiter.cs">
+      <Link>Common\AsyncWaiter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\Disposable.cs">
+      <Link>Common\Disposable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\EnumerationWrapper.cs">
+      <Link>Common\EnumerationWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\ObjectHolder.cs">
+      <Link>Common\ObjectHolder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\RandomUtility.cs">
+      <Link>Common\RandomUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\TestabilityTrace.cs">
+      <Link>Common\TestabilityTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\ThrowIf.cs">
+      <Link>Common\ThrowIf.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\TaskUtility.cs">
+      <Link>Common\TaskUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Actions\AbnormalProcessTerminationAction.cs">
+      <Link>Actions\AbnormalProcessTerminationAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Actions\ApiFaultInformationAction.cs">
+      <Link>Actions\ApiFaultInformationAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\PowershellManager.cs">
+      <Link>Client\PowershellManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\PowershellConstants.cs">
+      <Link>Client\PowershellConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\PowershellFabricClient.cs">
+      <Link>Client\PowershellFabricClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\RestFabricClient.cs">
+      <Link>Client\RestFabricClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\RestPathBuilder.cs">
+      <Link>Client\RestPathBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\RunspaceGroup.cs">
+      <Link>Client\RunspaceGroup.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Client\RunspaceGroupLoader.cs">
+      <Link>Client\RunspaceGroupLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\LocalEventStoreConnectionInformation.cs">
+      <Link>LocalEventStoreConnectionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\MdsTableEventStoreConnectionInformation.cs">
+      <Link>MdsTableEventStoreConnectionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\TestabilityExtensionsFuture.cs">
+      <Link>TestabilityExtensionsFuture.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\AbnormalProcessTerminationInformation.cs">
+      <Link>AbnormalProcessTerminationInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\ApiErrorInformation.cs">
+      <Link>ApiErrorInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\ApiFaultInformation.cs">
+      <Link>ApiFaultInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\ApiSlowInformation.cs">
+      <Link>ApiSlowInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\AzureEventStoreConnectionInformation.cs">
+      <Link>AzureEventStoreConnectionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\AzureTableEventStoreConnectionInformation.cs">
+      <Link>AzureTableEventStoreConnectionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\EventStoreConnection.cs">
+      <Link>EventStoreConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\EventStoreConnectionInformation.cs">
+      <Link>EventStoreConnectionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\EntityHelperLocal.cs">
+      <Link>Common\EntityHelperLocal.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\EventInfoExtractor.cs">
+      <Link>Common\EventInfoExtractor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\EventStoreHelper.cs">
+      <Link>Common\EventStoreHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\LocalEventStore.cs">
+      <Link>Common\LocalEventStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Common\RegexHelper.cs">
+      <Link>Common\RegexHelper.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\EtlReader\EtlReader.csproj">
+      <Project>{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}</Project>
+      <Name>EtlReader</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Management\System.Fabric.Management.csproj">
+      <Project>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</Project>
+      <Name>System.Fabric.Management</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\FabricBRS\exe\FabricBRS.csproj">
+      <Project>{FABBACB3-BD18-4D9D-8CE7-B4FF74722EF2}</Project>
+      <Name>FabricBRS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.JsonSerializerWrapper\System.Fabric.JsonSerializerWrapper.csproj">
+      <Project>{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}</Project>
+      <Name>System.Fabric.JsonSerializerWrapper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\tools\TraceDiagnostic\TraceDiagnostic.Store\TraceDiagnostic.Store.csproj">
+      <Project>{7950E116-2AB3-49E5-8BFD-5F457EEF7C69}</Project>
+      <Name>TraceDiagnostic.Store</Name>
+    </ProjectReference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.XML" />
+    <Reference Include="System.Management" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+
+  <!--================================================================================================
+  Section:     RepairPolicyEngine 
+  Description: Service settings for RepairPolicyEngine. 
+               RepairPolicyEngine monitors Windows Fabric nodes and if there are any health events in Error level
+               reported against a node for specific amount of time the RepairPolicyEngine will schedule
+               a repair of the machine on which the node is running.
+  ==================================================================================================-->
+  <Section Name="RepairPolicyEngine">
+    <!--==============================================================================================
+    Parameter:   HealthCheckIntervalInSeconds 
+    Description: Interval in seconds how often the RepairPolicyEngine wakes up
+                  and scans nodes to schedule repairs.
+    ================================================================================================-->
+    <Parameter Name="HealthCheckIntervalInSeconds" Value="5" />
+    <!--==============================================================================================
+    Parameter:   ActionSchedulingIntervalInSeconds
+    Description: RepairPolicyEngine is not allowed to schedule a repair more often than this interval.
+                  This is to prevent the RepairPolicyEngine from scheduling many repairs in a short time.
+    ================================================================================================-->
+    <Parameter Name="ActionSchedulingIntervalInSeconds" Value="10" />
+  </Section>
+
+  <!-- The names NodeRepairPolicy and NodeRepairActionList are fixed. The repair names can be declared here. -->
+  <!-- Currently only Node Level policy is supported. -->
+  <Section Name="NodeRepairPolicy">
+    <Parameter Name="ProbationToFailingWaitDurationInSeconds" Value="30" MustOverride="false" />
+    <Parameter Name="ProbationToHealthyWaitDurationInSeconds" Value="51" MustOverride="false" />
+    <Parameter Name="MinimumHealthyDurationInSeconds" Value="50" MustOverride="false" />
+    <Parameter Name="IsEnabled" Value="true" MustOverride="false" />
+  </Section>
+  <!-- List of Node level actions for PE to know -->
+  <Section Name="NodeRepairActionList">
+    <Parameter Name="System.Reboot" Value="NodeRepairRebootPolicy" MustOverride="false" />
+    <Parameter Name="System.ReimageOS" Value="NodeRepairReImagePolicy" MustOverride="false" />
+    <Parameter Name="RMA" Value="NodeRepairRMAPolicy" MustOverride="false" />
+    <Parameter Name="Foo" Value="NodeRepairFooPolicy" MustOverride="false" />
+  </Section>
+  <Section Name="NodeRepairRebootPolicy">
+    <!-- Required defines how many repair taks of this kind be scheduled at onetime -->
+    <Parameter Name="MaxOutstandingRepairTasks" Value="30" MustOverride="false" />
+    <!-- Required Probationary period to failing after this repair -->
+    <Parameter Name="ProbationToFailingWaitDurationPostRepairInSeconds" Value="20" MustOverride="false" />
+    <!-- Required Probationary period to healthy after this repair -->
+    <Parameter Name="ProbationToHealthyWaitDurationPostRepairInSeconds" Value="5" MustOverride="false" />
+    <!-- Required. Minimum time of error state before this repair is applied -->
+    <Parameter Name="PolicyActionTimeInSeconds" Value="20" MustOverride="false" />
+    <!-- This is optional and defaults to true -->
+    <Parameter Name="IsEnabled" Value="true" MustOverride="false" />
+  </Section>
+  <Section Name="NodeRepairReImagePolicy">
+    <Parameter Name="MaxOutstandingRepairTasks" Value="30" MustOverride="false" />
+    <Parameter Name="ProbationToFailingWaitDurationPostRepairInSeconds" Value="40" MustOverride="false" />
+    <Parameter Name="ProbationToHealthyWaitDurationPostRepairInSeconds" Value="10" MustOverride="false" />
+    <Parameter Name="PolicyActionTimeInSeconds" Value="180" MustOverride="false" />
+    <Parameter Name="IsEnabled" Value="true" MustOverride="false" />
+  </Section>
+  <Section Name="NodeRepairRMAPolicy">
+    <Parameter Name="MaxOutstandingRepairTasks" Value="30" MustOverride="false" />
+    <Parameter Name="ProbationToFailingWaitDurationPostRepairInSeconds" Value="80" MustOverride="false" />
+    <Parameter Name="ProbationToHealthyWaitDurationPostRepairInSeconds" Value="20" MustOverride="false" />
+    <Parameter Name="PolicyActionTimeInSeconds" Value="250" MustOverride="false" />
+    <Parameter Name="IsEnabled" Value="true" MustOverride="false" />
+  </Section>
+  <Section Name="NodeRepairFooPolicy">
+    <Parameter Name="MaxOutstandingRepairTasks" Value="30" MustOverride="false" />
+    <Parameter Name="ProbationToFailingWaitDurationPostRepairInSeconds" Value="60" MustOverride="false" />
+    <Parameter Name="ProbationToHealthyWaitDurationPostRepairInSeconds" Value="15" MustOverride="false" />
+    <Parameter Name="PolicyActionTimeInSeconds" Value="200" MustOverride="false" />
+    <Parameter Name="IsEnabled" Value="false" MustOverride="false" />
+  </Section>
+</Settings>

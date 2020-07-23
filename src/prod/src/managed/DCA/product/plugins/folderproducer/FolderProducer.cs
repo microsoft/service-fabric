@@ -178,7 +178,8 @@ namespace FabricDCA
                         this.logSourceId,
                         () => new DirectoryInfo(folderPath).EnumerateFiles("*", SearchOption.AllDirectories),
                         f => f.LastWriteTimeUtc < DateTime.UtcNow - MinimumFileRetentionTime, // isSafeToDelete
-                        f => f.LastWriteTimeUtc >= DateTime.UtcNow - this.folderProducerSettings.DataDeletionAge); // shouldBeRetained
+                        f => (!Utility.IgnoreUploadFileList.Exists(x => x.Equals(f)) &&
+                            f.LastWriteTimeUtc >= DateTime.UtcNow - this.folderProducerSettings.DataDeletionAge)); // shouldBeRetained
                 }
             }
         }

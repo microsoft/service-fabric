@@ -47,6 +47,7 @@ GlobalWString ImageBuilderProxy::ImageBuilderExeName = make_global<wstring>(L"Im
 GlobalWString ImageBuilderProxy::ApplicationTypeInfoOutputFilename = make_global<wstring>(L"ApplicationTypeInfo.txt");
 GlobalWString ImageBuilderProxy::FabricUpgradeOutputDirectory = make_global<wstring>(L"FabricUpgrade");
 GlobalWString ImageBuilderProxy::ClusterManifestOutputDirectory = make_global<wstring>(L"ClusterManifest");
+GlobalWString ImageBuilderProxy::FabricOutputDirectory = make_global<wstring>(L"Fabric");
 GlobalWString ImageBuilderProxy::FabricVersionOutputFilename = make_global<wstring>(L"VersionInfo.txt");
 GlobalWString ImageBuilderProxy::FabricUpgradeResultFilename = make_global<wstring>(L"FabricUpgradeResult.txt");
 GlobalWString ImageBuilderProxy::CleanupListFilename = make_global<wstring>(L"CleanupList.txt");
@@ -95,9 +96,11 @@ GlobalWString ImageBuilderProxy::CleanupComposeFiles = make_global<wstring>(L"/c
 GlobalWString ImageBuilderProxy::GenerateDnsNames = make_global<wstring>(L"/generateDnsNames");
 GlobalWString ImageBuilderProxy::SingleInstanceApplicationDescriptionString = make_global<wstring>(L"/singleInstanceApplicationDescription");
 GlobalWString ImageBuilderProxy::UseOpenNetworkConfig = make_global<wstring>(L"/useOpenNetworkConfig");
+GlobalWString ImageBuilderProxy::UseLocalNatNetworkConfig = make_global<wstring>(L"/useLocalNatNetworkConfig");
 GlobalWString ImageBuilderProxy::DisableApplicationPackageCleanup = make_global<wstring>(L"/disableApplicationPackageCleanup");
 GlobalWString ImageBuilderProxy::GenerationConfig = make_global<wstring>(L"/generationConfig");
 GlobalWString ImageBuilderProxy::SFVolumeDiskServiceEnabled = make_global<wstring>(L"/sfVolumeDiskServiceEnabled");
+GlobalWString ImageBuilderProxy::MountPointForSettings = make_global<wstring>(L"/mountPointForSettings");
 
 GlobalWString ImageBuilderProxy::OperationBuildApplicationTypeInfo = make_global<wstring>(L"BuildApplicationTypeInfo");
 GlobalWString ImageBuilderProxy::OperationDownloadAndBuildApplicationType = make_global<wstring>(L"DownloadAndBuildApplicationType");
@@ -1267,6 +1270,7 @@ private:
         this->Owner.AddImageBuilderArgument(cmdLineArgs, AppTypeVersion, typeVersion_.Value);
         this->Owner.AddImageBuilderArgument(cmdLineArgs, AppId, appId_.Value);
         this->Owner.AddImageBuilderArgument(cmdLineArgs, BuildPath, buildPath_);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, MountPointForSettings, Hosting2::HostingConfig::GetConfig().ContainerMountPointForSettings);
 
         if (ClusterManagerReplica::IsDnsServiceEnabled())
         {
@@ -1278,10 +1282,14 @@ private:
             this->Owner.AddImageBuilderArgument(cmdLineArgs, DisableChecksumValidation, L"true");
         }
 
-        if (Hosting2::HostingConfig::GetConfig().IPProviderEnabled && 
-            Hosting2::SetupConfig::GetConfig().ContainerNetworkSetup)
+        // For now, always pass UseOpenNetworkConfig parameter to true. 
+        // Tracking bug : 14259273, to completely remove "UseOpenNetworkConfig" parameter support from Imagebuilder.
+        // UseLocalNatNetworkConfig is used for determination instead.
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, UseOpenNetworkConfig, L"true");
+
+        if (Hosting2::HostingConfig::GetConfig().LocalNatIpProviderEnabled)
         {
-            this->Owner.AddImageBuilderArgument(cmdLineArgs, UseOpenNetworkConfig, L"true");
+            this->Owner.AddImageBuilderArgument(cmdLineArgs, UseLocalNatNetworkConfig, L"true");
         }
 
         //
@@ -1479,6 +1487,8 @@ private:
         this->Owner.AddImageBuilderArgument(cmdLineArgs, CurrentAppInstanceVersion, currentAppVersionInstance);
         this->Owner.AddImageBuilderArgument(cmdLineArgs, BuildPath, buildPath_);
 
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, MountPointForSettings, Hosting2::HostingConfig::GetConfig().ContainerMountPointForSettings);
+
         if (ClusterManagerReplica::IsDnsServiceEnabled())
         {
             this->Owner.AddImageBuilderArgument(cmdLineArgs, GenerateDnsNames, L"true");
@@ -1493,6 +1503,11 @@ private:
             Hosting2::SetupConfig::GetConfig().ContainerNetworkSetup)
         {
             this->Owner.AddImageBuilderArgument(cmdLineArgs, UseOpenNetworkConfig, L"true");
+        }
+
+        if (Hosting2::HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+        {
+            this->Owner.AddImageBuilderArgument(cmdLineArgs, UseLocalNatNetworkConfig, L"true");
         }
         
         //
@@ -3698,7 +3713,7 @@ ErrorCode ImageBuilderProxy::TryStartImageBuilderProcess(
     // Add common commandline arguments
     //
     AddImageBuilderArgument(args, WorkingDir, tempWorkingDirectory);
-    AddImageBuilderArgument(args, Operation, operation);    
+    AddImageBuilderArgument(args, Operation, operation);
     AddImageBuilderArgument(args, ErrorDetails, errorDetailsFile);
     if (!outputDirectoryOrFile.empty())
     {
@@ -3748,13 +3763,11 @@ ErrorCode ImageBuilderProxy::TryStartImageBuilderProcess(
     }
 
     // Pass the flag indicating if SFVolumeDisk is enabled or not.
-#if !defined(PLATFORM_UNIX)
     if (Common::CommonConfig::GetConfig().EnableUnsupportedPreviewFeatures && Hosting2::HostingConfig::GetConfig().IsSFVolumeDiskServiceEnabled)
     {
         AddImageBuilderArgument(args, SFVolumeDiskServiceEnabled, L"true");    
     }
     else
-#endif // !defined(PLATFORM_UNIX)
     {
         AddImageBuilderArgument(args, SFVolumeDiskServiceEnabled, L"false"); 
     }
@@ -4607,7 +4620,8 @@ ErrorCode ImageBuilderProxy::ParseApplication(
     DigestedApplicationDescription::CodePackageDescriptionMap codePackagesResult;
     map<ServiceModelTypeName, ServiceTypeDescription> typeDescriptions;
     map<ServicePackageIdentifier, ServicePackageResourceGovernanceDescription> servicePackageRGResult;
-    
+    vector<wstring> networksResult;
+
     ErrorCode error = ParseServicePackages(
         appName, 
         appDescription, 
@@ -4615,7 +4629,8 @@ ErrorCode ImageBuilderProxy::ParseApplication(
         /*out*/ packagesResult, 
         /*out*/ codePackagesResult, 
         /*out*/ typeDescriptions,
-        /*out*/ servicePackageRGResult);
+        /*out*/ servicePackageRGResult,
+        /*out*/ networksResult);
 
     vector<StoreDataServiceTemplate> templatesResult;
     if (error.IsSuccess())
@@ -4637,7 +4652,8 @@ ErrorCode ImageBuilderProxy::ParseApplication(
             codePackagesResult,
             templatesResult,
             defaultServicesResult,
-            servicePackageRGResult);
+            servicePackageRGResult,
+            networksResult);
     }
 
     return error;
@@ -4650,12 +4666,15 @@ ErrorCode ImageBuilderProxy::ParseServicePackages(
     __out vector<StoreDataServicePackage> & packagesResult,
     __out DigestedApplicationDescription::CodePackageDescriptionMap & codePackagesResult,
     __out map<ServiceModelTypeName, ServiceModel::ServiceTypeDescription> & typeDescriptionsResult,
-    __out ServiceModel::ServicePackageResourceGovernanceMap & servicePackageRGResult)
+    __out ServiceModel::ServicePackageResourceGovernanceMap & servicePackageRGResult,
+    __out vector<wstring> & networksResult)
 {
     vector<StoreDataServicePackage> tempPackagesResult;
     DigestedApplicationDescription::CodePackageDescriptionMap tempCodePackagesResult;
     map<ServiceModelTypeName, ServiceTypeDescription> tempTypeDescriptions;
     map<ServicePackageIdentifier, ServicePackageResourceGovernanceDescription> tempServicePackageRGDescriptions;
+    set<wstring> tempNetworkSet;
+    vector<wstring> tempNetworksResult;
 
     vector<ServicePackageDescription> packageDescriptions;
     ErrorCode error = ReadPackages(appDescription, layout, /*out*/ packageDescriptions);
@@ -4691,12 +4710,25 @@ ErrorCode ImageBuilderProxy::ParseServicePackages(
             }
 
             tempCodePackagesResult[ServiceModelPackageName(packageDescription.PackageName)] = packageDescription.DigestedCodePackages;
+
+            for (auto iter3 = packageDescription.NetworkPolicies.ContainerNetworkPolicies.begin();
+                iter3 != packageDescription.NetworkPolicies.ContainerNetworkPolicies.end();
+                ++iter3)
+            {
+                auto iter4 = tempNetworkSet.find(iter3->NetworkRef);
+                if (iter4 == tempNetworkSet.end())
+                {
+                    tempNetworkSet.insert(iter3->NetworkRef);
+                    tempNetworksResult.push_back(iter3->NetworkRef);
+                }
+            }
         }
 
         packagesResult.swap(tempPackagesResult);
         codePackagesResult.swap(tempCodePackagesResult);
         typeDescriptionsResult.swap(tempTypeDescriptions);
         servicePackageRGResult.swap(tempServicePackageRGDescriptions);
+        networksResult.swap(tempNetworksResult);
     }
 
     return error;

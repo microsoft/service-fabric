@@ -62,6 +62,11 @@ namespace System.Fabric
         [DataMember]
         internal ContainerDebugParameters ContainerDebugParams;
 
+        ///  DisableReliableCollectionReplicationMode specifies whether stateful service should run in replication mode or not.
+        ///  If value is true, service will run as stateless service with standalone reliable collections. Otherwise, stateful service will replication enabled for reliable collections.
+        [DataMember]
+        internal bool DisableReliableCollectionReplicationMode;
+
         internal CodePackageDebugParameters(
             string serviceManifestName,
             string codePackageName,
@@ -77,7 +82,8 @@ namespace System.Fabric
             string workingFolder,
             string debugParametersFile,
             string environmentBlock,
-            ContainerDebugParameters containerDebugParams)
+            ContainerDebugParameters containerDebugParams,
+            bool disableReliableCollectionReplicationMode)
         {
             this.ServiceManifestName = serviceManifestName;
             this.CodePackageName = codePackageName;
@@ -94,6 +100,7 @@ namespace System.Fabric
             this.DebugParametersFile = debugParametersFile;
             this.EnvironmentBlock = environmentBlock;
             this.ContainerDebugParams = containerDebugParams;
+            this.DisableReliableCollectionReplicationMode = disableReliableCollectionReplicationMode;
         }
 
         internal static List<CodePackageDebugParameters> CreateFrom(string debugParameters)

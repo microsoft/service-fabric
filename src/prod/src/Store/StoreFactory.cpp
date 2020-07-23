@@ -229,5 +229,6 @@ namespace Store
 
         attributes.AddAttribute(*HealthAttributeNames::NodeId, wformatString(nodeInstance.Id));
         attributes.AddAttribute(*HealthAttributeNames::NodeInstanceId, wformatString(nodeInstance.InstanceId));
+        attributes.AddAttribute(*HealthAttributeNames::NodeName, nodeName);
     }
 }

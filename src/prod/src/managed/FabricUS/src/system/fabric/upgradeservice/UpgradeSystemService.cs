@@ -227,6 +227,7 @@ namespace System.Fabric.UpgradeService
         {
             string coordinatorType = configStore.ReadUnencryptedString(configSectionName, Constants.ConfigurationSection.CoordinatorType);
             Trace.WriteNoise(TraceType, "Coordinator type: {0}", coordinatorType ?? "<null>");
+
             if (string.Equals(coordinatorType, Constants.ConfigurationSection.PaasCoordinator, StringComparison.OrdinalIgnoreCase))
             {
                 return new PaasCoordinator(configStore, configSectionName, this, this.partition);
@@ -236,7 +237,7 @@ namespace System.Fabric.UpgradeService
             if (string.Equals(coordinatorType, Constants.ConfigurationSection.WindowsUpdateServiceCoordinator, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(coordinatorType, Constants.ConfigurationSection.WUTestCoordinator, StringComparison.OrdinalIgnoreCase))
             {
-                return new WindowsUpdateServiceCoordinator(configStore, configSectionName, this, this.partition);
+                return new WindowsUpdateServiceCoordinator(configStore, configSectionName, this, this.partition, new ExceptionHandlingPolicy(Constants.WUSCoordinator.HealthProperty, ResourceCoordinator.TaskName, configStore, configSectionName, partition));
             }
 #endif
 

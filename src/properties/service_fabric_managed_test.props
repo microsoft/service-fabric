@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_common.props" />
+
+  <!-- Assembly Signing with insecure.snk which has both public and private key in it. -->
+  
+  <Import Project="$(SRCROOT)\properties\service_fabric_strong_name_keys.props" />
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(InsecurePublicKey)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  
+</Project>

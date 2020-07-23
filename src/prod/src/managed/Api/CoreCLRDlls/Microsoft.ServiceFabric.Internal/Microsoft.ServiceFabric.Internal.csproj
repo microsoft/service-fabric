@@ -93,6 +93,7 @@
     <Compile Include="..\..\src\System\Fabric\Interop\SharedNativeObject.cs" />
     <Compile Include="..\..\src\System\Fabric\Interop\StringCollectionResult.cs" />
     <Compile Include="..\..\src\System\Fabric\Interop\StringResult.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\StringListResult.cs" />
     <Compile Include="..\..\src\System\Fabric\Interop\Utility.cs" />
     <Compile Include="..\..\src\System\Fabric\Utility\SecurityCredentialExtension.cs" />
     <Compile Include="..\..\src\System\Fabric\Utility\NativeClaimsCredentialConverter.cs" />

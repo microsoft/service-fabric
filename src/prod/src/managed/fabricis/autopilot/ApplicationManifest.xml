@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest
+      ApplicationTypeName="InfrastructureService"
+      ApplicationTypeVersion="!FABRIC_VERSION!"
+      xmlns="http://schemas.microsoft.com/2011/01/fabric"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>Service Fabric Infrastructure Service Application for Autopilot</Description>
+  <Parameters>
+    <Parameter Name="AppRoot" DefaultValue="D:\app" />
+    <Parameter Name="CoordinatorAssemblyName" DefaultValue="FabricIS.AP" />
+    <Parameter Name="CoordinatorFactoryType" DefaultValue="System.Fabric.InfrastructureService.Autopilot.AutopilotInfrastructureCoordinatorFactory" />
+    <Parameter Name="Autopilot_JobPollingIntervalInSeconds" DefaultValue="60" />
+    <Parameter Name="Autopilot_AutoApprove" DefaultValue="false" />
+    <Parameter Name="Autopilot_LimitRepairTaskImpactLevel" DefaultValue="false" />
+  </Parameters>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="IS" ServiceManifestVersion="!FABRIC_VERSION!" />
+    <ConfigOverrides>
+      <ConfigOverride Name="Config">
+        <Settings>
+          <Section Name="InfrastructureService">
+            <Parameter Name="CoordinatorAssemblyName" Value="[CoordinatorAssemblyName]" />
+            <Parameter Name="CoordinatorFactoryType" Value="[CoordinatorFactoryType]" />
+            <Parameter Name="Autopilot.JobPollingIntervalInSeconds" Value="[Autopilot_JobPollingIntervalInSeconds]" />
+            <Parameter Name="Autopilot.AutoApprove" Value="[Autopilot_AutoApprove]" />
+            <Parameter Name="Autopilot.LimitRepairTaskImpactLevel" Value="[Autopilot_LimitRepairTaskImpactLevel]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
+    <EnvironmentOverrides CodePackageRef="Code">
+      <EnvironmentVariable Name="AppRoot" Value="[AppRoot]" />
+    </EnvironmentOverrides>
+  </ServiceManifestImport>
+</ApplicationManifest>

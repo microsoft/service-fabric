@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <NetStandardBuildLinux>false</NetStandardBuildLinux>
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <DefineConstants>PLATFORM_WINDOWS</DefineConstants>
+  </PropertyGroup>
+  <Import Project="..\BSDockerVolumePluginSetup.targets" />
+
+  <ItemGroup>
+    <Robocopy Include="$(PublishDir)">
+      <DestinationFolder>$(CodePackageDropPath)</DestinationFolder>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+    
+    <Robocopy Include="$(PublishDir)">
+      <DestinationFolder>$(CodePackageDropPath2)</DestinationFolder>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+
+  <!-- As Coreclr + CoreXt are not integrated properly together : this patch for robocopying files.   -->
+  <Target Name="RobocopyFiles" AfterTargets="Publish" DependsOnTargets="$(RobocopyFilesDependsOn)" Condition="'@(Robocopy)' != ''">
+    <Robocopy RetryCount="$(RobocopyRetryCount)" RetryWait="$(RobocopyRetryWait)" ShowDiagnosticTrace="$(RobocopyShowDiagnosticTrace)" ShowErrorOnRetry="$(RobocopyShowErrorOnRetry)" Sources="@(Robocopy)" Condition="'@(Robocopy)' != ''" />
+  </Target>
+</Project>

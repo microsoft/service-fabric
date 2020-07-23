@@ -116,6 +116,11 @@ namespace System.Fabric.BackupRestore
             get { return this.properties.PartitionInformation; }
         }
 
+        public string ServiceManifestVersion
+        {
+            get { return this.properties.ServiceManifestVersion; }
+        }
+
         /// <summary>
         /// Create a new <see cref="RecoveryPointMetadataFile"/> and write it to the given file.
         /// </summary>
@@ -131,6 +136,7 @@ namespace System.Fabric.BackupRestore
             string backupLocation,
             string parentBackupLocation,
             ServicePartitionInformation partitionInformation,
+            string serviceManifestVersion,
             CancellationToken cancellationToken)
         {
             // Create the file with asynchronous flag and 4096 cache size (C# default).
@@ -156,6 +162,7 @@ namespace System.Fabric.BackupRestore
                     EpochOfLastBackupRecord = epochOfLastBackupRecord,
                     LsnOfLastBackupRecord = lsnOfLastBackupRecord,
                     PartitionInformation = partitionInformation,
+                    ServiceManifestVersion = serviceManifestVersion,
                 };
 
                 // Write the properties.

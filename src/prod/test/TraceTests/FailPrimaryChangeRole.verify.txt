@@ -1,0 +1,8 @@
+###Partition 3de6753f-91fc-4158-8690-c9a0fcc9b65a time range 8/22/2014 8:54:02 PM-8/22/2014 8:58:48 PM
+Partition stuck in reconfiguration for at least ###00:04:10.0340000
+Checking primary on node 50
+Primary is stuck in Phase2_Catchup for at least ###00:04:09.9710000
+Service role S not yet updated to: P
+CatchUp on primary not completed
+Failed Task: CatchUp(RAPChangeRoleActions(ApiError: ServiceChangeRoleOperation->E_FAIL)[*3])
+

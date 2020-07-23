@@ -1,0 +1,11 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- 
+    Use this target to auto generate the config header file 
+
+    See $(SrcRoot)\prod\src\scripts\preprocess_config_macros.pl for more information
+  -->  
+  <Target Name="GenerateConfigHeader" BeforeTargets="AfterBuild" Condition="$(ConfigFilePath) != ''" Inputs="$(ConfigFilePath)" Outputs="$(SharedLogConfigPath)">
+    <Message Text="Regenerating $(SharedLogConfigPath) as $(ConfigFilePath) was updated"/>
+    <Exec command="perl $(SrcRoot)\prod\src\scripts\preprocess_config_macros.pl $(PkgVisualCpp_Tools_x64_Corext)\bin\x64 $(ConfigFilePath) $(SharedLogConfigPath) SharedLog" />
+  </Target>
+</Project>

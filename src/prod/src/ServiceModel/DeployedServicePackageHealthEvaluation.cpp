@@ -138,11 +138,8 @@ Common::ErrorCode DeployedServicePackageHealthEvaluation::FromPublicApi(
 void DeployedServicePackageHealthEvaluation::SetDescription()
 {
     description_ = wformatString(
-        "{0} ApplicationName='{1}', ServiceManifestName='{2}', ServicePackageActivationId='{3}', NodeName='{4}', AggregatedHealthState='{5}'.",
         HMResource::GetResources().HealthEvaluationUnhealthyDeployedServicePackage,
-        applicationName_,
         serviceManifestName_,
         servicePackageActivationId_,
-        nodeName_,
         aggregatedHealthState_);
 }

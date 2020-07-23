@@ -94,6 +94,10 @@ namespace Reliability
 
             void AddThreadContext(std::vector<BackgroundThreadContextUPtr> & contexts, ApplicationInfoSPtr const & thisSPtr) const;
 
+            __declspec(property(get = get_Networks, put = put_Networks)) StringCollection & Networks;
+            StringCollection const & get_Networks() const { return networks_; }
+            void put_Networks(StringCollection const& networks) { networks_ = networks; }
+
             void PostRead(int64 version);
             void PostUpdate(Common::DateTime updateTime);
 
@@ -107,7 +111,7 @@ namespace Reliability
                     ServiceModel::ServicePackageResourceGovernanceMap const & rgSettings,
                     ServiceModel::CodePackageContainersImagesMap const & containerImages) const;
 
-            FABRIC_FIELDS_11(
+            FABRIC_FIELDS_12(
                 applicationId_,
                 instanceId_,
                 upgrade_,
@@ -118,7 +122,8 @@ namespace Reliability
                 capacityDescription_,
                 resourceGovernanceDescription_,
                 rollback_,
-                codePackageContainersImages_);
+                codePackageContainersImages_,
+                networks_);
 
         private:
 
@@ -138,6 +143,7 @@ namespace Reliability
             ServiceModel::CodePackageContainersImagesMap codePackageContainersImages_;
 
             std::wstring idString_;
+            StringCollection networks_;
         };
     }
 }

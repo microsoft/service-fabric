@@ -27,19 +27,25 @@ namespace System.Fabric.FabricDeployer
     using System.Xml;
     using System.Net.NetworkInformation;
     using System.Net.Sockets;
+    using System.ServiceProcess;
     using System.Threading;
 
 #if !DotNetCoreClr
     using System.Management.Automation;
     using System.Management;
+    using Management.FabricDeployer;
 #endif
-    using System.Fabric.Management.FabricDeployer;
 
 #if !DotNetCoreClr // Disable compiling on windows for now. Need to correct when porting FabricDeployer for windows.
     [CLSCompliant(true)]
 #endif
     public static class Utility
     {
+#if DotNetCoreClrLinux
+        private static readonly TimeSpan ProcessOutputWaitTimeout = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan InstallTimeout = TimeSpan.FromMinutes(20);
+#endif
+
         internal static char[] SecureStringToCharArray(SecureString secureString)
         {
             if (secureString == null)
@@ -67,6 +73,47 @@ namespace System.Fabric.FabricDeployer
             }
 
             return charArray;
+        }
+
+        internal static void SetFabricRegistrySettings(DeploymentParameters parameters)
+        {
+            string machineNameForRegistry = string.IsNullOrEmpty(parameters.MachineName) ? null : @"\\" + parameters.MachineName;
+
+            if (!string.IsNullOrEmpty(parameters.FabricPackageRoot))
+            {
+                DeployerTrace.WriteInfo("Setting FabricRoot to {0} on machine {1}", parameters.FabricPackageRoot, parameters.MachineName);
+                FabricEnvironment.SetFabricRoot(parameters.FabricPackageRoot, machineNameForRegistry);
+
+                string fabricBinRoot = Path.Combine(parameters.FabricPackageRoot, Constants.FabricBinRootRelativePath);
+                DeployerTrace.WriteInfo("Setting FabricBinRoot to {0} on machine {1}", fabricBinRoot, parameters.MachineName);
+                FabricEnvironment.SetFabricBinRoot(fabricBinRoot, machineNameForRegistry);
+
+                string fabricCodePath = Path.Combine(parameters.FabricPackageRoot, Constants.FabricCodePathRelativePath);
+                DeployerTrace.WriteInfo("Setting FabricCodePath to {0} on machine {1}", fabricCodePath, parameters.MachineName);
+                FabricEnvironment.SetFabricCodePath(fabricCodePath, machineNameForRegistry);
+            }
+
+            if (!string.IsNullOrEmpty(parameters.FabricDataRoot))
+            {
+                DeployerTrace.WriteInfo("Setting FabricDataRoot to {0} on machine {1}", parameters.FabricDataRoot, parameters.MachineName);
+                FabricEnvironment.SetDataRoot(parameters.FabricDataRoot, machineNameForRegistry);
+            }
+
+            if (!string.IsNullOrEmpty(parameters.FabricLogRoot))
+            {
+                DeployerTrace.WriteInfo("Setting FabricLogRoot to {0} on machine {1}", parameters.FabricLogRoot, parameters.MachineName);
+                FabricEnvironment.SetLogRoot(parameters.FabricLogRoot, machineNameForRegistry);
+            }
+
+            DeployerTrace.WriteInfo("Setting EnableCircularTraceSession to {0} on machine {1}", parameters.EnableCircularTraceSession, parameters.MachineName);
+            FabricEnvironment.SetEnableCircularTraceSession(parameters.EnableCircularTraceSession, machineNameForRegistry);
+
+            // Set the state for preview features that need to lightup at runtime
+            DeployerTrace.WriteInfo("Setting EnableUnsupportedPreviewFeatures to {0} on machine {1}", parameters.EnableUnsupportedPreviewFeatures, parameters.MachineName);
+            FabricEnvironment.SetEnableUnsupportedPreviewFeatures(parameters.EnableUnsupportedPreviewFeatures, machineNameForRegistry);
+
+            DeployerTrace.WriteInfo("Setting IsSFVolumeDiskServiceEnabled to {0} on machine {1}", parameters.IsSFVolumeDiskServiceEnabled, parameters.MachineName);
+            FabricEnvironment.SetIsSFVolumeDiskServiceEnabled(parameters.IsSFVolumeDiskServiceEnabled, machineNameForRegistry);
         }
 
         internal static string GetFabricRoot()
@@ -156,7 +203,7 @@ namespace System.Fabric.FabricDeployer
 
         internal static string GetCurrentCodeVersion(string packageLocation)
         {
-#if DotNetCoreClrLinux
+#if DotNetCoreClr
             string currentAssembly = typeof(Utility).GetTypeInfo().Assembly.Location;
             string versionFile = Path.Combine(Path.GetDirectoryName(currentAssembly), "ClusterVersion");
             string codeVersion = File.ReadAllText(versionFile);
@@ -199,7 +246,6 @@ namespace System.Fabric.FabricDeployer
 #endif
         }
 
-
 #if DotNetCoreClrLinux || DotNetCoreClrIOT
         internal static bool GetTestFailDeployer()
         {
@@ -220,7 +266,6 @@ namespace System.Fabric.FabricDeployer
         {
             return;
         }
-
 #else
         internal static bool GetTestFailDeployer()
         {
@@ -262,9 +307,7 @@ namespace System.Fabric.FabricDeployer
             try
             {
                 DeployerTrace.WriteInfo("Deleting Fabric registry key tree for machine {0}", machineName);
-                RegistryKey baseKey = string.IsNullOrEmpty(machineName)
-                    ? Registry.LocalMachine
-                    : RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, machineName);
+                RegistryKey baseKey = GetHklm(machineName);
 
                 if (baseKey.OpenSubKey(FabricConstants.FabricRegistryKeyPath) != null)
                 {
@@ -479,6 +522,42 @@ namespace System.Fabric.FabricDeployer
             return string.Format("Error {0}: {1}", win32Error, new Win32Exception(win32Error).Message);
         }
 
+        /// <summary>
+        /// Checks if docker container service is installed.
+        /// </summary>
+        /// <returns></returns>
+        internal static bool IsContainerServiceInstalled()
+        {
+#if DotNetCoreClrLinux
+            return true;
+#else
+            bool installed = false;
+
+            var programFilesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), FlatNetworkConstants.ContainerServiceName);
+            var containerServiceFullPath = Path.Combine(programFilesPath, FlatNetworkConstants.ContainerProviderProcessNameWithExtension);
+            if (File.Exists(containerServiceFullPath))
+            {
+                installed = true;
+            }
+
+            DeployerTrace.WriteInfo("Container service installed {0}.", installed);
+            return installed;
+#endif
+        }
+
+#if !DotNetCoreClrLinux
+        /// <summary>
+        /// Checks if docker container NT service is present or not .
+        /// </summary>
+        /// <returns></returns>
+        internal static bool IsContainerNTServicePresent()
+        {
+            var service = ServiceController.GetServices().SingleOrDefault(
+                s => string.Equals(s.ServiceName, FlatNetworkConstants.ContainerServiceName, StringComparison.OrdinalIgnoreCase));
+            return ((service != null) ? true : false);
+        }
+#endif
+
 #if DotNetCoreClr // Need to correct when porting FabricDeployer for windows.
         internal static bool IsContainersFeaturePresent()
         {
@@ -487,48 +566,75 @@ namespace System.Fabric.FabricDeployer
 #else
         internal static bool IsContainersFeaturePresent()
         {
-            try
+            for (int i = 0; i < Constants.ApiRetryAttempts; i++)
             {
-                DismPackageFeatureState featureState = DismHelper.GetFeatureState(Constants.ContainersFeatureName);
+                DeployerTrace.WriteInfo("Waiting to query dism to get container feature state.");
 
-                switch (featureState)
+                Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
+
+                try
                 {
-                    case DismPackageFeatureState.DismStateInstallPending:
-                    case DismPackageFeatureState.DismStateInstalled:
-                    case DismPackageFeatureState.DismStateSuperseded:
-                        return true;
+                    DismPackageFeatureState featureState = DismHelper.GetFeatureState(Constants.ContainersFeatureName);
+
+                    switch (featureState)
+                    {
+                        case DismPackageFeatureState.DismStateInstallPending:
+                        case DismPackageFeatureState.DismStateInstalled:
+                        case DismPackageFeatureState.DismStateSuperseded:
+                            return true;
+                    }
+                }
+                catch (COMException ex)
+                {
+                    // Dism COM errors aren't well understood yet across different OSes.
+                    DeployerTrace.WriteWarning("Error getting feature state for feature {0}. Exception: {1}", Constants.ContainersFeatureName, ex);
+                }
+                catch (DllNotFoundException ex)
+                {
+                    // This happens on platforms that don't have dismapi.dll
+                    // https://technet.microsoft.com/en-us/library/hh825186.aspx
+                    DeployerTrace.WriteWarning(
+                        "Error getting feature state for feature {0}. This usually means that the platform doesn't support DISM APIs. Exception: {1}",
+                        Constants.ContainersFeatureName,
+                        ex);
+                }
+                catch (Exception ex)
+                {
+                    // Swallowing all!
+                    DeployerTrace.WriteWarning(
+                        "Unexpected error getting feature state for feature {0}. Exception: {1}",
+                        Constants.ContainersFeatureName,
+                        ex);
                 }
             }
-            catch (COMException ex)
-            {
-                // Dism COM errors aren't well understood yet across different OSes. TODO Handle specific error codes and throw the rest
-                DeployerTrace.WriteWarning("Error getting feature state for feature {0}. Treating feature as not present and continuing. Exception: {1}", Constants.ContainersFeatureName, ex);
-            }
-            catch (DllNotFoundException ex)
-            {
-                // This happens on platforms that don't have dismapi.dll
-                // https://technet.microsoft.com/en-us/library/hh825186.aspx
-                DeployerTrace.WriteWarning(
-                    "Error getting feature state for feature {0}. This usually means that the platform doesn't support DISM APIs. " +
-                    "Treating feature as not present and continuing. Exception: {1}",
-                    Constants.ContainersFeatureName,
-                    ex);
-            }
-            catch (Exception ex)
-            {
-                // Swallowing all!
-                DeployerTrace.WriteWarning(
-                    "Unexpected error getting feature state for feature {0}. " +
-                    "Treating feature as not present and continuing. Exception: {1}",
-                    Constants.ContainersFeatureName,
-                    ex);
-            }
 
+            DeployerTrace.WriteWarning("Treating feature as not present and continuing.");
+        
             return false;
         }
 #endif
 
-#if !DotNetCoreClrLinux
+        internal static RegistryKey GetHklm(string machineName)
+        {
+            RegistryKey hklm;
+            if (string.IsNullOrWhiteSpace(machineName)
+                || string.Equals(machineName.Trim(), Constants.LocalHostMachineName, StringComparison.OrdinalIgnoreCase))
+            {
+                hklm = Registry.LocalMachine;
+            }
+            else
+            {
+#if DotNetCoreClr
+                throw new Exception("CoreCLR doesn't support RegistryKey.OpenRemoteBaseKey");
+#else
+                hklm = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, machineName);
+#endif
+            }
+
+            return hklm;
+        }
+
+#if !DotNetCoreClr
         internal static T GetRegistryKeyValue<T>(
             RegistryKey baseRegistryKey,
             string keyName,
@@ -653,7 +759,6 @@ namespace System.Fabric.FabricDeployer
             DeployerTrace.WriteInfo("Key-value(s) successfully deleted for key name {0}", keyName);
         }
 
-#if !DotNetCoreClr // Disable compiling on windows for now. Need to correct when porting FabricDeployer for windows.
         /// <summary>
         /// Executes a PowerShell script and captures any error in a temp file.
         /// If <see cref="throwOnScriptError"/> is set, then an exception is thrown if the script returns an error.
@@ -710,7 +815,6 @@ namespace System.Fabric.FabricDeployer
                 }
             }
         }
-#endif
 
         internal static string GetDefaultPackageDestination(string machineName)
         {
@@ -749,38 +853,61 @@ namespace System.Fabric.FabricDeployer
 
         private static string GetRemoteSystemRoot(string machineName)
         {
-            RegistryKey remoteRootKey = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, machineName);
-            var ntCurrentVersionKey = remoteRootKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+            var ntCurrentVersionKey = GetHklm(machineName).OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
             return (string)ntCurrentVersionKey.GetValue("SystemRoot");
         }
 
         private static string GetTempPathInner(string machineName)
         {
-            RegistryKey key = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, machineName)
-                .OpenSubKey("System\\CurrentControlSet\\Control\\Session Manager\\Environment");
+            RegistryKey key = GetHklm(machineName).OpenSubKey("System\\CurrentControlSet\\Control\\Session Manager\\Environment");
             var systemRoot = GetRemoteSystemRoot(machineName);
             string path = (string)key.GetValue("TEMP", Path.Combine(systemRoot, "Temp"), RegistryValueOptions.DoNotExpandEnvironmentNames);
             path = path.ToLowerInvariant().Replace("%systemroot%", systemRoot);
             return path;
         }
-#endif // DotNetCoreClrLinux
+#endif
 
         /// <summary>
-        /// Retrieves the subnet and gateway information from nm agent
+        /// Retrieves network interface that has the given mac address.
+        /// </summary>
+        public static NetworkInterface GetNetworkInterfaceByMacAddress(string macAddress)
+        {
+            DeployerTrace.WriteInfo("Getting network interface with macAddress: {0}.", macAddress);
+            macAddress = macAddress.Replace("-", "").Replace(":", "").ToUpper();
+
+            foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                var nicMacAddress = nic.GetPhysicalAddress().ToString().Replace("-", "").Replace(":", "").ToUpper();
+
+                if (string.Equals(nicMacAddress, macAddress))
+                {
+                    DeployerTrace.WriteInfo("Network interface with macAddress {0} successfully obtained, name: {1}", macAddress, nic.Name);
+                    return nic;
+                }
+            }
+
+            DeployerTrace.WriteInfo("Unable to detect network interface with macAddress {0}.", macAddress);
+            return null;
+        }
+
+        /// <summary>
+        /// Retrieves the subnet, gateway and mac address information from nm agent,
         /// for the network interface specified.
         /// </summary>
         /// <param name="primaryNetworkInterface"></param>
         /// <param name="subnet"></param>
         /// <param name="gateway"></param>
+        /// <param name="macAddress"></param>
         /// <returns></returns>
-        public static bool RetrieveGatewayAndSubnet(bool primaryNetworkInterface, out string subnet, out string gateway)
+        public static bool RetrieveNMAgentInterfaceInfo(bool primaryNetworkInterface, out string subnet, out string gateway, out string macAddress)
         {
             bool success = false;
             subnet = string.Empty;
             gateway = string.Empty;
+            macAddress = string.Empty;
 
             var networkInterface = (primaryNetworkInterface) ? ("primary") : ("secondary");
-            DeployerTrace.WriteInfo("Retrieving gateway and subnet information from nm agent for the {0} network interface.", networkInterface);
+            DeployerTrace.WriteInfo("Retrieving gateway, subnet and mac address information from nm agent for the {0} network interface.", networkInterface);
 
             try
             {
@@ -795,7 +922,7 @@ namespace System.Fabric.FabricDeployer
 
                 using (var memoryStream = new MemoryStream(sourceBytes))
                 {
-#if DotNetCoreClrLinux
+#if DotNetCoreClr
                     using (var xmlTextReader = XmlReader.Create(memoryStream))
 #else
                     using (var xmlTextReader = new XmlTextReader(memoryStream))
@@ -807,6 +934,8 @@ namespace System.Fabric.FabricDeployer
                             var primaryInterface = interfaces.Items.FirstOrDefault(i => string.Equals(i.IsPrimary, (primaryNetworkInterface ? Boolean.TrueString : Boolean.FalseString), StringComparison.OrdinalIgnoreCase));
                             if (primaryInterface != null && primaryInterface.IPSubnet.Length > 0)
                             {
+                                macAddress = primaryInterface.MacAddress;
+
                                 subnet = primaryInterface.IPSubnet[0].Prefix;
 
                                 if (!string.IsNullOrEmpty(subnet))
@@ -825,11 +954,11 @@ namespace System.Fabric.FabricDeployer
                 }
 
                 success = true;
-                DeployerTrace.WriteInfo("Retrieved gateway and subnet information from nm agent for the {0} network interface. Subnet:{1} Gateway:{2}.", networkInterface, subnet, gateway);
+                DeployerTrace.WriteInfo("Retrieved gateway, subnet and mac address information from nm agent for the {0} network interface. Subnet:{1} Gateway:{2} Mac Address:{3}.", networkInterface, subnet, gateway, macAddress);
             }
             catch (Exception ex)
             {
-                DeployerTrace.WriteError("Failed to retrieve gateway and subnet information from nm agent for the {0} network interface, exception {1}.", networkInterface, ex);
+                DeployerTrace.WriteError("Failed to retrieve gateway, subnet and mac address information from nm agent for the {0} network interface, exception {1}.", networkInterface, ex);
             }
 
             return success;
@@ -915,11 +1044,11 @@ namespace System.Fabric.FabricDeployer
         {
             NetworkInterface networkInterface = null;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < Constants.ApiRetryAttempts; i++)
             {
                 DeployerTrace.WriteInfo("Waiting to get network interface on subnet {0}.", subnet);
 
-                Thread.Sleep(3000);
+                Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
 
                 networkInterface = GetNetworkInterfaceOnSubnet(subnet);
 
@@ -1029,11 +1158,11 @@ namespace System.Fabric.FabricDeployer
         {
             bool matching = false;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < Constants.ApiRetryAttempts; i++)
             {
                 DeployerTrace.WriteInfo("Waiting to match ip address {0} on network interface {1}.", expectedAddress.ToString(), networkInterface.Name);
 
-                Thread.Sleep(3000);
+                Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
 
                 IPAddress ipv4Address = null;
                 IPAddress ipv4Mask = null;
@@ -1049,6 +1178,82 @@ namespace System.Fabric.FabricDeployer
             DeployerTrace.WriteInfo("Matched ip address {0} on network interface {1}:{2}.", expectedAddress.ToString(), networkInterface.Name, matching);
 
             return matching;
+        }
+
+        /// <summary>
+        /// Kills the process, if running.
+        /// </summary>
+        /// <param name="processName"></param>
+        /// <returns></returns>
+        public static bool StopProcess(string processName)
+        {
+            bool success = false;
+
+            bool running;
+            int processId = 0;
+            if (Utility.IsProcessRunning(processName, out running, out processId) && !running)
+            {
+                return true;
+            }
+
+            try
+            {
+                var processes = Process.GetProcessesByName(processName);
+                if (processes.Length > 0)
+                {
+                    DeployerTrace.WriteInfo("Killing {0}:{1} process.", processes[0].ProcessName, processes[0].Id);
+                    processes[0].Kill();
+                }
+                else
+                {
+                    DeployerTrace.WriteWarning("Process {0} not found.", processName);
+                }
+
+                success = true;
+            }
+            catch (Exception ex)
+            {
+                DeployerTrace.WriteError("Failed to find if process {0} is running, exception {1}.", processName, ex);
+            }
+
+            return success;
+        }
+
+        /// <summary>
+        /// Checks if the process is running and returns the process id.
+        /// </summary>
+        /// <param name="processName"></param>
+        /// <param name="running"></param>
+        /// <param name="processId"></param>
+        /// <returns></returns>
+        public static bool IsProcessRunning(string processName, out bool running, out int processId)
+        {
+            bool success = false;
+            running = false;
+            processId = -1;
+
+            try
+            {
+                var processes = Process.GetProcessesByName(processName);
+                if (processes.Length > 0)
+                {
+                    running = true;
+                    processId = processes[0].Id;
+                    DeployerTrace.WriteInfo("Process running {0}:{1}.", processes[0].ProcessName, processes[0].Id);
+                }
+                else
+                {
+                    DeployerTrace.WriteInfo("Process {0} not found.", processName);
+                }
+
+                success = true;
+            }
+            catch (Exception ex)
+            {
+                DeployerTrace.WriteError("Failed to find if process {0} is running, exception {1}.", processName, ex);
+            }
+
+            return success;
         }
 
 #if !DotNetCoreClr
@@ -1120,6 +1325,388 @@ namespace System.Fabric.FabricDeployer
                 DeployerTrace.WriteError("Failed to save node last boot up time to registry exception {0}", ex);
             }
         }
+
+        /// <summary>
+        /// Gets the dns verified host ip.
+        /// </summary>
+        /// <param name="infrastructure"></param>
+        internal static string GetHostIp(Infrastructure infrastructure)
+        {
+            string hostIp = string.Empty;
+
+            var currentNodeIPAddressOrFQDN = GetNodeIPAddressOrFQDN(infrastructure);
+            string hostName = string.IsNullOrEmpty(currentNodeIPAddressOrFQDN) ? (Dns.GetHostName()) : (currentNodeIPAddressOrFQDN);
+            DeployerTrace.WriteInfo("Trying to resolve FQDN name <{0}>.", hostName);
+
+            if (!IPAddress.TryParse(currentNodeIPAddressOrFQDN, out IPAddress address))
+            {
+                IPHostEntry entry = Dns.GetHostEntry(currentNodeIPAddressOrFQDN);
+                foreach (var ip in entry.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        // Do a reverse lookup to confirm that hostname is indeed in DNS.
+
+                        try
+                        {
+                            /// From 18.03 onwards the docker host dns name resolves to
+                            /// the ip address used by the host.
+                            if (string.Equals(Dns.GetHostEntry(ip).HostName, entry.HostName, StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(Dns.GetHostEntry(ip).HostName, Constants.DockerHostDnsName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                hostIp = ip.ToString();
+                                break;
+                            }
+                        }
+                        catch (Exception innerEx)
+                        {
+                            DeployerTrace.WriteWarning("Failed to resolve IP {0}, exception {1}", ip.ToString(), innerEx.ToString());
+                        }
+                    }
+                }
+            }
+            else
+            {
+                hostIp = address.ToString();
+            }
+
+            DeployerTrace.WriteInfo("Resolved host name <{0}> to ip: {1}.", hostName, hostIp);
+
+            return hostIp;
+        }
+
+        /// <summary>
+        /// Gets the ip address of the current node.
+        /// </summary>
+        /// <param name="infrastructure"></param>
+        /// <returns></returns>
+        internal static string GetNodeIPAddressOrFQDN(Infrastructure infrastructure)
+        {
+            string currentNodeIPAddressOrFQDN = string.Empty;
+
+            if ((infrastructure != null) && (infrastructure.InfrastructureNodes != null))
+            {
+                foreach (var infraNode in infrastructure.InfrastructureNodes)
+                {
+                    if (NetworkApiHelper.IsAddressForThisMachine(infraNode.IPAddressOrFQDN))
+                    {
+                        currentNodeIPAddressOrFQDN = infraNode.IPAddressOrFQDN;
+                        break;
+                    }
+                }
+            }
+
+            return currentNodeIPAddressOrFQDN;
+        }
+
+        /// <summary>
+        /// Gets the network interface index and name, given the ip address.
+        /// </summary>
+        /// <param name="ipv4Address"></param>
+        /// <param name="networkInterfaceIndex"></param>
+        /// <param name="networkInterfaceName"></param>
+        public static void GetNetworkInterfaceIndexAndName(IPAddress ipv4Address, out int networkInterfaceIndex, out string networkInterfaceName)
+        {
+            networkInterfaceIndex = -1;
+            networkInterfaceName = string.Empty;
+
+            DeployerTrace.WriteInfo("Get network interface index for ip address {0}.", ipv4Address.ToString());
+
+            if (ipv4Address == null)
+            {
+                return;
+            }
+
+            foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                var properties = nic.GetIPProperties();
+                foreach (var address in properties.UnicastAddresses)
+                {
+#if DotNetCoreClrLinux
+                    if (address.Address.AddressFamily == AddressFamily.InterNetwork)
+#else
+                    if (address.Address.AddressFamily == AddressFamily.InterNetwork && !address.IsTransient)
 #endif
+                    {
+                        if (IPAddress.Equals(ipv4Address, address.Address))
+                        {
+                            networkInterfaceIndex = properties.GetIPv4Properties().Index;
+                            networkInterfaceName = nic.Name;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            DeployerTrace.WriteInfo("Network interface details for ip address {0} are index: {1}, name: {2}.", ipv4Address.ToString(), networkInterfaceIndex, networkInterfaceName);
+        }
+
+        /// <summary>
+        /// Gets the network interface index and name, given the ip address.
+        /// This api will retry logic that matches ip with available interfaces.
+        /// This is needed when the ip takes a while to plumb.
+        /// </summary>
+        /// <param name="ipv4Address"></param>
+        /// <param name="networkInterfaceIndex"></param>
+        /// <param name="networkInterfaceName"></param>
+        public static void GetNetworkInterfaceIndexAndNameWithRetry(IPAddress ipv4Address, out int networkInterfaceIndex, out string networkInterfaceName)
+        {
+            networkInterfaceIndex = -1;
+            networkInterfaceName = string.Empty;
+            // Using MaxApiRetryAttempts since more retries are needed to ensure ip address is plumbed correctly.
+            for (int i = 0; i < Constants.MaxApiRetryAttempts; i++)
+            {
+                DeployerTrace.WriteInfo("Waiting to get network interface details for ip address {0}.", ipv4Address.ToString());
+
+                Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
+
+                int nwiIndex = -1;
+                string nwiName = string.Empty;
+                GetNetworkInterfaceIndexAndName(ipv4Address, out nwiIndex, out nwiName);
+                if (nwiIndex != -1)
+                {
+                    networkInterfaceIndex = nwiIndex;
+                    networkInterfaceName = nwiName;
+                    break;
+                }
+            }
+
+            DeployerTrace.WriteInfo("Network interface details for ip address {0} are index: {1}, name: {2}.", ipv4Address.ToString(), networkInterfaceIndex, networkInterfaceName);
+        }
+#endif // !DotNetCoreClr
+
+#if DotNetCoreClrLinux
+        internal static void ForceAptPackageInstall(string packageName, ref bool installedInThisRun)
+        {
+            ProcessResult result;
+            installedInThisRun = false;
+
+            string packageCleanlyInstalledCmd = string.Format(Constants.DpkgPackageCleanlyInstalledCommandFormat, packageName);
+            result = Utility.RunLinuxBashCommand(packageCleanlyInstalledCmd, Environment.CurrentDirectory, TimeSpan.FromSeconds(30), true);
+
+            if (result.ExitCode == 0)
+            {
+                DeployerTrace.WriteInfo("Package {0} is already installed.", packageName);
+
+                string upgradePackageCmd = string.Format(Constants.AptUpgradePackageCommandFormat, packageName);
+                Utility.RunAptLockLinuxBashCommand(upgradePackageCmd, Environment.CurrentDirectory, TimeSpan.FromMinutes(15), true);
+
+                return;
+            }
+
+            string packageStateVisibleCmd = string.Format(Constants.DpkgPackageStateVisibleCommandFormat, packageName);
+            result = Utility.RunLinuxBashCommand(packageStateVisibleCmd, Environment.CurrentDirectory, TimeSpan.FromSeconds(30), true);
+            if (result.ExitCode == 0)
+            {
+                DeployerTrace.WriteInfo("Package {0} is in state: {1}.", packageName, result.Output);
+            }
+            else
+            {
+                DeployerTrace.WriteInfo("Package {0} is not installed.", packageName, result.Output);
+            }
+
+            string installPackageCmd = string.Format(Constants.AptPackageInstallCommand, packageName);
+            result = Utility.RunAptLockLinuxBashCommand(installPackageCmd, Environment.CurrentDirectory, TimeSpan.FromMinutes(15), true);
+            if (result.ExitCode == 0)
+            {
+                result = Utility.RunLinuxBashCommand(packageCleanlyInstalledCmd, Environment.CurrentDirectory, TimeSpan.FromSeconds(30), true);
+                if (result.ExitCode == 0)
+                {
+                    DeployerTrace.WriteInfo("Package {0} has been successfully installed.", packageName);
+                    installedInThisRun = true;
+                    return;
+                }
+            }
+
+            Utility.RunAptLockLinuxBashCommand(Constants.AptUpdateCommand, Environment.CurrentDirectory, TimeSpan.FromMinutes(15), true);
+            Utility.RunAptLockLinuxBashCommand(Constants.DpkgConfigureCommand, Environment.CurrentDirectory, TimeSpan.FromMinutes(15), true);
+
+            result = Utility.RunAptLockLinuxBashCommand(installPackageCmd, Environment.CurrentDirectory, TimeSpan.FromMinutes(15), true);
+            if (result.ExitCode != 0)
+            {
+                string message = string.Format("Command '{0}' hit error {1}.", installPackageCmd, result.ExitCode);
+                DeployerTrace.WriteError(message);
+            }
+
+            result = Utility.RunLinuxBashCommand(packageCleanlyInstalledCmd, Environment.CurrentDirectory, TimeSpan.FromSeconds(30), true);
+            if (result.ExitCode == 0)
+            {
+                DeployerTrace.WriteInfo("Package {0} has been successfully installed (second attempt).", packageName);
+                installedInThisRun = true;
+                return;
+            }
+
+            // If Moby is still not installed, state is corrupted. Attempt full purge & reinstall as automitigation.
+            Utility.PurgeAptPackageIfPresent(packageName);
+            Utility.RunAptLockLinuxBashCommand(Constants.AptAutoremoveCommand, Environment.CurrentDirectory, TimeSpan.FromMinutes(15), true);
+            result = Utility.RunAptLockLinuxBashCommand(installPackageCmd, Environment.CurrentDirectory, TimeSpan.FromMinutes(15), true);
+            if (result.ExitCode == 0)
+            {
+                DeployerTrace.WriteInfo("Package {0} has been successfully installed (third attempt).", packageName);
+                installedInThisRun = true;
+                return;
+            }
+            else
+            {
+                throw new InvalidDeploymentException(string.Format("Check machine state for {0}. State is wedged.", packageName));
+            }
+        }
+
+        internal static ProcessResult RunAptLockLinuxBashCommand(string dpkgCommand, string workingDirectory, TimeSpan timeout, bool trace = false)
+        {
+            ProcessResult result;
+            var timeoutHelper = new TimeoutHelper(timeout);
+            int retryAttempt = 0;
+            do
+            {
+                if (retryAttempt != 0)
+                {
+                    DeployerTrace.WriteInfo("Executing attempt: {0}", retryAttempt);
+                }
+
+                result = Utility.RunLinuxBashCommand(dpkgCommand, workingDirectory, InstallTimeout, trace: true);
+
+                if (result.ExitCode == 100 || result.Output.Contains("Could not get lock /var/lib/dpkg/lock"))
+                {
+                    DeployerTrace.WriteInfo("Encountered apt lock. Attempt: {0}", retryAttempt);
+                    Utility.RunLinuxBashCommand("ps aux | grep apt", workingDirectory, TimeSpan.FromMinutes(10), trace: true);
+                    Thread.Sleep(TimeSpan.FromSeconds(10));
+                }
+            } while (result.ExitCode != 0 && !TimeoutHelper.HasExpired(timeoutHelper));
+
+            return result;
+        }
+
+        internal static ProcessResult RunLinuxBashCommand(string bashCmd, string workingDirectory, TimeSpan timeout, int[] expectedErrorCodes, int sleepTimeInSecOnRetry = 10, int retryCount = 5, bool trace = false)
+        {
+            ProcessResult result;
+            int retryAttempt = 0;
+
+            if (expectedErrorCodes == null)
+            {
+                expectedErrorCodes = new int[] { 0 };
+            }
+
+            do
+            {
+                if (retryAttempt != 0)
+                {
+                    DeployerTrace.WriteInfo("Attempt: {0}", retryAttempt);
+                }
+
+                result = Utility.RunLinuxBashCommand(bashCmd, workingDirectory, timeout, trace: trace);
+                retryAttempt++;
+                
+                if (!IsExitCodeExpected(result, expectedErrorCodes))
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(sleepTimeInSecOnRetry));
+                }
+
+            } while (!IsExitCodeExpected(result, expectedErrorCodes) && retryAttempt < retryCount);
+
+            return result;
+        }
+
+        internal static ProcessResult RunLinuxBashCommand(string bashCmd, string workingDirectory, TimeSpan timeout, bool trace = false)
+        {
+            return Utility.RunProcessOnLinux("sh", string.Format(CultureInfo.InvariantCulture, "-c \"{0}\"", bashCmd), workingDirectory, timeout, trace: trace);
+        }
+
+        internal static ProcessResult RunProcessOnLinux(string command, string arguments, string workingDirectory, TimeSpan timeout, bool trace = false)
+        {
+            if (trace)
+            {
+                DeployerTrace.WriteInfo("Running process {0} {1} with timeout {2}...\nWorkingDirectory: {3}", command, arguments, timeout, workingDirectory);
+            }
+
+            var processResult = RunProcessOnLinux(command, arguments, workingDirectory, timeout);
+
+            if (trace)
+            {
+                DeployerTrace.WriteInfo("Process {0} completed with exit code {1}. Output: \n{2}", command, processResult.ExitCode, processResult.Output);
+            }
+
+            return processResult;
+        }
+
+        /// <summary>
+        /// Runs the specified process and saves the output to specifid log file.
+        /// </summary>
+        /// <returns>The exit code from the process.</returns>
+        internal static ProcessResult RunProcessOnLinux(string command, string arguments, string workingDirectory, TimeSpan timeout)
+        {
+            int outputStreamEnded = 0;
+            var result = new ProcessResult();
+            var startInfo = new ProcessStartInfo(command, arguments);
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
+            startInfo.WorkingDirectory = workingDirectory;
+
+            var process = Process.Start(startInfo);
+            var sb = new StringBuilder();
+            DataReceivedEventHandler dataReceivedHandler = (sender, e) =>
+            {
+                if (e.Data != null)
+                {
+                    sb.AppendLine(e.Data);
+                }
+                else
+                {
+                    Interlocked.Increment(ref outputStreamEnded);
+                }
+            };
+
+            process.OutputDataReceived += dataReceivedHandler;
+            process.ErrorDataReceived += dataReceivedHandler;
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            bool completed = process.WaitForExit((int)timeout.TotalMilliseconds);
+            if (!completed)
+            {
+                DeployerTrace.WriteWarning("Timeout {0} exceeded, terminating process..", timeout);
+                process.Kill();
+            }
+
+            if (outputStreamEnded < 2)
+            {
+                SpinWait.SpinUntil(() => outputStreamEnded == 2, ProcessOutputWaitTimeout);
+            }
+
+            result.ExitCode = process.ExitCode;
+            result.Output = sb.ToString();
+
+            return result;
+        }
+
+        internal static bool IsExitCodeExpected(ProcessResult result, int[] expectedExitCodes)
+        {
+            return expectedExitCodes.Any(code => code == result.ExitCode);
+        }
+
+        internal static void PurgeAptPackageIfPresent(string packageName)
+        {
+            string packageVisibleInDpkgState = string.Format(Constants.DpkgPackageStateVisibleCommandFormat, packageName);
+            ProcessResult result = Utility.RunLinuxBashCommand(packageVisibleInDpkgState, Environment.CurrentDirectory, TimeSpan.FromSeconds(30), true);
+            if (result.ExitCode == 0)
+            {
+                string purgePackageCmd = string.Format(Constants.AptPurgePackageCommandFormat, packageName);
+                result = Utility.RunAptLockLinuxBashCommand(purgePackageCmd, Environment.CurrentDirectory, TimeSpan.FromMinutes(15), true);
+
+                if (result.ExitCode != 0)
+                {
+                    throw new InvalidDeploymentException(string.Format("Purging package {0} was not successful. Exit code: {1}, Output: {2}", packageName, result.ExitCode, result.Output));
+                }
+            }
+        }
+#endif
+    }
+
+    internal class ProcessResult
+    {
+        public int ExitCode { get; set; }
+        public string Output { get; set; }
     }
 }

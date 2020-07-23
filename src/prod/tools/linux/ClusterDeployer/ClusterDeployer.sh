@@ -91,9 +91,14 @@ if [ "$SkipDrop" == "false" ]; then
         DeployFabricBins
     fi
 
+# Start tracing
+# TODO: Move to TraceSessionManager after figuring out startring lttng as sfuser or root 
+# Ex: lttng_handler.sh $serviceFabricVersion $traceDiskBufferSizeInMB $keepExistingSFSessions
 echo "Starting tracing session"
+traceDiskBufferSizeInMB=5120
+keepExistingSFSessions=0
 if command -v lttng >/dev/null 2>&1; then
-    ./../FabricDrop/bin/Fabric/DCA.Code/lttng_handler.sh $(cat ./../FabricDrop/bin/Fabric/DCA.Code/ClusterVersion)
+    ./../FabricDrop/bin/Fabric/DCA.Code/lttng_handler.sh $(cat ./../FabricDrop/bin/Fabric/DCA.Code/ClusterVersion) $traceDiskBufferSizeInMB $keepExistingSFSessions
 else
     echo "LTTng is not installed." >&2;
 fi

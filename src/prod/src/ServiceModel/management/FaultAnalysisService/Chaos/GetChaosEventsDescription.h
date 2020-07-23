@@ -29,7 +29,7 @@ namespace Management
             __declspec(property(get = get_Filter)) std::shared_ptr<ChaosEventsFilter> const & FilterSPtr;
             std::shared_ptr<ChaosEventsFilter> const & get_Filter() const { return filterSPtr_; }
 
-            __declspec(property(get = get_QueryPagingDescription, put = set_QueryPagingDescription)) std::shared_ptr<ServiceModel::QueryPagingDescription> const & QueryPagingDescriptionSPtr;
+            __declspec(property(get = get_QueryPagingDescription, put = set_QueryPagingDescription)) std::shared_ptr<ServiceModel::QueryPagingDescription> const & PagingDescription;
             std::shared_ptr<ServiceModel::QueryPagingDescription> const & get_QueryPagingDescription() const { return queryPagingDescriptionSPtr_; }
 
             __declspec(property(get = get_ClientType)) std::wstring ClientType;

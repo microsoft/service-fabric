@@ -141,6 +141,7 @@ target_link_libraries(${exe_FailoverRA.Test}
   ${lib_StoreRepairPolicy}
   ${lib_Replication}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancingCommon}
   ${lib_ServiceGroup}
   ${lib_ImageModel}
@@ -167,6 +168,7 @@ target_link_libraries(${exe_FailoverRA.Test}
   ${lib_InternalFabricUUID}
   ${lib_FabricUUID}
   ${lib_FabricResources}
+  ${lib_NetworkInventoryManager}
   ${KtlUser}
   ${BoostTest2}
   ${Cxx}

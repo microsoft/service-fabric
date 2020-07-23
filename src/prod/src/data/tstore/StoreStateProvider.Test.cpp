@@ -44,7 +44,7 @@ class StoreStateProviderTest
     {
         KAllocator &allocator = GetAllocator();
         MockTransactionalReplicator::SPtr replicator = nullptr;
-        NTSTATUS status = MockTransactionalReplicator::Create(allocator, replicator);
+        NTSTATUS status = MockTransactionalReplicator::Create(allocator, /*hasPersistedState: */true, replicator);
         CODING_ERROR_ASSERT(NT_SUCCESS(status));
         replicator->Initialize(*GetPartitionedReplicaId());
         replicator->Role = role;

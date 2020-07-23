@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <ProjectGuid>{0A9DC01A-3290-4682-8C9D-17B213ECCEB5}</ProjectGuid>
+    <RootNamespace>System.Fabric.InfrastructureService.Test</RootNamespace>
+    <AssemblyName>FabricIS.Test</AssemblyName>
+    <OutputType>Library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ServiceReplicaTest.cs" />
+    <Compile Include="ProgramTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\dll\FabricIS.common.csproj">
+      <Project>{b2c86537-979a-473a-b5a0-f9d1082a7e22}</Project>
+      <Name>FabricIS.common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\common\test\FabricIS.common.test.csproj">
+      <Project>{83746794-611f-439c-abf5-15df52cc9c96}</Project>
+      <Name>FabricIS.common.test</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\exe\FabricIS.csproj">
+      <Project>{bc6f4eb9-040f-4b1f-abfa-ee19f86745b9}</Project>
+      <Name>FabricIS</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll">
+      <!--
+      This binary needs to be explicitly copied for private cloud tests to work on http://testinfra1 by setting <Private>True</Private>
+      This copy is not necessary for official builds
+      Reason:
+      For executing private cloud test runs on http://testinfra1, we upload our dev box's local build. The dev box build does not copy
+      $(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll to the FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current
+      folder. This is because CoreXT/MSBuild detects that we have a dll with the same name present in the GAC (due to Visual Studio being installed on
+      our dev boxes). So, it skips the copying. However, on http://testinfra1 VMs which uses our uploaded local build, Visual Studio is not installed,
+      and hence this dll is not found in the GAC. Now since this dll isn't copied too, FabricIS.Test.dll fails.
+      On official build machines, Visual Studio isn't installed. So, Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll is correctly copied
+      to the required folder during the build. Hence FabricIS.Test.dll on http://testinfra1 from the official build succeeds.
+      -->
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

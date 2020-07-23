@@ -1,0 +1,13 @@
+load SetV2StackPerfConfig.test
+
+setcfg Config.TraceEtw.Level 4
+
+# Disable PLB because it can end up moving a quorum of replicas at once causing RA to detect suspected data loss until RA bug is fixed
+setcfg Config.PlacementAndLoadBalancing.LoadBalancingEnabled false
+
+# Enable Progress Vector Trimming
+setcfg Config.TransactionalReplicator2.ProgressVectorMaxEntries 20
+setcfg Config.TransactionalReplicator.CheckpointThresholdInMB 150 
+
+# Create three node cluster.
+load ThreeNodeLocalCluster.test

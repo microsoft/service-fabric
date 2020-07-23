@@ -38,7 +38,6 @@
 #include "lmcons.h"
 #include "lmerr.h"
 #include "mbusafecrt.h"
-#include "minmax.h"
 #include "mstcpip.h"
 #include "mswsock.h"
 #include "nt.h"

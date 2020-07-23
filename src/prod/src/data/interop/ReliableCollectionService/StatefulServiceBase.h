@@ -9,6 +9,7 @@ typedef void(*removePartitionContextCallback)(long long key);
 typedef void(*addPartitionContextCallback)(long long key, TxnReplicatorHandle txReplicator, IFabricStatefulServicePartition* partition, GUID partitionId, long long replicaId);
 // Signature for callback when change role happens. Partition LowKey and the new role are passed to the callback.
 typedef void(*changeRoleCallback)(long long key, int32_t newRole);
+typedef void(*abortCallback)(long long key);
 
 namespace TXRStatefulServiceBase
 {
@@ -74,13 +75,14 @@ namespace TXRStatefulServiceBase
         virtual ~StatefulServiceBase();
 
     public:
-        static void SetCallback(addPartitionContextCallback addCallback, removePartitionContextCallback removeCallback, changeRoleCallback changeCallback) 
+        static void SetCallback(addPartitionContextCallback addCallback, removePartitionContextCallback removeCallback, changeRoleCallback changeCallback, abortCallback abortcall) 
         {
             s_addPartitionContextCallbackFnptr = addCallback;
             s_removePartitionContextCallbackFnptr = removeCallback;
 
             // This can be nullptr.
             s_changeRoleCallbackFnPtr = changeCallback;
+            s_abortCallbackFnPtr = abortcall;
         }
 
 	protected:
@@ -142,6 +144,7 @@ namespace TXRStatefulServiceBase
         static addPartitionContextCallback s_addPartitionContextCallbackFnptr;
         static removePartitionContextCallback s_removePartitionContextCallbackFnptr;
         static changeRoleCallback s_changeRoleCallbackFnPtr;
+        static abortCallback s_abortCallbackFnPtr;
     };
 
     typedef Common::ComPointer<StatefulServiceBase> StatefulServiceBaseCPtr;

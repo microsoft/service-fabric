@@ -75,7 +75,7 @@ public:
 
     ErrorCode EndSetSecrets(
         Common::AsyncOperationSPtr const & operation,
-        __out Management::CentralSecretService::SecretReferencesDescription & result)
+        __out Management::CentralSecretService::SecretsDescription & result)
     {
         UNREFERENCED_PARAMETER(result);
         return CompletedAsyncOperation::End(operation);
@@ -103,6 +103,32 @@ public:
         __out Management::CentralSecretService::SecretReferencesDescription & result)
     {
         UNREFERENCED_PARAMETER(result);
+        return CompletedAsyncOperation::End(operation);
+    }
+
+    Common::AsyncOperationSPtr BeginGetSecretVersions(
+        Management::CentralSecretService::SecretReferencesDescription & secretReferences,
+        Common::TimeSpan const timeout,
+        Common::AsyncCallback const &callback,
+        Common::AsyncOperationSPtr const & parent)
+    {
+        UNREFERENCED_PARAMETER(secretReferences);
+        UNREFERENCED_PARAMETER(timeout);
+        UNREFERENCED_PARAMETER(callback);
+        UNREFERENCED_PARAMETER(parent);
+
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
+            ErrorCodeValue::Success,
+            callback,
+            parent);
+    }
+
+    Common::ErrorCode EndGetSecretVersions(
+        Common::AsyncOperationSPtr const & operation,
+        __out Management::CentralSecretService::SecretReferencesDescription & result)
+    {
+        UNREFERENCED_PARAMETER(result);
+
         return CompletedAsyncOperation::End(operation);
     }
 
@@ -293,6 +319,18 @@ public:
     ErrorCode CreateResourceManagementClient(__out Api::IResourceManagementClientPtr &clientPtr)
     {
         clientPtr = RootedObjectPointer<IResourceManagementClient>(nullptr, this->CreateComponentRoot());
+        return ErrorCode::Success();
+    }
+
+    ErrorCode CreateNetworkManagementClient(__out Api::INetworkManagementClientPtr &clientPtr)
+    {
+        clientPtr = RootedObjectPointer<INetworkManagementClient>(nullptr, this->CreateComponentRoot());
+            return ErrorCode::Success();
+    }
+
+    ErrorCode CreateGatewayResourceManagerClient(__out Api::IGatewayResourceManagerClientPtr &clientPtr)
+    {
+        clientPtr = RootedObjectPointer<IGatewayResourceManagerClient>(nullptr, this->CreateComponentRoot());
         return ErrorCode::Success();
     }
 

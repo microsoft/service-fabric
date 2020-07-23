@@ -111,7 +111,7 @@ namespace Client
         CLIENT_TRACE( TrackerCallbacksWithRSPTrace, 84, Info, "handlers=({1} last={2})", "contextSequenceId", "handlers", "rsp")
         CLIENT_TRACE( TrackerCallbacksWithADFTrace, 85, Info, "handlers=({1} last={2})", "contextSequenceId", "handlers", "failure")
         CLIENT_TRACE( TrackerCallbacksTrace, 86, Info, "handlers=({1})", "contextSequenceId", "handlers")
-        CLIENT_TRACE( HandlerIdTrace, 87, Info, "{1};", "contextSequenceId", "handlerId")        
+        CLIENT_TRACE( HandlerIdTrace, 87, Info, "{1};", "contextSequenceId", "handlerId")
         CLIENT_TRACE( BeginRecoverPartition, 88, Info, "{1}: PartitionId = {2}", "id", "activityId", "partitionId")
         CLIENT_TRACE( BeginRecoverServicePartitions, 89, Info, "{1}: ServiceName = {2}", "id", "activityId", "serviceName")
         CLIENT_TRACE( BeginRecoverSystemPartitions, 90, Info, "{1}", "id", "activityId")
@@ -120,7 +120,7 @@ namespace Client
         CLIENT_TRACE( BeginGetStagingLocation, 93, Info, "{1}: partitionId = {2}", "id", "activityId", "partitionId")
         CLIENT_TRACE( EndGetStagingLocation, 94, Info, "{1}: Error = {2}, StagingLocation = {3}", "id", "activityId", "error", "stagingLocation")
         CLIENT_TRACE( BeginUpload, 95, Info, "{1}: StagingRelativePath = {2}, StoreRelativePath = {3}, ShouldOverwrite = {4}, PartitionId = {5}", "id", "activityId", "stagingRelativePath", "storeRelativePath", "shouldOverwrite", "partitionId")
-        CLIENT_TRACE( EndUpload, 96, Info, "{1}: Error = {2}", "id", "activityId", "error")        
+        CLIENT_TRACE( EndUpload, 96, Info, "{1}: Error = {2}", "id", "activityId", "error")
         CLIENT_TRACE( BeginListFiles, 97, Info, "{1}: StoreRelativePath = {2}, ContinuationToken = {3}, IsRecursive = {4}, IsPaging = {5}, PartitionId = {6}", "id", "activityId", "storeRelativePath", "continuationToken", "isRecursive", "isPaging", "partitionId")
         CLIENT_TRACE( EndListFiles, 98, Info, "{1}: Error = {2}, ContinuationToken = {3}, AvailableFileCount = {4}, AvailableFolderCount = {5}, AvailableShareCount = {6}", "id", "activityId", "error", "ContinuationToken", "availableFileCount", "availableFolderCount", "availableShareCount")
         CLIENT_TRACE( BeginDelete, 99, Info, "{1}: StoreRelativePath = {2}, PartitionId = {3}", "id", "activityId", "storeRelativePath", "partitionId")
@@ -191,15 +191,20 @@ namespace Client
         CLIENT_TRACE(BeginDeleteComposeDeployment, 167, Info, "{1}: DeploymentName = {2}", "id", "activityId", "deploymentName")
         CLIENT_TRACE(AcceptedNotification, 170, Info, "[{1}] accepted service notification ({2}): {3}", "id", "pageId", "serviceName", "partition")
         CLIENT_TRACE(BeginUpgradeComposeDeployment, 171, Info, "{1}: DeploymentName = {2}, ComposeFiles Count = {3}, SFSettings files Count = {4}", "id", "activityId", "deploymentName", "composeFileCount", "sfSettingsFilesCount")
+        CLIENT_TRACE(BeginRollbackComposeDeployment, 172, Info, "{1}: DeploymentName = {2}", "id", "activityId", "deploymentName")
         CLIENT_TRACE(BeginDeleteSingleInstanceDeployment, 173, Info, "{1}: Description = {2}", "id", "activityId", "description")
         CLIENT_TRACE(BeginCreateOrUpdateApplicationResource, 174, Info, "{1}: ApplicationName = {2}, Services = {3}", "id", "activityId", "applicationName", "serviceCount")
         CLIENT_TRACE(BeginCreateVolume, 175, Info, "{1}: VolumeName = {2}", "id", "activityId", "volumeName")
         CLIENT_TRACE(BeginDeleteVolume, 176, Info, "{1}: VolumeName = {2}", "id", "activityId", "volumeName")
         CLIENT_TRACE(BeginUploadChunkContent, 177, Info, "{1}: SessionId = {2}, StartPosition = {3}, EndPosition = {4}, Size= {5}, PartitionId = {6}", "id", "activityId", "sessionId", "startPosition", "endPosition", "size", "partitionId")
         CLIENT_TRACE(EndUploadChunkContent, 178, Info, "{1}: Error = {2}", "id", "activityId", "error")
+        CLIENT_TRACE(BeginCreateNetwork, 179, Info, "{1}: BeginCreateNetwork for Network {2}", "id", "activityId", "networkName")
+        CLIENT_TRACE(BeginDeleteNetwork, 180, Info, "{1}: BeginDeleteNetwork for Network {2}", "id", "activityId", "networkName")
 
+        CLIENT_TRACE(BeginCreateOrUpdateGatewayResource, 181, Info, "{1} BeginCreateOrUpdateGatewayResource", "id", "activityId")
+        CLIENT_TRACE(BeginDeleteGatewayResource, 182, Info, "{1}: BeginDeleteGatewayResource for Gateway {2}", "id", "activityId", "name")
         END_STRUCTURED_TRACES
-        
+
         DECLARE_CLIENT_TRACE( Open, std::wstring )
         DECLARE_CLIENT_TRACE( OpenFailed, std::wstring, std::wstring, Common::ErrorCode )
         DECLARE_CLIENT_TRACE( Close, std::wstring )
@@ -320,11 +325,11 @@ namespace Client
 
         DECLARE_CLIENT_TRACE( BeginUpdateApplicationUpgrade, std::wstring, Common::ActivityId, Common::NamingUri )
         DECLARE_CLIENT_TRACE( BeginUpdateFabricUpgrade, std::wstring, Common::ActivityId )
-        
+
         DECLARE_CLIENT_TRACE( BeginStartNode, std::wstring, Common::ActivityId, std::wstring, uint64, std::wstring, uint64)
         DECLARE_CLIENT_TRACE( BeginRollbackApplicationUpgrade, std::wstring, Common::ActivityId, Common::NamingUri )
         DECLARE_CLIENT_TRACE( BeginRollbackFabricUpgrade, std::wstring, Common::ActivityId )
-        
+
         DECLARE_CLIENT_TRACE( BeginCreateRepairRequest, std::wstring, Common::ActivityId, Management::RepairManager::RepairTask)
         DECLARE_CLIENT_TRACE( EndCreateRepairRequest, std::wstring, Common::ActivityId, Common::ErrorCode, int64)
         DECLARE_CLIENT_TRACE( BeginCancelRepairRequest, std::wstring, Common::ActivityId, std::wstring, int64, bool)
@@ -362,13 +367,16 @@ namespace Client
         DECLARE_CLIENT_TRACE( BeginDeleteComposeDeployment, std::wstring, Common::ActivityId, std::wstring)
         DECLARE_CLIENT_TRACE( AcceptedNotification, std::wstring, Naming::ServiceNotificationPageId, std::wstring, Reliability::ServiceTableEntry)
         DECLARE_CLIENT_TRACE( BeginUpgradeComposeDeployment, std::wstring, Common::ActivityId, std::wstring, uint64, uint64)
+        DECLARE_CLIENT_TRACE(BeginRollbackComposeDeployment, std::wstring, Common::ActivityId, std::wstring)
         DECLARE_CLIENT_TRACE( BeginDeleteSingleInstanceDeployment, std::wstring, Common::ActivityId, ServiceModel::DeleteSingleInstanceDeploymentDescription )
         DECLARE_CLIENT_TRACE( BeginCreateOrUpdateApplicationResource, std::wstring, Common::ActivityId, std::wstring, size_t)
         DECLARE_CLIENT_TRACE( BeginCreateVolume, std::wstring, Common::ActivityId, std::wstring)
         DECLARE_CLIENT_TRACE( BeginDeleteVolume, std::wstring, Common::ActivityId, std::wstring)
-
         DECLARE_CLIENT_TRACE( BeginUploadChunkContent, std::wstring, Common::ActivityId, Common::Guid, uint64, uint64, uint64, Common::Guid);
         DECLARE_CLIENT_TRACE( EndUploadChunkContent, std::wstring, Common::ActivityId, Common::ErrorCode)
+        DECLARE_CLIENT_TRACE( BeginCreateNetwork, std::wstring, Common::ActivityId, std::wstring)
+        DECLARE_CLIENT_TRACE( BeginDeleteNetwork, std::wstring, Common::ActivityId, std::wstring)
+        DECLARE_CLIENT_TRACE( BeginCreateOrUpdateGatewayResource, std::wstring, Common::ActivityId)
+        DECLARE_CLIENT_TRACE( BeginDeleteGatewayResource, std::wstring, Common::ActivityId, std::wstring)
     };
 }
-

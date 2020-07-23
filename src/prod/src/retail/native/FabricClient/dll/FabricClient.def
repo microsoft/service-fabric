@@ -1,0 +1,12 @@
+LIBRARY FabricClient
+EXPORTS
+    FabricCreateClient
+    FabricCreateLocalClient
+    FabricCreateClient2
+    FabricCreateLocalClient2
+    FabricCreateClient3
+    FabricCreateLocalClient3
+    FabricCreateLocalClient4
+    GetFabricClientDefaultSettings
+    FabricGetClientDllVersion
+    FabricGetDefaultRollingUpgradeMonitoringPolicy

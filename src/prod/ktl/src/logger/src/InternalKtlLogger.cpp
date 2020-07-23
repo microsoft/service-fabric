@@ -794,13 +794,13 @@ RvdAsnIndex::Load( __in RvdAsnIndex& Src)
                 RvdAsnIndexEntry::SavedState    previousIndexEntryValue;
                 BOOLEAN                         previousIndexEntryWasStored;
 
-				ULONGLONG dontCare = 0;
+                ULONGLONG dontCare = 0;
                 NTSTATUS status = UnsafeAddOrUpdate(
                     nextEntry,
                     resultIndexEntry,
                     previousIndexEntryValue,
                     previousIndexEntryWasStored,
-					dontCare);
+                    dontCare);
 
                 if (!NT_SUCCESS(status))
                 {
@@ -878,7 +878,7 @@ RvdAsnIndex::UnsafeAddOrUpdate(
 
         if (currentEntry->_MappingEntry.RecordAsnVersion >= IndexEntry->_MappingEntry.RecordAsnVersion)
         {
-			DuplicateRecordAsnVersion = currentEntry->_MappingEntry.RecordAsnVersion;
+            DuplicateRecordAsnVersion = currentEntry->_MappingEntry.RecordAsnVersion;
             PreviousIndexEntryWasStored = FALSE;
             ResultIndexEntry.Reset();
             return STATUS_OBJECT_NAME_COLLISION;
@@ -1771,7 +1771,9 @@ RvdAsnIndex::GetContainingAsnInformation(
 BOOLEAN
 RvdAsnIndex::CheckForRecordsWithHigherVersion(
     __in RvdLogAsn Asn,
-    __in ULONGLONG Version)
+    __in ULONGLONG Version,
+    __out ULONGLONG& HigherVersion
+    )
 {
     K_LOCK_BLOCK(_ThisLock)
     {
@@ -1781,6 +1783,7 @@ RvdAsnIndex::CheckForRecordsWithHigherVersion(
         {
             if (currentEntry->GetVersion() > Version)
             {
+                HigherVersion = currentEntry->GetVersion();
                 return(TRUE);
             }
             currentEntry = UnsafePrev(currentEntry);

@@ -247,10 +247,16 @@ namespace System.Fabric.Interop
                     { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_VOLUME_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_VolumeNotFound : msg), e, FabricErrorCode.VolumeNotFound) },
                     { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_SERVICE_SCALING_POLICY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidServiceScalingPolicy : msg), e, FabricErrorCode.InvalidServiceScalingPolicy) },
                     { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DATABASE_MIGRATION_IN_PROGRESS, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_DatabaseMigrationInProgress : msg), e, FabricErrorCode.DatabaseMigrationInProgress) },
-                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_CentralSecretServiceGeneric : msg), e, FabricErrorCode.CentralSecretServiceGenericError) }
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_CentralSecretServiceGeneric : msg), e, FabricErrorCode.CentralSecretServiceGenericError) },
+					{ (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_COMPOSE_DEPLOYMENT_NOT_UPGRADING, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ComposeDeploymentNotUpgrading : msg), e, FabricErrorCode.ComposeDeploymentNotUpgrading) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SECRET_INVALID, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_SecretInvalid : msg), e, FabricErrorCode.SecretInvalid) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SECRET_VERSION_ALREADY_EXISTS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_SecretVersionAlreadyExists : msg), e, FabricErrorCode.SecretVersionAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_SingleInstanceApplicationUpgradeInProgress : msg), e, FabricErrorCode.SingleInstanceApplicationUpgradeInProgress) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_OPERATION_NOT_SUPPORTED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_OperationNotSupported : msg), e, FabricErrorCode.OperationNotSupported) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NETWORK_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NetworkNotFound : msg), e, FabricErrorCode.NetworkNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NETWORK_IN_USE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NetworkInUse : msg), e, FabricErrorCode.NetworkInUse) }
                 };
             }
         }
     }
 }
- 

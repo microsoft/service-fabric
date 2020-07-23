@@ -18,12 +18,12 @@ namespace System.Fabric.Common.Tracing
     internal class TraceEvent
     {
         public const ushort MaxFieldsPerEvent = 32;
-
+        public const ulong AdminChannelKeywordMask = 0x8000000000000000;
+        public const ulong DebugChannelKeywordMask = 0x1000000000000000;
+        public const ulong OperationalChannelKeywordMask = 0x4000000000000000;
+ 
         // Every major release, this is incremented by 10. For CU's, it's incremented by 1. Keep this value in sync with TraceEvent.cpp.
         private const byte version = 2;
-        private const ulong AdminChannelKeywordMask = 0x8000000000000000;
-        private const ulong DebugChannelKeywordMask = 0x1000000000000000;
-        private const ulong OperationalChannelKeywordMask = 0x4000000000000000;
         private const string FabricTracesTestKeywordEnvironmentVariable = "FabricTracesTestKeyword";
 
         private static readonly ulong TestKeyword = InitializeTestKeyword();

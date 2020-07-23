@@ -20,11 +20,13 @@ OverlayManager::~OverlayManager()
 }
 
 OverlayManager::OverlayManager(
-    __in KtlLogManager::MemoryThrottleLimits* MemoryThrottleLimits,
-    __in KtlLogManager::SharedLogContainerSettings* SharedLogContainerSettings
+    __in KtlLogManager::MemoryThrottleLimits& MemoryThrottleLimits,
+    __in KtlLogManager::SharedLogContainerSettings& SharedLogContainerSettings,
+    __in KtlLogManager::AcceleratedFlushLimits& AcceleratedFlushLimits
       ) :
-   _MemoryThrottleLimits(*MemoryThrottleLimits),
-   _SharedLogContainerSettings(*SharedLogContainerSettings),
+   _MemoryThrottleLimits(MemoryThrottleLimits),
+   _AcceleratedFlushLimits(AcceleratedFlushLimits),
+   _SharedLogContainerSettings(SharedLogContainerSettings),
    _ContainersTable(*this,
                     GetThisAllocator(),
                     GetThisAllocationTag()),
@@ -66,8 +68,9 @@ OverlayManager::OverlayManager(
 NTSTATUS
 OverlayManager::Create(
     __out OverlayManager::SPtr& Context,    
-    __in KtlLogManager::MemoryThrottleLimits* MemoryThrottleLimits,
-    __in KtlLogManager::SharedLogContainerSettings* SharedLogContainerSettings,
+    __in KtlLogManager::MemoryThrottleLimits& MemoryThrottleLimits,
+    __in KtlLogManager::SharedLogContainerSettings& SharedLogContainerSettings,
+    __in KtlLogManager::AcceleratedFlushLimits& AcceleratedFlushLimits,
     __in KAllocator& Allocator,
     __in ULONG AllocationTag
     )
@@ -75,7 +78,7 @@ OverlayManager::Create(
     NTSTATUS status;
     OverlayManager::SPtr context;
 
-    context = _new(AllocationTag, Allocator) OverlayManager(MemoryThrottleLimits, SharedLogContainerSettings);
+    context = _new(AllocationTag, Allocator) OverlayManager(MemoryThrottleLimits, SharedLogContainerSettings, AcceleratedFlushLimits);
     if (context == nullptr)
     {
         status = STATUS_INSUFFICIENT_RESOURCES;
@@ -1382,17 +1385,17 @@ OverlayManager::MapPathToDiskId(
     // them to different guids so different drives can have different gates.
     //
 
-	//
-	// For windows, use this random guid as the default in case we are
-	// not able to map the path. In this way any paths that aren't
-	// mapped will still have some kind of disk id
-	//
-	
+    //
+    // For windows, use this random guid as the default in case we are
+    // not able to map the path. In this way any paths that aren't
+    // mapped will still have some kind of disk id
+    //
+    
     // {3C391CBC-4AC5-4a8b-B38B-413D17E1DB46}
     static const GUID aGuid = 
         { 0x3c391cbc, 0x4ac5, 0x4a8b, { 0xb3, 0x8b, 0x41, 0x3d, 0x17, 0xe1, 0xdb, 0x46 } };
     KGuid diskId = aGuid;
-	
+    
 #if !defined(PLATFORM_UNIX)
     ULONG l;
     BOOLEAN b = FALSE;
@@ -2165,7 +2168,6 @@ OverlayManager::AsyncQueryLogIdOverlay::FSMContinue(
 
     if (! NT_SUCCESS(Status))
     {
-        KTraceFailedAsyncRequest(Status, this, _State, 0);
         DoComplete(Status);
         return;
     }
@@ -3324,6 +3326,7 @@ OverlayManager::AsyncConfigureContextOverlay::FSMContinue(
     __in NTSTATUS Status
     )
 {
+    ULONG sizeExpected;
     KAsyncContextBase::CompletionCallback completion(this, &OverlayManager::AsyncConfigureContextOverlay::OperationCompletion);
     
     if (! NT_SUCCESS(Status))
@@ -3501,16 +3504,27 @@ OverlayManager::AsyncConfigureContextOverlay::FSMContinue(
                 }
 
                 case KtlLogManager::ConfigureMemoryThrottleLimits:
+                {
+                    sizeExpected = FIELD_OFFSET(KtlLogManager::MemoryThrottleLimits, MaximumDestagingWriteOutstanding);
+                    goto DoConfigureMemoryThrottleLimits;
+                }
+                
                 case KtlLogManager::ConfigureMemoryThrottleLimits2:
-                {                                                                          
+                {
+                    sizeExpected = FIELD_OFFSET(KtlLogManager::MemoryThrottleLimits, SharedLogThrottleLimit);
+                    goto DoConfigureMemoryThrottleLimits;
+                }
+                
+                case KtlLogManager::ConfigureMemoryThrottleLimits3:
+                {
+                    sizeExpected = sizeof(KtlLogManager::MemoryThrottleLimits);                                         ;
+DoConfigureMemoryThrottleLimits:
+                    
                     //
                     // Establish the new throttle memory limits
                     //
-                    KtlLogManager::MemoryThrottleLimits* limits;
-                    ULONG sizeExpected = (_Code == KtlLogManager::ConfigureMemoryThrottleLimits) ?
-                                                FIELD_OFFSET(KtlLogManager::MemoryThrottleLimits, MaximumDestagingWriteOutstanding) :
-                                                sizeof(KtlLogManager::MemoryThrottleLimits);                                         
-
+                    KtlLogManager::MemoryThrottleLimits* limits;                                                                                               
+                    
                     if (! _InBuffer || (_InBuffer->QuerySize() < sizeExpected))
                     {
                         Status = STATUS_INVALID_PARAMETER;
@@ -3639,6 +3653,25 @@ OverlayManager::AsyncConfigureContextOverlay::FSMContinue(
                         maximumDestagingWriteOutstanding = KtlLogManager::MemoryThrottleLimits::_DefaultMaximumDestagingWriteOutstandingMin;
                     }
 
+                    ULONG sharedLogThrottleLimit;
+                    if (_Code >= KtlLogManager::ConfigureMemoryThrottleLimits3)
+                    {
+                        sharedLogThrottleLimit = limits->SharedLogThrottleLimit;
+                    } else {
+                        sharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
+                    }
+
+                    if ((sharedLogThrottleLimit == 0) || (sharedLogThrottleLimit > 100))
+                    {
+                        Status = STATUS_INVALID_PARAMETER;
+                        KTraceFailedAsyncRequest(Status, this,
+                                                 sharedLogThrottleLimit,
+                                                 0);
+
+                        DoComplete(Status);
+                        return;
+                    }
+                    
 
                     KDbgCheckpointWDataInformational(GetActivityId(), "SetMemoryThrottleLimits", STATUS_SUCCESS,
                         (ULONGLONG)limits->WriteBufferMemoryPoolMin,
@@ -3650,7 +3683,7 @@ OverlayManager::AsyncConfigureContextOverlay::FSMContinue(
                         (ULONGLONG)limits->AllocationTimeoutInMs,
                         (ULONGLONG)limits->PinnedMemoryLimit,
                         (ULONGLONG)maximumDestagingWriteOutstanding,
-                        (ULONGLONG)0);                  
+                        (ULONGLONG)sharedLogThrottleLimit);                  
 
                     //
                     // Remember the limits that are originally set
@@ -3665,6 +3698,7 @@ OverlayManager::AsyncConfigureContextOverlay::FSMContinue(
                     _OM->_ThrottledAllocator->SetAllocationTimeoutInMs(limits->AllocationTimeoutInMs);
             
                     _OM->_MemoryThrottleLimits.MaximumDestagingWriteOutstanding = maximumDestagingWriteOutstanding;
+                    _OM->_MemoryThrottleLimits.SharedLogThrottleLimit = sharedLogThrottleLimit;
                     
                     Status = STATUS_SUCCESS;
                     break;
@@ -3743,6 +3777,74 @@ OverlayManager::AsyncConfigureContextOverlay::FSMContinue(
                     break;
                 }
 #endif
+
+                case KtlLogManager::ConfigureAcceleratedFlushLimits:
+                {                                                                          
+                    //
+                    // Establish the new write throttle threshold
+                    //
+                    KtlLogManager::AcceleratedFlushLimits* settings;
+
+                    if (! _InBuffer || (_InBuffer->QuerySize() < sizeof(KtlLogManager::AcceleratedFlushLimits)))
+                    {
+                        Status = STATUS_INVALID_PARAMETER;
+                        KTraceFailedAsyncRequest(Status, this, _State, _InBuffer ? _InBuffer->QuerySize() : (ULONGLONG)-1);
+
+                        DoComplete(Status);
+                        return;
+                    }
+
+                    settings = (KtlLogManager::AcceleratedFlushLimits*)_InBuffer->GetBuffer();
+                    
+                    //
+                    // Validate settings
+                    //
+                    if ((settings->AccelerateFlushActiveTimerInMs != KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActiveTimerInMsNoAction) &&
+                        ((settings->AccelerateFlushActiveTimerInMs < KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActiveTimerInMsMin) ||
+                         (settings->AccelerateFlushActiveTimerInMs > KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActiveTimerInMsMax)))
+                    {
+                        Status = STATUS_INVALID_PARAMETER;
+                        KTraceFailedAsyncRequest(Status, this,
+                                                 settings->AccelerateFlushActiveTimerInMs,
+                                                 0);
+
+                        DoComplete(Status);
+                        return;
+                    }
+
+                    if ((settings->AccelerateFlushPassiveTimerInMs < KtlLogManager::AcceleratedFlushLimits::AccelerateFlushPassiveTimerInMsMin) ||
+                        (settings->AccelerateFlushPassiveTimerInMs > KtlLogManager::AcceleratedFlushLimits::AccelerateFlushPassiveTimerInMsMax))
+                    {
+                        Status = STATUS_INVALID_PARAMETER;
+                        KTraceFailedAsyncRequest(Status, this,
+                                                 settings->AccelerateFlushPassiveTimerInMs,
+                                                 0);
+
+                        DoComplete(Status);
+                        return;
+                    }
+
+                    if ((settings->AccelerateFlushActivePercent < settings->AccelerateFlushPassivePercent) ||
+                        (settings->AccelerateFlushActivePercent < KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActivePercentMin) ||
+                        (settings->AccelerateFlushActivePercent > KtlLogManager::AcceleratedFlushLimits::AccelerateFlushActivePercentMax) ||
+                        (settings->AccelerateFlushPassivePercent < KtlLogManager::AcceleratedFlushLimits::AccelerateFlushPassivePercentMin) ||
+                        (settings->AccelerateFlushPassivePercent > KtlLogManager::AcceleratedFlushLimits::AccelerateFlushPassivePercentMax))
+                    {
+                        Status = STATUS_INVALID_PARAMETER;
+                        KTraceFailedAsyncRequest(Status, this,
+                                                 settings->AccelerateFlushActivePercent,
+                                                 settings->AccelerateFlushPassivePercent);
+
+                        DoComplete(Status);
+                        return;
+                    }
+
+                    
+                    _OM->_AcceleratedFlushLimits = *settings;
+
+                    Status = STATUS_SUCCESS;
+                    break;
+                }
                 
                 default:
                 {

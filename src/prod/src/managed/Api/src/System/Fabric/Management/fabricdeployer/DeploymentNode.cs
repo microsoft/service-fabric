@@ -198,6 +198,21 @@ namespace System.Fabric.FabricDeployer
             var currentClusterManifestFile = this.nodeSettings.DeploymentFoldersInfo.CurrentClusterManifestFile;
             if (File.Exists(currentClusterManifestFile))
             {
+                // Check if cluster manifest is invalid. See RDBug 14040324.
+                string fileContents = string.Empty;
+                if (new FileInfo(currentClusterManifestFile).Length == 0
+                        || new Func<bool>(() =>
+                        {
+                            fileContents = File.ReadAllText(currentClusterManifestFile);
+                            return string.IsNullOrWhiteSpace(fileContents);
+                        }).Invoke())
+                {
+                    string errorMsg = string.Format(StringResources.ClusterManifestInvalidDeleting_Formatted, currentClusterManifestFile, fileContents);
+                    DeployerTrace.WriteError(errorMsg);
+                    File.Delete(currentClusterManifestFile);
+                    throw new ClusterManifestValidationException(errorMsg);
+                }
+
                 ClusterManifestType currentManifest = XmlHelper.ReadXml<ClusterManifestType>(currentClusterManifestFile, SchemaLocation.GetWindowsFabricSchemaLocation());
                 SetupSettings currentSettings = new SetupSettings(currentManifest);
                 SetupSettings targetSettings = new SetupSettings(this.clusterManifest);

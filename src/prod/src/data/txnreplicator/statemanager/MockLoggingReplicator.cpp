@@ -11,9 +11,10 @@ using namespace TxnReplicator;
 using namespace Data::Utilities;
 
 MockLoggingReplicator::SPtr MockLoggingReplicator::Create(
+    __in bool hasPersistedState,
     __in KAllocator& allocator)
 {
-    SPtr result = _new(TEST_TAG, allocator) MockLoggingReplicator();
+    SPtr result = _new(TEST_TAG, allocator) MockLoggingReplicator(hasPersistedState);
     THROW_ON_ALLOCATION_FAILURE(result);
     THROW_ON_FAILURE(result->Status());
 
@@ -629,9 +630,10 @@ NTSTATUS MockLoggingReplicator::UnRegisterTransactionChangeHandler() noexcept
     CODING_ASSERT("NOT IMPLEMENTED");
 }
 
-MockLoggingReplicator::MockLoggingReplicator()
+MockLoggingReplicator::MockLoggingReplicator(__in bool hasPersistedState)
     : KAsyncServiceBase()
     , KWeakRefType<MockLoggingReplicator>()
+    , hasPersistedState_(hasPersistedState)
 {
     NTSTATUS status = Data::Utilities::ReaderWriterAsyncLock::Create(GetThisAllocator(), GetThisAllocationTag(), readerWriterLockSPtr_);
     CODING_ERROR_ASSERT(NT_SUCCESS(status));

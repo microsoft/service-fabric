@@ -1,0 +1,281 @@
+{
+  "name": "DevCluster",
+  "clusterConfigurationVersion": "1.0.0",
+  "apiVersion": "10-2017",
+  "nodes": [
+    {
+      "nodeName": "_Node_0",
+      "iPAddress": "localhost",
+      "nodeTypeRef": "NodeType0",
+      "faultDomain": "fd:/0",
+      "upgradeDomain": "0"
+    }
+  ],
+
+  "properties": {
+    "diagnosticsStore": {
+      "metadata": "Please replace the diagnostics file share with an actual file share accessible from all cluster machines.",
+      "dataDeletionAgeInDays": "3",
+      "storeType": "FileShare",
+      "connectionstring": "%systemdrive%\\ProgramData\\SF\\DiagnosticsStore"
+    },
+    "nodeTypes": [
+      {
+        "name": "NodeType0",
+        "clientConnectionEndpointPort": "19000",
+        "clusterConnectionEndpointPort": "19002",
+        "leaseDriverEndpointPort": "19001",
+        "serviceConnectionEndpointPort": "19006",
+        "httpGatewayEndpointPort": "19080",
+        "reverseProxyEndpointPort": "19081",
+        "applicationPorts": {
+          "startPort": "30001",
+          "endPort": "31000"
+        },
+        "isPrimary": true
+      }
+    ],
+    "fabricSettings": [
+      {
+        "name": "Setup",
+        "parameters": [
+          {
+            "name": "FabricDataRoot",
+            "value": "%systemdrive%\\SfDevCluster\\Data"
+          },
+          {
+            "name": "FabricLogRoot",
+            "value": "%systemdrive%\\SfDevCluster\\Log"
+          },
+          {
+            "name": "IsDevCluster",
+            "value": "true"
+          }
+        ]
+      },
+      {
+        "name": "Diagnostics",
+        "parameters": [
+          {
+            "name": "ProducerInstances",
+            "value": "ServiceFabricEtlFile,ServiceFabricPerfCtrFolder"
+          },
+          {
+            "name": "MaxDiskQuotaInMB",
+            "value": "10240"
+          },
+          {
+            "name": "EnableCircularTraceSession",
+            "value": "true"
+          }
+        ]
+      },
+      {
+        "name": "FabricClient",
+        "parameters": [
+          {
+            "name": "HealthReportSendInterval",
+            "value": "0"
+          }
+        ]
+      },
+      {
+        "name": "Failover",
+        "parameters": [
+          {
+            "name": "SendToFMTimeout",
+            "value": "1"
+          },
+          {
+            "name": "NodeUpRetryInterval",
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "name": "Federation",
+        "parameters": [
+          {
+            "name": "NodeIdGeneratorVersion",
+            "value": "V4"
+          },
+          {
+            "name": "UnresponsiveDuration",
+            "value": "0"
+          },
+          {
+            "name": "ProcessAssertExitTimeout",
+            "value": "86400"
+          }
+        ]
+      },
+      {
+        "name": "Hosting",
+        "parameters": [
+          {
+            "name": "EndpointProviderEnabled",
+            "value": "true"
+          },
+          {
+            "name": "RunAsPolicyEnabled",
+            "value": "true"
+          },
+          {
+            "name": "EnableProcessDebugging",
+            "value": "true"
+          },
+          {
+            "name": "DeactivationScanInterval",
+            "value": "600"
+          },
+          {
+            "name": "DeactivationGraceInterval",
+            "value": "2"
+          },
+          {
+            "name": "ServiceTypeRegistrationTimeout",
+            "value": "20"
+          },
+          {
+            "name": "CacheCleanupScanInterval",
+            "value": "300"
+          },
+          {
+            "name": "DeploymentRetryBackoffInterval",
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "name": "Management",
+        "parameters": [
+          {
+            "name": "ImageStoreConnectionString",
+            "value": "ImageStoreConnectionStringPlaceHolder"
+          },
+          {
+            "name": "ImageCachingEnabled",
+            "value": "false"
+          },
+          {
+            "name": "EnableDeploymentAtDataRoot",
+            "value": "true"
+          },
+          {
+            "name": "DisableChecksumValidation",
+            "value": "true"
+          }
+        ]
+      },
+      {
+        "name": "PlacementAndLoadBalancing",
+        "parameters": [
+          {
+            "name": "MinLoadBalancingInterval",
+            "value": "300"
+          },
+          {
+            "name": "TraceCRMReasons",
+            "value": "false"
+          }
+        ]
+      },
+      {
+        "name": "ReconfigurationAgent",
+        "parameters": [
+          {
+            "name": "IsDeactivationInfoEnabled",
+            "value": "true"
+          },
+          {
+            "name": "ServiceApiHealthDuration",
+            "value": "20"
+          },
+          {
+            "name": "ServiceReconfigurationApiHealthDuration",
+            "value": "20"
+          },
+          {
+            "name": "LocalHealthReportingTimerInterval",
+            "value": "5"
+          },
+          {
+            "name": "RAUpgradeProgressCheckInterval",
+            "value": "3"
+          },
+          {
+            "name": "RAPMessageRetryInterval",
+            "value": "0.5"
+          },
+          {
+            "name": "MinimumIntervalBetweenRAPMessageRetry",
+            "value": "0.5"
+          }
+        ]
+      },
+      {
+        "name": "ServiceFabricEtlFile",
+        "parameters": [
+          {
+            "name": "DataDeletionAgeInDays",
+            "value": "3"
+          },
+          {
+            "name": "IsEnabled",
+            "value": "true"
+          },
+          {
+            "name": "ProducerType",
+            "value": "EtlFileProducer"
+          },
+          {
+            "name": "EtlReadIntervalInMinutes",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "ServiceFabricPerfCtrFolder",
+        "parameters": [
+          {
+            "name": "DataDeletionAgeInDays",
+            "value": "3"
+          },
+          {
+            "name": "IsEnabled",
+            "value": "true"
+          },
+          {
+            "name": "ProducerType",
+            "value": "FolderProducer"
+          },
+          {
+            "name": "FolderType",
+            "value": "ServiceFabricPerformanceCounters"
+          }
+        ]
+      },
+      {
+        "name": "Trace/Etw",
+        "parameters": [
+          {
+            "name": "Level",
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "name": "TransactionalReplicator",
+        "parameters": [
+          {
+            "name": "CheckpointThresholdInMB",
+            "value": "64"
+          }
+        ]
+      }
+    ],
+    "addOnFeatures": [
+      "DnsService"
+    ]
+  }
+}

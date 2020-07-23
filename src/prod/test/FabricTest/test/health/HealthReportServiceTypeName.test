@@ -1,0 +1,59 @@
+#
+# This test validates that simple service type name is being sent to health manager when updating service 
+#
+
+
+votes 10 20 30
+fmservice 3 1
+cmservice 5 1
+namingservice 1 5 2
+set DummyPLBEnabled true
+cleantest
+
+
++10
++20
++30
++40
++50
+verify
+
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA version=1.0
+app.upload version10
+provisionapp version10
+
+# Create application version 1.0
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+# Create services
+createservice fabric:/MyApp/Volatile ServiceTypeA y 1 3 appname=fabric:/MyApp
+verify
+
+createservice fabric:/MyApp/Volatile1 ServiceTypeA y 2 3 appname=fabric:/MyApp servicePackageActivationMode=ExclusiveProcess
+verify
+
+# Update services
+updateservice fabric:/MyApp/Volatile Stateful TargetReplicaSetSize=2
+updateservice fabric:/MyApp/Volatile1 Stateful TargetReplicaSetSize=2
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/Volatile 2
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/Volatile1 2
+
+verify
+
+# Give time so that the report can propagate to health manager
+!pause 20
+
+checkhmentity service servicename=fabric:/MyApp/Volatile1 servicetypename=ServiceTypeA state=ok
+
+-*
+!q

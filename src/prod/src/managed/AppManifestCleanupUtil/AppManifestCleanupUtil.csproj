@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{8386AB8D-9CFD-404E-B46C-5BC561E435E1}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>AppManifestCleanupUtil</RootNamespace>
+    <AssemblyName>AppManifestCleanupUtil</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AppManifestCleanupUtil.cs" />
+    <Compile Include="CommandArgs.cs" />
+    <Compile Include="CommandLineParser\CommandLineArgumentAttribute.cs" />
+    <Compile Include="CommandLineParser\CommandLineUtility.cs" />
+	<Compile Include="CommandLineParser\DefaultCommandLineArgumentAttribute.cs" />
+	<Compile Include="CommandLineParser\CommandLineArgumentParser.cs" />
+	<Compile Include="CommandLineParser\CommandLineArgumentType.cs" />
+    <Compile Include="ExclusiveFileStream.cs" />
+    <Compile Include="Utility.cs" />
+    <Compile Include="XmlSerializationUtility.cs" />  
+    <Compile Include="Program.cs" />
+	 <Compile Include="SR.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SR.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
