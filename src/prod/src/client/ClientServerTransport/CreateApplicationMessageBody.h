@@ -46,7 +46,7 @@ namespace Management
 
             Reliability::ApplicationCapacityDescription const & get_ApplicationCapacity() const { return applicationCapacity_; }
 
-            FABRIC_FIELDS_05(applicationName_, 
+            FABRIC_FIELDS_05(applicationName_,
                 applicationType_, 
                 applicationVersion_, 
                 applicationParameters_,

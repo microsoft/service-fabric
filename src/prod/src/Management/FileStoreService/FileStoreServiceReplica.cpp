@@ -49,6 +49,7 @@ FileStoreServiceReplica::FileStoreServiceReplica(
     , nodeInstance_(nodeInfo.NodeInstance)
     , factoryHolder_(factoryHolder)
     , routingAgentProxy_(routingAgentProxy)
+    , fileStoreServiceCounters_()
 {
     this->SetTraceId(this->PartitionedReplicaId.TraceId);
 
@@ -99,6 +100,9 @@ ErrorCode FileStoreServiceReplica::OnOpen(ComPointer<IFabricStatefulServiceParti
             error);
         return error;
     }
+
+    this->fileStoreServiceCounters_ = FileStoreServiceCounters::CreateInstance(
+        this->PartitionedReplicaId.TraceId + L":" + StringUtility::ToWString(DateTime::Now().Ticks));
 
     error = Utility::RetriableOperation([this]() { return this->CreateName(); }, 3);
     if(!error.IsSuccess())

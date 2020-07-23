@@ -113,16 +113,18 @@ ErrorCode Api::ComProxySystemServiceBase<TComInterface>::EndCallSystemServiceInt
     AsyncOperationSPtr const & asyncOperation,
     __inout wstring & outputBlob)
 {
-    IFabricStringResult* publicOutput = NULL;
-    ErrorCode result = CallSystemServiceOperation::End(asyncOperation, &publicOutput);
+    ComPointer<IFabricStringResult> publicOutput;
+    ErrorCode result = CallSystemServiceOperation::End(asyncOperation, publicOutput.InitializationAddress());
 
-    if (result.IsSuccess() && publicOutput != NULL)
+    if (result.IsSuccess())
     {
-        LPCWSTR publicOutputStr = publicOutput->get_String();
-        if (publicOutputStr != NULL)
-        {
-            outputBlob.assign(publicOutputStr);
-        }
+        result = StringUtility::LpcwstrToWstring2(
+            publicOutput->get_String(),
+            true,
+            0,
+            STRSAFE_MAX_CCH,
+            outputBlob
+        );
     }
 
     return result;

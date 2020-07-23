@@ -18,7 +18,7 @@ namespace
             monitoringData.PartitionId,
             monitoringData.Api,
             monitoringData.ReplicaId,
-            metaData.NodeInstance,
+            metaData.NodeInstance.ToString(),
             metaData.NodeName);
     }
 
@@ -29,7 +29,7 @@ namespace
             monitoringData.Api,
             monitoringData.ReplicaId,
 			monitoringData.StartTime.ToDateTime(),
-            metaData.NodeInstance,
+            metaData.NodeInstance.ToString(),
             metaData.NodeName);
     }
 
@@ -44,7 +44,7 @@ namespace
                 elapsed.TotalMillisecondsAsDouble(),
                 error,
                 error.Message,
-                metaData.NodeInstance,
+                metaData.NodeInstance.ToString(),
                 metaData.NodeName);
         }
         else
@@ -57,7 +57,7 @@ namespace
                 elapsed.TotalMillisecondsAsDouble(),
                 error,
                 error.Message,
-                metaData.NodeInstance,
+                metaData.NodeInstance.ToString(),
                 metaData.NodeName);
         }
     }

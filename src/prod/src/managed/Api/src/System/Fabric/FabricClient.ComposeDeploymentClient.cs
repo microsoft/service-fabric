@@ -23,7 +23,7 @@ namespace System.Fabric
 
             private readonly FabricClient fabricClient;
             private readonly NativeClient.IFabricApplicationManagementClient10 nativeManagementClient;
-            private NativeClient.IInternalFabricApplicationManagementClient internalNativeApplicationClient;
+            private NativeClient.IInternalFabricApplicationManagementClient2 internalNativeApplicationClient;
 
             #endregion
 
@@ -35,7 +35,7 @@ namespace System.Fabric
                 this.nativeManagementClient = nativeManagementClient;
                 Utility.WrapNativeSyncInvokeInMTA(() =>
                 {
-                    this.internalNativeApplicationClient = (NativeClient.IInternalFabricApplicationManagementClient)this.nativeManagementClient;
+                    this.internalNativeApplicationClient = (NativeClient.IInternalFabricApplicationManagementClient2)this.nativeManagementClient;
                 },
                 "ComposeDeploymentClient.ctor");
             }
@@ -93,6 +93,23 @@ namespace System.Fabric
                 this.fabricClient.ThrowIfDisposed();
 
                 return this.UpgradeComposeDeploymentAsyncHelper(upgradeDescription, timeout, cancellationToken);
+            }
+
+            internal Task RollbackComposeDeploymentUpgradeAsync(ComposeDeploymentRollbackDescriptionWrapper description)
+            {
+                return this.RollbackComposeDeploymentUpgradeAsync(description, FabricClient.DefaultTimeout);
+            }
+
+            internal Task RollbackComposeDeploymentUpgradeAsync(ComposeDeploymentRollbackDescriptionWrapper description, TimeSpan timeout)
+            {
+                return this.RollbackComposeDeploymentUpgradeAsync(description, timeout, CancellationToken.None);
+            }
+
+            internal Task RollbackComposeDeploymentUpgradeAsync(ComposeDeploymentRollbackDescriptionWrapper description, TimeSpan timeout, CancellationToken cancellationToken)
+            {
+                this.fabricClient.ThrowIfDisposed();
+
+                return this.RollbackComposeDeploymentUpgradeAsyncHelper(description, timeout, cancellationToken);
             }
 
             /// <summary>
@@ -278,6 +295,38 @@ namespace System.Fabric
             {
                 return ComposeDeploymentUpgradeProgress.CreateFromNative(this.internalNativeApplicationClient.EndGetComposeDeploymentUpgradeProgress(context));
             }
+            #endregion
+
+            #region Rollback Compose Deployment Async
+
+            private Task RollbackComposeDeploymentUpgradeAsyncHelper(ComposeDeploymentRollbackDescriptionWrapper description, TimeSpan timeout, CancellationToken cancellationToken)
+            {
+                return Utility.WrapNativeAsyncInvokeInMTA(
+                    (callback) => this.RollbackComposeDeploymentBeginWrapper(description, timeout, callback),
+                    this.RollbackComposeDeploymentEndWrapper,
+                    cancellationToken,
+                    "ApplicationManager.RollbackComposeDeploymentUpgradeAsync");
+            }
+
+            private NativeCommon.IFabricAsyncOperationContext RollbackComposeDeploymentBeginWrapper(
+                ComposeDeploymentRollbackDescriptionWrapper description,
+                TimeSpan timeout,
+                NativeCommon.IFabricAsyncOperationCallback callback)
+            {
+                using (var pin = new PinCollection())
+                {
+                    return this.internalNativeApplicationClient.BeginRollbackComposeDeployment(
+                        description.ToNative(pin),
+                        Utility.ToMilliseconds(timeout, "timeout"),
+                        callback);
+                }
+            }
+
+            private void RollbackComposeDeploymentEndWrapper(NativeCommon.IFabricAsyncOperationContext context)
+            {
+                this.internalNativeApplicationClient.EndRollbackComposeDeployment(context);
+            }
+
             #endregion
 
             #endregion

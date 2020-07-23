@@ -5,7 +5,7 @@
     {
       "Name": "BasicStatefulActorKvs",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -21,7 +21,7 @@
     {
       "Name": "ActorEvents",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -37,7 +37,7 @@
     {
       "Name": "FabActGCtestonKvs",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -53,7 +53,7 @@
     {
       "Name": "FabActReminderstestonKvs",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -69,7 +69,7 @@
     {
       "Name": "FabActdirtystatehandlerKVStests",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -85,7 +85,7 @@
     {
       "Name": "ActorFailovertestKVS",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -101,7 +101,7 @@
     {
       "Name": "Actorreentrancytest",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -117,7 +117,7 @@
     {
       "Name": "GranularStateActorKvs",
       "Type": "V2_ScriptTest",
-      "Owners": "harahma",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -133,7 +133,7 @@
     {
       "Name": "ActorQueryStatefulKVStest",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -149,7 +149,7 @@
     {
       "Name": "ActorQuerywithPagingStatefulKVStest",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -165,7 +165,7 @@
     {
       "Name": "DeleteStatefulActorKVStest",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -181,7 +181,7 @@
     {
       "Name": "BackupRestoreActorKVS",
       "Type": "V2_ScriptTest",
-      "Owners": "harahma",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -197,7 +197,7 @@
     {
       "Name": "ReminderContinuityKVS",
       "Type": "V2_ScriptTest",
-      "Owners": "harahma",
+      "Owners": "amanbha,suchia",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",

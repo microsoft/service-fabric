@@ -1,0 +1,67 @@
+#
+# [owner] motanv
+# Download failed on a node
+# (Adapted from Upgrade.Cancel.test)
+# 
+set DummyPLBEnabled true
+set NamingOperationTimeout 100
+set RAPMessageRetryInterval 10
+set MinActionRetryIntervalPerReplica 5
+set NodeUpRetryInterval 5
+set ReconfigurationMessageRetryInterval 5
+set FMPlacementConstraints system==true
+set CMPlacementConstraints system==true
+set NamingPlacementConstraints system==true
+
+votes 10 20 30
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true ud=ud0
++20 nodeprops=system:false ud=ud1
++30 nodeprops=system:false ud=ud2
++40 nodeprops=system:false ud=ud3
+verify
+
+#
+# Create app
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeB stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeB version=1.0
+app.upload version10
+provisionapp incoming\version10
+
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version11 ServicePackageA ServiceTypeB stateless
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeB version=1.1
+app.upload version11
+provisionapp incoming\version11
+
+createapp fabric:/app1 TestApp 1.0
+verify
+
+createservice fabric:/app1/test TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 3 persist constraint=(system!=true) appname=fabric:/app1
+verify
+
+injectfailure 40 * hosting.downloadapplication
+
+#upgrade should proceed past ud0, ud1, ud2 and get stuck on ud3 because the node cant download the package
+upgradeapp fabric:/app1 1.1 Rolling upgrademode=auto restart
+
+!pause 150
+#!waitforstate RA.Upgrade.fabric:/app1.40 ApplicationUpgrade_DownloadFailed
+
+#Rollback the upgrade
+upgradeapp fabric:/app1 1.0 Rolling upgrademode=auto restart errors=Success,ApplicationUpgradeInProgress,Timeout
+
+!pause 150
+!q

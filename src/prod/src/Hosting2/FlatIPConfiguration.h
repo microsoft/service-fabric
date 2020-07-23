@@ -27,7 +27,7 @@ namespace Hosting2
             DENY_COPY(Subnet)
 
         public:
-            Subnet(uint gateway, uint mask);
+            Subnet(wstring subnetCIDR, uint gateway, uint mask);
             virtual ~Subnet();
 
             // Adds an IP address to the subnet.  If there are multiple
@@ -55,6 +55,9 @@ namespace Hosting2
             __declspec(property(get = get_GatewayIp)) uint GatewayIp;
             uint get_GatewayIp() const { return this->gatewayAddress_; }
 
+            __declspec(property(get = get_SubnetCIDR)) wstring SubnetCIDR;
+            wstring get_SubnetCIDR() const { return this->subnetCIDR_; }
+
             __declspec(property(get = get_Mask)) uint Mask;
             uint get_Mask() const { return this->addressMask_; }
 
@@ -72,6 +75,9 @@ namespace Hosting2
             // address and mask.
             //
             uint gatewayAddress_;
+
+            // Holds the subnet information in CIDR format
+            wstring subnetCIDR_;
 
             // Holds the mask for this subnet as a bitmask: e.g. the CIDR
             // notation /24 is converted into 0xFFFFFF00

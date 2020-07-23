@@ -147,6 +147,25 @@ bool LogRecord::IsCommitLogRecord(__in LogRecord const & logRecord)
     return false;
 }
 
+std::wstring LogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::StartingJSON + Constants::Quote;
+
+    logRecordString += L"PSN" + Constants::DivisionJSON +
+        std::to_wstring(get_Psn()) + Constants::EndlJSON;
+    logRecordString += L"LSN" + Constants::DivisionJSON + 
+        std::to_wstring(get_Lsn()) + Constants::EndlJSON;
+    logRecordString += L"Record Type" + Constants::DivisionJSON +
+        get_RecordTypeName() + Constants::EndlJSON;
+    logRecordString += L"Record Position" + Constants::DivisionJSON +
+        std::to_wstring(get_RecordPosition()) + Constants::EndlJSON;
+    logRecordString += L"Record Length" + Constants::DivisionJSON +
+        std::to_wstring(get_RecordLength()) + Constants::Quote;
+
+    return logRecordString;
+}
+
+
 void LogRecord::UpdateApproximateDiskSize()
 {
     ApproximateSizeOnDisk = ApproximateSizeOnDisk + DiskSpaceUsed;
@@ -156,6 +175,26 @@ Awaitable<LogRecord::SPtr> LogRecord::ReadNextRecordAsync(
     __in io::KStream & stream,
     __in InvalidLogRecords & invalidLogRecords,
     __in KAllocator & allocator,
+    __in bool isPhysicalRead,
+    __in bool useInvalidRecordPosition,
+    __in bool setRecordLength)
+{
+    ULONG64 nextRecordPosition = 0;
+    co_return co_await ReadNextRecordAsync(
+        stream,
+        invalidLogRecords,
+        allocator,
+        nextRecordPosition,
+        isPhysicalRead,
+        useInvalidRecordPosition,
+        setRecordLength);
+}
+
+Awaitable<LogRecord::SPtr> LogRecord::ReadNextRecordAsync(
+    __in io::KStream & stream,
+    __in InvalidLogRecords & invalidLogRecords,
+    __in KAllocator & allocator,
+    __out ULONG64 & nextRecordPosition,
     __in bool isPhysicalRead,
     __in bool useInvalidRecordPosition,
     __in bool setRecordLength)
@@ -188,6 +227,8 @@ Awaitable<LogRecord::SPtr> LogRecord::ReadNextRecordAsync(
 
     BinaryReader recordSizereader(*buffer, allocator);
     recordSizereader.Read(recordLength);
+
+    nextRecordPosition = 2 * sizeof(ULONG32) + recordPosition + recordLength;
 
     bytesToRead = sizeof(ULONG32) + recordLength;
 
@@ -288,6 +329,62 @@ Awaitable<LogRecord::SPtr> LogRecord::ReadPreviousRecordAsync(
         recordPosition,
         invalidLogRecords,
         allocator);
+}
+
+std::wstring LogRecord::get_RecordTypeName() const
+{
+    wstring name;
+
+    switch (get_RecordType())
+    {
+    case LogRecordType::Enum::Invalid:
+        name = L"Invalid";
+        break;
+    case LogRecordType::Enum::BeginTransaction:
+        name = L"BeginTransaction";
+        break;
+    case LogRecordType::Enum::Operation:
+        name = L"Operation";
+        break;
+    case LogRecordType::Enum::EndTransaction:
+        name = L"EndTransaction";
+        break;
+    case LogRecordType::Enum::Barrier:
+        name = L"Barrier";
+        break;
+    case LogRecordType::Enum::UpdateEpoch:
+        name = L"UpdateEpoch";
+        break;
+    case LogRecordType::Enum::Backup:
+        name = L"Backup";
+        break;
+    case LogRecordType::Enum::BeginCheckpoint:
+        name = L"BeginCheckpoint";
+        break;
+    case LogRecordType::Enum::EndCheckpoint:
+        name = L"EndCheckpoint";
+        break;
+    case LogRecordType::Enum::Indexing:
+        name = L"Indexing";
+        break;
+    case LogRecordType::Enum::TruncateHead:
+        name = L"TruncateHead";
+        break;
+    case LogRecordType::Enum::TruncateTail:
+        name = L"TruncateTail";
+        break;
+    case LogRecordType::Enum::Information:
+        name = L"Information";
+        break;
+    case LogRecordType::Enum::CompleteCheckpoint:
+        name = L"CompleteCheckPoint";
+        break;
+    default:
+        CODING_ASSERT("Unexpected log record type {0}", get_RecordType());
+        break;
+    }
+
+    return name;
 }
 
 // MCoskun: When EnableSecondaryCommitApplyAcknowledgement is true, we need to consider each commit as barrier.

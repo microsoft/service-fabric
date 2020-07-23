@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{9A29C95B-34F2-44EB-BF0D-0EAE5A04B039}</ProjectGuid>
+    <RootNamespace>TelemetryAggregation.Test</RootNamespace>
+    <AssemblyName>TelemetryAggregationTests</AssemblyName>
+    <AssemblyDescription>Code to parse the telemetry config file for testing changes </AssemblyDescription>
+    <AssemblyTitle>Telemetry Configuration File Parser for Testing Config File</AssemblyTitle>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <OutputType>Library</OutputType>
+    <TargetDestination>bin/FabricUnitTests</TargetDestination>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="TraceAggregatorTest.cs" />
+    <Compile Include="FieldAggregatorTest.cs" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\TelemetryAggregation\ConfigParser\dll\TelemetryConfigParser.csproj" >
+      <Project>{8F5269D6-6F47-411A-8DF1-98A61D30890B}</Project>
+      <Name>TelemetryConfigParser</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\TelemetryAggregation\dll\TelemetryAggregation.csproj">
+      <Project>{4ED2B9F1-639E-465D-8200-CD05E499232F}</Project>
+      <Name>TelemetryAggregation</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+</Project>

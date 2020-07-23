@@ -43,9 +43,13 @@ fi
 #echo "/var/crash/core.%e.%p.%t" > /proc/sys/kernel/core_pattern
 
 # Start tracing
+# TODO: Move to TraceSessionManager after figuring out startring lttng as sfuser or root 
+# Ex: lttng_handler.sh $serviceFabricVersion $traceDiskBufferSizeInMB $keepExistingSFSessions
 echo "Starting tracing session"
+traceDiskBufferSizeInMB=5120
+keepExistingSFSessions=0
 if command -v lttng >/dev/null 2>&1; then
-    ./Fabric/DCA.Code/lttng_handler.sh $(cat ./Fabric/DCA.Code/ClusterVersion)
+    ./Fabric/DCA.Code/lttng_handler.sh $(cat ./Fabric/DCA.Code/ClusterVersion) $traceDiskBufferSizeInMB $keepExistingSFSessions
 else
     echo "LTTng is not installed." >&2;
 fi
@@ -56,8 +60,23 @@ do
     setfacl -m "u:sfuser:rw-" /dev/${i}
 done
 
+# Setting sfuser as owner of /home/sfuser for writing selfsigned certs
+echo "Setting sfuser as owner of /home/sfuser"
+if [ -d "/home/sfuser" ]; then
+   chown sfuser:sfuser /home/sfuser
+else
+   mkdir /home/sfuser
+   chown sfuser:sfuser /home/sfuser
+fi
+
 /opt/microsoft/servicefabric/bin/Fabric/Fabric.Code/FabricDeployer.sh
 check_errs $? FabricDeployer
+
+#Load Blockstore driver.
+${FabricCodePath}/BlockStore/driver/blockstore.sh -u -l -s ${FabricCodePath}/BlockStore/driver/
+if [ $? != 0 ]; then
+    echo "Couldn't load blockstore driver."
+fi
 
 echo Starting FabricHost
 /opt/microsoft/servicefabric/bin/FabricHost -c -skipfabricsetup

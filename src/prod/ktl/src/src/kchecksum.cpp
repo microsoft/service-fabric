@@ -1447,9 +1447,11 @@ static UInt64 CsCrc64Map32[2048] =
 # include "xrand2.h"
 #endif
 
-#ifndef _M_IX86
+#ifndef _M_IX86 
+#ifndef __aarch64__
 # include <mmintrin.h>
 # include <xmmintrin.h>
+#endif
 #endif
 
 /* --------------------------- Implementation of CRC --------------------------- */
@@ -2061,11 +2063,15 @@ struct CsCrc64
                     emms                        // stop using MMX
                 }
             }
-#else /* AMD64 */
+#else /* AMD64 and ARM64 */
             for ( ;  pData < pLast;  pData += CRC_U32OFF)
             {
                 CRC_DO( CRC_DECLAREB,0);
+#if __aarch64__
+                __builtin_prefetch((const char *)pData+256);
+#else
                 _mm_prefetch((const char *)pData+256, _MM_HINT_T1);
+#endif
 
                 CRC_DO( CRC_FETCH, 0);
                 CRC_DO( CRC_INIT, 7);

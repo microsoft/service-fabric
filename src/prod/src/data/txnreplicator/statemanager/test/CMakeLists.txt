@@ -47,6 +47,7 @@ add_executable(${exe_statemanager_test}
   ../TestStateProviderProperties.cpp
   ../TestTransaction.cpp
   ../TestTransactionManager.cpp
+  ../Volatile.Test.cpp
 )
 
 #add_precompiled_header(${exe_statemanager_test} ../stdafx.h)

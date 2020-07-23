@@ -485,6 +485,12 @@ class KLogicalLogInformation
     //
     //     returns information used for reading the log
     //
+    // ControlCode = QueryAcceleratedFlushMode
+    //     InBuffer = NULL
+    //     OutBuffer = struct AcceleratedFlushMode
+    //
+    //     returns information about accelerated flush mode
+    //
     enum
     {
         QueryLogicalLogTailAsnAndHighestOperationControl = 1,
@@ -507,8 +513,10 @@ class KLogicalLogInformation
         QueryTelemetryStatistics = 14,
                                          
         QueryLogSizeAndSpaceRemaining = 15,
+        
+        QueryAcceleratedFlushMode = 16,
 
-        Last = 15
+        Last = 16
     } LogicalLogControlCodes;
 
     struct TelemetryStatistics
@@ -573,6 +581,12 @@ class KLogicalLogInformation
         ULONGLONG LogSize;
         ULONGLONG SpaceRemaining;
     };
+
+    struct AcceleratedFlushMode
+    {
+        BOOLEAN IsAccelerateInActiveMode;
+    };
+        
 };
 
 

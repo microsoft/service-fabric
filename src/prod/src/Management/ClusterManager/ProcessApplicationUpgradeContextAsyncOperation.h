@@ -197,7 +197,12 @@ namespace Management
             private:
                 void InitializeUpgrade(Common::AsyncOperationSPtr const & thisSPtr);
                 virtual void OnLoadApplicationDescriptionsComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
+
                 void OnValidateServicesComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
+                void ValidateNetworks(Common::AsyncOperationSPtr const & thisSPtr);
+                void OnValidateNetworksComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
+                void ValidateActiveDefaultServices(Common::AsyncOperationSPtr const & thisSPtr);
+
                 void LoadActiveDefaultServiceUpdates(Common::AsyncOperationSPtr const & thisSPtr);
                 ErrorCode ScheduleLoadActiveDefaultService(
                     Common::AsyncOperationSPtr const & parallelAsyncOperation,
@@ -238,6 +243,12 @@ namespace Management
                 Common::AsyncOperationSPtr const &);
             virtual Common::ErrorCode EndLoadApplicationDescriptions(
                 Common::AsyncOperationSPtr const &);
+            bool IsNetworkValidationNeeded();
+            Common::AsyncOperationSPtr BeginValidateNetworks(
+                Common::AsyncCallback const &,
+                Common::AsyncOperationSPtr const &);
+            Common::ErrorCode EndValidateNetworks(
+                Common::AsyncOperationSPtr const &);
             Common::ErrorCode LoadUpgradePolicies();
             Common::ErrorCode LoadHealthPolicy(ServiceModelVersion const &, __out ServiceModel::ApplicationHealthPolicy &);
             Common::ErrorCode LoadActiveServices();
@@ -260,6 +271,7 @@ namespace Management
                 uint64 instanceId,
                 std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> &&,
                 std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> &&,
+                std::vector<std::wstring> &&,
                 __out Reliability::UpgradeApplicationRequestMessageBody &);
 
             void AppendDynamicUpgradeStatusDetails(std::wstring const &);

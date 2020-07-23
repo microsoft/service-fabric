@@ -49,10 +49,18 @@ namespace System.Fabric
         internal string DefaultContainerRepositoryPassword { get; private set; }
 
         internal bool IsDefaultContainerRepositoryPasswordEncrypted { get; private set; }
-
+        
         internal string ContainerRepositoryCredentialTokenEndPoint { get; private set; }
 
         internal string DefaultMSIEndpointForTokenAuthentication { get; private set; }
+
+        internal string DefaultContainerRepositoryPasswordType { get; private set; }
+
+        internal bool DisableDockerRequestRetry { get; private set; }
+
+        internal bool LocalNatIpProviderEnabled { get; private set; }
+
+        internal string LocalNatIpProviderNetworkName { get; private set; }
 
         internal static unsafe HostingSettings LoadHostingSettings()
         {
@@ -88,7 +96,11 @@ namespace System.Fabric
                 DefaultContainerNetwork = nativeSettingMap["DefaultContainerNetwork"],
                 DefaultNatNetwork = nativeSettingMap["DefaultNatNetwork"],
                 ContainerRepositoryCredentialTokenEndPoint = nativeSettingMap["ContainerRepositoryCredentialTokenEndPoint"],
-                DefaultMSIEndpointForTokenAuthentication = nativeSettingMap["DefaultMSIEndpointForTokenAuthentication"]
+                DefaultMSIEndpointForTokenAuthentication = nativeSettingMap["DefaultMSIEndpointForTokenAuthentication"],
+                DefaultContainerRepositoryPasswordType = nativeSettingMap["DefaultContainerRepositoryPasswordType"],
+                DisableDockerRequestRetry = bool.Parse(nativeSettingMap["DisableDockerRequestRetry"]),
+                LocalNatIpProviderEnabled = bool.Parse(nativeSettingMap["LocalNatIpProviderEnabled"]),
+                LocalNatIpProviderNetworkName = nativeSettingMap["LocalNatIpProviderNetworkName"]
             };
         }
     }

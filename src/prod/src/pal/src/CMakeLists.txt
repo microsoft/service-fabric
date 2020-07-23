@@ -35,7 +35,6 @@ set( WIN_SOURCES
     lm.cpp
     lmerr.cpp
     mbusafecrt.cpp
-    minmax.cpp
     mstcpip.cpp
     mswsock.cpp
     nt.cpp

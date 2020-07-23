@@ -229,6 +229,21 @@ ErrorCode NodesHandler::Initialize()
         Constants::HttpPostVerb,
         MAKE_HANDLER_CALLBACK(DeployServicePackageToNode)));
 
+    validHandlerUris.push_back(HandlerUriTemplate(
+        Constants::NetworksOnNodeEntitySetPath,
+        Constants::HttpGetVerb,
+        MAKE_HANDLER_CALLBACK(GetAllNetworksOnNode)));
+
+    validHandlerUris.push_back(HandlerUriTemplate(
+        Constants::CodePackagesEntitySetPathViaNetworkViaNode,
+        Constants::HttpGetVerb,
+        MAKE_HANDLER_CALLBACK(GetAllCodePackagesOnNetworkOnNode)));
+
+    validHandlerUris.push_back(HandlerUriTemplate(
+        Constants::CodePackagesEntityKeyPathViaNetworkViaNode,
+        Constants::HttpGetVerb,
+        MAKE_HANDLER_CALLBACK(GetCodePackagesOnNetworkOnNodeByName)));
+
     return server_.InnerServer->RegisterHandler(Constants::NodesHandlerPath, shared_from_this());
 }
 
@@ -292,7 +307,7 @@ void NodesHandler::GetAllNodes(AsyncOperationSPtr const& thisSPtr)
             handlerOperation->OnError(thisSPtr, error);
             return;
         }
-        queryDescription.QueryPagingDescriptionUPtr = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryDescription.PagingDescription = make_unique<QueryPagingDescription>(move(pagingDescription));
 
         queryDescription.NodeStatusFilter = nodeStatus;
 
@@ -1329,7 +1344,7 @@ void NodesHandler::GetDeployedApplicationPagedList(
             handlerOperation->OnError(thisSPtr, error);
             return;
         }
-        queryDescription.QueryPagingDescriptionUPtr = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryDescription.PagingDescription = make_unique<QueryPagingDescription>(move(pagingDescription));
 
         AsyncOperationSPtr inner = client.QueryClient->BeginGetDeployedApplicationPagedList(
             queryDescription,
@@ -2810,4 +2825,298 @@ void NodesHandler::OnDeployServicePackageToNodeComplete(
     }
     ByteBufferUPtr bufferUPtr;
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
+}
+
+void NodesHandler::GetAllNetworksOnNode(AsyncOperationSPtr const& thisSPtr)
+{
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    auto &client = handlerOperation->FabricClient;
+    UriArgumentParser argumentParser(handlerOperation->Uri);
+
+    DeployedNetworkQueryDescription deployedNetworkQueryDescription;
+
+    wstring nodeName;
+    auto error = argumentParser.TryGetNodeName(nodeName);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(thisSPtr, error);
+        return;
+    }
+
+    deployedNetworkQueryDescription.NodeName = move(nodeName);
+
+    QueryPagingDescription pagingDescription;
+    error = argumentParser.TryGetPagingDescription(pagingDescription);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(thisSPtr, error);
+        return;
+    }
+
+    deployedNetworkQueryDescription.QueryPagingDescriptionObject = make_unique<QueryPagingDescription>(move(pagingDescription));
+
+    AsyncOperationSPtr operation = client.NetworkMgmtClient->BeginGetDeployedNetworkList(
+        move(deployedNetworkQueryDescription),
+        handlerOperation->Timeout,
+        [this](AsyncOperationSPtr const& operation)
+    {
+        this->OnGetAllNetworksOnNodeComplete(operation, false);
+    },
+        handlerOperation->shared_from_this());
+
+    OnGetAllNetworksOnNodeComplete(operation, true);
+}
+
+void NodesHandler::OnGetAllNetworksOnNodeComplete(
+    AsyncOperationSPtr const& operation,
+    __in bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation->Parent);
+    auto &client = handlerOperation->FabricClient;
+
+    vector<DeployedNetworkQueryResult> deployedNetworks;
+    PagingStatusUPtr pagingStatus;
+    auto error = client.NetworkMgmtClient->EndGetDeployedNetworkList(operation, deployedNetworks, pagingStatus);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    DeployedNetworkList deployedNetworkList;
+    if (pagingStatus)
+    {
+        deployedNetworkList.ContinuationToken = pagingStatus->TakeContinuationToken();
+    }
+
+    deployedNetworkList.Items = move(deployedNetworks);
+
+    ByteBufferUPtr bufferUPtr;
+    error = handlerOperation->Serialize(deployedNetworkList, bufferUPtr);
+
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
+}
+
+void NodesHandler::GetAllCodePackagesOnNetworkOnNode(AsyncOperationSPtr const& thisSPtr)
+{
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    auto &client = handlerOperation->FabricClient;
+
+    DeployedNetworkCodePackageQueryDescription deployedNetworkCodePackageQueryDescription;
+    bool success = GetDeployedNetworkCodePackageQueryDescription(thisSPtr, false, deployedNetworkCodePackageQueryDescription);
+    if (!success)
+    {
+        return;
+    }
+
+    AsyncOperationSPtr operation = client.NetworkMgmtClient->BeginGetDeployedNetworkCodePackageList(
+        move(deployedNetworkCodePackageQueryDescription),
+        handlerOperation->Timeout,
+        [this](AsyncOperationSPtr const& operation)
+    {
+        this->OnGetAllCodePackagesOnNetworkOnNodeComplete(operation, false);
+    },
+        handlerOperation->shared_from_this());
+
+    OnGetAllCodePackagesOnNetworkOnNodeComplete(operation, true);
+}
+
+void NodesHandler::OnGetAllCodePackagesOnNetworkOnNodeComplete(
+    AsyncOperationSPtr const& operation,
+    __in bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation->Parent);
+    auto &client = handlerOperation->FabricClient;
+
+    vector<DeployedNetworkCodePackageQueryResult> deployedNetworkCodePackages;
+    PagingStatusUPtr pagingStatus;
+    auto error = client.NetworkMgmtClient->EndGetDeployedNetworkCodePackageList(operation, deployedNetworkCodePackages, pagingStatus);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    DeployedNetworkCodePackageList deployedNetworkCodePackageList;
+    if (pagingStatus)
+    {
+        deployedNetworkCodePackageList.ContinuationToken = pagingStatus->TakeContinuationToken();
+    }
+
+    deployedNetworkCodePackageList.Items = move(deployedNetworkCodePackages);
+
+    ByteBufferUPtr bufferUPtr;
+    error = handlerOperation->Serialize(deployedNetworkCodePackageList, bufferUPtr);
+
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
+}
+
+void NodesHandler::GetCodePackagesOnNetworkOnNodeByName(AsyncOperationSPtr const& thisSPtr)
+{
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    auto &client = handlerOperation->FabricClient;
+
+    DeployedNetworkCodePackageQueryDescription deployedNetworkCodePackageQueryDescription;
+    bool success = GetDeployedNetworkCodePackageQueryDescription(thisSPtr, true, deployedNetworkCodePackageQueryDescription);
+    if (!success)
+    {
+        return;
+    }
+
+    AsyncOperationSPtr operation = client.NetworkMgmtClient->BeginGetDeployedNetworkCodePackageList(
+        move(deployedNetworkCodePackageQueryDescription),
+        handlerOperation->Timeout,
+        [this](AsyncOperationSPtr const& operation)
+    {
+        this->OnGetCodePackagesOnNetworkOnNodeByNameComplete(operation, false);
+    },
+        handlerOperation->shared_from_this());
+
+    OnGetCodePackagesOnNetworkOnNodeByNameComplete(operation, true);
+}
+
+void NodesHandler::OnGetCodePackagesOnNetworkOnNodeByNameComplete(
+    AsyncOperationSPtr const& operation,
+    __in bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation->Parent);
+    auto &client = handlerOperation->FabricClient;
+
+    vector<DeployedNetworkCodePackageQueryResult> deployedNetworkCodePackages;
+    PagingStatusUPtr pagingStatus;
+    auto error = client.NetworkMgmtClient->EndGetDeployedNetworkCodePackageList(operation, deployedNetworkCodePackages, pagingStatus);
+
+    TESTASSERT_IF(pagingStatus, "OnGetCodePackagesOnNetworkOnNodeByNameComplete: paging status shouldn't be set");
+
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    ByteBufferUPtr bufferUPtr;
+    if (deployedNetworkCodePackages.size() == 0)
+    {
+        handlerOperation->OnSuccess(
+            operation->Parent,
+            move(bufferUPtr),
+            Constants::StatusNoContent,
+            Constants::StatusDescriptionNoContent);
+
+        return;
+    }
+
+    if (deployedNetworkCodePackages.size() != 1)
+    {
+        handlerOperation->OnError(operation->Parent, ErrorCodeValue::OperationFailed);
+        return;
+    }
+
+    error = handlerOperation->Serialize(deployedNetworkCodePackages[0], bufferUPtr);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
+}
+
+bool NodesHandler::GetDeployedNetworkCodePackageQueryDescription(
+    Common::AsyncOperationSPtr const& thisSPtr,
+    bool includeCodePackageName,
+    __out DeployedNetworkCodePackageQueryDescription & queryDescription)
+{
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    UriArgumentParser argumentParser(handlerOperation->Uri);
+
+    ErrorCode error;
+    wstring nodeName;
+    error = argumentParser.TryGetNodeName(nodeName);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(thisSPtr, error);
+        return false;
+    }
+
+    queryDescription.NodeName = move(nodeName);
+        
+    wstring networkName;
+    error = argumentParser.TryGetNetworkName(networkName);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(thisSPtr, error);
+        return false;
+    }
+
+    queryDescription.NetworkName = move(networkName);
+
+    if (includeCodePackageName) // GetDeployedNetworkCodePackageInfo
+    {
+        wstring codePackageName;
+        error = argumentParser.TryGetCodePackageName(codePackageName);
+        if (!error.IsSuccess())
+        {
+            handlerOperation->OnError(thisSPtr, error);
+            return false;
+        }
+
+        queryDescription.CodePackageNameFilter = move(codePackageName);
+    }
+    else // GetDeployedNetworkCodePackageList
+    {
+        NamingUri applicationName;
+        error = argumentParser.TryGetApplicationName(applicationName);
+        if (error.IsSuccess())
+        {
+            queryDescription.ApplicationNameFilter = move(applicationName);
+        }
+        else if (!error.IsSuccess() && !error.IsError(ErrorCodeValue::NameNotFound))
+        {            
+            handlerOperation->OnError(thisSPtr, error);
+            return false;
+        }
+
+        wstring serviceManifestName;
+        error = argumentParser.TryGetServiceManifestName(serviceManifestName);
+        if (error.IsSuccess())
+        {
+            queryDescription.ServiceManifestNameFilter = move(serviceManifestName);
+        }
+        else if (!error.IsSuccess() && !error.IsError(ErrorCodeValue::NameNotFound))
+        {
+            handlerOperation->OnError(thisSPtr, error);
+            return false;
+        }
+
+        QueryPagingDescription pagingDescription;
+        error = argumentParser.TryGetPagingDescription(pagingDescription);
+        if (!error.IsSuccess())
+        {
+            handlerOperation->OnError(thisSPtr, error);
+            return false;
+        }
+
+        queryDescription.QueryPagingDescriptionObject = make_unique<QueryPagingDescription>(move(pagingDescription));
+    }
+
+    return true;
 }

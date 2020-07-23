@@ -30,6 +30,12 @@ Abstract:
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#if !__has_builtin(__int2c)
+#ifdef __aarch64__
+extern "C" void __int2c();
+#endif
+#endif
+
 #define Message(a, b...) printf("[%s@%d] " a "\n", __FUNCTION__, __LINE__, ##b)
 
 //Exit if condition evalutes to true.

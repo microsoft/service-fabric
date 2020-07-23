@@ -1,0 +1,3 @@
+# Deploy and create app.
+uploadapp RobustTXRPendingApp apppackages\RobustTXRAppPkg
+provisionapp RobustTXRPendingApp

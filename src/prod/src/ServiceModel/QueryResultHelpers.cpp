@@ -10,7 +10,7 @@ using namespace Common;
 using namespace ServiceModel;
 using namespace ServiceModel::QueryResultHelpers;
 
-BEGIN_QUERY_RESULT_ITEM_ENUM()    
+BEGIN_QUERY_RESULT_ITEM_ENUM()
     QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::Node)
     QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::Service)
     QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::ServiceGroupMember)
@@ -70,4 +70,11 @@ BEGIN_QUERY_RESULT_ITEM_ENUM()
     QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::ReplicaResource)
     QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::ApplicationUnhealthyEvaluation)
     QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::VolumeResourceList)
+    QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::Network)
+    QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::NetworkApplication)
+    QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::NetworkNode)
+    QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::ApplicationNetwork)
+    QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::DeployedNetwork)
+    QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::DeployedNetworkCodePackage)
+    QUERY_RESULT_ITEM_ENUM_KIND(QueryResultHelpers::NetworkResourceList)
 END_QUERY_RESULT_ITEM_ENUM()

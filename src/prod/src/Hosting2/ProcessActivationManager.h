@@ -30,6 +30,9 @@ namespace Hosting2
         _declspec(property(get = get_ActivationManager)) FabricActivationManager const & ActivationManager;
         inline FabricActivationManager const & get_ActivationManager() const { return activationManager_; }
 
+        _declspec(property(get = get_FirewallSecurityProvider)) FirewallSecurityProviderUPtr const & FirewallSecurityProviderObj;
+        inline FirewallSecurityProviderUPtr const & get_FirewallSecurityProvider() const { return firewallProvider_; }
+
         _declspec(property(get = get_IsSystem)) bool IsSystem;
         inline bool get_IsSystem() const { return isSystem_; }
 
@@ -51,6 +54,39 @@ namespace Hosting2
         //for each pod, for each container do a docker inspect and verify namespaces, cgroup parent etc
         //vector contains the sizes of container groups
         bool Test_VerifyPods(std::vector<int> & containerGroups) const;
+
+        Common::AsyncOperationSPtr BeginGetOverlayNetworkDefinition(
+            std::wstring const & networkName,
+            std::wstring const & nodeId,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+
+        Common::ErrorCode EndGetOverlayNetworkDefinition(
+            Common::AsyncOperationSPtr const & operation,
+            OverlayNetworkDefinitionSPtr & networkDefinition);
+
+        Common::AsyncOperationSPtr BeginDeleteOverlayNetworkDefinition(
+            std::wstring const & networkName,
+            std::wstring const & nodeId,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+
+        Common::ErrorCode EndDeleteOverlayNetworkDefinition(
+            Common::AsyncOperationSPtr const & operation);
+
+        Common::AsyncOperationSPtr BeginPublishNetworkTablesRequest(
+            std::wstring const & networkName,
+            std::wstring const & nodeId,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+
+        Common::ErrorCode EndPublishNetworkTablesRequest(
+            Common::AsyncOperationSPtr const & operation);
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -75,11 +111,6 @@ namespace Hosting2
             std::wstring const & callbackAddress,
             uint64 nodeInstanceId);
 
-        Common::ErrorCode GetRequestorUserToken(
-            Common::HandleUPtr const & appHostProcessHandle,
-            std::wstring const & nodeId,
-            __out Common::AccessTokenSPtr & requestorToken);
-
         void OnParentProcessTerminated(
             DWORD parentId,
             std::wstring const & nodeId,
@@ -100,14 +131,11 @@ namespace Hosting2
 
         Common::ErrorCode TerminateAndCleanup(std::wstring const & nodeId, DWORD processId, uint64 nodeInstanceId);
 
-        Common::ProcessWait::WaitCallback GetProcessTerminationHandler(DWORD parentId, std::wstring const & appServiceId);
-
         void CleanupPortAclsForNode(std::wstring const & nodeId);
 
         void ProcessIpcMessage(
             __in Transport::Message & message, 
             __in Transport::IpcReceiverContextUPtr & context);
-
 
         void ProcessActivateProcessRequest(
             __in Transport::Message & message, 
@@ -207,6 +235,22 @@ namespace Hosting2
             __in Transport::Message & message,
             __in Transport::IpcReceiverContextUPtr & context);
 
+        void ProcessManageOverlayNetworkResourcesRequest(
+            __in Transport::Message & message,
+            __in Transport::IpcReceiverContextUPtr & context);
+
+        void ProcessUpdateOverlayNetworkRoutesRequest(
+            __in Transport::Message & message,
+            __in Transport::IpcReceiverContextUPtr & context);
+
+        void ProcessGetDeployedNetworkCodePackagesRequest(
+            __in Transport::Message & message,
+            __in Transport::IpcReceiverContextUPtr & context);
+
+        void ProcessGetDeployedNetworksRequest(
+            __in Transport::Message & message,
+            __in Transport::IpcReceiverContextUPtr & context);
+
         void ProcessSetupContainerGroupRequest(
             __in Transport::Message & message,
             __in Transport::IpcReceiverContextUPtr & context);
@@ -254,7 +298,6 @@ namespace Hosting2
        void OnGetResourceUsageComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynhronously);
        void OnGetImagesCompleted(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynhronously);
        void OnContainerEngineTerminated(DWORD exitCode, ULONG continuousFailureCount, Common::TimeSpan const& nextStartTime);
-       void MarkContainerLogFolderForDeletion(wstring const & appServiceId);
        Common::ErrorCode CopyAndACLCertificateFromDataPackage(
            wstring const & dataPackageName,
            wstring const & dataPackageVersion,
@@ -368,6 +411,9 @@ namespace Hosting2
         class GetResourceUsageAsyncOperation;
         class GetImagesAsyncOperation;
         class NotifyDockerProcessTerminationAsyncOperation;
+        class GetOverlayNetworkDefinitionAsyncOperation;
+        class DeleteOverlayNetworkDefinitionAsyncOperation;
+        class PublishNetworkTablesAsyncOperation;
 
         friend class ApplicationService;
         friend class ActivatorRequestor;

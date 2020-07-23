@@ -90,7 +90,7 @@ namespace System.Fabric.UpgradeService
             return aggregatedNodeList;
         }
 
-        public async Task<Dictionary<string, ReplicaSetSize>> GetSystemServiceReplicaSetSize(TimeSpan timeout, CancellationToken token)
+        public async Task<Dictionary<string, ServiceRuntimeDescription>> GetSystemServiceRuntimeDescriptionsAsync(TimeSpan timeout, CancellationToken token)
         {            
             if (this.systemServicesName == null)
             {
@@ -111,7 +111,7 @@ namespace System.Fabric.UpgradeService
 
             await Task.WhenAll(taskList);
 
-            Dictionary<string, ReplicaSetSize> systemServiceReplicaSetSize = new Dictionary<string,ReplicaSetSize>();
+            Dictionary<string, ServiceRuntimeDescription> systemServiceReplicaSetSize = new Dictionary<string, ServiceRuntimeDescription>();
             foreach(var task in taskList)
             {
                 var serviceDesc = task.Result as StatefulServiceDescription;
@@ -129,7 +129,12 @@ namespace System.Fabric.UpgradeService
 
                 systemServiceReplicaSetSize.Add(
                     serviceDesc.ServiceName.ToString(),
-                    new ReplicaSetSize() { MinReplicaSetSize = serviceDesc.MinReplicaSetSize, TargetReplicaSetSize = serviceDesc.TargetReplicaSetSize });
+                    new ServiceRuntimeDescription()
+                    {
+                        MinReplicaSetSize = serviceDesc.MinReplicaSetSize,
+                        TargetReplicaSetSize = serviceDesc.TargetReplicaSetSize,
+                        PlacementConstraints = serviceDesc.PlacementConstraints
+                    });
             }
 
             return systemServiceReplicaSetSize;
@@ -210,12 +215,12 @@ namespace System.Fabric.UpgradeService
             return clusterConfigFilePath;
         }
 
-        public async Task UpdateSystemServicesReplicaSizeAsync(
-            Dictionary<string, ReplicaSetSize> systemServicesSize, 
+        public async Task UpdateSystemServicesDescriptionAsync(
+            Dictionary<string, ServiceRuntimeDescription> descriptions, 
             TimeSpan timeout, 
             CancellationToken cancellationToken)
         {
-            if(systemServicesSize == null)
+            if(descriptions == null)
             {
                 return;
             }
@@ -227,7 +232,7 @@ namespace System.Fabric.UpgradeService
             }
 
             List<Task> taskList = new List<Task>();
-            foreach(var service in systemServicesSize)
+            foreach(var service in descriptions)
             {
                 var serviceName = new Uri(service.Key);
                 if(!this.systemServicesName.Contains(serviceName))
@@ -243,20 +248,28 @@ namespace System.Fabric.UpgradeService
             await Task.WhenAll(taskList);
         }
 
-        public async Task UpdateServiceDescriptionAsync(Uri serviceName, ReplicaSetSize replicaSetSize, TimeSpan timeout, CancellationToken cancellationToken)
-        {            
+        public async Task UpdateServiceDescriptionAsync(Uri serviceName, ServiceRuntimeDescription description, TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            if (serviceName == null || 
+                description == null)
+            {
+                return;
+            }
+
             var updateDesc = new StatefulServiceUpdateDescription()
             {
-                MinReplicaSetSize = replicaSetSize.MinReplicaSetSize,
-                TargetReplicaSetSize = replicaSetSize.TargetReplicaSetSize
+                MinReplicaSetSize = description.MinReplicaSetSize,
+                TargetReplicaSetSize = description.TargetReplicaSetSize,
+                PlacementConstraints = description.PlacementConstraints
             };
 
             Trace.WriteInfo(
-                TraceType, 
-                "Calling UpdateServiceDescription for {0}. Target={1}, Min={2}.", 
+                TraceType,
+                "Calling UpdateServiceDescription for {0}. TargetReplicaSetSize={1}, MinReplicaSetSize={2}. PlacementConstraints={3}", 
                 serviceName, 
                 updateDesc.TargetReplicaSetSize, 
-                updateDesc.MinReplicaSetSize);
+                updateDesc.MinReplicaSetSize,
+                updateDesc.PlacementConstraints ?? "null");
 
             var timeoutHelper = new TimeoutHelper(timeout, Constants.MaxOperationTimeout);
 

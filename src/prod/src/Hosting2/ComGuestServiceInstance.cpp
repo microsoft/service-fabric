@@ -190,7 +190,7 @@ void ComGuestServiceInstance::OnActivatedCodePackageTerminated(
 {
     WriteWarning(
         TraceType,
-        "OnActivatedCodePackageTerminated: {0}. {1}",
+        "OnActivatedCodePackageTerminated - Reporting FaultTransient: {0}. {1}",
         serviceTraceInfo_,
         eventDesc);
 

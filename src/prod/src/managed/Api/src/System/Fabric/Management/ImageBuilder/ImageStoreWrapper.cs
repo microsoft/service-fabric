@@ -17,6 +17,7 @@ namespace System.Fabric.Management.ImageBuilder
     {
         private static readonly string TraceType = "ImageStoreWrapper";
         private readonly string localImageBuilderRoot;
+        public const string xstoreSchemaTag = @"xstore:";
 
         public ImageStoreWrapper(IImageStore imageStore, string localRoot)
         {
@@ -343,6 +344,11 @@ namespace System.Fabric.Management.ImageBuilder
         public async Task DeleteContentAsync(string tag, TimeSpan timeout)
         {
             await this.ImageStore.DeleteContentAsync(tag, timeout);
+        }
+
+        public bool IsXStoreBasedImageStore()
+        {
+            return this.ImageStore.RootUri.Trim().StartsWith(xstoreSchemaTag, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

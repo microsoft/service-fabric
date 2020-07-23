@@ -55,6 +55,9 @@ namespace Management
             INTERNAL_CONFIG_ENTRY(int, L"BackupRestoreService", BackupCopierJobQueueThrottle, 25, Common::ConfigEntryUpgradePolicy::Dynamic);
             // The amount of time to allow for BackupCopier specific timeout errors to return to the client. If this buffer is too small, then the client times out before the server and gets a generic timeout error.
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"BackupRestoreService", BackupCopierTimeoutBuffer, Common::TimeSpan::FromSeconds(3), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // The DsmsAutopilotServiceName for BackupRestore service
+            INTERNAL_CONFIG_ENTRY(std::wstring, L"BackupRestoreService", DsmsAutopilotServiceName, L"", Common::ConfigEntryUpgradePolicy::Static);
         };
     }
 }

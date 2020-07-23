@@ -1,0 +1,5 @@
+# This file is used since the below project contains .log in its name
+# which is by default ignored by Git. So using a ! to do the opposite
+# Please refer https://www.kernel.org/pub/software/scm/git/docs/gitignore.html
+#
+!/**/edb*.log

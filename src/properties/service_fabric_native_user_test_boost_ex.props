@@ -1,0 +1,6 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(SRCROOT)\properties\service_fabric_native_user_test_boost.props" />
+    <ItemGroup>
+        <ClCompile Include="$(SrcRoot)\prod\test\BoostUnitTest\btest_ex.cpp"/>      
+    </ItemGroup>
+</Project>

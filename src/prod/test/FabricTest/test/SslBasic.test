@@ -29,7 +29,7 @@ set ClusterWideCredentials X509:EncryptAndSign:WinFabricRing.Rings.WinFabricTest
 !setcfg CertificateHealthReportingInterval=10  
 
 # Open nodes using different certificates but with a common subject alternative name, matching the SecurityDomain
-set OpenTimeout 45 
+set OpenTimeout 120 
 +10 security=FindByThumbprint,78:12:20:5a:39:d2:23:76:da:a0:37:f0:5a:ed:e3:60:1a:7e:64:bf,My,LocalMachine
 +20 security=FindByThumbprint,9dc906b169dc4faffd1697ac781e806790749d2f,My,LocalMachine
 +30 security=FindBySubjectName,CN=WinFabric-Test-SAN1-Alice,My,LocalMachine

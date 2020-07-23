@@ -1,0 +1,113 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup>
+    <!--Note: The conditional ConfigurationType prevents us from using common props neatly-->
+    <ConfigurationType Condition="'$(ConsoleTest)' != 'true'">DynamicLibrary</ConfigurationType>
+    <ConfigurationType Condition="'$(ConsoleTest)' == 'true'">Application</ConfigurationType>
+    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
+    <UMDF_VERSION_MAJOR>1</UMDF_VERSION_MAJOR>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <FavorSizeOrSpeed></FavorSizeOrSpeed>
+      <StringPooling>true</StringPooling>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreadedDLL</RuntimeLibrary>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DisableSpecificWarnings></DisableSpecificWarnings>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions)
+        KTL_USER_MODE=1;
+        TESTNAME="$(TargetName)";
+        _CRT_SECURE_NO_WARNINGS=1;
+      </PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(ConsoleTest)' == 'true'">
+        %(PreprocessorDefinitions)
+        CONSOLE_TEST=1;
+      </PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories)
+        $(KTLSRCROOT)\inc;
+        $(KTLSRCROOT)\tools\inc;
+        $(KTLSRCROOT)\tools\tests\common;
+        $(KTLSRCROOT)\StatusCodes\$(O);
+        $(KTLSRCROOT)\mc\user\$(O);
+        <!--Still need this because we use some KM header files-->
+        $(KM_IncludePath);
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc;
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /await /d2guardspecload</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <AdditionalOptions>%(AdditionalOptions)/DYNAMICBASE /guard:cf /d2:-guardspecload</AdditionalOptions>
+      <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Debug'">libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <AdditionalDependencies>
+        shlwapi.lib;
+        ntdll.lib;
+        uuid.lib;
+        iphlpapi.lib;
+        kernel32.lib;
+        user32.lib;
+        resutils.lib;
+        rpcrt4.lib;
+        rpcns4.lib;
+        Schannel.lib;
+        ws2_32.lib;
+        ole32.lib;
+        oleaut32.lib;
+        netapi32.lib;
+        mpr.lib;
+        winmm.lib;
+        advapi32.lib;
+        version.lib;
+        Psapi.lib;
+        Wbemuuid.lib;
+      </AdditionalDependencies>
+    </Link>
+    <Link Condition="'$(ConsoleTest)' == 'true'">
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <SubSystem>console</SubSystem>
+      <CreateHotPatchableImage>X64Image</CreateHotPatchableImage>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(KTLSRCROOT)\src\user\crt_md\KTLUSER_md.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\StatusCodes\StatusCodes.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\tools\tests\userlib\KmUnitUser.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\tools\CommandlineParser\user\crt_md\CommandLineParserUser_md.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\tools\tests\testloader\TestLoader.vcxproj" />
+  </ItemGroup>
+  <!--Required to run test-->
+  <ItemGroup>
+    <PostBuildCopy Include="$(PkgTaef_Redist)\Build\Binaries\Release\x64\TestExecution\*.*">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="$(PkgWinFab_Test_Tools_retail)\lib\net45\RunTests\**\*" Exclude="$(PkgWinFab_Test_Tools_retail)\lib\net45\RunTests\**\*.exe.config">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="$(KTLSRCROOT)\test\Config\RunTests.exe.config">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+    </PostBuildCopy>
+  </ItemGroup>
+  <!--Final binplace-->
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+    </Robocopy>
+  </ItemGroup>
+</Project>

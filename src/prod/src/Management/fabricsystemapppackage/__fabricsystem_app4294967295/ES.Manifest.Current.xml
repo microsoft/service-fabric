@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    Name="ES"
+    Version="Current"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>A Microsoft Service Fabric system service that facilitates Events Store APIs.</Description>
+    <ServiceTypes>
+        <StatefulServiceType ServiceTypeName="EventStoreServiceType" HasPersistedState="true" />
+    </ServiceTypes>
+    <CodePackage Name="Code" Version="Current">
+        <EntryPoint>
+            <ExeHost>
+                <Program>EventStore.Service.exe</Program>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <Resources>
+        <Endpoints>
+            <Endpoint Name="RestEndpoint" Type="Internal" Protocol="tcp" />
+        </Endpoints>
+    </Resources>
+</ServiceManifest>

@@ -170,6 +170,8 @@ namespace Reliability
 
             void InduceRepartitioningFailure(std::wstring const& serviceName, Common::ErrorCode error);
 
+            int64 GetInBuildCountPerNode(int nodeId, std::wstring metricName = L"");
+
             uint64 RefreshTime;
 
         private:

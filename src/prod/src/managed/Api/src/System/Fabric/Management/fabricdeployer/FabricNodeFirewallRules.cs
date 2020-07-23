@@ -35,6 +35,8 @@ namespace System.Fabric.FabricDeployer
         private string FabricInfrastructureServicePath { get; set; }
         private string UpgradeOrchestrationServicePath { get; set; }
         private string CentralSecretServicePath { get; set; }
+        private string EventStoreServicePath { get; set; }
+        private string GatewayResourceManagerPath { get; set; }
 
 #if !DotNetCoreClrLinux && !DotNetCoreClrIOT
         private static string TypeProgID = "HNetCfg.FwPolicy2";
@@ -65,6 +67,8 @@ namespace System.Fabric.FabricDeployer
             string fabricInfrastructureServicePath,
             string upgradeOrchestrationServicePath,
             string centralSecretServicePath,
+            string eventStoreServicePath,
+            string gatewayResourceManagerPath,
             string dynamicPorts,
             SettingsOverridesTypeSection securitySection)
 
@@ -79,7 +83,6 @@ namespace System.Fabric.FabricDeployer
                 FileStoreServicePath = fileStoreServicePath,
                 HttpGatewayPort = httpGatewayPort,
                 FabricGatewayPath = fabricGatewayPath,
-
                 HttpAppGatewayPort = httpAppGatewayPort,
                 FabricAppGatewayPath = fabricAppGatewayPath,
                 FaultAnalysisServicePath = faultAnalysisServicePath,
@@ -89,6 +92,8 @@ namespace System.Fabric.FabricDeployer
                 FabricInfrastructureServicePath = fabricInfrastructureServicePath,
                 UpgradeOrchestrationServicePath = upgradeOrchestrationServicePath,
                 CentralSecretServicePath = centralSecretServicePath,
+                EventStoreServicePath = eventStoreServicePath,
+                GatewayResourceManagerPath = gatewayResourceManagerPath,
                 DynamicPorts = dynamicPorts
             };
 
@@ -120,6 +125,11 @@ namespace System.Fabric.FabricDeployer
             AddApplicationPathExceptionProfileRules(rules, nodeRules, FabricNodeFirewallRules.FabricRepairServiceExceptionTemplate, nodeRules.FabricRepairServicePath, FabricNodeFirewallRules.outDirection);
             AddApplicationPathExceptionProfileRules(rules, nodeRules, FabricNodeFirewallRules.FabricInfrastructureServiceExceptionTemplate, nodeRules.FabricInfrastructureServicePath, FabricNodeFirewallRules.inDirection);
             AddApplicationPathExceptionProfileRules(rules, nodeRules, FabricNodeFirewallRules.FabricInfrastructureServiceExceptionTemplate, nodeRules.FabricInfrastructureServicePath, FabricNodeFirewallRules.outDirection);
+            AddApplicationPathExceptionProfileRules(rules, nodeRules, FabricNodeFirewallRules.EventStoreServiceExceptionTemplate, nodeRules.EventStoreServicePath, FabricNodeFirewallRules.inDirection);
+            AddApplicationPathExceptionProfileRules(rules, nodeRules, FabricNodeFirewallRules.EventStoreServiceExceptionTemplate, nodeRules.EventStoreServicePath, FabricNodeFirewallRules.outDirection);
+            AddApplicationPathExceptionProfileRules(rules, nodeRules, FabricNodeFirewallRules.GatewayResourceManagerExceptionTemplate, nodeRules.GatewayResourceManagerPath, FabricNodeFirewallRules.inDirection);
+            AddApplicationPathExceptionProfileRules(rules, nodeRules, FabricNodeFirewallRules.GatewayResourceManagerExceptionTemplate, nodeRules.GatewayResourceManagerPath, FabricNodeFirewallRules.outDirection);
+
 #endif
             AddLeaseDriverExceptionProfileRule(rules, nodeRules, FabricNodeFirewallRules.inDirection);
             AddLeaseDriverExceptionProfileRule(rules, nodeRules, FabricNodeFirewallRules.outDirection);
@@ -507,6 +517,8 @@ namespace System.Fabric.FabricDeployer
         private static readonly string FabricInfrastructureServiceExceptionTemplate = "{0} WindowsFabric InfrastructureService Process (TCP{1}{2})";
         private static readonly string UpgradeOrchestrationServiceExceptionTemplate = "{0} WindowsFabric UpgradeOrchestrationService Process (TCP{1}{2})";
         private static readonly string CentralSecretServiceExceptionTemplate = "{0} WindowsFabric CentralSecretService Process (TCP{1}{2})";
+        private static readonly string EventStoreServiceExceptionTemplate = "{0} WindowsFabric EventStoreService Process (TCP{1}{2})";
+        private static readonly string GatewayResourceManagerExceptionTemplate = "{0} WindowsFabric GatewayResourceManager Process (TCP{1}{2})";
 #endif 
 
         private static readonly string FabricHttpGatewayExceptionTemplate = "{0} WindowsFabric Http Gateway (TCP{1}{2})";

@@ -185,6 +185,17 @@ ULONG BarrierLogRecord::GetSizeOnWire() const
     return __super::GetSizeOnWire() + SizeOnWireIncrement;
 }
 
+std::wstring BarrierLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CompEndlJSON;
+
+    logRecordString += L"Last Stable LSN" + Constants::DivisionJSON +
+        std::to_wstring(lastStableLsn_) + Constants::Quote;
+    logRecordString += Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}
+
 bool BarrierLogRecord::Test_Equals(__in LogRecord const & other) const
 {
     BarrierLogRecord const & otherBarrierLogRecord = dynamic_cast<BarrierLogRecord const &>(other);

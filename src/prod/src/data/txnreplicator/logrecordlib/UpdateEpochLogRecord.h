@@ -33,6 +33,8 @@ namespace Data
                 __in PhysicalLogRecord & invalidPhysicalLogRecord,
                 __in KAllocator & allocator);
 
+            virtual std::wstring ToString() const override;
+
             __declspec(property(get = get_Epoch)) TxnReplicator::Epoch & EpochValue;
             TxnReplicator::Epoch const & get_Epoch() const
             {

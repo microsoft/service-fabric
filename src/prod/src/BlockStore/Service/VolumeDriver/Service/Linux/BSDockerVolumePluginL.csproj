@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <NetStandardBuildWindows>false</NetStandardBuildWindows>
+    <RuntimeIdentifier>ubuntu.16.04-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  <Import Project="..\BSDockerVolumePlugin.targets" />
+
+  <!-- SDK's ResolvePackageFileConflicts is not able to process the dll format
+       in runtime linux nuget giving this error
+         Encountered conflict between '...\runtime.linux-x64.microsoft.netcore.app\2.0.7\runtimes\linux-x64\lib\netcoreapp2.0\System.Runtime.dll'
+         and '...\runtime.any.system.runtime\4.3.0\lib\netstandard1.5\System.Runtime.dll'.
+         Could not determine a winner because '...\runtime.linux-x64.microsoft.netcore.app\2.0.7\runtimes\linux-x64\lib\netcoreapp2.0\System.Runtime.dll'
+         is not an assembly.
+       
+       This causes both the assemblies to be copied. In case the files other
+       than runtime.linux-x64 are copied, it fails the runtime loading of DLLs
+       
+       Adding this target ensures correct files are copied in the end.
+       This is a workaround till we use Linux VolumeDriver or update the windows sdk.
+       -->
+  <Target Name="WorkAroundSdkResolveBug" BeforeTargets="_CopyResolvedFilesToPublishAlways">
+    <ItemGroup>
+      <__AssemblyFromRuntimePackage Include="@(_ResolvedFileToPublishAlways->WithMetadataValue('PackageName', 'runtime.linux-x64.microsoft.netcore.app'))" />
+    </ItemGroup>
+    <ItemGroup>
+      <_ResolvedFileToPublishAlways Include="@(__AssemblyFromRuntimePackage)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CopyFiles" AfterTargets="Publish">
+    <ItemGroup>
+      <CopyAppPackageFiles Include="..\AppPkg\**\*" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <CopySourceFiles Include="$(PublishDir)\**\*" Exclude="$(PublishDir)\**\*.pdb" />
+    </ItemGroup>
+  
+    <Copy SourceFiles="@(CopyAppPackageFiles)" DestinationFolder="$(ApplicationPackageDropPath)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(CopyAppPackageFiles)" DestinationFolder="$(ApplicationPackageDropPath2)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+
+    <Copy SourceFiles="@(CopySourceFiles)" DestinationFolder="$(CodePackageDropPath)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(CopySourceFiles)" DestinationFolder="$(CodePackageDropPath2)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

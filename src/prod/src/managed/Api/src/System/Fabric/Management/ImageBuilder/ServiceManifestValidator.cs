@@ -187,7 +187,8 @@ namespace System.Fabric.Management.ImageBuilder
 
                     if (codePackageType.SetupEntryPoint != null)
                     {
-                        this.ValidateEntryPointPath(serviceManifestFileName, fileLocator, codePackageType.SetupEntryPoint.ExeHost.Program);
+                        this.ValidateEntryPointPath(serviceManifestFileName, fileLocator, codePackageType.SetupEntryPoint.ExeHost.Program,
+                            codePackageType.SetupEntryPoint.ExeHost.IsExternalExecutable);
                     }
 
                     if (codePackageType.EntryPoint != null && codePackageType.EntryPoint.Item != null)
@@ -440,6 +441,12 @@ namespace System.Fabric.Management.ImageBuilder
             }
             else if (!fileLocator.FileExists(entryPointPath))
             {
+#if !DotNetCoreClrLinux
+                if (string.IsNullOrEmpty(Path.GetExtension(entryPointPath)) && fileLocator.FileExists(entryPointPath + ".exe"))
+                {
+                    return;
+                }
+#endif
                 ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
                     TraceType,
                     serviceManifestFileName,

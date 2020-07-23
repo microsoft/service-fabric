@@ -36,6 +36,7 @@ UdpListener::UdpListener(
 
 UdpListener::~UdpListener()
 {
+    Tracer().Trace(DnsTraceLevel_Noise, "Destructing DNS UdpListener.");
 }
 
 
@@ -49,6 +50,8 @@ void UdpListener::OnStart()
 
 void UdpListener::OnCancel()
 {
+    Tracer().Trace(DnsTraceLevel_Info, "DNS UdpListener OnCancel called.");
+
     Cleanup();
 
     Complete(STATUS_CANCELLED);
@@ -56,7 +59,7 @@ void UdpListener::OnCancel()
 
 void UdpListener::OnCompleted()
 {
-    Tracer().Trace(DnsTraceLevel_Noise, "DNS UdpListener Completed");
+    Tracer().Trace(DnsTraceLevel_Info, "DNS UdpListener OnCompleted called.");
 
 #if !defined(PLATFORM_UNIX)
     if (_ioRegistrationContext != 0)

@@ -82,6 +82,9 @@ deps=(
    go-md2man
    runc
    libostree-dev # libostree-dev can be found in the flatpak(https://launchpad.net/~alexlarsson/+archive/ubuntu/flatpak) PPA
+
+   #libcurl
+   libcurl4-openssl-dev
 )
 
 for pkg in "${deps[@]}"

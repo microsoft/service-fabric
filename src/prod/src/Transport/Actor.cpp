@@ -79,7 +79,7 @@ namespace Transport
             case DirectMessagingAgent: w << "DirectMessagingAgent"; return;
 
             //FabricServiceCommunication
-            case ServiceCommunicationActor:w << "ServiceCommunicationActor"; return;
+            case ServiceCommunicationActor:w << "DirectMessagingAgent"; return;
 
             // BackupRestore service.
             case BA: w << "BA"; return;
@@ -90,7 +90,15 @@ namespace Transport
             case ContainerActivatorServiceClient: w << "ContainerActivatorServiceClient"; return;
 
             // Central Secret Service
-            case CSS: w << "CSS"; return;            
+            case CSS: w << "CSS"; return;
+
+            case GatewayResourceManager: w << "GatewayResourceManager"; return;
+
+            // NetworkInventoryService
+            case NetworkInventoryService: w << "NetworkInventoryService"; return;
+            
+            // NetworkInventoryAgent
+            case NetworkInventoryAgent: w << "NetworkInventoryAgent"; return;
 
             // Test
             case WindowsFabricTestApi: w << "WindowsFabricTestApi"; return;

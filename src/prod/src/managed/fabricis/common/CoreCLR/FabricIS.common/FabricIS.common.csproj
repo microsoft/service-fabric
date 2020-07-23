@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Fabric Infrastructure Service</Description>
+    <AssemblyName>FabricIS.common</AssemblyName>
+    <PackageId>FabricIS.common</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <GenerateNeutralResourcesLanguageAttribute>false</GenerateNeutralResourcesLanguageAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="_friends.cs;
+      ..\..\dll\AppConfigStore.cs;
+      ..\..\dll\Arguments.cs;
+      ..\..\dll\AssemblyInfo.cs;
+      ..\..\dll\AzureHelper.cs;
+      ..\..\dll\AzureModeDetection\AzureMode.cs;
+      ..\..\dll\AzureModeDetection\IAzureModeDetector.cs;
+      ..\..\dll\AzureModeDetection\IAzureModeDetectorFactory.cs;
+      ..\..\dll\CommandHandler.cs;
+      ..\..\dll\CommandHandlerEntry.cs;
+      ..\..\dll\CommandProcessor.cs;
+      ..\..\dll\ConfigSection.cs;
+      ..\..\dll\Constants.cs;
+      ..\..\dll\CoordinatorFactoryArgs.cs;
+      ..\..\dll\DelayLoadCoordinator.cs;
+      ..\..\dll\FinishTaskCommand.cs;
+      ..\..\dll\IConfigSection.cs;
+      ..\..\dll\IJobBlockingPolicyManager.cs;
+      ..\..\dll\InfrastructureServiceCommand.cs;
+      ..\..\dll\IRetryPolicyFactory.cs;
+      ..\..\dll\IVersionedPropertyStore.cs;
+      ..\..\dll\IVersionedKeyValue.cs;
+      ..\..\dll\RoleInstanceHealth\BaseRoleInstanceHealthPolicy.cs;
+      ..\..\dll\RoleInstanceHealth\DynamicRoleInstanceHealthPolicyManager.cs;
+      ..\..\dll\RoleInstanceHealth\IRoleInstanceHealthPolicy.cs;
+      ..\..\dll\RoleInstanceHealth\IRoleInstanceHealthPolicyManager.cs;
+      ..\..\dll\RoleInstanceHealth\IRoleInstanceHealthWatchdogFactory.cs;
+      ..\..\dll\RoleInstanceHealth\RoleInstanceHealthConstants.cs;
+      ..\..\dll\RoleInstanceHealth\RoleInstanceHealthWatchdog.cs;
+      ..\..\dll\RoleInstanceHealth\RoleInstanceHealthWatchdogFactory.cs;
+      ..\..\dll\RoleInstanceHealth\RoleInstanceStatusMapHealthPolicy.cs;
+      ..\..\dll\RoleInstanceHealth\RoleInstanceStatusMaxAllowedHealthPolicy.cs;
+      ..\..\dll\StartTaskCommand.cs;
+      ..\..\dll\TaskUtility.cs;
+      ..\..\dll\TestInfrastructureCoordinator.cs;
+      ..\..\dll\VersionedPropertyStore.cs;
+      ..\..\dll\VersionedKeyValue.cs;
+      ..\..\dll\Wrappers\IHealthClient.cs;
+      ..\..\dll\Wrappers\IHealthReport.cs;
+      ..\..\dll\IInfrastructureAgentWrapper.cs;
+      ..\..\dll\IInfrastructureCoordinator.cs;
+      ..\..\dll\IInfrastructureCoordinatorFactory.cs;
+      ..\..\dll\InfrastructureServiceMaintenanceAction.cs;
+      ..\..\dll\IRetryPolicy.cs;
+      ..\..\dll\JobBlockingPolicy.cs;
+      ..\..\dll\JobBlockingPolicyManager.cs;
+      ..\..\dll\LinearRetryPolicyFactory.cs;
+      ..\..\dll\ManagementException.cs;
+      ..\..\dll\NullInfrastructureAgent.cs;
+      ..\..\dll\ProcessCloser.cs;
+      ..\..\dll\LinearRetryPolicy.cs;
+      ..\..\dll\Trace.cs;
+      ..\..\dll\Wrappers\INamedPropertyWrapper.cs;
+      ..\..\dll\Wrappers\INode.cs;
+      ..\..\dll\Wrappers\IPropertyBatchResultWrapper.cs;
+      ..\..\dll\Wrappers\IPropertyManagerWrapper.cs;
+      ..\..\dll\RoleInstanceHealth\IRoleInstanceHealthWatchdog.cs;
+      ..\..\dll\Wrappers\IQueryClient.cs;
+      ..\..\dll\Wrappers\NamedPropertyWrapper.cs;
+      ..\..\dll\Wrappers\PropertyBatchResultWrapper.cs;
+      ..\..\dll\Wrappers\PropertyManagerWrapper.cs;
+      ..\..\dll\Wrappers\RoleInstance.cs;
+      ..\..\dll\Wrappers\ServiceFabricHealthClient.cs;
+      ..\..\dll\NullCoordinator.cs;
+      ..\..\dll\Wrappers\ServiceFabricQueryClient.cs;
+      ..\..\dll\Wrappers\InfrastructureAgentWrapper.cs" Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\..\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Win32.Registry" Version="4.4.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

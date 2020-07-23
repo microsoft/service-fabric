@@ -58,7 +58,8 @@ namespace TStoreTests
         virtual void Setup(
             ULONG replicaCount = 1, 
             KDelegate<ULONG(const TKey & Key)> hashFunc = DefaultHash,
-            KString::CSPtr startDirectory = nullptr)
+            KString::CSPtr startDirectory = nullptr,
+            bool hasPersistedState = true)
         {
             CODING_ERROR_ASSERT(replicaCount >= 1);
             NTSTATUS status;
@@ -78,12 +79,20 @@ namespace TStoreTests
             KUriView name(L"fabric:/Store");
 
             //create primary replicator
-            mockReplicatorSPtr_ = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
+            mockReplicatorSPtr_ = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY, hasPersistedState);
             mockReplicatorSPtr_->SetReadable(true);
 
             // Set up the work folder.
             KString::CSPtr currentFolderPath = nullptr;
-            if (startDirectory != nullptr)
+
+            if (hasPersistedState == false)
+            {
+                // Volatile store scenario
+                // Create a filename for compatibility with existing APIs. 
+                KString::SPtr fileName = CreateGuidString();
+                currentFolderPath = CreateFileString(*fileName);
+            }
+            else if (startDirectory != nullptr)
             {
                 currentFolderPath = startDirectory;
             }
@@ -106,8 +115,8 @@ namespace TStoreTests
             //create secondary replicator and stores.
             for (ULONG32 i = 0; i < replicaCount - 1; i++)
             {
-                auto secondaryFolderPath = CreateTempDirectory();
-                CreateSecondary(name, 5, *secondaryFolderPath, nullptr, nullptr, FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY);
+                KString::CSPtr secondaryFolderPath = hasPersistedState ? CreateTempDirectory() : currentFolderPath;
+                CreateSecondary(name, 5, *secondaryFolderPath, nullptr, nullptr, mockReplicatorSPtr_->HasPeristedState ,FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY);
             }
         }
 
@@ -245,6 +254,14 @@ namespace TStoreTests
           SyncAwait(secondaryStore.EndSettingCurrentStateAsync(ktl::CancellationToken::None));
       }
 
+      ktl::Awaitable<void> FullCopyToSecondaryAsync(__in Data::TStore::Store<TKey, TValue> & secondaryStore)
+      {
+          // Checkpoint the Primary, to get all current state
+          co_await CheckpointAsync(*Store);
+          co_await CopyCheckpointToSecondaryAsync(secondaryStore);
+          co_return;
+      }
+        
       ktl::Awaitable<void> CopyCheckpointToSecondaryAsync(__in Data::TStore::Store<TKey, TValue> & secondaryStore)
       {
           // Get the current state from the Primary
@@ -563,7 +580,7 @@ namespace TStoreTests
             //create secondary replicator and stores.
             for (ULONG32 i = 1; i < snappedReplicaCount; i++)
             {
-                auto secondary = CreateSecondary(name, 5, *workingFolders[i], nullptr, nullptr, FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY, changeHandlerSPtr, mask);
+                auto secondary = CreateSecondary(name, 5, *workingFolders[i], nullptr, nullptr, mockReplicatorSPtr_->HasPeristedState, FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY, changeHandlerSPtr, mask);
             }
 
             mockReplicatorSPtr_->UpdateSecondaryLSN();
@@ -619,7 +636,7 @@ namespace TStoreTests
             //create secondary replicator and stores.
             for (ULONG32 i = 1; i < snappedReplicaCount; i++)
             {
-                auto secondary = co_await CreateSecondaryAsync(name, 5, *workingFolders[i], nullptr, nullptr, FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY, changeHandlerSPtr, mask);
+                auto secondary = co_await CreateSecondaryAsync(name, 5, *workingFolders[i], nullptr, nullptr, mockReplicatorSPtr_->HasPeristedState, FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY, changeHandlerSPtr, mask);
             }
 
             mockReplicatorSPtr_->UpdateSecondaryLSN();
@@ -687,12 +704,13 @@ namespace TStoreTests
             __in KStringView const & workFolder,
             __in_opt OperationData const * const initializationContext,
             __in_opt KSharedArray<TxnReplicator::IStateProvider2::SPtr> const * const children,
+            __in bool hasPersistedState = true,
             __in FABRIC_REPLICA_ROLE role = FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY,
             __in_opt KSharedPtr<IDictionaryChangeHandler<TKey, TValue>> changeHandlerSPtr = nullptr,
             __in_opt DictionaryChangeEventMask::Enum mask = DictionaryChangeEventMask::Enum::All)
         {
             //create secondary replicator.
-            auto secondaryReplicator = CreateMockReplicator(role);
+            auto secondaryReplicator = CreateMockReplicator(role, hasPersistedState);
             secondaryReplicator->SetReadable(true);
             secondariesReplicatorSPtr_->Append(secondaryReplicator);
 
@@ -726,12 +744,13 @@ namespace TStoreTests
             __in KStringView const & workFolder,
             __in_opt OperationData const * const initializationContext,
             __in_opt KSharedArray<TxnReplicator::IStateProvider2::SPtr> const * const children,
+            __in bool hasPersistedState = true,
             __in FABRIC_REPLICA_ROLE role = FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY,
             __in_opt KSharedPtr<IDictionaryChangeHandler<TKey, TValue>> changeHandlerSPtr = nullptr,
             __in_opt DictionaryChangeEventMask::Enum mask = DictionaryChangeEventMask::Enum::All)
         {
             //create secondary replicator.
-            auto secondaryReplicator = CreateMockReplicator(role);
+            auto secondaryReplicator = CreateMockReplicator(role, hasPersistedState);
             secondaryReplicator->SetReadable(true);
             secondariesReplicatorSPtr_->Append(secondaryReplicator);
 
@@ -761,14 +780,16 @@ namespace TStoreTests
 
         KSharedPtr<Data::TStore::Store<TKey, TValue>> CreateSecondary()
         {
-            auto workFolder = CreateTempDirectory();
-            return CreateSecondary(Store->Name, storeSPtr_->StateProviderId, *workFolder, nullptr, nullptr);
+            bool hasPersistedState = mockReplicatorSPtr_->HasPeristedState;
+            KString::CSPtr workFolder = hasPersistedState ? CreateTempDirectory() : Store->WorkingDirectoryCSPtr;
+            return CreateSecondary(Store->Name, storeSPtr_->StateProviderId, *workFolder, nullptr, nullptr, hasPersistedState);
         }
 
         ktl::Awaitable<KSharedPtr<Data::TStore::Store<TKey, TValue>>> CreateSecondaryAsync()
         {
-            auto workFolder = CreateTempDirectory();
-            co_return co_await CreateSecondaryAsync(Store->Name, storeSPtr_->StateProviderId, *workFolder, nullptr, nullptr);
+            bool hasPersistedState = mockReplicatorSPtr_->HasPeristedState;
+            KString::CSPtr workFolder = hasPersistedState ? CreateTempDirectory() : Store->WorkingDirectoryCSPtr;
+            co_return co_await CreateSecondaryAsync(Store->Name, storeSPtr_->StateProviderId, *workFolder, nullptr, nullptr, hasPersistedState);
         }
 
         KSharedPtr<Data::TStore::Store<TKey, TValue>> CloseAndRecoverSecondary(
@@ -1059,11 +1080,11 @@ namespace TStoreTests
             }
         }
 
-        KSharedPtr<MockTransactionalReplicator> CreateMockReplicator(FABRIC_REPLICA_ROLE role) //TODO: IStatefulServicePartition& partition
+        KSharedPtr<MockTransactionalReplicator> CreateMockReplicator(__in FABRIC_REPLICA_ROLE role, __in bool hasPersistedState) //TODO: IStatefulServicePartition& partition
         {
             KAllocator& allocator = GetAllocator();
             MockTransactionalReplicator::SPtr replicator = nullptr;
-            NTSTATUS status = MockTransactionalReplicator::Create(allocator, replicator);
+            NTSTATUS status = MockTransactionalReplicator::Create(allocator, hasPersistedState, replicator);
             CODING_ERROR_ASSERT(NT_SUCCESS(status));
             replicator->Initialize(*GetPartitionedReplicaId());
             replicator->Role = role;

@@ -27,7 +27,7 @@ namespace System.Fabric
 
         internal string NodeWorkFolder { get; set; }
 
-        internal string AssignedIp { get; set; }
+        internal ContainerNetworkConfigDescription ContainerNetworkConfig { get; set; }
 
         internal string EntryPoint { get; set; }
 
@@ -87,7 +87,6 @@ namespace System.Fabric
                 ContainerName = NativeTypes.FromNativeString(nativeDescription.ContainerName),
                 DeploymentFolder = NativeTypes.FromNativeString(nativeDescription.DeploymentFolder),
                 NodeWorkFolder = NativeTypes.FromNativeString(nativeDescription.NodeWorkFolder),
-                AssignedIp = NativeTypes.FromNativeString(nativeDescription.AssignedIp),
                 EntryPoint = NativeTypes.FromNativeString(nativeDescription.EntryPoint),
                 HostName = NativeTypes.FromNativeString(nativeDescription.HostName),
                 GroupContainerName = NativeTypes.FromNativeString(nativeDescription.GroupContainerName),
@@ -119,6 +118,12 @@ namespace System.Fabric
                 {
                     var nativeContainerDescriptionEx2 = *((NativeTypes.FABRIC_CONTAINER_DESCRIPTION_EX2*)nativeContainerDescriptionEx1.Reserved);
                     containerDescription.UseTokenAuthenticationCredentials = NativeTypes.FromBOOLEAN(nativeContainerDescriptionEx2.UseTokenAuthenticationCredentials);
+
+                    if (nativeContainerDescriptionEx2.Reserved != null)
+                    {
+                        var nativeContainerDescriptionEx3 = *((NativeTypes.FABRIC_CONTAINER_DESCRIPTION_EX3*)nativeContainerDescriptionEx2.Reserved);
+                        containerDescription.ContainerNetworkConfig = ContainerNetworkConfigDescription.CreateFromNative(nativeContainerDescriptionEx3.ContainerNetworkConfigDescription);
+                    }
                 }
             }
 

@@ -66,3 +66,8 @@ ErrorCode ContainerImageDescription::ToPublicApi(
 
     return ErrorCode(ErrorCodeValue::Success);
 }
+
+void ContainerImageDescription::SetContainerRepositoryPassword(std::wstring const& password)
+{
+    repositoryCredentials_.Password = password;
+}

@@ -13,6 +13,7 @@ namespace FabricDCA
         internal const int DefaultLttReadIntervalMinutes = 10;
         internal const int minRecommendedLttReadInterval = 5;
         internal const string LttSubDirectoryUnderLogDirectory = "lttng-traces";
+        internal const string LttTraceSessionFolderNamePrefix = "fabric_traces_";
         internal const string DtrSubDirectoryUnderLogDirectory = "Traces";
 
         internal const string ServiceFabricLttTypeParamName = "ServiceFabricLttType";

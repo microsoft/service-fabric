@@ -100,7 +100,7 @@ namespace Transport
             BRS = 43,
             BAP = 44,
 
-            //Fabric Container Activator Service
+            // Fabric Container Activator Service
             ContainerActivatorService = 45,
             ContainerActivatorServiceClient = 46,
 
@@ -109,7 +109,16 @@ namespace Transport
             // Central Secret Service
             CSS = 48,
 
-            EndValidEnum = 49,
+            // NetworkInventoryService
+            NetworkInventoryService = 49,
+
+            // NetworkInventoryAgent
+            NetworkInventoryAgent = 50,
+
+            // GatewayResourceManager Service
+            GatewayResourceManager = 51,
+
+            EndValidEnum = 52,
 
             // !!! Please add new actor values above this !!!
             FirstValidEnum = Empty,

@@ -258,7 +258,7 @@ namespace Hosting2
             CodePackagesAsyncOperationCompletedCallback const & asyncCallback,
             Common::AsyncOperationSPtr const & parent);
 
-        void FinishAtivateCodePackages(
+        void FinishActivateCodePackages(
             Common::AsyncOperationSPtr const & operation, 
             bool expectedCompletedSynchronously,
             CodePackagesAsyncOperationCompletedCallback const & asyncCallback);
@@ -305,37 +305,6 @@ namespace Hosting2
             __in std::wstring const & name,
             __out SecurityPrincipalInformationSPtr & info);
 
-        void RegisterForEvents(
-            CodePackageMap const & codePackages,
-            Common::AsyncOperationSPtr const & parent,
-            bool forPrimary);
-        
-        void OnActivateSecondaryCodePackages(
-            CodePackageMap const & codePackages,
-            Common::AsyncOperationSPtr const & parent);
-
-        void OnDeactivateSecondaryCodePackages(
-            CodePackageMap const & codePackages,
-            Common::AsyncOperationSPtr const & parent);
-
-        void ActivateSecondaryCodePackagesAsync(
-            CodePackageMap const & codePackages,
-            Common::TimeSpan const timeout,
-            Common::AsyncOperationSPtr const & parent);
-
-        void FinishAtivateSecondaryCodePackages(
-            Common::AsyncOperationSPtr const & operation,
-            bool expectedCompletedSynchronously);
-
-        void DeactivateSecondaryCodePackagesAsync(
-            CodePackageMap const & codePackages,
-            Common::TimeSpan const timeout,
-            Common::AsyncOperationSPtr const & parent);
-
-        void FinishDeativateSecondaryCodePackages(
-            Common::AsyncOperationSPtr const & operation,
-            bool expectedCompletedSynchronously);
-
         Common::ErrorCode RegisterEventWaitOperation(AsyncOperationSPtr const & operation, bool isActivateOperation = true);
         void UnregisterEventWaitOperation(bool isActivateOperation = true);
 
@@ -351,18 +320,12 @@ namespace Hosting2
         ServiceModel::ServicePackageVersionInstance currentVersionInstance__;
         ServiceModel::ServicePackageDescription packageDescription__;
         ServicePackageInstanceEnvironmentContextSPtr environmentContext__;
-        bool hasPrimarySecondaryCodePackages_;
         bool codePackagesActivationRequested_;
         std::unique_ptr<Common::AsyncAutoResetEvent> activateEventHandler_;
         std::unique_ptr<Common::AsyncAutoResetEvent> deactivateEventHandler_;
         Common::AsyncOperationSPtr eventWaitAsyncOperation_;
         Common::AsyncOperationSPtr deactivateAsyncOperation_;
-        std::wstring activateEventName_;
-        std::wstring deactivateEventName_;
-        std::wstring activationCompletedEventName_;
-        std::wstring deactivationCompletedEventName_;
         Common::ExclusiveLock lock_;
-        AutoResetEvent deactivationCompleteEvent_;
         CodePackageMap activeCodePackages_;
 
         //

@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest ApplicationTypeName="FabricMonitoringServiceApplication" ApplicationTypeVersion="6.0.20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Parameters>
+    <Parameter Name="HealthDataReadIntervalInMinutes" DefaultValue="5" />
+    <Parameter Name="HealthDataReadTimeoutInSeconds" DefaultValue="60" />
+    <Parameter Name="ClusterName" DefaultValue="ClusterNameUnknown" />
+    <Parameter Name="DataCenterName" DefaultValue="DataCenterNameUnknown" />
+    <Parameter Name="MAMdmAccountName" DefaultValue="" />
+    <Parameter Name="MAMdmNamespace" DefaultValue="" />
+    <Parameter Name="ReportServiceHealth" DefaultValue="Always" />
+    <Parameter Name="ApplicationsThatReportServiceHealth" DefaultValue="All" />
+    <Parameter Name="ReportPartitionHealth" DefaultValue="Always" />
+    <Parameter Name="ApplicationsThatReportPartitionHealth" DefaultValue="fabric:/System" />
+    <Parameter Name="ReportReplicaHealth" DefaultValue="Always" />
+    <Parameter Name="ApplicationsThatReportReplicaHealth" DefaultValue="fabric:/System" />
+    <Parameter Name="ReportDeployedApplicationHealth" DefaultValue="Never" />
+    <Parameter Name="ApplicationsThatReportDeployedApplicationHealth" DefaultValue="" />
+    <Parameter Name="ReportServicePackageHealth" DefaultValue="Never" />
+    <Parameter Name="ApplicationsThatReportServicePackageHealth" DefaultValue="" />
+    <Parameter Name="ReportHealthEvents" DefaultValue="Always" />
+    <Parameter Name="ApplicationsThatReportHealthEvents" DefaultValue="fabric:/System" />
+  </Parameters>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="MonitoringServicePackage" ServiceManifestVersion="6.0.20" />
+    <ConfigOverrides>
+      <ConfigOverride Name="MonitoringService.Config">
+        <Settings>
+          <Section Name="HealthDataProducer">
+            <Parameter Name="HealthDataReadIntervalInMinutes" Value="[HealthDataReadIntervalInMinutes]" />
+            <Parameter Name="HealthDataReadTimeoutInSeconds" Value="[HealthDataReadTimeoutInSeconds]" />
+            <Parameter Name="ClusterName" Value="[ClusterName]" />
+            <Parameter Name="HealthQueryTimeoutInSeconds" Value="[HealthQueryTimeoutInSeconds]" />
+            <Parameter Name="ReportServiceHealth" Value="[ReportServiceHealth]" />
+            <Parameter Name="ApplicationsThatReportServiceHealth" Value="[ApplicationsThatReportServiceHealth]" />
+            <Parameter Name="ReportPartitionHealth" Value="[ReportPartitionHealth]" />
+            <Parameter Name="ApplicationsThatReportPartitionHealth" Value="[ApplicationsThatReportPartitionHealth]" />
+            <Parameter Name="ReportReplicaHealth" Value="[ReportReplicaHealth]" />
+            <Parameter Name="ApplicationsThatReportReplicaHealth" Value="[ApplicationsThatReportReplicaHealth]" />
+            <Parameter Name="ReportDeployedApplicationHealth" Value="[ReportDeployedApplicationHealth]" />
+            <Parameter Name="ApplicationsThatReportDeployedApplicationHealth" Value="[ApplicationsThatReportDeployedApplicationHealth]" />
+            <Parameter Name="ReportServicePackageHealth" Value="[ReportServicePackageHealth]" />
+            <Parameter Name="ApplicationsThatReportServicePackageHealth" Value="[ApplicationsThatReportServicePackageHealth]" />
+            <Parameter Name="ReportHealthEvents" Value="[ReportHealthEvents]" />
+            <Parameter Name="ApplicationsThatReportHealthEvents" Value="[ApplicationsThatReportHealthEvents]" />
+          </Section>
+          <Section Name="MdsHealthDataConsumer">
+            <Parameter Name="MdmAccountName" Value="[MAMdmAccountName]" />
+            <Parameter Name="MdmNamespace" Value="[MAMdmNamespace]" />
+            <Parameter Name="DataCenter" Value="[DataCenterName]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
+  </ServiceManifestImport>
+</ApplicationManifest>

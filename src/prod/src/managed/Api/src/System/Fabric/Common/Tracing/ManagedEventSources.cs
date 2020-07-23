@@ -3099,16 +3099,98 @@ Keywords = Keywords.DataMessaging)]
             WriteEvent(this.eventDescriptors[61579], id, errMsg);
         }
 
+        [Event(61583,
+            Message = "ReplicaId: {1} StoreCount: {2}",
+            Task = Tasks.TStore, Opcode = Opcodes.Op144, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+# endif
+            Keywords = Keywords.Default)]
+        public void StoreCountTelemetry(Guid id, long replicaId, long numberOfStores)
+        {
+            WriteEvent(this.eventDescriptors[61583], id, replicaId, numberOfStores);
+        }
+
+        [Event(61584,
+    Message = "ReplicaId: {1} TotalItemCount: {2}",
+    Task = Tasks.TStore, Opcode = Opcodes.Op145, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+#endif
+            Keywords = Keywords.Default)]
+        public void ItemCountTelemetry(Guid id, long replicaId, long totalItemCount)
+        {
+            WriteEvent(this.eventDescriptors[61584], id, replicaId, totalItemCount);
+        }
+
+        [Event(61585,
+            Message = "ReplicaId: {1} TotalDiskSize: {2}",
+            Task = Tasks.TStore, Opcode = Opcodes.Op146, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+# endif
+            Keywords = Keywords.Default)]
+        public void DiskSizeTelemetry(Guid id, long replicaId, long totalDiskSize)
+        {
+            WriteEvent(this.eventDescriptors[61585], id, replicaId, totalDiskSize);
+        }
+
+        [Event(61586,
+            Message = "ReplicaId: {1} TotalKeySize: {2} NumKeys: {3} TotalValueSize: {4} NumValues: {5}",
+            Task = Tasks.TStore, Opcode = Opcodes.Op147, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+# endif
+            Keywords = Keywords.Default)]
+        public void KeyValueSizeTelemetry(Guid id, long replicaId, long totalKeySize, long numberOfKeys, long totalValueSize, long numberOfValues)
+        {
+            WriteEvent(this.eventDescriptors[61586], id, replicaId, totalKeySize, numberOfKeys, totalValueSize, numberOfValues);
+        }
+
+        [Event(61587,
+            Message = "ReplicaId: {1} CustomKeyTypePercentage: {2}",
+            Task = Tasks.TStore, Opcode = Opcodes.Op148, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+# endif
+            Keywords = Keywords.Default)]
+        public void KeyTypeTelemetry(Guid id, long replicaId, double customKeyTypePercentage)
+        {
+            WriteEvent(this.eventDescriptors[61587], id, replicaId, customKeyTypePercentage);
+        }
+
+        [Event(61588,
+            Message = "ReplicaId: {1} NumReads: {2} NumWrites: {3}",
+            Task = Tasks.TStore, Opcode = Opcodes.Op149, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+# endif
+            Keywords = Keywords.Default)]
+        public void ReadWriteTelemetry(Guid id, long replicaId, long numberOfReads, long numberOfWrites)
+        {
+            WriteEvent(this.eventDescriptors[61588], id, replicaId, numberOfReads, numberOfWrites);
+        }
+
         [Event(61589,
-            Message = "Replica Id: {1} Avg Read Latency (ms): {2} Number of reads: {3}",
+            Message = "ReplicaId: {1} TotalReadLatency (us): {2} NumReads: {3} LastReadLatency (us): {4}",
             Task = Tasks.TStore, Opcode = Opcodes.Op150, Level = EventLevel.Informational,
 #if DotNetCoreClr
             Channel = SystemEventChannel.Debug,
 # endif
             Keywords = Keywords.Default)]
-        public void ReadLatency(Guid id, long replicaId, double avgReadLatencyInMs, long numberOfReads)
+        public void ReadLatencyTelemetry(Guid id, long replicaId, long totalReadLatencyInUs, long numberOfReads, long lastReadLatencyInUs)
         {
-            WriteEvent(this.eventDescriptors[61589], id, replicaId, avgReadLatencyInMs, numberOfReads);
+            WriteEvent(this.eventDescriptors[61589], id, replicaId, totalReadLatencyInUs, numberOfReads, lastReadLatencyInUs);
+        }
+
+        [Event(61591, Message = "starting", Task = Tasks.TStore, Opcode  = Opcodes.Op151, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+#endif
+            Keywords = Keywords.Default)]
+        public void SweepOnReads(string id)
+        {
+            WriteEvent(this.eventDescriptors[61591], id);
         }
 
         /***********************/
@@ -5625,7 +5707,7 @@ Keywords = Keywords.DataMessaging)]
             Task = Tasks.TReplicator, Opcode = Opcodes.Op203, Level = EventLevel.Informational,
 #if DotNetCoreClr
             Channel = SystemEventChannel.Debug,
-# endif
+#endif
             Keywords = Keywords.Default)]
         public void MetricManagerTelemetry(Guid id, long replicaId, long diskSizeInMB, long numberOfStateProviders)
         {
@@ -5637,7 +5719,7 @@ Keywords = Keywords.DataMessaging)]
             Task = Tasks.TReplicator, Opcode = Opcodes.Op204, Level = EventLevel.Informational,
 #if DotNetCoreClr
             Channel = SystemEventChannel.Debug,
-# endif
+#endif
             Keywords = Keywords.Default)]
         public void ProcessLogHeadTruncationDone(string id, long LSN, long PSN, ulong position, long numFreeLinkCalls, long numTrueFreeLinkCalls)
         {
@@ -5649,7 +5731,7 @@ Keywords = Keywords.DataMessaging)]
             Task = Tasks.TReplicator, Opcode = Opcodes.Op205, Level = EventLevel.Warning,
 #if DotNetCoreClr
             Channel = SystemEventChannel.Debug,
-# endif
+#endif
             Keywords = Keywords.Default)]
         public void ProgressVectorValidationTelemetry(string id, string errorMessage, string sourceVector, long sourceIndex, string sourceVectorEntry, string targetVector, long targetIndex, string targetVectorEntry)
         {
@@ -5661,7 +5743,7 @@ Keywords = Keywords.DataMessaging)]
             Task = Tasks.TReplicator, Opcode = Opcodes.Op206, Level = EventLevel.Informational,
 #if DotNetCoreClr
             Channel = SystemEventChannel.Debug,
-# endif
+#endif
             Keywords = Keywords.Default)]
         public void PeriodicCheckpointTruncation(string id, string periodicCheckpointTruncationState, string lastChkptTime, string lastTruncationTime)
         {
@@ -7175,6 +7257,27 @@ Keywords = Keywords.DataMessaging)]
                 timeForUpload, totalTimeForBackup, partitionId);
         }
 
+        [Event(
+          65302,
+          Message = "Backup was auto restore {0} with success {1} in  total time of {2}s with backupCounts {3} for partition Id {4}",
+          Task = Tasks.BackupRestoreService,
+          Opcode = Opcodes.Op105,
+          Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+#endif
+            Keywords = Keywords.Default)]
+        public void BackupRestoreDetails(
+          int autoRestoredCount,
+          int successfullRestore,
+          double timeForRestore,
+          int backupCounts,
+          string partitionId)
+        {
+            WriteEvent(this.eventDescriptors[65302], autoRestoredCount, successfullRestore, timeForRestore,
+                backupCounts, partitionId);
+        }
+
 
         /***********************/
         /***Events corresponding to FabricApiMonitoringComponent
@@ -7277,7 +7380,7 @@ Keywords = Keywords.DataMessaging)]
             WriteEvent(this.eventDescriptors[65160], id, stateProviderId, StateManagerName);
         }
 
-        #region ReliableConcurrentQueue events
+#region ReliableConcurrentQueue events
 
         [Event(63616, Message = "Enqueue rejected as the queue is full.  Max size: {1}", Task = Tasks.ReliableConcurrentQueue, Opcode = Opcodes.Op11,
            Level = EventLevel.Informational,
@@ -7609,7 +7712,7 @@ Keywords = Keywords.DataMessaging)]
             WriteEvent(this.eventDescriptors[63646], id, transactionId);
         }
 
-        #endregion
+#endregion
 
         [Event(60420, Message = "{1}", Task = Tasks.InfrastructureService, Opcode = Opcodes.Op11, Level = EventLevel.Informational,
 #if DotNetCoreClr
@@ -7621,7 +7724,7 @@ Keywords = Keywords.DataMessaging)]
             WriteEvent(this.eventDescriptors[60420], id, message);
         }
 
-        #region Chaos events
+#region Chaos events
 
         [Event(64969, Message = "Found:{1}, Running:{2}, TimestampUtcOfLastStartInTicks:{3}", Task = Tasks.Testability, Opcode = Opcodes.Op11, Level = EventLevel.Informational,
 #if DotNetCoreClr
@@ -7762,9 +7865,9 @@ Keywords = Keywords.DataMessaging)]
                 reason);
         }
 
-        #endregion Chaos events
+#endregion Chaos events
 
-        #region ClusterAnalysis Events
+#region ClusterAnalysis Events
 
         /// <summary>
         /// When a primary replica moves, PrimaryMoveAnalysisAgent@ClusterAnalysis analyzes the traces to find out the reason
@@ -7806,9 +7909,9 @@ Keywords = Keywords.DataMessaging)]
                 correlatedTraceRecords);
         }
 
-        #endregion
+#endregion
 
-        #region Chaos Operational traces
+#region Chaos Operational traces
 
         [Event(50021, Message = "EventInstanceId: {0}, MaxConcurrentFaults: {1}, TimeToRunInSeconds:{2}, MaxClusterStabilizationTimeoutInSeconds:{3}, WaitTimeBetweenIterationsInSeconds:{4}, WaitTimeBetweenFaultsInSeconds:{5}, MoveReplicaFaultEnabled: {6}, IncludedNodeTypeList: {7}, IncludedApplicationList: {8}, {9}, Context: {10}.", Task = Tasks.Testability, Opcode = Opcodes.Op22, Level = EventLevel.Informational,
 #if DotNetCoreClr
@@ -8029,10 +8132,9 @@ Keywords = Keywords.DataMessaging)]
                 );
         }
 
-        #endregion
+#endregion
 
-        #region EventStoreReader Events
-
+#region EventStoreReader Events
 
         [Event(65004, Message = "EntityType: {0}, ApiVersion: {1}, ParamStartTime: {2}, ParamEndTime {3}, ParamIsIdentifierPresent: {4}, ParamEventTypes: {5}, SkipCorrelationLookup: {6}, QueryExecutionTimeMs: {7}, queryItemCount: {8}", Task = Tasks.Testability, Opcode = Opcodes.Op19, Level = EventLevel.Informational,
 #if DotNetCoreClr
@@ -8056,7 +8158,7 @@ Keywords = Keywords.DataMessaging)]
         [Event(65005, Message = "UnsupportedUri. Message : {0}", Task = Tasks.Testability, Opcode = Opcodes.Op20, Level = EventLevel.Warning,
 #if DotNetCoreClr
             Channel = SystemEventChannel.Debug,
-# endif
+#endif
             Keywords = Keywords.Default)]
         public void EventStoreUnsupportedUri(string message)
         {
@@ -8071,6 +8173,36 @@ Keywords = Keywords.DataMessaging)]
         public void EventStoreFailed(string queryArgs, string failure)
         {
             WriteEvent(this.eventDescriptors[65006], queryArgs, failure);
+        }
+
+        [Event(65007, Message = "Cache Miss. CacheName: {0}, CacheStartTime: {1}, CacheEndTime: {2}, QueryStartTime: {3}, QueryEndTime: {4}", Task = Tasks.Testability, Opcode = Opcodes.Op33, Level = EventLevel.Warning,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+#endif
+            Keywords = Keywords.Default)]
+        public void EventStoreCacheMiss(string cacheName, DateTime cacheStartTime, DateTime cacheEndTime, DateTime queryStartTime, DateTime queryEndTime)
+        {
+            WriteEvent(this.eventDescriptors[65007], cacheName, cacheStartTime, cacheEndTime, queryStartTime, queryEndTime);
+        }
+
+        [Event(65008, Message = "Cache Telemetry. CacheName: {0}, CacheItemCount: {1}, CacheDurationHours: {2}", Task = Tasks.Testability, Opcode = Opcodes.Op36, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+#endif
+            Keywords = Keywords.Default)]
+        public void EventStoreCacheTelemetry(string cacheName, int cacheItemCount, double cacheDurationHours)
+        {
+            WriteEvent(this.eventDescriptors[65008], cacheName, cacheItemCount, cacheDurationHours);
+        }
+
+        [Event(65009, Message = "EventStore Perf telemetry. MemoryUsageMb: {0}", Task = Tasks.Testability, Opcode = Opcodes.Op37, Level = EventLevel.Informational,
+#if DotNetCoreClr
+            Channel = SystemEventChannel.Debug,
+#endif
+            Keywords = Keywords.Default)]
+        public void EventStorePerfTelemetry(int memoryUsageMb)
+        {
+            WriteEvent(this.eventDescriptors[65009], memoryUsageMb);
         }
 
         #endregion
@@ -8088,10 +8220,10 @@ Keywords = Keywords.DataMessaging)]
             WriteEvent(this.eventDescriptors[65011], eventInstanceId, relatedFromId, relatedFromType, relatedToId, relatedToType);
         }
 
-        #endregion
+#endregion
 
 
-        #region FabricCM events
+#region FabricCM events
 
         [Event(65310, Message = "{2}", Task = Tasks.ManagedHosting, Opcode = Opcodes.Op233,
             Level = EventLevel.Verbose, Keywords = Keywords.Default)]
@@ -8121,9 +8253,41 @@ Keywords = Keywords.DataMessaging)]
             WriteEvent(this.eventDescriptors[65313], id, type, message);
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #region FabricGatewayResourceManager events
+
+        [Event(65400, Message = "{2}", Task = Tasks.GatewayResourceManager, Opcode = Opcodes.Op233,
+            Level = EventLevel.Verbose, Keywords = Keywords.Default)]
+        public void GatewayResourceManager_NoiseText(string id, string type, string message)
+        {
+            WriteEvent(this.eventDescriptors[65400], id, type, message);
+        }
+
+        [Event(65401, Message = "{2}", Task = Tasks.GatewayResourceManager, Opcode = Opcodes.Op230,
+            Level = EventLevel.Informational, Keywords = Keywords.Default)]
+        public void GatewayResourceManager_InfoText(string id, string type, string message)
+        {
+            WriteEvent(this.eventDescriptors[65401], id, type, message);
+        }
+
+        [Event(65402, Message = "{2}", Task = Tasks.GatewayResourceManager, Opcode = Opcodes.Op231,
+            Level = EventLevel.Warning, Keywords = Keywords.Default)]
+        public void GatewayResourceManager_WarningText(string id, string type, string message)
+        {
+            WriteEvent(this.eventDescriptors[65402], id, type, message);
+        }
+
+        [Event(65403, Message = "{2}", Task = Tasks.GatewayResourceManager, Opcode = Opcodes.Op232,
+            Level = EventLevel.Error, Keywords = Keywords.Default)]
+        public void GatewayResourceManager_ErrorText(string id, string type, string message)
+        {
+            WriteEvent(this.eventDescriptors[65403], id, type, message);
+        }
+
+        #endregion
+
+        #endregion
 
         [NonEvent]
         internal EventTask GetEventTask(string taskName)
@@ -8283,7 +8447,10 @@ Keywords = Keywords.DataMessaging)]
                    Events.BackupCopier_ErrorText, Events.BackupCopier_WarningText,
                    Events.BackupCopier_NoiseText);
                 actionMap[(int)FabricEvents.Tasks.ManagedHosting] = new WriteVariants(Events.ManagedHosting_InfoText,Events.ManagedHosting_ErrorText,
-                    Events.ManagedHosting_WarningText, Events.ManagedHosting_NoiseText);
+                   Events.ManagedHosting_WarningText, Events.ManagedHosting_NoiseText);
+                actionMap[(int)FabricEvents.Tasks.GatewayResourceManager] = new WriteVariants(Events.GatewayResourceManager_InfoText,
+                   Events.GatewayResourceManager_ErrorText, Events.GatewayResourceManager_WarningText,
+                   Events.GatewayResourceManager_NoiseText);
             }
 
             /// <summary>
@@ -8515,10 +8682,15 @@ Keywords = Keywords.DataMessaging)]
             public const EventTask ManagedHosting = (EventTask)261;
 
             /// <summary>
+            /// Used by GatewayResourceManager
+            /// </summary>
+            public const EventTask GatewayResourceManager = (EventTask)262;
+
+            /// <summary>
             /// All valid task id must be below this number. Increase when adding tasks.
             /// Max value is 2**16.
             /// </summary>
-            public const EventTask Max = (EventTask)262;
+            public const EventTask Max = (EventTask)263;
         }
 
         // Eventsource mandates that all events should have unique taskcode/opcode pair. Since taskcode is shared across module we are defining Opcodes here to make the pair unique.

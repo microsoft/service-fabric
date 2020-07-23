@@ -1,0 +1,24 @@
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <ItemGroup>
+    <FabricVerFile Include="AppContainerE\ApplicationManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\AppContainerE</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="AppContainerE\HWServicePkg\ServiceManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\AppContainerE\HWServicePkg</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="AppContainerE\HWServicePkg\Config\Settings.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\AppContainerE\HWServicePkg\Config</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="BlockStoreContainerLinux\ApplicationManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\BlockStoreContainerLinux</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="BlockStoreContainerLinux\MongoServicePkg\ServiceManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\BlockStoreContainerLinux\MongoServicePkg</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="BlockStoreContainerLinux\MongoServicePkg\Config\Settings.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\BlockStoreContainerLinux\MongoServicePkg\Config</TargetPath>
+    </FabricVerFile>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+</Project>

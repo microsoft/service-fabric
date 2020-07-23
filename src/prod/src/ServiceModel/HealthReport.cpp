@@ -436,6 +436,13 @@ HealthReport HealthReport::CreateSystemHealthReport(
         description = HMResource::GetResources().NodeDown;
         break;
 
+    case SystemHealthReportCode::FM_SeedNodeDown:
+        sourceId = *Constants::HealthReportFMSource;
+        property = *Constants::HealthStateProperty;
+        healthState = FABRIC_HEALTH_STATE_ERROR;
+        description = HMResource::GetResources().SeedNodeDown;
+        break;
+
     case SystemHealthReportCode::FM_NodeDownDuringUpgrade:
         sourceId = *Constants::HealthReportFMSource;
         property = *Constants::HealthStateProperty;
@@ -1290,7 +1297,7 @@ void HealthReport::FillEventData(Common::TraceEventContext & context) const
 {
     CheckEntityExists();
     context.Write<std::wstring>(entityInformation_->EntityId);
-    context.Write<FABRIC_INSTANCE_ID>(entityInformation_->EntityInstance);
+    context.WriteCopy<FABRIC_INSTANCE_ID>(entityInformation_->EntityInstance);
     context.Write<std::wstring>(sourceId_);
     context.Write<std::wstring>(property_);
     context.WriteCopy<std::wstring>(wformatString(state_));

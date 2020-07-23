@@ -66,7 +66,8 @@ ErrorCode ProcessInternalListRequestAsyncOperation::EndOperation(
 }
 
 ErrorCode ProcessInternalListRequestAsyncOperation::ListMetadata()
-{        
+{       
+    auto localFullpath = Path::Combine(this->RequestManagerObj.ReplicaObj.StoreRoot, this->StoreRelativePath);
     // list the specific file
     FileMetadata metadata(this->StoreRelativePath);
     auto error = this->ReplicatedStoreWrapperObj.ReadExact(this->ActivityId, metadata);
@@ -74,8 +75,7 @@ ErrorCode ProcessInternalListRequestAsyncOperation::ListMetadata()
     if (error.IsError(ErrorCodeValue::Success) && 
         this->RequestManagerObj.IsDataLossExpected() &&
         FileState::IsStable(metadata.State))
-    {
-        auto localFullpath = Path::Combine(this->RequestManagerObj.ReplicaObj.StoreRoot, this->StoreRelativePath);
+    {        
         if (!File::Exists(localFullpath))
         {
             // Dataloss only happens if machines are destructively re-imaged (losing data) and
@@ -114,6 +114,15 @@ ErrorCode ProcessInternalListRequestAsyncOperation::ListMetadata()
     isPresent_ = true;
     state_ = metadata.State;
     currentVersion_ = metadata.CurrentVersion;
+
+    if (!File::Exists(localFullpath))
+    {
+        WriteWarning(
+            TraceComponent,
+            this->RequestManagerObj.TraceId,
+            "File doesn't exist locally: {0}.",
+            localFullpath);
+    }
 
     return ErrorCodeValue::Success;
 }

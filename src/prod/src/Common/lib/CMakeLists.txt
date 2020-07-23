@@ -44,6 +44,7 @@ set( LINUX_SOURCES
   ../ConfigEntryBase.cpp
   ../ConfigEntryUpgradePolicy.cpp
   ../ConfigEventSource.cpp
+  ../ConfigOverrideDescription.cpp
   ../ConfigParameter.cpp
   ../ConfigParameterOverride.cpp
   ../ConfigSection.cpp
@@ -74,7 +75,6 @@ set( LINUX_SOURCES
   ../FabricConfigVersion.cpp
   ../FabricConstants.cpp
   ../FabricEnvironment.cpp  #Partially migrated, logic related to registry needs to be changed
-  ../FabricGlobals.cpp
   ../FabricNodeConfig.cpp
   ../FabricNodeGlobalConfig.cpp
   ../FabricSerializer.cpp
@@ -153,7 +153,6 @@ set( LINUX_SOURCES
   ../TestPortHelper.cpp
   ../TextTraceWriter.cpp
   ../TextWriter.cpp
-  ../ThreadCounter.cpp
   ../ThreadErrorMessages.cpp
   ../Threadpool.cpp
   #../Threadpool.Linux.cpp
@@ -169,6 +168,7 @@ set( LINUX_SOURCES
   ../TokenHandle.cpp
   ../Trace.cpp
   ../TraceChannelType.cpp
+  ../DiagnosticsConfig.cpp
   ../TraceConsoleSink.cpp
   ../TraceCorrelatedEvent.cpp
   ../TraceEvent.cpp
@@ -176,6 +176,7 @@ set( LINUX_SOURCES
   ../TraceFilterDescription.cpp
   ../TraceKeywords.cpp
   ../TraceManifestGenerator.cpp
+  ../TraceSession.cpp
   ../TraceSinkFilter.cpp
   ../TraceTextFileSink.cpp
   ../Types.cpp

@@ -7,6 +7,9 @@
 
 #include <boost/test/unit_test.hpp>
 #include "Common/boost-taef.h"
+#if defined(PLATFORM_UNIX)
+#include <sys/stat.h>
+#endif
 
 using namespace std;
 
@@ -31,7 +34,8 @@ namespace Common
             wstring const & subDirPrefix,
             int fileCount,
             int subDirCount,
-            int dirDepth);
+            int dirDepth,
+            wstring const & fileExt = L"");
 
         void VerifyTestDirectoryExists(
             wstring const & rootDirName,
@@ -39,7 +43,8 @@ namespace Common
             wstring const & subDirPrefix,
             int fileCount,
             int subDirCount,
-            int dirDepth);
+            int dirDepth,
+            wstring const & fileExt = L"");
 
         void VerifyTestDirectoryNotExists(
             wstring const & rootDirName);
@@ -208,6 +213,169 @@ namespace Common
             wformatString("Delete returned wrong ErrorCode: {0}, expected {1}", error, ErrorCodeValue::DirectoryNotFound).c_str());
     }
 
+    BOOST_AUTO_TEST_CASE(GetSubDirectoriesTest)
+    {
+        Trace.WriteInfo(DirectoryTest::TestSource, "*** GetSubDirectoriesTest");
+
+        auto testDir = Path::Combine(GetTestRootDir(), L"Directory.test");
+
+        int fileCount = 5;
+        int subDirCount = 5;
+        int subDirDepth = 3;
+
+        CreateTestDirectory(
+            testDir,
+            L"MyFile",
+            L"MySubDir",
+            fileCount,
+            subDirCount,
+            subDirDepth);
+
+        VerifyTestDirectoryExists(
+            testDir,
+            L"MyFile",
+            L"MySubDir",
+            fileCount,
+            subDirCount,
+            subDirDepth);
+
+        vector<wstring> subDirectories = Directory::GetSubDirectories(testDir, wformatString("*{0}*", "MySubDir"), true, true);
+        auto subDirectoryCount = subDirectories.size();
+        VERIFY_IS_TRUE(subDirectoryCount == subDirCount, wformatString("Number of subdirectories doesnot match. ExpecteCount:{0}, SubDirectoryCount:{1}", subDirectoryCount, subDirCount).c_str());
+
+        vector<wstring> subDirectoryWithSinglePattern = Directory::GetSubDirectories(testDir, wformatString("*{0}", "MySubDir"), true, true);
+        auto subDirectoryWithPatternCount = subDirectoryWithSinglePattern.size();
+        VERIFY_IS_TRUE(subDirectoryWithPatternCount == 0, wformatString("Number of subdirectories doesnot match. ExpecteCount:{0}, SubDirectoryCount:{1}", subDirectoryWithPatternCount, 0).c_str());
+
+        vector<wstring> singleSubDirectory = Directory::GetSubDirectories(testDir, wformatString("*{0}*", "MySubDir1"), true, true);
+        auto singleSubDirectoryCount = singleSubDirectory.size();
+        VERIFY_IS_TRUE(singleSubDirectoryCount == 1, wformatString("Number of subdirectories doesnot match. ExpecteCount:{0}, SubDirectoryCount:{1}", singleSubDirectoryCount, 1).c_str());
+
+        vector<wstring> missingDirectory = Directory::GetSubDirectories(testDir, wformatString("*{0}*", "Foo"), true, true);
+        auto missingDirectoryCount = missingDirectory.size();
+        VERIFY_IS_TRUE(missingDirectoryCount == 0, wformatString("Number of subdirectories doesnot match. ExpecteCount:{0}, SubDirectoryCount:{1}", missingDirectoryCount, 0).c_str());
+
+        vector<wstring> singleSubDirectoryWithSinglePattern = Directory::GetSubDirectories(testDir, wformatString("*{0}", "MySubDir1"), true, true);
+        auto singleSubDirectoryWithPatternCount = singleSubDirectoryWithSinglePattern.size();
+        VERIFY_IS_TRUE(singleSubDirectoryWithPatternCount == 1, wformatString("Number of subdirectories doesnot match. ExpecteCount:{0}, SubDirectoryCount:{1}", singleSubDirectoryWithPatternCount, 1).c_str());
+    }
+
+    BOOST_AUTO_TEST_CASE(GetFilesInDirectoriesTest)
+    {
+        Trace.WriteInfo(DirectoryTest::TestSource, "*** GetFilesInDirectoriesTest");
+
+        auto testDir = Path::Combine(GetTestRootDir(), L"Directory.test");
+
+        int fileCount = 5;
+        int subDirCount = 5;
+        int subDirDepth = 3;
+
+        CreateTestDirectory(
+            testDir,
+            L"MyFile",
+            L"MySubDir",
+            fileCount,
+            subDirCount,
+            subDirDepth,
+            L".xml");
+
+        VerifyTestDirectoryExists(
+            testDir,
+            L"MyFile",
+            L"MySubDir",
+            fileCount,
+            subDirCount,
+            subDirDepth,
+            L".xml");
+
+        CreateTestDirectory(
+            testDir,
+            L"MyFile1",
+            L"MySubDir",
+            1,
+            0,
+            0,
+            L".txt");
+
+        // There is only 1 txt file in top directory. Serach all subdirectories should return only 1 file.
+        vector<wstring> topDirectoriesTxtFiles = Directory::GetFiles(testDir, L"*.txt", true, false);
+        Trace.WriteInfo("GetFilesTest", " txtFiles ExpectedCount:{0}, SubDirectoryCount:{1}", 1, topDirectoriesTxtFiles.size());
+        VERIFY_IS_TRUE(1 == topDirectoriesTxtFiles.size(), wformatString("Number of files doesnot match. ExpecteCount:{0}, FilesCount:{1}", 1, topDirectoriesTxtFiles.size()).c_str());
+
+        // Get the file with the absolute name in top directory
+        vector<wstring> topDirectoriesXmlFile = Directory::GetFiles(testDir, L"MyFile0.xml", true, true);
+        Trace.WriteInfo("GetFilesTest", " txtFiles ExpectedCount:{0}, SubDirectoryCount:{1}", 1, topDirectoriesXmlFile.size());
+        VERIFY_IS_TRUE(1 == topDirectoriesXmlFile.size(), wformatString("Number of files doesnot match. ExpecteCount:{0}, FilesCount:{1}", 1, topDirectoriesXmlFile.size()).c_str());
+
+        // All the subdirectories have xml files. Serach to top directory should result in only top directory files.
+        vector<wstring> subDirectoriesFiles = Directory::GetFiles(testDir, L"*.xml", true, true);
+        Trace.WriteInfo("GetFilesTest", "xmlFiles ExpectedCount:{0}, SubDirectoryCount:{1}", fileCount, subDirectoriesFiles.size());
+        VERIFY_IS_TRUE(fileCount == subDirectoriesFiles.size(), wformatString("Number of files doesnot match. ExpecteCount:{0}, FilesCount:{1}", fileCount, subDirectoriesFiles.size()).c_str());
+    }
+
+#if defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(DirectoryPermissionsTest)
+    {
+        Trace.WriteInfo(DirectoryTest::TestSource, "*** DirectoryPermissionsTest");
+
+        auto testDir = Path::Combine(GetTestRootDir(), L"Directory.test");
+
+        int fileCount = 1;
+        int subDirCount = 1;
+        int subDirDepth = 0;
+
+        CreateTestDirectory(
+            testDir,
+            L"MyFile",
+            L"MySubDir",
+            fileCount,
+            subDirCount,
+            subDirDepth);
+
+        VerifyTestDirectoryExists(
+            testDir,
+            L"MyFile",
+            L"MySubDir",
+            fileCount,
+            subDirCount,
+            subDirDepth);
+
+        string pathA = FileNormalizePath(Path::ConvertToNtPath(testDir).c_str());
+        struct stat stat_data;
+        VERIFY_IS_TRUE(stat(pathA.c_str(), &stat_data) == 0, wformatString("Unable to retreive the stat for the directory").c_str());
+        int mode = stat_data.st_mode;
+        // Permission should be 755
+        VERIFY_IS_TRUE(mode & S_IRUSR, L"User reda permission not set");
+        VERIFY_IS_TRUE(mode & S_IWUSR, L"User write permission not set");
+        VERIFY_IS_TRUE(mode & S_IXUSR, L"User execute permission not set");
+        VERIFY_IS_TRUE(mode & S_IRGRP, L"Group read permission not set");
+        VERIFY_IS_TRUE(mode & S_IXGRP, L"Group execute permission not set");
+        VERIFY_IS_TRUE(mode & ~S_IWGRP, L"Group write permission set");
+        VERIFY_IS_TRUE(mode & S_IROTH, L"Others read permission not set");
+        VERIFY_IS_TRUE(mode & S_IXOTH, L"Others read permission not set");
+        VERIFY_IS_TRUE(mode & ~S_IWOTH, L"Others write permission set");
+
+        auto path = Path::Combine(Directory::GetCurrentDirectory(), testDir);
+        VERIFY_IS_TRUE(Directory::Exists(path), L"Directory doesn;t exist");
+        auto error = File::AllowAccessToAll(path);
+        Trace.WriteInfo("DirectoryPermissionsTest", "SetAttributes for {0} completed with {1}", testDir, error);
+        VERIFY_IS_TRUE(error.IsSuccess(), wformatString("Unable to set permissions for the directory {0}", testDir).c_str());
+        struct stat stat_data_1;
+        VERIFY_IS_TRUE(stat(pathA.c_str(), &stat_data_1) == 0, wformatString("Unable to retreive the stat for the directory").c_str());
+        int mode1 = stat_data_1.st_mode;
+        // Permission should be 777
+        VERIFY_IS_TRUE(mode1 & S_IRUSR, L"User reda permission not set");
+        VERIFY_IS_TRUE(mode1 & S_IWUSR, L"User write permission not set");
+        VERIFY_IS_TRUE(mode1 & S_IXUSR, L"User execute permission not set");
+        VERIFY_IS_TRUE(mode1 & S_IRGRP, L"Group read permission not set");
+        VERIFY_IS_TRUE(mode1 & S_IXGRP, L"Group execute permission not set");
+        VERIFY_IS_TRUE(mode1 & S_IWGRP, L"Group write permission not set");
+        VERIFY_IS_TRUE(mode1 & S_IROTH, L"Others read permission not set");
+        VERIFY_IS_TRUE(mode1 & S_IXOTH, L"Others read permission not set");
+        VERIFY_IS_TRUE(mode1 & S_IWOTH, L"Others write permission not set");
+    }
+#endif
+
     BOOST_AUTO_TEST_SUITE_END()
 
     void DirectoryTest::CreateTestDirectory(
@@ -216,15 +384,19 @@ namespace Common
         wstring const & subDirPrefix,
         int fileCount,
         int subDirCount,
-        int dirDepth)
+        int dirDepth,
+        wstring const & fileExt)
     {
-        Directory::Create(rootDirName);
+        if (!Directory::Exists(rootDirName))
+        {
+            Directory::Create(rootDirName);
+        }
 
         if (dirDepth < 0) { return; }
 
         for (int fx=0; fx<fileCount; ++fx)
         {
-            auto fileName = Path::Combine(rootDirName, wformatString("{0}{1}", fileNamePrefix, fx));
+            auto fileName = Path::Combine(rootDirName, wformatString("{0}{1}{2}", fileNamePrefix, fx, fileExt));
 
             File file;
             auto error = file.TryOpen(fileName, FileMode::OpenOrCreate, FileAccess::Write);
@@ -247,7 +419,8 @@ namespace Common
                 subDirPrefix,
                 fileCount,
                 subDirCount,
-                dirDepth - 1);
+                dirDepth - 1,
+                fileExt);
         }
     }
     
@@ -257,7 +430,8 @@ namespace Common
         wstring const & subDirPrefix,
         int fileCount,
         int subDirCount,
-        int dirDepth)
+        int dirDepth,
+        wstring const & fileExt)
     {
         bool exists = Directory::Exists(rootDirName);
 
@@ -267,7 +441,7 @@ namespace Common
 
         for (int fx=0; fx<fileCount; ++fx)
         {
-            auto fileName = Path::Combine(rootDirName, wformatString("{0}{1}", fileNamePrefix, fx));
+            auto fileName = Path::Combine(rootDirName, wformatString("{0}{1}{2}", fileNamePrefix, fx, fileExt));
 
             exists = File::Exists(fileName);
 
@@ -284,7 +458,8 @@ namespace Common
                 subDirPrefix,
                 fileCount,
                 subDirCount,
-                dirDepth - 1);
+                dirDepth - 1,
+                fileExt);
         }
     }
 

@@ -18,7 +18,7 @@
     {
       "Name": "ComposeDeploymentCommunication",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "linggeng,bharatn",
+      "Owners": "jiqh,bharatn",
       "ResourcesRequired": "Server:6;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -46,7 +46,7 @@
     {
       "Name": "VotingContainerAppTest",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "mrgarg,yzha,kailasl",
+      "Owners": "kailasl,preethas",
       "ResourcesRequired": "Server:1;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -89,8 +89,8 @@
     {
       "Name": "V2Application_windows",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "linggeng,bharatn",      
-      "ResourcesRequired": "Server:2;Group=WS2016SBZ",
+      "Owners": "jiqh,bharatn",
+      "ResourcesRequired": "Server:2;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
         "SetupTimeout": "900",
@@ -172,7 +172,7 @@
     {
       "Name": "VotingAppWS2016OnWS1709",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "caiwang,gkhanna",
+      "Owners": "caiwang,sanjayga",
       "ResourcesRequired": "Server:2;Group=WS2016RS3-D2V3",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -186,7 +186,7 @@
     {
       "Name": "VotingAppWS2016OnWS1804",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "caiwang,gkhanna",
+      "Owners": "caiwang,sanjayga",
       "ResourcesRequired": "Server:2;Group=WS2016RS4-D2V3",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -194,6 +194,34 @@
         "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
         "TaskName": "VotingAppRS1.test",
         "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "IngressIO_WS1803.test",
+      "Type": "Windows_SFRP_ScriptTest",
+      "Owners": "kavyako,sridmad",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "IngressIO_WS1803.test",
+        "ExecutionTimeout": "10800",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "IngressO_WS1803.test",
+      "Type": "Windows_SFRP_ScriptTest",
+      "Owners": "kavyako,sridmad",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "IngressO_WS1803.test",
+        "ExecutionTimeout": "10800",
         "CleanupTimeout": "5400"
       }
     }

@@ -149,6 +149,11 @@ void PhysicalLogRecord::Write(
     operationData.Append(*kBuffer);
 }
 
+std::wstring PhysicalLogRecord::ToString() const
+{
+    return __super::ToString();
+}
+
 bool PhysicalLogRecord::FreePreviousLinksLowerThanPsn(
     __in LONG64 logHeadPsn,
     __in InvalidLogRecords & invalidLogRecords)

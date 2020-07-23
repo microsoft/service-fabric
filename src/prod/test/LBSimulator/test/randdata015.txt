@@ -1,0 +1,19 @@
+# Nodes: 1000
+# Capacity constraints: None
+# Scaleout count constraints: No
+# Affinitized services: 0
+<Config
+FastBalancingTemperatureDecayRate = 0.99
+LoadBalancingEnabled = true
+MaxSimulatedAnnealingIterations = 1
+IgnoreCostInScoring = true
+>
+
+MetricCount:2
+FaultDomains:{dc1,dc2,dc3,dc4}
+NodeCount:1000
+PartitionCount:{1000, 1000, 1000, 1000}
+ReplicaCountPerPartition:{3, 3, 3, 3}
+PrimaryLoadRange:{P/5/10/0,P/5/10/0}
+SecondaryLoadRange:{U/5/10,U/5/10}
+

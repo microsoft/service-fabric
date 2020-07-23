@@ -8,3 +8,4 @@
 extern "C" int LoadStringResource(UINT id, __out_ecount(bufferMax) LPWSTR buffer, int bufferMax);
 
 #include <inc/resourceids.h>
+

@@ -1,0 +1,103 @@
+###############################################################################
+# Test: PerNodeThrottleBasic.test
+# Owners: nipuzovi
+# This test verifies that maximum number of InBuild replicas per node is respected.
+#   - All 3 phases (Placement, Constraint Check and Load Balancing) are checked.
+#   - Checks also node deactivation.
+# Test relies on test assert in PLB that will fire if the limit is exceeded.
+###############################################################################
+
+votes 10 20 30
+fmservice 2 1
+namingservice 1 2 1
+cmservice 2 1
+cleantest
+
+# Enable very aggressive throttling in all phases
+set ThrottlingConstraintPriority 0
+set ThrottlePlacementPhase true
+set ThrottleBalancingPhase true
+set ThrottleConstraintCheckPhase true
+
+set MaximumInBuildReplicasPerNode NodeType 2
+
+# PLB will check if there are more than 2 IB replicas on the node.
+set PerNodeThrottlingCheck 2
+
+# Do not balance at the beginning.
+set LoadBalancingEnabled false
+set PLBActionRetryTimes 9999
+set BalancingDelayAfterNewNode 0
+set BalancingDelayAfterNodeDown 0
+
++10 ud=UD1 nodeprops=user:false
++20 ud=UD2 nodeprops=user:false
++30 ud=UD3 nodeprops=user:false
++40 ud=UD4 nodeprops=user:false
+verify
+
+# Test case: placement phase throttling.
+# 1 service with 20 partitions, 4 replicas each.
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 20 4 persist
+verify
+
+# Test case: balancing phase throttling
++50 ud=UD5 nodeprops=user:false
+verify
+
+# Enable balancing and wait for the cluster to balance itself.
+set LoadBalancingEnabled true
+
+# Due to throttling, balancing may take some time
+set QueryOperationRetryCount 40
+
+verifynodeload nodeid:10 PrimaryCount 4
+verifynodeload nodeid:20 PrimaryCount 4
+verifynodeload nodeid:30 PrimaryCount 4
+verifynodeload nodeid:40 PrimaryCount 4
+verifynodeload nodeid:50 PrimaryCount 4
+
+verifynodeload nodeid:10 ReplicaCount 16
+verifynodeload nodeid:20 ReplicaCount 16
+verifynodeload nodeid:30 ReplicaCount 16
+verifynodeload nodeid:40 ReplicaCount 16
+verifynodeload nodeid:50 ReplicaCount 16
+
+# Test case: deactivate node for removal
+set LoadBalancingEnabled false
+
+deactivatenode 50 RemoveData
+!waitforstate FM.Node.DeactivationIntent.50 RemoveData
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+verifynodeload nodeid:50 PrimaryCount 0
+verifynodeload nodeid:50 ReplicaCount 0
+
+# Test case: invoke constraint check
+set LoadBalancingEnabled false
+
++60 ud=UD1 nodeprops=user:true
++70 ud=UD2 nodeprops=user:true
++80 ud=UD3 nodeprops=user:true
++90 ud=UD3 nodeprops=user:true
+verify
+
+updateservice fabric:/test1 Stateful constraint=user==true
+
+verifynodeload nodeid:10 PrimaryCount 0
+verifynodeload nodeid:20 PrimaryCount 0
+verifynodeload nodeid:30 PrimaryCount 0
+verifynodeload nodeid:40 PrimaryCount 0
+verifynodeload nodeid:50 PrimaryCount 0
+
+verifynodeload nodeid:10 ReplicaCount 0
+verifynodeload nodeid:20 ReplicaCount 0
+verifynodeload nodeid:30 ReplicaCount 0
+verifynodeload nodeid:40 ReplicaCount 0
+verifynodeload nodeid:50 ReplicaCount 0
+
+deleteservice fabric:/test1
+verify
+
+!q

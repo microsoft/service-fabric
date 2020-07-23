@@ -20,12 +20,21 @@ namespace Management
             DECLARE_SINGLETON_COMPONENT_CONFIG(CentralSecretServiceConfig, "CentralSecretService")
 
         public:
-            bool static IsCentralSecretServiceConfigured();
+            bool static IsCentralSecretServiceEnabled();
+
+            // The IsEnabled for CentralSecretService
+            PUBLIC_CONFIG_ENTRY(bool, L"CentralSecretService", IsEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
+            
+            // The EncryptionCertificateThumbprint for CentralSecretService
+            PUBLIC_CONFIG_ENTRY(std::wstring, L"CentralSecretService", EncryptionCertificateThumbprint, L"", Common::ConfigEntryUpgradePolicy::Static);
+
+            // The EncryptionCertificateStoreName for CentralSecretService
+            PUBLIC_CONFIG_ENTRY(std::wstring, L"CentralSecretService", EncryptionCertificateStoreName, L"My", Common::ConfigEntryUpgradePolicy::Static);
 
             // The TargetReplicaSetSize for CentralSecretService
-            PUBLIC_CONFIG_ENTRY(int, L"CentralSecretService", TargetReplicaSetSize, 0, Common::ConfigEntryUpgradePolicy::NotAllowed);
+            PUBLIC_CONFIG_ENTRY(int, L"CentralSecretService", TargetReplicaSetSize, 0, Common::ConfigEntryUpgradePolicy::Static);
             // The MinReplicaSetSize for CentralSecretService
-            PUBLIC_CONFIG_ENTRY(int, L"CentralSecretService", MinReplicaSetSize, 0, Common::ConfigEntryUpgradePolicy::NotAllowed);
+            PUBLIC_CONFIG_ENTRY(int, L"CentralSecretService", MinReplicaSetSize, 0, Common::ConfigEntryUpgradePolicy::Static);
             // The ReplicaRestartWaitDuration for CentralSecretService
             PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"CentralSecretService", ReplicaRestartWaitDuration, Common::TimeSpan::FromMinutes(60), Common::ConfigEntryUpgradePolicy::Static);
             // The QuorumLossWaitDuration for CentralSecretService

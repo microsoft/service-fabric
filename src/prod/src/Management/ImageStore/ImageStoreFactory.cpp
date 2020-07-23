@@ -122,7 +122,7 @@ Common::ErrorCode ImageStoreFactory::GetAccessToken(
             error = AccountHelper::GetServiceAccountName(accountName, userName, domainName, dlnFormatName);
             if(!error.IsSuccess()) { return error; }
 
-            error = AccessToken::CreateServiceAccountToken(userName, domainName, accountPassword.GetPlaintext(), NULL, imageStoreAccessToken);
+            error = AccessToken::CreateServiceAccountToken(userName, domainName, accountPassword.GetPlaintext(), false, NULL, imageStoreAccessToken);
         }
         else if(accountType == SecurityPrincipalAccountType::DomainUser)
         {

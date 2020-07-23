@@ -91,6 +91,294 @@ namespace PlacementAndLoadBalancingUnitTest
         VERIFY_ARE_EQUAL(1, CountIf(actionList, ActionMatch(L"0 add instance 3|4", value)));
     }
 
+    BOOST_AUTO_TEST_CASE(AutoScalingInvalidPolicyTest)
+    {
+        // This test verify default scale interval = 1sec, 
+        // in case scale interval is not defined or when it is set to zero to avoid infinite loop in autoscaling
+        Trace.WriteInfo("PLBAutoscalingTestSource", "AutoScalingInvalidPolicyTest");
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        for (int i = 0; i < 5; i++)
+        {
+            plb.UpdateNode(CreateNodeDescription(i));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        auto scalingPolicy = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            0,          // Scale Interval In Seconds
+            2,          // Minimum Instance Count
+            4,          // Maximum Instance Count
+            1);         // Scale Increment
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+        plb.UpdateService(CreateServiceDescriptionWithAutoscalingPolicy(
+            L"TestService",
+            L"TestType",
+            false,
+            3,
+            move(scalingPolicy),
+            CreateMetrics(L"Metric1/1.0/0/0")));
+
+        plb.UpdateFailoverUnit(
+            FailoverUnitDescription(CreateGuid(0), wstring(L"TestService"), 0, CreateReplicas(L"S/0, S/1, S/2"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 3));
+
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(0, L"TestService", L"Metric1", 90));
+
+        auto scalingPolicy1 = CreateAutoScalingPolicyForService(
+            L"servicefabric:/_CpuCores", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            0,          // Scale Interval In Seconds
+            2,          // Minimum Partition Count
+            4,          // Maximum Partition Count
+            1);         // Scale Increment
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType1"), set<NodeId>()));
+        plb.UpdateService(CreateServiceDescriptionWithAutoscalingPolicy(
+            L"TestService1",
+            L"TestType1",
+            true,
+            1,
+            vector<Reliability::ServiceScalingPolicyDescription>(scalingPolicy1),
+            CreateMetrics(L"Metric1/1.0/0/0"),
+            3));
+
+
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(L"TestService1"), 0, CreateReplicas(L""), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 1));
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+        auto now = Stopwatch::Now() + TimeSpan::FromSeconds(10);
+        fm_->RefreshPLB(now);
+
+        // PLB should set new target replica count for this partition.
+        VERIFY_ARE_EQUAL(4, fm_->GetTargetReplicaCountForPartition(CreateGuid(0)));
+
+        // PLB should set new target partitions for TestService1.
+        VERIFY_ARE_EQUAL(INT_MAX, fm_->GetPartitionCountChangeForService(L"TestService1"));
+
+        plb.UpdateFailoverUnit(
+            FailoverUnitDescription(CreateGuid(0), wstring(L"TestService"), 1, CreateReplicas(L"S/0, S/1, S/2"), 1, Reliability::FailoverUnitFlags::Flags::None, false, false, 4));
+        now = now + PLBConfig::GetConfig().MinPlacementInterval + TimeSpan::FromSeconds(10);
+        fm_->RefreshPLB(now);
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+
+        VERIFY_ARE_EQUAL(1u, actionList.size());
+        VERIFY_ARE_EQUAL(1, CountIf(actionList, ActionMatch(L"0 add instance 3|4", value)));
+    }
+
+    BOOST_AUTO_TEST_CASE(AutoScalingEdgeCaseScaling)
+    {
+        // Test case: MaxTarget is above number of suitable nodes, autoscaler should not stuck. (3 nodes with A nodetype, 5 nodes in total)
+        //             Placement    Current    Current    Autoscaling                         Should     Goal    
+        //             constraint   replicas   target     MaxCount     MinCount   Increment   scale      target
+        // Service 1:  A nodetype      5          5          -1            2           1        Up          3  - -1 should scale on all the available nodes
+        // Service 2:  A nodetype      5          5          -1            2           1        No          5  - target shouldn't change even replicas are on invalid nodetype
+        // Service 3:  A nodetype      5          5          -1            2           1        Down        4  - scale down should just lower target for increment
+
+        // Service 4:  A nodetype      5          5           5            3           1        Up          5  - target should not be lowered due to number of proper nodes, if it is already above
+        // Service 5:  A nodetype      5          5           5            3           1        No          5  - target should stay the same as no autoscaling action needed
+
+        // Service 6:  A nodetype      5          5           5            1           3        Down        2  - target is lowered by increment no matter of valid nodes 
+
+        // Service 7:  Nothing         5          5          -1            2           1        Up          5  - 5 nodes in total, scaleup should keep target on 5
+
+        // Service 8:  A nodetype      3          3           4            2           1        Up          4  - only 3 valid nodes, but scaleup should set target to 4
+        // Service 9:  Nothing         3          3           4            2           1        Up          4  - 5 valid nodes, scaleup should increase target to 4
+        // Service 10: A nodetype      5          5          -1            4           1        Up          4  - same as 1, but shouldn't go below minimum count
+
+        Trace.WriteInfo("PLBAutoscalingTestSource", "AutoScalingEdgeCaseScaling");
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        map<wstring, wstring> nodeProp0;
+        nodeProp0[L"Type"] = L"TypeA";
+        map<wstring, wstring> nodeProp1;
+        nodeProp1[L"Type"] = L"TypeB";
+        map<wstring, wstring> nodeProp2;
+        nodeProp2[L"Type"] = L"TypeB";
+        map<wstring, wstring> nodeProp3;
+        nodeProp3[L"Type"] = L"TypeA";
+        map<wstring, wstring> nodeProp4;
+        nodeProp4[L"Type"] = L"TypeA";
+
+        plb.UpdateNode(CreateNodeDescription(0, std::wstring(), std::wstring(), move(nodeProp0), std::wstring(), true));
+        plb.UpdateNode(CreateNodeDescription(1, std::wstring(), std::wstring(), move(nodeProp1), std::wstring(), true));
+        plb.UpdateNode(CreateNodeDescription(2, std::wstring(), std::wstring(), move(nodeProp2), std::wstring(), true));
+        plb.UpdateNode(CreateNodeDescription(3, std::wstring(), std::wstring(), move(nodeProp3), std::wstring(), true));
+        plb.UpdateNode(CreateNodeDescription(4, std::wstring(), std::wstring(), move(nodeProp4), std::wstring(), true));
+        
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        auto scalingPolicy1 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            2,          // Minimum Instance Count
+            -1,         // Maximum Instance Count
+            1);         // Scale Increment
+        auto scalingPolicy2 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            2,          // Minimum Instance Count
+            -1,         // Maximum Instance Count
+            1);         // Scale Increment
+        auto scalingPolicy3 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            2,          // Minimum Instance Count
+            -1,         // Maximum Instance Count
+            1);         // Scale Increment
+
+        auto scalingPolicy4 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            3,          // Minimum Instance Count
+            5,          // Maximum Instance Count
+            1);         // Scale Increment
+        auto scalingPolicy5 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            3,          // Minimum Instance Count
+            5,          // Maximum Instance Count
+            1);         // Scale Increment
+
+        auto scalingPolicy6 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            1,          // Minimum Instance Count
+            5,          // Maximum Instance Count
+            3);         // Scale Increment
+
+        auto scalingPolicy7 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            2,          // Minimum Instance Count
+            -1,         // Maximum Instance Count
+            1);         // Scale Increment
+
+        auto scalingPolicy8 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            2,          // Minimum Instance Count
+            4,          // Maximum Instance Count
+            1);         // Scale Increment
+        auto scalingPolicy9 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            2,          // Minimum Instance Count
+            4,          // Maximum Instance Count
+            1);         // Scale Increment
+
+        auto scalingPolicy10 = CreateAutoScalingPolicyForPartition(
+            L"Metric1", // metricName
+            10,         // Lower Load Threshold
+            20,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            4,          // Minimum Instance Count
+            -1,         // Maximum Instance Count
+            1);         // Scale Increment
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+
+        plb.UpdateService( ServiceDescription(L"TestService1", L"TestType", wstring(L""), false, L"Type==TypeA",
+            wstring(L""), true,	CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false,	1, 7, true, 
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy1)));
+
+        plb.UpdateService(ServiceDescription(L"TestService2", L"TestType", wstring(L""), false, L"Type==TypeA",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy2)));
+
+        plb.UpdateService(ServiceDescription(L"TestService3", L"TestType", wstring(L""), false, L"Type==TypeA",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy3)));
+
+        plb.UpdateService(ServiceDescription(L"TestService4", L"TestType", wstring(L""), false, L"Type==TypeA",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy4)));
+
+        plb.UpdateService(ServiceDescription(L"TestService5", L"TestType", wstring(L""), false, L"Type==TypeA",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy5)));
+
+        plb.UpdateService(ServiceDescription(L"TestService6", L"TestType", wstring(L""), false, L"Type==TypeA",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy6)));
+
+        plb.UpdateService(ServiceDescription(L"TestService7", L"TestType", wstring(L""), false, L"",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy7)));
+
+        plb.UpdateService(ServiceDescription(L"TestService8", L"TestType", wstring(L""), false, L"Type==TypeA",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy8)));
+
+        plb.UpdateService(ServiceDescription(L"TestService9", L"TestType", wstring(L""), false, L"",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy9)));
+
+        plb.UpdateService(ServiceDescription(L"TestService10", L"TestType", wstring(L""), false, L"Type==TypeA",
+            wstring(L""), true, CreateMetrics(L"Metric1/1.0/10/10"), FABRIC_MOVE_COST_LOW, false, 1, 7, true,
+            ServiceModel::ServicePackageIdentifier(), ServiceModel::ServicePackageActivationMode::ExclusiveProcess, 0, move(scalingPolicy10)));
+
+
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(L"TestService1"), 0, CreateReplicas(L"S/0, S/1, S/2, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 5));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(L"TestService2"), 0, CreateReplicas(L"S/0, S/1, S/2, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 5));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(2), wstring(L"TestService3"), 0, CreateReplicas(L"S/0, S/1, S/2, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 5));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(3), wstring(L"TestService4"), 0, CreateReplicas(L"S/0, S/1, S/2, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 5));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(4), wstring(L"TestService5"), 0, CreateReplicas(L"S/0, S/1, S/2, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 5));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(5), wstring(L"TestService6"), 0, CreateReplicas(L"S/0, S/1, S/2, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 5));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(6), wstring(L"TestService7"), 0, CreateReplicas(L"S/0, S/1, S/2, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 5));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(7), wstring(L"TestService8"), 0, CreateReplicas(L"S/0, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 3));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(8), wstring(L"TestService9"), 0, CreateReplicas(L"S/0, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 3));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(9), wstring(L"TestService10"), 0, CreateReplicas(L"S/0, S/1, S/2, S/3, S/4"), 0, Reliability::FailoverUnitFlags::Flags::None, false, false, 5));
+
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(0, L"TestService1", L"Metric1", 150));
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(2, L"TestService3", L"Metric1", 1));
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(3, L"TestService4", L"Metric1", 150));
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(5, L"TestService6", L"Metric1", 1));
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(6, L"TestService7", L"Metric1", 150));
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(7, L"TestService8", L"Metric1", 150));
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(8, L"TestService9", L"Metric1", 150));
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(9, L"TestService10", L"Metric1", 150));
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+        auto now = Stopwatch::Now() + TimeSpan::FromSeconds(10);
+        fm_->RefreshPLB(now);
+
+        VERIFY_ARE_EQUAL(3, fm_->GetTargetReplicaCountForPartition(CreateGuid(0)));
+        VERIFY_ARE_EQUAL(-1, fm_->GetTargetReplicaCountForPartition(CreateGuid(1))); //-1 is not changed
+        VERIFY_ARE_EQUAL(4, fm_->GetTargetReplicaCountForPartition(CreateGuid(2)));
+        VERIFY_ARE_EQUAL(-1, fm_->GetTargetReplicaCountForPartition(CreateGuid(3)));
+        VERIFY_ARE_EQUAL(-1, fm_->GetTargetReplicaCountForPartition(CreateGuid(4))); //-1 is not changed
+        VERIFY_ARE_EQUAL(2, fm_->GetTargetReplicaCountForPartition(CreateGuid(5)));
+        VERIFY_ARE_EQUAL(-1, fm_->GetTargetReplicaCountForPartition(CreateGuid(6))); //-1 is not changed
+        VERIFY_ARE_EQUAL(4, fm_->GetTargetReplicaCountForPartition(CreateGuid(7))); 
+        VERIFY_ARE_EQUAL(4, fm_->GetTargetReplicaCountForPartition(CreateGuid(8)));
+        VERIFY_ARE_EQUAL(4, fm_->GetTargetReplicaCountForPartition(CreateGuid(9)));
+    }
+
     BOOST_AUTO_TEST_CASE(AutoScalingMultiPartitionTest)
     {
         // Test case: 
@@ -246,7 +534,8 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->RefreshPLB(now);
 
         // PLB should set new target replica count for this partition.
-        VERIFY_ARE_EQUAL(13, fm_->GetTargetReplicaCountForPartition(CreateGuid(0)));
+        // Since there are only 5 nodes, targetReplicaCount should become 5 (scaling to every node due to -1).
+        VERIFY_ARE_EQUAL(5, fm_->GetTargetReplicaCountForPartition(CreateGuid(0)));
 
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(L"TestService"), 2, CreateReplicas(L"S/0, S/1, S/2"), 2, Reliability::FailoverUnitFlags::Flags::None, false, false, 13));
         now = now + PLBConfig::GetConfig().MinPlacementInterval + TimeSpan::FromSeconds(10);
@@ -1385,6 +1674,88 @@ namespace PlacementAndLoadBalancingUnitTest
         VERIFY_ARE_EQUAL(1, fm_->GetPartitionCountChangeForService(L"TestService1"));
     }
 
+    BOOST_AUTO_TEST_CASE(AutoScalingStatefulServiceUpdateLoadWithoutPrimary)
+    {
+        // This test is updating load for partition that doesn't have primary replica
+        // and checks that we'll guard from asserting
+        Trace.WriteInfo("PLBAutoscalingTestSource", "AutoScalingStatefulServiceUpdateLoadWithoutPrimary");
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        for (int i = 0; i < 5; i++)
+        {
+            plb.UpdateNode(CreateNodeDescription(i));
+        }
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+       auto scalingPolicy = CreateAutoScalingPolicyForService(
+            L"servicefabric:/_CpuCores", // metricName
+            1,         // Lower Load Threshold
+            3,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            2,          // Minimum Partition Count
+            4,          // Maximum Partition Count
+            1);         // Scale Increment
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+        plb.UpdateService(CreateServiceDescriptionWithAutoscalingPolicy(
+            L"TestService1",
+            L"TestType",
+            true,
+            1,
+            vector<Reliability::ServiceScalingPolicyDescription>(scalingPolicy),
+            CreateMetrics(L""),
+            3));
+
+        // Create a failoverUnit without primary replica
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(L"TestService1"), 0, CreateReplicas(L""),0));
+        plb.Refresh(Stopwatch::Now());
+
+        // Update load for CPU metric although there is no primary
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(0, L"TestService1", L"servicefabric:/_CpuCores", 2, 0));
+        plb.Refresh(Stopwatch::Now());
+    }
+
+    BOOST_AUTO_TEST_CASE(AutoScalingStatelessServiceUpdateLoadWithoutInstances)
+    {
+        // This test is updating load for partition that doesn't have instances
+        // and checks that no asserts will happen
+        Trace.WriteInfo("PLBAutoscalingTestSource", "AutoScalingStatelessServiceUpdateLoadWithoutInstances");
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        for (int i = 0; i < 5; i++)
+        {
+            plb.UpdateNode(CreateNodeDescription(i));
+        }
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        auto scalingPolicy = CreateAutoScalingPolicyForService(
+            L"servicefabric:/_CpuCores", // metricName
+            1,         // Lower Load Threshold
+            3,         // Upper Load Threshold
+            1,          // Scale Interval In Seconds
+            2,          // Minimum Partition Count
+            4,          // Maximum Partition Count
+            1);         // Scale Increment
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+        plb.UpdateService(CreateServiceDescriptionWithAutoscalingPolicy(
+            L"TestService1",
+            L"TestType",
+            false,
+            1,
+            vector<Reliability::ServiceScalingPolicyDescription>(scalingPolicy),
+            CreateMetrics(L"Metric1/1.0/0/0"),
+            3));
+
+        // Create a failoverUnit without instances
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(L"TestService1"), 0, CreateReplicas(L""), 0));
+        plb.Refresh(Stopwatch::Now());
+
+        // Update load for Memory metric although there are no instances
+        plb.UpdateLoadOrMoveCost(CreateLoadOrMoveCost(0, L"TestService1", L"servicefabric:/_MemoryInMB", 2000));
+        plb.Refresh(Stopwatch::Now());
+    }
+
     BOOST_AUTO_TEST_SUITE_END()
 
     void TestPLBAutoscaling::PartitionsScalingTestHelper(std::wstring const& metricName, uint mergeSplit)
@@ -1582,6 +1953,7 @@ namespace PlacementAndLoadBalancingUnitTest
         VERIFY_ARE_EQUAL(-2, fm_->GetPartitionCountChangeForService(L"TestService1"));
         VERIFY_ARE_EQUAL(1, fm_->GetPartitionCountChangeForService(L"TestService2"));
     }
+
     bool TestPLBAutoscaling::ClassSetup()
     {
         Trace.WriteInfo("TestPLBAutoscalingTestSource", "Random seed: {0}", PLBConfig::GetConfig().InitialRandomSeed);

@@ -113,10 +113,10 @@ bool ApplicationServiceTemplateDescription::operator == (ApplicationServiceTempl
         {
             for (size_t index = 0; index < ScalingPolicies.size(); ++index)
             {
-                equals = ScalingPolicies[index].Equals(other.ScalingPolicies[index], true);
-                if (!equals)
+                auto error = ScalingPolicies[index].Equals(other.ScalingPolicies[index], true);
+                if (!error.IsSuccess())
                 {
-                    return equals;
+                    return false;
                 }
             }
         }

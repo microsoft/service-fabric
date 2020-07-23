@@ -2105,17 +2105,13 @@ bool FailoverUnit::IsSafeToRemove(wstring const& batchId) const
     int effectiveDroppedCount = 0;
     for (ReplicaConstIterator const& replica : CurrentConfiguration.Replicas)
     {
-        if (replica->NodeInfoObj->DeactivationInfo.IsRemove)
+        NodeDeactivationInfo const & nodeDeactivationInfo = replica->NodeInfoObj->DeactivationInfo;
+        if ((replica->IsDropped) ||
+            (nodeDeactivationInfo.IsRemove &&
+                (nodeDeactivationInfo.IsDeactivationComplete ||
+                 nodeDeactivationInfo.ContainsBatch(batchId))))
         {
-            if (replica->IsDropped ||
-                replica->NodeInfoObj->DeactivationInfo.IsDeactivationComplete)
-            {
-                effectiveDroppedCount++;
-            }
-            else if (replica->NodeInfoObj->DeactivationInfo.ContainsBatch(batchId))
-            {
-                effectiveDroppedCount++;
-            }
+            effectiveDroppedCount++;
         }
     }
 

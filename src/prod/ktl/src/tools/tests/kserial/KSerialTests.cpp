@@ -911,13 +911,13 @@ NTSTATUS KIDomNodeTests()
     KBuffer::SPtr       buf;
     NTSTATUS            status = STATUS_SUCCESS;
 
-	HRESULT hr;
-	size_t result;
-	size_t bufferSize;
-	hr = SizeTAdd(wcslen(xml), 1, &result);
-	KInvariant(SUCCEEDED(hr));
+    HRESULT hr;
+    size_t result;
+    size_t bufferSize;
+    hr = SizeTAdd(wcslen(xml), 1, &result);
+    KInvariant(SUCCEEDED(hr));
     hr = SizeTMult(result, sizeof(WCHAR), &bufferSize);
-	KInvariant(SUCCEEDED(hr));
+    KInvariant(SUCCEEDED(hr));
     if (bufferSize > ULONG_MAX)
     {
         KTestPrintf("bufferSize > ULONG_MAX\n");
@@ -1142,12 +1142,22 @@ KSerialTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
+    NTSTATUS status;
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     KTestPrintf("KSerialTest: STARTED\n");
 
     EventRegisterMicrosoft_Windows_KTL();
 
     KtlSystem* underlyingSystem;
-    NTSTATUS status = KtlSystem::Initialize(&underlyingSystem);
+    status = KtlSystem::Initialize(&underlyingSystem);
     if (!NT_SUCCESS(status))
     {
         KTestPrintf("%s: %i: KtlSystem::Initialize failed\n", __FUNCTION__, __LINE__);
@@ -1181,6 +1191,11 @@ KSerialTest(
     EventUnregisterMicrosoft_Windows_KTL();
     
     KTestPrintf("KSerialTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return status;
 }
 

@@ -6,6 +6,7 @@
 namespace System.Fabric.Management.ImageStore
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Fabric.Common;
     using System.Fabric.Interop;
@@ -14,6 +15,7 @@ namespace System.Fabric.Management.ImageStore
     using System.IO;
     using System.Linq;
     using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.Storage.RetryPolicies;
     using Microsoft.WindowsAzure.Storage;
 
     /// <summary>
@@ -35,6 +37,9 @@ namespace System.Fabric.Management.ImageStore
 
         /// <summary>Default blob storage endpoint compoisted by suffix for azure blob storage </summary>
         public const string DefaultBlobEndpointFormatWitSuffix = "{0}://{1}.blob.{2}/";
+
+        /// <summary>Gets the default retry policy used in blob request option </summary>
+        public static readonly ExponentialRetry DefaultRetryPolicy = new ExponentialRetry(System.TimeSpan.FromSeconds(3), 3);
 
         /// <summary>String in image uri to indicate default endpoint protocal </summary>
         private const string DefaultEndpointsProtocolField = "DefaultEndpointsProtocol";
@@ -70,6 +75,48 @@ namespace System.Fabric.Management.ImageStore
 
         /// <summary>The string in the imagestore uri that representation of container </summary>
         private const string ImageStoreUriContainerFieldName = "Container";
+
+        private static ConcurrentDictionary<Guid, List<Tuple<string, string>>> blobContentMap;
+
+        /// <summary>
+        /// Retrieve the list of blob content operated 
+        /// </summary>
+        /// <param name="operationId">A unique ID represents a download operation used to retrieve blob contents.</param>
+        /// <returns></returns>
+        public static List<Tuple<string, string>> GetDownloadContentEntries(Guid operationId)
+        {
+            if (blobContentMap != null && blobContentMap.ContainsKey(operationId))
+            {
+                List<Tuple<string, string>> contents;
+                if (!blobContentMap.TryRemove(operationId, out contents))
+                {
+                    return contents;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Add the blob content to be operated into the map
+        /// </summary>
+        /// <param name="operationId">A unique ID represents a download operation used to retrieve blob contents.</param>
+        /// <param name="srcUri">The source location of downloading operation.</param>
+        /// <param name="dstUri">The destination locaiton of downloading operation.</param>
+        public static void AddDownloadContentEntry(Guid operationId, string srcUri, string dstUri)
+        {
+            if (blobContentMap == null)
+            {
+                blobContentMap = new ConcurrentDictionary<Guid, List<Tuple<string, string>>>();
+            }
+
+            if (!blobContentMap.ContainsKey(operationId))
+            {
+                blobContentMap.TryAdd(operationId, new List<Tuple<string, string>>());
+            }
+            
+            blobContentMap[operationId].Add(new Tuple<string, string>(srcUri, dstUri));
+        }
 
         /// <summary>
         /// See if a uri point to xstore image store
@@ -155,12 +202,19 @@ namespace System.Fabric.Management.ImageStore
             imageStoreUri = imageStoreUri.Replace("\\;", ";");
             imageStoreUri = imageStoreUri.Replace("\\=", "=");
 
-            Utility.ReleaseAssert(imageStoreUri.StartsWith(XstoreSchemaTag, StringComparison.OrdinalIgnoreCase), "Invalid Image Store Uri - expect start with xstore");
+            if (!imageStoreUri.StartsWith(XstoreSchemaTag, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(StringResources.XStore_InvalidConnectionStringPrefix, imageStoreUri);
+            }
             string untaggedImageStoreUri = imageStoreUri.TrimStart().Substring(XstoreSchemaTag.Length).Trim();
 
             // validation that no whitespace exist in imagestore uri; otherwise it would be a problem to use it as
             // a parameter to loaderservice/servicemanager
-            Utility.ReleaseAssert(untaggedImageStoreUri.IndexOf(" ", StringComparison.OrdinalIgnoreCase) < 0, "imagestore uri can not contain WhiteSpace character");
+
+            if (untaggedImageStoreUri.IndexOf(" ", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                throw new ArgumentException(StringResources.XStore_UnexpectedWhitespaceCharInConnectionString, imageStoreUri);
+            }            
 
             if (untaggedImageStoreUri.IndexOf(AccountNameField, StringComparison.OrdinalIgnoreCase) >= 0 &&
                 untaggedImageStoreUri.IndexOf(AccountKeyField, StringComparison.OrdinalIgnoreCase) >= 0 &&
@@ -178,16 +232,29 @@ namespace System.Fabric.Management.ImageStore
             {
                 // this is the format that specify a customed connection string
                 // it must have blobendpoint in it
-                Utility.ReleaseAssert(
-                    untaggedImageStoreUri.IndexOf(BlobEndpointField, StringComparison.OrdinalIgnoreCase) >= 0 || untaggedImageStoreUri.IndexOf(EndpointSuffix, StringComparison.OrdinalIgnoreCase) >= 0,
-                    "The customed imagestore uri must contain blob endpoint or endpoint suffix");
+                if (untaggedImageStoreUri.IndexOf(BlobEndpointField, StringComparison.OrdinalIgnoreCase) < 0 
+                    && untaggedImageStoreUri.IndexOf(EndpointSuffix, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    throw new ArgumentException(StringResources.XStore_MissingEndpoint, imageStoreUri);
+                }
 
                 TryParseUntaggedCustomImageStoreUri(untaggedImageStoreUri, out connectionString, out secondaryConnectionString, out blobEndpoint, out container, out accountName, out endpointSuffix);
             }
 
-            Utility.ReleaseAssert(!string.IsNullOrEmpty(connectionString), "connectionString cannot be null or empty");
-            Utility.ReleaseAssert(!string.IsNullOrEmpty(blobEndpoint), "blobEndpoint cannot be null or empty");
-            Utility.ReleaseAssert(!string.IsNullOrEmpty(container), "container cannot be null or empty");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ArgumentException(StringResources.XStore_MissingConnectionString, imageStoreUri);
+            }
+
+            if (string.IsNullOrEmpty(container))
+            {
+                throw new ArgumentException(StringResources.XStore_MissingContainer, imageStoreUri);
+            }
+
+            if (string.IsNullOrEmpty(blobEndpoint))
+            {
+                throw new ArgumentException(StringResources.XStore_MissingEndpoint, imageStoreUri);
+            }
 
             connectionString = connectionString.Trim();
             container = container.Trim();
@@ -359,7 +426,11 @@ namespace System.Fabric.Management.ImageStore
             // validate that the container field is at the tail of imagestore uri
             // note that we are sure no space would be between "Container" and "="
             int pos = untaggedImageStoreUri.LastIndexOf(ImageStoreUriContainerFieldName + "=", StringComparison.OrdinalIgnoreCase);
-            Utility.ReleaseAssert(pos > 0, "The untagged imagestore uri should be looks like: {connection string};Container=<container>");
+            if (pos <= 0)
+            {
+                throw new ArgumentException(StringResources.XStore_MalformedConnectionString, untaggedImageStoreUri);
+            }
+
             connectionString = untaggedImageStoreUri.Substring(0, pos).Trim(new char[] { ' ', ';' });
 
             // search for blob endpoint and container
@@ -417,7 +488,12 @@ namespace System.Fabric.Management.ImageStore
 
                 // Secondary connection string.
                 int accountKeyIndex = connectionStringValues.FindIndex((pair) => pair.StartsWith(AccountKeyField + "=", StringComparison.OrdinalIgnoreCase));
-                Utility.ReleaseAssert(accountKeyIndex >= 0 && accountKeyIndex < connectionStringValues.Count, "Unable to locate account key in the image store uri");
+
+                if (accountKeyIndex < 0 || accountKeyIndex >= connectionStringValues.Count)
+                {
+                    throw new ArgumentException(StringResources.XStore_MissingAccountKey, untaggedImageStoreUri);
+                }
+
                 connectionStringValues[accountKeyIndex] = string.Format(CultureInfo.InvariantCulture, "{0}={1}", AccountKeyField, azureXStoreTable[SecondaryAccountKeyField]);
                 secondaryConnectionString = string.Join(";", connectionStringValues.ToArray());
             }

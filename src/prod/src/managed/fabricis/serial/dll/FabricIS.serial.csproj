@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{068FBA64-22B8-49F9-9067-330D94028B05}</ProjectGuid>
+    <RootNamespace>FabricIS.serial</RootNamespace>
+    <AssemblyName>FabricIS.serial</AssemblyName>
+    <AssemblyDescription>Fabric Infrastructure Service with serial communication with Azure</AssemblyDescription>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="BreakpointManager.cs" />
+    <Compile Include="IJobImpactData.cs" />
+    <Compile Include="IJobImpactManager.cs" />
+    <Compile Include="JobImpactData.cs" />
+    <Compile Include="JobImpactManager.cs" />
+    <Compile Include="JobImpactTranslationMode.cs" />
+    <Compile Include="ImpactTranslator.cs" />
+    <Compile Include="NotificationAction.cs" />
+    <Compile Include="Helpers\VolatileLastCompletedJobStepInfo.cs" />
+    <Compile Include="Helpers\CoordinatorHelper.cs" />
+    <Compile Include="ManagementClient\IManagementClient.cs" />
+    <Compile Include="Helpers\JobTypeHelper.cs" />
+    <Compile Include="Wrappers\IManagementNotificationContext.cs" />
+    <Compile Include="Wrappers\ImpactedInstance.cs" />
+    <Compile Include="JobType.cs" />
+    <Compile Include="NotificationType.cs" />
+    <Compile Include="Coordinator\WindowsAzureInfrastructureCoordinator.cs" />
+    <Compile Include="ManagementClient\WindowsAzureManagementClient.cs" />
+    <Compile Include="WindowsAzureRepairExecutor.cs" />
+    <Compile Include="Wrappers\WindowsAzureManagementJobWrapper.cs" />
+    <Compile Include="ManagementClient\ManagementClientFactory.cs" />
+    <Compile Include="ManagementClient\IManagementClientFactory.cs" />
+    <Compile Include="Coordinator\WindowsAzureInfrastructureCoordinatorFactory.cs" />
+    <Compile Include="Wrappers\IManagementJobWrapper.cs" />
+    <Compile Include="WindowsServerRestart\WindowsServerRestartCoordinator.cs" />
+    <Compile Include="WindowsServerRestart\WindowsServerRestartCoordinatorFactory.cs" />
+    <Compile Include="WindowsServerRestart\IHealthCheck.cs" />
+    <Compile Include="WindowsServerRestart\IRestartPolicy.cs" />
+    <Compile Include="WindowsServerRestart\IPolicyStore.cs" />
+    <Compile Include="WindowsServerRestart\WindowsServerRestartHealthCheck.cs" />
+    <Compile Include="WindowsServerRestart\WindowsServerRestartPolicy.cs" />
+    <Compile Include="WindowsServerRestart\WindowsServerRestartConstant.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\dll\FabricIS.common.csproj">
+      <Project>{b2c86537-979a-473a-b5a0-f9d1082a7e22}</Project>
+      <Name>FabricIS.common</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgWinFab_Internal_MR_SDK_132_763_2_21)\lib\net45\Microsoft.WindowsAzure.ServiceRuntime.Management.dll" />
+    <!-- These 2 are used by the MR SDK above but not directly referenced by FabricIS.serial.dll -->
+    <Reference Include="$(PkgBond_Core_NET)\lib\net35\Microsoft.Bond.dll">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="$(PkgBond_Core_NET)\lib\net35\Microsoft.Bond.Interfaces.dll">
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb;$(PkgWinFab_Internal_MR_SDK_132_763_2_21)\lib\net45\Microsoft.WindowsAzure.ServiceRuntime.Management.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -5,7 +5,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Arabic",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -22,7 +22,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Arabic",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -39,7 +39,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Arabic",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -56,7 +56,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Arabic",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -73,7 +73,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-ChineseSimplified",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -90,7 +90,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-ChineseSimplified",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -107,7 +107,7 @@
         {
             "Name": "Glob-BasicStatelessActor-ChineseSimplified",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -124,7 +124,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-ChineseSimplified",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -140,7 +140,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-ChineseTraditional",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -157,7 +157,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-ChineseTraditional",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -174,7 +174,7 @@
         {
             "Name": "Glob-BasicStatelessActor-ChineseTraditional",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -191,7 +191,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-ChineseTraditional",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -207,7 +207,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Czech",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -224,7 +224,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Czech",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -241,7 +241,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Czech",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -258,7 +258,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Czech",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -274,7 +274,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Danish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -291,7 +291,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Danish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -308,7 +308,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Danish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -325,7 +325,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Danish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -341,7 +341,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-DutchNetherlands",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -358,7 +358,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-DutchNetherlands",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -375,7 +375,7 @@
         {
             "Name": "Glob-BasicStatelessActor-DutchNetherlands",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -392,7 +392,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-DutchNetherlands",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -408,7 +408,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Finnish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -425,7 +425,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Finnish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -442,7 +442,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Finnish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -459,7 +459,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Finnish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -475,7 +475,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-French",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -492,7 +492,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-French",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -509,7 +509,7 @@
         {
             "Name": "Glob-BasicStatelessActor-French",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -526,7 +526,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-French",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -542,7 +542,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-German",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -559,7 +559,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-German",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -576,7 +576,7 @@
         {
             "Name": "Glob-BasicStatelessActor-German",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -593,7 +593,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-German",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -609,7 +609,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Greek",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -626,7 +626,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Greek",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -643,7 +643,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Greek",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -660,7 +660,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Greek",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -676,7 +676,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Hebrew",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -693,7 +693,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Hebrew",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -710,7 +710,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Hebrew",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -727,7 +727,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Hebrew",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -743,7 +743,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Hungarian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -760,7 +760,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Hungarian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -777,7 +777,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Hungarian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -794,7 +794,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Hungarian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -810,7 +810,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Italian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -827,7 +827,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Italian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -844,7 +844,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Italian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -861,7 +861,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Italian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -877,7 +877,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Japanese",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -894,7 +894,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Japanese",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -911,7 +911,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Japanese",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -928,7 +928,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Japanese",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -944,7 +944,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Korean",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -961,7 +961,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Korean",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -978,7 +978,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Korean",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -995,7 +995,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Korean",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1011,7 +1011,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Norwegian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1028,7 +1028,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Norwegian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1045,7 +1045,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Norwegian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1062,7 +1062,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Norwegian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1078,7 +1078,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Polish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1095,7 +1095,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Polish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1112,7 +1112,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Polish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1129,7 +1129,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Polish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1145,7 +1145,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-PortugeseBrazilian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1162,7 +1162,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-PortugeseBrazilian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1179,7 +1179,7 @@
         {
             "Name": "Glob-BasicStatelessActor-PortugeseBrazilian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1196,7 +1196,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-PortugeseBrazilian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1212,7 +1212,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-PortugeseStandard",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1229,7 +1229,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-PortugeseStandard",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1246,7 +1246,7 @@
         {
             "Name": "Glob-BasicStatelessActor-PortugeseStandard",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1263,7 +1263,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-PortugeseStandard",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1279,7 +1279,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Russian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1296,7 +1296,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Russian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1313,7 +1313,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Russian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1330,7 +1330,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Russian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1346,7 +1346,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Slovak",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1363,7 +1363,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Slovak",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1380,7 +1380,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Slovak",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1397,7 +1397,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Slovak",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1413,7 +1413,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Slovenian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1430,7 +1430,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Slovenian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1447,7 +1447,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Slovenian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1464,7 +1464,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Slovenian",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1480,7 +1480,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Spanish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1497,7 +1497,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Spanish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1514,7 +1514,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Spanish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1531,7 +1531,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Spanish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1547,7 +1547,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Swedish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1564,7 +1564,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Swedish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1581,7 +1581,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Swedish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1598,7 +1598,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Swedish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1614,7 +1614,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Thailand",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1631,7 +1631,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Thailand",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1648,7 +1648,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Thailand",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1665,7 +1665,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Thailand",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1681,7 +1681,7 @@
         {
             "Name": "Glob-BasicStatefulActorRD-Turkish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1698,7 +1698,7 @@
         {
             "Name": "Glob-BasicStatefulActorKvs-Turkish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1715,7 +1715,7 @@
         {
             "Name": "Glob-BasicStatelessActor-Turkish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1732,7 +1732,7 @@
         {
             "Name": "Glob-StatefulActorGlobActorID-Turkish",
             "Type": "V2_ScriptTest_With_Locale",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1749,7 +1749,7 @@
         {
             "Name": "Glob-BasicStatefulActorGlobalState",
             "Type": "V2_ScriptTest",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupType": "XCopy",
@@ -1764,7 +1764,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Arabic",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1777,7 +1777,7 @@
         {
             "Name": "Glob-SFTest-Secure-Arabic",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1792,7 +1792,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Arabic",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1807,7 +1807,7 @@
         {
             "Name": "Glob-ServiceFabricTest-ChineseSimplified",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1820,7 +1820,7 @@
         {
             "Name": "Glob-SFTest-Secure-ChineseSimplified",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1835,7 +1835,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-ChineseSimplified",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1852,7 +1852,7 @@
         {
             "Name": "Glob-ServiceFabricTest-ChineseTraditional",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1865,7 +1865,7 @@
         {
             "Name": "Glob-SFTest-Secure-ChineseTraditional",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1880,7 +1880,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-ChineseTraditional",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1896,7 +1896,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Czech",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1909,7 +1909,7 @@
         {
             "Name": "Glob-SFTest-Secure-Czech",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1922,7 +1922,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Czech",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1939,7 +1939,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Dannish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1952,7 +1952,7 @@
         {
             "Name": "Glob-SFTest-Secure-Dannish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1965,7 +1965,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Dannish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1981,7 +1981,7 @@
         {
             "Name": "Glob-ServiceFabricTest-DutchNetharland",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -1994,7 +1994,7 @@
         {
             "Name": "Glob-SFTest-Secure-DutchNetharland",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2007,7 +2007,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-DutchNetharland",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2028,7 +2028,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Finnish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2041,7 +2041,7 @@
         {
             "Name": "Glob-SFTest-Secure-Finnish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2054,7 +2054,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Finnish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2072,7 +2072,7 @@
         {
             "Name": "Glob-ServiceFabricTest-France",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2085,7 +2085,7 @@
         {
             "Name": "Glob-SFTest-Secure-France",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2098,7 +2098,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-France",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2113,7 +2113,7 @@
         {
             "Name": "Glob-ServiceFabricTest-German",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2126,7 +2126,7 @@
         {
             "Name": "Glob-SFTest-Secure-German",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2139,7 +2139,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-German",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2156,7 +2156,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Greek",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2169,7 +2169,7 @@
         {
             "Name": "Glob-SFTest-Secure-Greek",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2182,7 +2182,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Greek",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2200,7 +2200,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Hebrew",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2213,7 +2213,7 @@
         {
             "Name": "Glob-SFTest-Secure-Hebrew",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2226,7 +2226,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Hebrew",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2244,7 +2244,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Hungarian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2257,7 +2257,7 @@
         {
             "Name": "Glob-SFTest-Secure-Hungarian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2270,7 +2270,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Hungarian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2285,7 +2285,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Italian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2298,7 +2298,7 @@
         {
             "Name": "Glob-SFTest-Secure-Italian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2311,7 +2311,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Italian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2326,7 +2326,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Japanese",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2339,7 +2339,7 @@
         {
             "Name": "Glob-SFTest-Secure-Japanese",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2352,7 +2352,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Japanese",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2367,7 +2367,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Korean",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2380,7 +2380,7 @@
         {
             "Name": "Glob-SFTest-Secure-Korean",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2393,7 +2393,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Korean",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2412,7 +2412,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Norwegian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2425,7 +2425,7 @@
         {
             "Name": "Glob-SFTest-Secure-Norwegian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2438,7 +2438,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Norwegian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2456,7 +2456,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Polish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2469,7 +2469,7 @@
         {
             "Name": "Glob-SFTest-Secure-Polish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2482,7 +2482,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Polish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2497,7 +2497,7 @@
         {
             "Name": "Glob-ServiceFabricTest-PortugeseBrazilian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2510,7 +2510,7 @@
         {
             "Name": "Glob-SFTest-Secure-PortugeseBrazilian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2523,7 +2523,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-PortugeseBrazilian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2538,7 +2538,7 @@
         {
             "Name": "Glob-ServiceFabricTest-PortugeseStandard",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2551,7 +2551,7 @@
         {
             "Name": "Glob-SFTest-Secure-PortugeseStandard",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2564,7 +2564,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-PortugeseStandard",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2579,7 +2579,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Russian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2592,7 +2592,7 @@
         {
             "Name": "Glob-SFTest-Secure-Russian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2605,7 +2605,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Russian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2622,7 +2622,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Slovak",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2635,7 +2635,7 @@
         {
             "Name": "Glob-SFTest-Secure-Slovak",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2648,7 +2648,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Slovak",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2666,7 +2666,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Slovenian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2679,7 +2679,7 @@
         {
             "Name": "Glob-SFTest-Secure-Slovenian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2692,7 +2692,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Slovenian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2712,7 +2712,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Spanish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2725,7 +2725,7 @@
         {
             "Name": "Glob-SFTest-Secure-Spanish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2738,7 +2738,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Spanish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2753,7 +2753,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Swedish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2766,7 +2766,7 @@
         {
             "Name": "Glob-SFTest-Secure-Swedish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2779,7 +2779,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Swedish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2796,7 +2796,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Thailand",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2809,7 +2809,7 @@
         {
             "Name": "Glob-SFTest-Secure-Thailand",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2822,7 +2822,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Thailand",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2838,7 +2838,7 @@
         {
             "Name": "Glob-ServiceFabricTest-Turkish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2851,7 +2851,7 @@
         {
             "Name": "Glob-SFTest-Secure-Turkish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2864,7 +2864,7 @@
         {
             "Name": "Glob-ReliableDictionaryTest-Turkish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "900",
@@ -2877,7 +2877,7 @@
         {
             "Name": "Loc-ServiceFabricTest-ChineseTraditional",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
             "TestExecutionParameters": {
@@ -2891,7 +2891,7 @@
         {
             "Name": "Loc-SFTest-Secure-ChineseTraditional",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
             "TestExecutionParameters": {
@@ -2905,7 +2905,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-ChineseTraditional",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
             "TestExecutionParameters": {
@@ -2922,7 +2922,7 @@
         {
             "Name": "Loc-ServiceFabricTest-Czech",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-CZECH",
             "TestExecutionParameters": {
@@ -2936,7 +2936,7 @@
         {
             "Name": "Loc-SFTest-Secure-Czech",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-CZECH",
             "TestExecutionParameters": {
@@ -2950,7 +2950,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Czech",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-CZECH",
             "TestExecutionParameters": {
@@ -2966,7 +2966,7 @@
         {
             "Name": "Loc-ServiceFabricTest-DutchNetharland",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Dutch",
 
@@ -2981,7 +2981,7 @@
         {
             "Name": "Loc-SFTest-Secure-DutchNetharland",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Dutch",
 
@@ -2996,7 +2996,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-DutchNetharland",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Dutch",
 
@@ -3013,7 +3013,7 @@
         {
             "Name": "Loc-ServiceFabricTest-France",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-French",
 
@@ -3028,7 +3028,7 @@
         {
             "Name": "Loc-SFTest-Secure-France",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-French",
 
@@ -3043,7 +3043,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-France",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-French",
 
@@ -3060,7 +3060,7 @@
         {
             "Name": "Loc-ServiceFabricTest-German",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
 
@@ -3075,7 +3075,7 @@
         {
             "Name": "Loc-SFTest-Secure-German",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
 
@@ -3090,7 +3090,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-German",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
 
@@ -3107,7 +3107,7 @@
         {
             "Name": "Globalization_LocalizeRun_Hungarian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Hungarian",
 
@@ -3122,7 +3122,7 @@
         {
             "Name": "Loc-SFTest-Secure-Hungarian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Hungarian",
 
@@ -3137,7 +3137,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Hungarian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Hungarian",
 
@@ -3154,7 +3154,7 @@
         {
             "Name": "Globalization_LocalizeRun_Italian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Italian",
 
@@ -3169,7 +3169,7 @@
         {
             "Name": "Loc-SFTest-Secure-Italian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Italian",
 
@@ -3184,7 +3184,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Italian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Italian",
 
@@ -3201,7 +3201,7 @@
         {
             "Name": "Loc-ServiceFabricTest-Japanese",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
 
@@ -3216,7 +3216,7 @@
         {
             "Name": "Loc-SFTest-Secure-Japanese",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
 
@@ -3231,7 +3231,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Japanese",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
 
@@ -3248,7 +3248,7 @@
         {
             "Name": "Loc-ServiceFabricTest-Korean",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Korean",
 
@@ -3263,7 +3263,7 @@
         {
             "Name": "Loc-SFTest-Secure-Korean",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Korean",
             "TestExecutionParameters": {
@@ -3277,7 +3277,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Korean",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Korean",
 
@@ -3294,7 +3294,7 @@
         {
             "Name": "Loc-ServiceFabricTest-Polish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Polish",
 
@@ -3309,7 +3309,7 @@
         {
             "Name": "Loc-SFTest-Secure-Polish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Polish",
 
@@ -3324,7 +3324,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Polish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Polish",
 
@@ -3341,7 +3341,7 @@
         {
             "Name": "Loc-ServiceFabricTest-PortugeseBrazilian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Brazil",
 
@@ -3356,7 +3356,7 @@
         {
             "Name": "Loc-SFTest-Secure-PortugeseBrazilian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Brazil",
 
@@ -3371,7 +3371,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-PortugeseBrazilian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Brazil",
 
@@ -3388,7 +3388,7 @@
         {
             "Name": "Loc-ServiceFabricTest-PortugeseStandard",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Portugal",
 
@@ -3403,7 +3403,7 @@
         {
             "Name": "Loc-SFTest-Secure-PortugeseStandard",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Portugal",
 
@@ -3418,7 +3418,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-PortugeseStandard",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Portugal",
 
@@ -3435,7 +3435,7 @@
         {
             "Name": "Loc-ServiceFabricTest-Russian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
 
@@ -3450,7 +3450,7 @@
         {
             "Name": "Loc-SFTest-Secure-Russian",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
             "TestExecutionParameters": {
@@ -3464,7 +3464,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Russian",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
 
@@ -3481,7 +3481,7 @@
         {
             "Name": "Loc-ServiceFabricTest-Spanish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Spanish",
 
@@ -3496,7 +3496,7 @@
         {
             "Name": "Loc-SFTest-Secure-Spanish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Spanish",
 
@@ -3511,7 +3511,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Spanish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Spanish",
 
@@ -3528,7 +3528,7 @@
         {
             "Name": "Loc-ServiceFabricTest-Swedish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Swedish",
 
@@ -3543,7 +3543,7 @@
         {
             "Name": "Loc-SFTest-Secure-Swedish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Swedish",
 
@@ -3558,7 +3558,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Swedish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-Swedish",
 
@@ -3575,7 +3575,7 @@
         {
             "Name": "Loc-ServiceFabricTest-Turkish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
 
@@ -3590,7 +3590,7 @@
         {
             "Name": "Loc-SFTest-Secure-Turkish",
             "Type": "PowershellTest_Glob_Secure",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
 
@@ -3605,7 +3605,7 @@
         {
             "Name": "Loc-ReliableDictionaryTest-Turkish",
             "Type": "PowershellTest_Glob",
-            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Owners": "v-rasich,v-mankan,lemai",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
             "TestExecutionParameters": {

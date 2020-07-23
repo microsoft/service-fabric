@@ -1,0 +1,15 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <SelfContained>true</SelfContained>
+    
+    <ApplicationPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\BlockStore\VolumeDriver\$(CurrentRuntimeIdentifier)</ApplicationPackageDropPath>
+    <ServicePackageDropPath>$(ApplicationPackageDropPath)\ServiceFabricVolumeDriverPkg</ServicePackageDropPath>
+    <CodePackageDropPath>$(ServicePackageDropPath)\Code</CodePackageDropPath>
+    
+    <ApplicationPackageDropPath2>$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\apppackages\VolumeDriver\$(CurrentRuntimeIdentifier)</ApplicationPackageDropPath2>
+    <ServicePackageDropPath2>$(ApplicationPackageDropPath2)\ServiceFabricVolumeDriverPkg</ServicePackageDropPath2>
+    <CodePackageDropPath2>$(ServicePackageDropPath2)\Code</CodePackageDropPath2>
+  </PropertyGroup>
+</Project>

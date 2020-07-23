@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="Resolver" Version="1.0"
+  xmlns="http://schemas.microsoft.com/2011/01/fabric"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <ServiceTypes>
+        <StatelessServiceType ServiceTypeName="GatewayResolverServiceType" UseImplicitHost="true"/>
+    </ServiceTypes>
+
+    <CodePackage Name="Code" Version="1.0">
+        <EntryPoint>
+            <ExeHost>
+                <Program>FabricServiceResolver.exe</Program>
+                <Arguments></Arguments>
+                <WorkingFolder>CodePackage</WorkingFolder>
+                <ConsoleRedirection FileRetentionCount="5" FileMaxSizeInKb="2048"/>
+            </ExeHost>
+        </EntryPoint>
+
+        <EnvironmentVariables>
+            <EnvironmentVariable Name="Gateway_Listen_Network" Value=""/>
+            <EnvironmentVariable Name="Gateway_Config" Value=""/>
+            <EnvironmentVariable Name="Gateway_Resolver_Uses_Dynamic_Port" Value=""/>
+            <EnvironmentVariable Name="GatewayMode" Value="true"/>
+        </EnvironmentVariables>
+    </CodePackage>
+
+    <Resources>
+        <Endpoints>
+            <Endpoint Name="GatewayProxyResolverEndpoint" CodePackageRef="Code" />
+        </Endpoints>
+    </Resources>
+</ServiceManifest>

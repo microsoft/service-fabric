@@ -14,8 +14,6 @@ using namespace Common;
 
 namespace Common
 {
-    #define AccountHelperTraceType "AccountHelperSuite"
-
     class AccountHelperTest
     {
     public:
@@ -25,7 +23,7 @@ namespace Common
         SecurityTestSetup securityTestSetup_;
     };
 
-    BOOST_FIXTURE_TEST_SUITE(AccountHelperSuite, AccountHelperTest);
+    BOOST_FIXTURE_TEST_SUITE2(AccountHelperSuite, AccountHelperTest);
 
     BOOST_AUTO_TEST_CASE(GeneratePwd)
     {
@@ -37,7 +35,7 @@ namespace Common
             testSecret,
             password); 
 
-        Trace.WriteInfo(AccountHelperTraceType, "errorCode={0}, password='{1}'", error, password);
+        Trace.WriteInfo(TraceType, "errorCode={0}, password='{1}'", error, password);
         VERIFY_IS_TRUE(error.IsSuccess());
         VERIFY_IS_TRUE(!password.IsEmpty());
 
@@ -47,7 +45,7 @@ namespace Common
             testSecret,
             password2); 
 
-        Trace.WriteInfo(AccountHelperTraceType, "errorCode={0}, password2='{1}'", error, password2);
+        Trace.WriteInfo(TraceType, "errorCode={0}, password2='{1}'", error, password2);
         VERIFY_IS_TRUE(error.IsSuccess());
         VERIFY_ARE_EQUAL2(password, password2);
     }
@@ -67,7 +65,7 @@ namespace Common
             testCert.Thumbprint()->ToStrings().first,
             password); 
 
-        Trace.WriteInfo(AccountHelperTraceType, "errorCode={0}, password='{1}'", error, password);
+        Trace.WriteInfo(TraceType, "errorCode={0}, password='{1}'", error, password);
         VERIFY_IS_TRUE(error.IsSuccess());
         VERIFY_IS_TRUE(!password.IsEmpty());
 
@@ -80,7 +78,7 @@ namespace Common
             testCert.Thumbprint()->ToStrings().first,
             password2); 
 
-        Trace.WriteInfo(AccountHelperTraceType, "errorCode={0}, password2='{1}'", error, password2);
+        Trace.WriteInfo(TraceType, "errorCode={0}, password2='{1}'", error, password2);
         VERIFY_IS_TRUE(error.IsSuccess());
         VERIFY_ARE_EQUAL2(password, password2);
     }
@@ -120,7 +118,7 @@ namespace Common
         for (auto const & accountName : accountNames)
         {
             wstring actualThumbprint = accountName.second;
-            Trace.WriteInfo(AccountHelperTraceType, "GetAccountNamesFromX509CommonName: Verify expectedThumbprint {0} equals actual {1}", expectedThumbprint, actualThumbprint);
+            Trace.WriteInfo(TraceType, "GetAccountNamesFromX509CommonName: Verify expectedThumbprint {0} equals actual {1}", expectedThumbprint, actualThumbprint);
             VERIFY_ARE_EQUAL(expectedThumbprint, actualThumbprint);
         }
 
@@ -202,5 +200,5 @@ void AccountHelperTest::TraceAccountNames(
         writer.Write("{0} - {1} ", entry.first, entry.second);
     }
 
-    Trace.WriteInfo(AccountHelperTraceType, "GetAccountNamesFromX509CommonName: Found {0} account names: {1}", accountNames.size(), traceInfo);
+    Trace.WriteInfo(TraceType, "GetAccountNamesFromX509CommonName: Found {0} account names: {1}", accountNames.size(), traceInfo);
 }

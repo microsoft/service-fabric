@@ -15,7 +15,7 @@ namespace FabricDCA
         internal const string PerformanceCountersBinaryArchiveDirectoryName = "PerformanceCountersBinaryArchive";
 
         internal const bool FolderProducerEnabledByDefault = false;
-        internal const bool KernelCrashUploadEnabledDefault = false;
+        internal const bool KernelCrashUploadEnabledDefault = true;
 
         internal static readonly TimeSpan DefaultDataDeletionAge = TimeSpan.FromDays(7);
         internal static readonly TimeSpan MaxDataDeletionAge = TimeSpan.FromDays(1000);

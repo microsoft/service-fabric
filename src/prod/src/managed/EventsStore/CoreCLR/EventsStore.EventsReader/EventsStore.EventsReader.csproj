@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>86194067-d8c7-46e7-be69-3052265f4697</ProjectGuid>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootNamespace>EventsStore.EventsReader</RootNamespace>
+    <AssemblyName>EventsStore.EventsReader</AssemblyName>
+    <AssemblyTitle>Events Reader</AssemblyTitle>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\CoreCLR\Common\ClusterAnalysis.Common.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\CoreCLR\TraceAccessLayer\ClusterAnalysis.TraceAccessLayer.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\EventsStore\CoreCLR\EventsStore.EventsModels\EventsStore.EventsModels.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" /> 
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\EventsStore.EventsReader\ConfigReader\AzureConsumerType.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\ConfigReader\AzureTableConsumer.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\Exceptions\ConnectionParsingException.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\DataReader\FilterFactory.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\ErrorCodes.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\Exceptions\EventStoreException.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\LogProvider\EventStoreLogProvider.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\LogProvider\EventStoreLogger.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\ConfigReader\ClusterSettingsReader.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\DataReader\EntityType.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\DataReader\EventStoreReader.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\DataReader\Mapping.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\QueryStatTracker.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\ReaderConstants.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\EventsReaderExe.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\IResultWriter.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\ParsedUri.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\ConfigReader\ProtectedAccountKeyHelper.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\QueryParametersWrapper.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\RequestParser.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\RequestRouter.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\ConfigReader\StorageConnection.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\UriCollection.cs" />
+    <Compile Include="..\..\EventsStore.EventsReader\JsonSerializerHelper.cs" />
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" Condition=" $(CurrentRuntimeIdentifier) != ''" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

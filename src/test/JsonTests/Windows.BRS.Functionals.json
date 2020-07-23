@@ -225,6 +225,22 @@
               "CleanupType": "XCopy",
               "CleanupTimeout": "7000"
             }
+        },
+        {
+            "Name": "RetentionPolicy",
+            "Type": "V2_ScriptTest",
+            "Owners": "brkhande,sfbrs",
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "6000",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "RetentionPolicy.test",
+              "ExecutionTimeout": "5400",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
         }
     ]
 }

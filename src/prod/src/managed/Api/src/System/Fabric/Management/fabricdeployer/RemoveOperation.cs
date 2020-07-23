@@ -22,16 +22,26 @@ namespace System.Fabric.FabricDeployer
     {
         protected override void OnExecuteOperation(DeploymentParameters parameters, ClusterManifestType clusterManifest, Infrastructure infrastructure)
         {
-            CleanupDeployment(parameters);
+            try
+            {
+                CleanupDeployment(parameters);
+            }
+            finally
+            {
+#if !DotNetCoreClr
+                if (AccountHelper.IsAdminUser())
+                {
+                    CollectEventLogs();
+                }
+#endif
+            }
         }
 
         protected void CleanupDeployment(DeploymentParameters parameters)
         {
-#if !DotNetCoreClr // Disable compiling on windows for now. Need to correct when porting FabricDeployer for windows.
+#if !DotNetCoreClr
             if (AccountHelper.IsAdminUser())
             {
-                CollectEventLogs();
-
                 FabricDeployerServiceController.DisableService();
                 if (!parameters.SkipFirewallConfiguration)
                 {
@@ -86,13 +96,12 @@ namespace System.Fabric.FabricDeployer
 #else
             DeployerTrace.WriteInfo("CoreClrLinux: SPN cleanning skipped for Linux");
 #endif
+
 #if !DotNetCoreClrIOT
             new DockerDnsHelper(parameters, string.Empty).CleanupAsync().GetAwaiter().GetResult();
 
-            // Clean up docker network set up
-            var containerNetworkCleanupOperation = new ContainerNetworkCleanupOperation();
-            containerNetworkCleanupOperation.ExecuteOperation(parameters.ContainerNetworkName);
-#endif            
+            RemoveNetworks(parameters);
+#endif
         }
 
 #if !DotNetCoreClr // Disable compiling on windows for now. Need to correct when porting FabricDeployer for windows.
@@ -106,7 +115,7 @@ namespace System.Fabric.FabricDeployer
             {
                 using (EventLogReader adminReader = new EventLogReader(adminQuery), operationalReader = new EventLogReader(operationalQuery))
                 {
-                    string path = Path.Combine(Utility.GetTempPath("localhost"), Constants.EventLogsFileName);
+                    string path = Path.Combine(Utility.GetTempPath(Constants.LocalHostMachineName), Constants.EventLogsFileName);
                     if (File.Exists(path))
                     {
                         File.Delete(path);
@@ -276,5 +285,49 @@ namespace System.Fabric.FabricDeployer
                 NativeMethods.NetApiBufferFree(buffer);
             }
         }
+
+#if !DotNetCoreClrIOT
+        private static void RemoveNetworks(DeploymentParameters parameters)
+        {
+            var containerServiceArguments = (parameters.UseContainerServiceArguments) ? (parameters.ContainerServiceArguments) : (FlatNetworkConstants.ContainerServiceArguments);
+
+#if !DotNetCoreClrLinux
+            containerServiceArguments = (parameters.EnableContainerServiceDebugMode) 
+                ? (string.Format("{0} {1}", containerServiceArguments, FlatNetworkConstants.ContainerProviderServiceDebugModeArg))
+                : containerServiceArguments;
+#endif
+
+            bool exceptionOccurred = false;
+            string exceptionMsg = string.Empty;
+            try
+            {
+                // Clean up container network set up
+                var containerNetworkCleanupOperation = new ContainerNetworkCleanupOperation();
+                containerNetworkCleanupOperation.ExecuteOperation(parameters.ContainerNetworkName, containerServiceArguments, parameters.FabricDataRoot);
+            }
+            catch (Exception ex)
+            {
+                // we will throw this exception after isolated network clean up.
+                exceptionOccurred = true;
+                exceptionMsg = ex.Message;
+            }
+
+            try
+            {
+                // Clean up isolated network set up
+                var isolatedNetworkCleanupOperation = new IsolatedNetworkCleanupOperation();
+                isolatedNetworkCleanupOperation.ExecuteOperation(parameters.IsolatedNetworkName, parameters.FabricBinRoot);
+            }
+            catch (Exception ex)
+            {
+                DeployerTrace.WriteError("Error occurred while cleaning up isolated network setup exception {0}", ex);
+            }
+
+            if (exceptionOccurred)
+            {
+                throw new InvalidDeploymentException(exceptionMsg);
+            }
+        }
+#endif
     }
 }

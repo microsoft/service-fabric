@@ -59,5 +59,9 @@ namespace Api
         virtual Common::ErrorCode CreateResourceManagerClient(__out IResourceManagerClientPtr&) = 0;
 
         virtual Common::ErrorCode CreateResourceManagementClient(__out IResourceManagementClientPtr&) = 0;
+
+        virtual Common::ErrorCode CreateNetworkManagementClient(__out INetworkManagementClientPtr& ) = 0;
+
+        virtual Common::ErrorCode CreateGatewayResourceManagerClient(__out IGatewayResourceManagerClientPtr&) = 0;
     };
 }

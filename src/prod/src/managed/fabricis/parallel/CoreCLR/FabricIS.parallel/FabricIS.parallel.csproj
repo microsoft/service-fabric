@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Fabric Infrastructure Service</Description>
+    <AssemblyName>FabricIS.parallel</AssemblyName>
+    <PackageId>FabricIS.parallel</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <GenerateNeutralResourcesLanguageAttribute>false</GenerateNeutralResourcesLanguageAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\dll\_friends.cs;
+      ..\..\dll\Actions\Action.cs;
+      ..\..\dll\AssemblyInfo.cs;
+      ..\..\dll\Constants.cs;
+      ..\..\dll\Actions\AckJobAction.cs;
+      ..\..\dll\Actions\ActionFactory.cs;
+      ..\..\dll\Actions\ActionHelper.cs;
+      ..\..\dll\Actions\ActionType.cs;
+      ..\..\dll\Actions\ExecuteJobAction.cs;
+      ..\..\dll\Actions\IAction.cs;
+      ..\..\dll\Actions\CancelRepairTaskAction.cs;
+      ..\..\dll\Actions\CancelJobAction.cs;
+      ..\..\dll\Actions\CancelRestoringHealthCheckAction.cs;
+      ..\..\dll\Actions\ClaimedRepairTaskAction.cs;
+      ..\..\dll\Actions\CoordinatorContext.cs;
+      ..\..\dll\Actions\CreateInPreparingAction.cs;
+      ..\..\dll\Actions\MoveToPreparingAction.cs;
+      ..\..\dll\Actions\MoveToExecutingAction.cs;
+      ..\..\dll\Actions\MoveToRestoringAction.cs;
+      ..\..\dll\Actions\MoveToCompletedAction.cs;
+      ..\..\dll\Actions\RequestRepairAction.cs;
+      ..\..\dll\CommandHandling\AllowActionMap.cs;
+      ..\..\dll\CommandHandling\AllowActionRecord.cs;
+      ..\..\dll\CommandHandling\CoordinatorCommandProcessor.cs;
+      ..\..\dll\CommandHandling\CoordinatorStateData.cs;
+      ..\..\dll\CommandHandling\IAllowActionMap.cs;
+      ..\..\dll\CommandHandling\IAllowActionRecord.cs;
+      ..\..\dll\Coordinator\AzureParallelInfrastructureCoordinator.cs;
+      ..\..\dll\Coordinator\AzureParallelInfrastructureCoordinatorFactory.cs;
+      ..\..\dll\Coordinator\CoordinatorEnvironment.cs;
+      ..\..\dll\Coordinator\CoordinatorDiagnosticInfo.cs;
+      ..\..\dll\Coordinator\ManagementChannelTerminallyUnhealthyException.cs;
+      ..\..\dll\Helpers\BondHelper.cs;
+      ..\..\dll\Helpers\ImpactedRoleInstance.cs;
+      ..\..\dll\Helpers\RepairTaskExecutorData.cs;
+      ..\..\dll\Helpers\JobSummary.cs;
+      ..\..\dll\Helpers\CoordinatorHelper.cs;
+      ..\..\dll\Helpers\RepairTaskPrepareArgs.cs;
+      ..\..\dll\Helpers\RepairActionProvider.cs;
+      ..\..\dll\IActionableWorkItem.cs;
+      ..\..\dll\ImpactTranslator.cs;
+      ..\..\dll\IMappedTenantJob.cs;
+      ..\..\dll\IMappedRepairTask.cs;
+      ..\..\dll\JobClassifier.cs;
+      ..\..\dll\MappedRepairTask.cs;
+      ..\..\dll\MappedTenantJob.cs;
+      ..\..\dll\PolicyAgent\IPolicyAgentClient.cs;
+      ..\..\dll\PolicyAgent\IPolicyAgentServiceWrapper.cs;
+      ..\..\dll\PolicyAgent\PolicyAgentClient.cs;
+      ..\..\dll\PolicyAgent\PolicyAgentServiceWrapper.cs;
+      ..\..\dll\Policies\ActionPolicy.cs;
+      ..\..\dll\Policies\IActionPolicy.cs;
+      ..\..\dll\Policies\IActionPolicyFactory.cs;
+      ..\..\dll\Policies\DefaultActionPolicyFactory.cs;
+      ..\..\dll\Policies\ExternalAllowActionPolicy.cs;
+      ..\..\dll\Policies\JobBlockingActionPolicy.cs;
+      ..\..\dll\Policies\JobThrottlingActionPolicy.cs;
+      ..\..\dll\Policies\PrePostExecuteActionPolicy.cs;
+      ..\..\dll\Reconciler.cs;
+      ..\..\dll\Repairs\IRepairManager.cs;
+      ..\..\dll\Repairs\IRepairManagerFactory.cs;
+      ..\..\dll\Repairs\IRepairTask.cs;
+      ..\..\dll\Repairs\ServiceFabricRepairManager.cs;
+      ..\..\dll\Repairs\ServiceFabricRepairManagerFactory.cs;
+      ..\..\dll\Repairs\ServiceFabricRepairTask.cs;
+      ..\..\dll\Telemetry\ActivityEvent.cs;
+      ..\..\dll\Telemetry\ActivityEventHelper.cs;
+      ..\..\dll\Telemetry\ActivityEventType.cs;
+      ..\..\dll\Telemetry\ActivityLoggerFactory.cs;
+      ..\..\dll\Telemetry\ChangeStateEvent.cs;
+      ..\..\dll\Telemetry\IActivityEvent.cs;
+      ..\..\dll\Telemetry\IActivityLogger.cs;
+      ..\..\dll\Telemetry\IActivityLoggerFactory.cs;
+      ..\..\dll\Telemetry\OperationEvent.cs;
+      ..\..\dll\Telemetry\OperationResult.cs;
+      ..\..\dll\Telemetry\TraceActivitySubject.cs;
+      ..\..\dll\Wrappers\IImpactInfo.cs;
+      ..\..\dll\Wrappers\IJobStepInfo.cs;
+      ..\..\dll\Wrappers\ImpactInfoWrapper.cs;
+      ..\..\dll\Wrappers\IPolicyAgentDocumentForTenant.cs;
+      ..\..\dll\Wrappers\IRoleInstanceImpactedByJob.cs;
+      ..\..\dll\Wrappers\ITenantJob.cs;
+      ..\..\dll\Wrappers\JobStepInfoWrapper.cs;
+      ..\..\dll\Wrappers\PolicyAgentDocumentForTenantWrapper.cs;
+      ..\..\dll\Wrappers\RoleInstanceImpactedByJobWrapper.cs;
+      ..\..\dll\Wrappers\TenantJobWrapper.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\..\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="..\..\schema\CoreCLR\FabricIS.parallel.schema\FabricIS.parallel.schema.csproj" />
+    <ProjectReference Include="..\..\..\common\CoreCLR\FabricIS.common\FabricIS.common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+    <PackageReference Include="Bond.Core.CSharp" Version="6.0.0" />
+    <PackageReference Include="Bond.Compiler.CSharp" Version="6.0.0" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  
+  <!-- Nuget package do not support changing the alias from csproj
+       This is a workaround for it -->
+  <Target Name="InstallAliasesForNugetPackageAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
+    <ItemGroup>
+      <ReferencePath Condition="'%(FileName)' == 'Newtonsoft.Json'">
+        <Aliases>ActualSystemRuntimeSerializationFormatters</Aliases>
+      </ReferencePath>
+    </ItemGroup>
+  </Target>
+</Project>

@@ -26,5 +26,10 @@ namespace System.Fabric.BackupRestore.DataStructures
         /// Azure storage as the backup store type
         /// </summary>
         AzureStorage = NativeBackupRestoreTypes.FABRIC_BACKUP_STORE_TYPE.FABRIC_BACKUP_STORE_TYPE_AZURE_STORE,
+
+        /// <summary>
+        /// dSMS managed Azure storage as the backup store type
+        /// </summary>
+        DsmsAzureStorage = NativeBackupRestoreTypes.FABRIC_BACKUP_STORE_TYPE.FABRIC_BACKUP_STORE_TYPE_DSMS_AZURE_STORE,
     }
 }

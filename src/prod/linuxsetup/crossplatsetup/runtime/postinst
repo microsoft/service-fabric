@@ -21,7 +21,18 @@ GetDistroInstaller()
     fi
 }
 
+FabricHostServicePath=/etc/systemd/system/servicefabric.service
+UpdaterServicePath=/etc/systemd/system/servicefabricupdater.service
+
 GetDistroInstaller DISTROINSTALLER
+
+awk -F/ '$2 == "docker"' /proc/self/cgroup | read
+if [ $? == 0 ]; then
+    echo "Running in container"
+    RunningInContainer="true"
+else
+    RunningInContainer="false"
+fi
 
 echo Creating sfuser
 groupadd -r sfuser >/dev/null 2>&1
@@ -71,17 +82,41 @@ if ! grep -q "$MatchStatement" $SshdConfigFile; then
     systemctl reload sshd
 fi
 
+echo Setting up Fabric environment
+echo FabricHostServicePath = ${FabricHostServicePath}
+echo UpdaterServicePath = ${UpdaterServicePath}
+
+if [ ! -d /etc/servicefabric ]; then
+    mkdir /etc/servicefabric
+fi
+
+echo -n ${FabricHostServicePath} > /etc/servicefabric/FabricHostServicePath
+echo -n ${UpdaterServicePath} > /etc/servicefabric/UpdaterServicePath
+
 echo "Copying servicefabric.service file to systemd"
-cp -f --preserve usr/share/servicefabric/scripts/servicefabric.service /etc/systemd/system/servicefabric.service
+cp -f --preserve usr/share/servicefabric/scripts/servicefabric.service ${FabricHostServicePath}
 if [ $? != 0 ]; then
     echo Error: Failed to copy servicefabric.service file to systemd folder
     exit 1
 fi
 
 echo "Copying servicefabricupdater.service file to systemd"
-cp -f --preserve usr/share/servicefabric/scripts/servicefabricupdater.service /etc/systemd/system/servicefabricupdater.service
+cp -f --preserve usr/share/servicefabric/scripts/servicefabricupdater.service ${UpdaterServicePath}
 if [ $? != 0 ]; then
     echo Error: Failed to copy servicefabricupdater.service file to systemd folder
+    exit 1
+fi
+
+echo "Setting sfuser as owner of Fabric services"
+chown sfuser:sfuser ${FabricHostServicePath}
+if [ $? != 0 ]; then
+    echo Error: Failed to set sfuser as owner of ${FabricHostServicePath}
+    exit 1
+fi
+
+chown sfuser:sfuser ${UpdaterServicePath}
+if [ $? != 0 ]; then
+    echo Error: Failed to set sfuser as owner of ${UpdaterServicePath}
     exit 1
 fi
 
@@ -164,8 +199,12 @@ if [ -f /usr/bin/atop ]; then
     # restart instead of start in case atop is already running
     systemctl restart atop.service
     if [ $? != 0 ]; then
-        echo Error: Failed to restart atop.service
-        exit 1
+        "echo Error: Failed to restart atop.service"
+        if [ "$RunningInContainer" == "true" ]; then
+            echo "Ignoring systemctl access due to running in container environment."
+        else
+            exit 1
+        fi
     fi
 else
     echo "atop not installed, so not configured."

@@ -1612,6 +1612,16 @@ private:
     UserRecordHeaderFault(RvdLogUserStreamRecordHeader& UserStreamRecordHeader, ULONG LineNumber)
     {
         KWString streamId(KtlSystem::GlobalNonPagedAllocator(), UserStreamRecordHeader.LogStreamId.Get());
+#if defined(PLATFORM_UNIX)
+        KDbgPrintf(
+            "UnitTestLogValidator::UserRecordHeaderFault @LogValidator Line: %i; Stream: %s; AtLsn: %I64u; Type: %i; MetadataSize: %i; IoBufferSize: %i\n",
+            LineNumber,
+            Utf16To8((WCHAR*)streamId).c_str(),
+            UserStreamRecordHeader.Lsn.Get(),
+            UserStreamRecordHeader.RecordType,
+            UserStreamRecordHeader.MetaDataSize,
+            UserStreamRecordHeader.IoBufferSize);
+#else
         KDbgPrintf(
             "UnitTestLogValidator::UserRecordHeaderFault @LogValidator Line: %i; Stream: %S; AtLsn: %I64u; Type: %i; MetadataSize: %i; IoBufferSize: %i\n",
             LineNumber,
@@ -1620,6 +1630,7 @@ private:
             UserStreamRecordHeader.RecordType,
             UserStreamRecordHeader.MetaDataSize,
             UserStreamRecordHeader.IoBufferSize);
+#endif
     }
 
     VOID
@@ -1664,6 +1675,15 @@ private:
     InconsistentStreamInfoFound(RvdLogStreamInformation& CurrentInfo, RvdLogPhysicalCheckpointRecord& CpRecord)
     {
         KWString streamId(KtlSystem::GlobalNonPagedAllocator(), CurrentInfo.LogStreamId.Get());
+#if defined(PLATFORM_UNIX)
+        KDbgPrintf(
+            "UnitTestLogValidator::InconsistentStreamInfoFound; ForStreamId: %s; CpAtLsn: %I64u; LowestLsn: %I64u; HighestLsn: %I64u; NextLsn: %I64u\n",
+            Utf16To8((WCHAR*)streamId).c_str(),
+            CpRecord.Lsn.Get(),
+            CurrentInfo.LowestLsn.Get(),
+            CurrentInfo.HighestLsn.Get(),
+            CurrentInfo.NextLsn.Get());
+#else
         KDbgPrintf(
             "UnitTestLogValidator::InconsistentStreamInfoFound; ForStreamId: %S; CpAtLsn: %I64u; LowestLsn: %I64u; HighestLsn: %I64u; NextLsn: %I64u\n",
             (WCHAR*)streamId,
@@ -1671,6 +1691,7 @@ private:
             CurrentInfo.LowestLsn.Get(),
             CurrentInfo.HighestLsn.Get(),
             CurrentInfo.NextLsn.Get());
+#endif
     }
 
     VOID
@@ -1693,10 +1714,17 @@ private:
     StreamMissingInValidRecord(RvdLogRecordHeader& RecordHeader)
     {
         KWString streamId(KtlSystem::GlobalNonPagedAllocator(), RecordHeader.LogStreamId.Get());
+#if defined(PLATFORM_UNIX)
+        KDbgPrintf(
+            "UnitTestLogValidator::StreamMissingInValidRecord; ForStreamId: %s; AtLsn: %I64u\n",
+            Utf16To8((WCHAR*)streamId).c_str(),
+            RecordHeader.Lsn.Get());
+#else
         KDbgPrintf(
             "UnitTestLogValidator::StreamMissingInValidRecord; ForStreamId: %S; AtLsn: %I64u\n",
             (WCHAR*)streamId,
             RecordHeader.Lsn.Get());
+#endif
     }
 
     VOID
@@ -1704,17 +1732,35 @@ private:
     {
         KWString streamId(KtlSystem::GlobalNonPagedAllocator(), RecordHeader.LogStreamId.Get());
         KWString streamType(KtlSystem::GlobalNonPagedAllocator(), RecordHeader.LogStreamId.Get());
+#if defined(PLATFORM_UNIX)
+        KDbgPrintf(
+            "UnitTestLogValidator::StreamMissingInValidRecord; ForStreamId: %s; StreamType: %s; AtLsn: %I64u\n",
+            Utf16To8((WCHAR*)streamId).c_str(),
+            Utf16To8((WCHAR*)streamType).c_str(),
+            RecordHeader.Lsn.Get());
+#else
         KDbgPrintf(
             "UnitTestLogValidator::StreamMissingInValidRecord; ForStreamId: %S; StreamType: %S; AtLsn: %I64u\n",
             (WCHAR*)streamId,
             (WCHAR*)streamType,
             RecordHeader.Lsn.Get());
+#endif
     }
 
     VOID
     InvalidStreamLimitsInValidRecord(RvdLogRecordHeader& RecordHeader, RvdLogStreamInformation& StreamInfo)
     {
         KWString streamId(KtlSystem::GlobalNonPagedAllocator(), RecordHeader.LogStreamId.Get());
+#if defined(PLATFORM_UNIX)
+        KDbgPrintf(
+            "UnitTestLogValidator::InvalidStreamLimitsInValidRecord; ForStreamId: %s; AtLsn: %I64u; "
+            "PrevLsnInLogStream: %I64u; StreamInfo{HighestLsn: %I64u; NextLsn: %I64u}\n",
+            Utf16To8((WCHAR*)streamId).c_str(),
+            RecordHeader.Lsn.Get(),
+            RecordHeader.PrevLsnInLogStream.Get(),
+            StreamInfo.HighestLsn.Get(),
+            StreamInfo.NextLsn.Get());
+#else
         KDbgPrintf(
             "UnitTestLogValidator::InvalidStreamLimitsInValidRecord; ForStreamId: %S; AtLsn: %I64u; "
             "PrevLsnInLogStream: %I64u; StreamInfo{HighestLsn: %I64u; NextLsn: %I64u}\n",
@@ -1723,6 +1769,7 @@ private:
             RecordHeader.PrevLsnInLogStream.Get(),
             StreamInfo.HighestLsn.Get(),
             StreamInfo.NextLsn.Get());
+#endif
     }
 
     VOID
@@ -1746,10 +1793,17 @@ private:
     InvalidStreamIdInValidRecord(RvdLogUserStreamRecordHeader& RecordHeader)
     {
         KWString streamId(KtlSystem::GlobalNonPagedAllocator(), RecordHeader.LogStreamId.Get());
+#if defined(PLATFORM_UNIX)
+        KDbgPrintf(
+            "UnitTestLogValidator::InvalidStreamLimitsInValidRecord; ForStreamId: %s; AtLsn: %I64u\n",
+            Utf16To8((WCHAR*)streamId).c_str(),
+            RecordHeader.Lsn.Get());
+#else
         KDbgPrintf(
             "UnitTestLogValidator::InvalidStreamLimitsInValidRecord; ForStreamId: %S; AtLsn: %I64u\n",
             (WCHAR*)streamId,
             RecordHeader.Lsn.Get());
+#endif
     }
 
     VOID
@@ -2007,6 +2061,17 @@ private:
         KWString streamId(KtlSystem::GlobalNonPagedAllocator(), CurrentInfo.LogStreamId.Get());
         KWString streamType(KtlSystem::GlobalNonPagedAllocator(), CurrentInfo.LogStreamType.Get());
 
+#if defined(PLATFORM_UNIX)
+        KDbgPrintf(
+            "UnitTestLogValidator::ReportRecoveredStreamInfoInCheckpointRecord: \n"
+            "\tStreamId: %s; \n"
+            "\tStreamType: %s; LowestLsn: %I64u; HighestLsn: %I64u; NextLsn: %I64u\n",
+            Utf16To8((WCHAR*)streamId).c_str(),
+            Utf16To8((WCHAR*)streamType).c_str(),
+            CurrentInfo.LowestLsn.Get(),
+            CurrentInfo.HighestLsn.Get(),
+            CurrentInfo.NextLsn.Get());
+#else
         KDbgPrintf(
             "UnitTestLogValidator::ReportRecoveredStreamInfoInCheckpointRecord: \n"
             "\tStreamId: %S; \n"
@@ -2016,6 +2081,7 @@ private:
             CurrentInfo.LowestLsn.Get(),
             CurrentInfo.HighestLsn.Get(),
             CurrentInfo.NextLsn.Get());
+#endif
     }
 
     VOID
@@ -2068,6 +2134,16 @@ private:
         BOOLEAN     isCheckpointStream = StreamDesc._Info.LogStreamId == RvdDiskLogConstants::CheckpointStreamId();
         ULONG       numberOfLSNs = isCheckpointStream ? 0 : StreamDesc._LsnIndex->QueryNumberOfRecords();
 
+#if defined(PLATFORM_UNIX)
+        KDbgPrintf(
+            "UnitTestLogValidator::ReportRecoveredStream: StreamId: %s; LowestLsn: %I64u; HighestLsn: %I64u; NextLsn: %I64u; TPointAsn: %I64u; #LSNs: %u\n",
+            Utf16To8((WCHAR*)streamId).c_str(),
+            StreamDesc._Info.LowestLsn.Get(),
+            StreamDesc._Info.HighestLsn.Get(),
+            StreamDesc._Info.NextLsn.Get(),
+            StreamDesc._TruncationPoint.Get(),
+            numberOfLSNs);
+#else
         KDbgPrintf(
             "UnitTestLogValidator::ReportRecoveredStream: StreamId: %S; LowestLsn: %I64u; HighestLsn: %I64u; NextLsn: %I64u; TPointAsn: %I64u; #LSNs: %u\n",
             (WCHAR*)streamId,
@@ -2076,6 +2152,7 @@ private:
             StreamDesc._Info.NextLsn.Get(),
             StreamDesc._TruncationPoint.Get(),
             numberOfLSNs);
+#endif
 
         if (!isCheckpointStream)
         {
@@ -2099,12 +2176,21 @@ private:
         {
             RvdLogStreamInformation& streamInfo = StreamInfos[ix];
             KWString streamId(KtlSystem::GlobalNonPagedAllocator(), streamInfo.LogStreamId.Get());
+#if defined(PLATFORM_UNIX)
+            KDbgPrintf(
+                "\tStreamId: %s; LowestLsn: %I64u; HighestLsn: %I64u; NextLsn: %I64u\n",
+                Utf16To8((WCHAR*)streamId).c_str(),
+                streamInfo.LowestLsn.Get(),
+                streamInfo.HighestLsn.Get(),
+                streamInfo.NextLsn.Get());
+#else
             KDbgPrintf(
                 "\tStreamId: %S; LowestLsn: %I64u; HighestLsn: %I64u; NextLsn: %I64u\n",
                 (WCHAR*)streamId,
                 streamInfo.LowestLsn.Get(),
                 streamInfo.HighestLsn.Get(),
                 streamInfo.NextLsn.Get());
+#endif
         }
     }
 
@@ -2388,7 +2474,7 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
         KWString    streamId(KtlSystem::GlobalNonPagedAllocator(), RecoveredState._StreamDescs[ix0]._Info.LogStreamId.Get());
         ULONG       ix1;
 
-        for (ix1 = 0; ix1 < LogState._NumberOfStreams; ix1++)
+        for (ix1 = 0; ix0 < LogState._NumberOfStreams; ix1++)
         {
             if (RecoveredState._StreamDescs[ix0]._Info.LogStreamId == LogState._StreamDescs[ix1]._Info.LogStreamId)
             {
@@ -2398,28 +2484,49 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                 if (recoveredDesc._Info.LogStreamType != logDesc._Info.LogStreamType)
                 {
                     comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                    KDbgPrintf(
+                        "ReportLogStateDifferences: LogStreamType Compare Failed for stream %s: %i\n",
+                        Utf16To8((WCHAR*)streamId).c_str(),
+                        __LINE__);
+#else
                     KDbgPrintf(
                         "ReportLogStateDifferences: LogStreamType Compare Failed for stream %S: %i\n",
                         (WCHAR*)streamId,
                         __LINE__);
+#endif
                 }
 
                 if (recoveredDesc._Info.HighestLsn != logDesc._Info.HighestLsn)
                 {
                     comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                    KDbgPrintf(
+                        "ReportLogStateDifferences: HighestLsn Compare Failed for stream %s: %i\n",
+                        Utf16To8((WCHAR*)streamId).c_str(),
+                        __LINE__);
+#else
                     KDbgPrintf(
                         "ReportLogStateDifferences: HighestLsn Compare Failed for stream %S: %i\n",
                         (WCHAR*)streamId,
                         __LINE__);
+#endif
                 }
 
                 if (recoveredDesc._Info.NextLsn != logDesc._Info.NextLsn)
                 {
                     comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                    KDbgPrintf(
+                        "ReportLogStateDifferences: NextLsn Compare Failed for stream %s: %i\n",
+                        Utf16To8((WCHAR*)streamId).c_str(),
+                        __LINE__);
+#else
                     KDbgPrintf(
                         "ReportLogStateDifferences: NextLsn Compare Failed for stream %S: %i\n",
                         (WCHAR*)streamId,
                         __LINE__);
+#endif
                 }
 
                 if (recoveredDesc._Info.LowestLsn != logDesc._Info.LowestLsn)
@@ -2428,10 +2535,17 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                     {
                         // under recovered stream state
                         comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                        KDbgPrintf(
+                            "ReportLogStateDifferences: LowestLsn Compare Failed (under recovered) for stream %s: %i\n",
+                            Utf16To8((WCHAR*)streamId).c_str(),
+                            __LINE__);
+#else
                         KDbgPrintf(
                             "ReportLogStateDifferences: LowestLsn Compare Failed (under recovered) for stream %S: %i\n",
                             (WCHAR*)streamId,
                             __LINE__);
+#endif
                     }
                 }
 
@@ -2458,28 +2572,49 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                 if (recoveredDesc._AsnIndex->GetNumberOfEntries() != logDesc._AsnIndex->GetNumberOfEntries())
                 {
                     comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                    KDbgPrintf(
+                        "ReportLogStateDifferences: GetNumberOfEntries (Asn) Compare Failed for stream %s: %i\n",
+                        Utf16To8((WCHAR*)streamId).c_str(),
+                        __LINE__);
+#else
                     KDbgPrintf(
                         "ReportLogStateDifferences: GetNumberOfEntries (Asn) Compare Failed for stream %S: %i\n",
                         (WCHAR*)streamId,
                         __LINE__);
+#endif
                 }
 
                 if (recoveredDesc._LsnIndex->QueryNumberOfRecords() != logDesc._LsnIndex->QueryNumberOfRecords())
                 {
                     comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                    KDbgPrintf(
+                        "ReportLogStateDifferences: QueryNumberOfRecords (Lsn) Compare Failed for stream %s: %i\n",
+                        Utf16To8((WCHAR*)streamId).c_str(),
+                        __LINE__);
+#else
                     KDbgPrintf(
                         "ReportLogStateDifferences: QueryNumberOfRecords (Lsn) Compare Failed for stream %S: %i\n",
                         (WCHAR*)streamId,
                         __LINE__);
+#endif
                 }
 
                 if (recoveredDesc._TruncationPoint != logDesc._TruncationPoint)
                 {
                     comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                    KDbgPrintf(
+                        "ReportLogStateDifferences: _TruncationPoint Compare Failed for stream %s: %i\n",
+                        Utf16To8((WCHAR*)streamId).c_str(),
+                        __LINE__);
+#else
                     KDbgPrintf(
                         "ReportLogStateDifferences: _TruncationPoint Compare Failed for stream %S: %i\n",
                         (WCHAR*)streamId,
                         __LINE__);
+#endif
                 }
 
                 // Verify the _AsnIndex's match
@@ -2492,10 +2627,17 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if ((recoveredAsnEntry == nullptr) || (logAsnEntry == nullptr))
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: UnsafeFirst() returned nullptr for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: UnsafeFirst() returned nullptr for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
 
                             break;
                         }
@@ -2503,10 +2645,17 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if (recoveredAsnEntry->GetAsn() != logAsnEntry->GetAsn())
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: GetAsn() mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: GetAsn() mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
 
                             break;
                         }
@@ -2514,10 +2663,17 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if (recoveredAsnEntry->GetLsn() != logAsnEntry->GetLsn())
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: GetLsn() mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: GetLsn() mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
 
                             break;
                         }
@@ -2525,10 +2681,17 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if (recoveredAsnEntry->GetVersion() != logAsnEntry->GetVersion())
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: GetVersion() mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: GetVersion() mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
 
                             break;
                         }
@@ -2536,10 +2699,17 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if (recoveredAsnEntry->GetDisposition() != logAsnEntry->GetDisposition())
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: GetDisposition() mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: GetDisposition() mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
 
                             break;
                         }
@@ -2547,10 +2717,17 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if (recoveredAsnEntry->GetIoBufferSizeHint() != logAsnEntry->GetIoBufferSizeHint())
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: GetIoBufferSizeHint() mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: GetIoBufferSizeHint() mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
 
                             break;
                         }
@@ -2558,10 +2735,17 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if (recoveredAsnEntry->GetLowestLsnOfHigherASNs() != logAsnEntry->GetLowestLsnOfHigherASNs())
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: GetLowestLsnOfHigherASNs() mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: GetLowestLsnOfHigherASNs() mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
 
                             break;
                         }
@@ -2586,11 +2770,19 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if (!NT_SUCCESS(status))
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: QueryRecord() Failed for stream %s: Status: 0x%08X, %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                status,
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: QueryRecord() Failed for stream %S: Status: 0x%08X, %i\n",
                                 (WCHAR*)streamId,
                                 status,
                                 __LINE__);
+#endif
                         }
 
                         RvdLogLsn   lsn1;
@@ -2601,38 +2793,67 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
                         if (!NT_SUCCESS(status))
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: QueryRecord() Failed for stream %s: Status: 0x%08X, %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                status,
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: QueryRecord() Failed for stream %S: Status: 0x%08X, %i\n",
                                 (WCHAR*)streamId,
                                 status,
                                 __LINE__);
+#endif
                         }
 
                         if (lsn0 != lsn1)
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: LSN mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: LSN mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
                         }
 
                         if (headerAndMetadataSize0 != headerAndMetadataSize1)
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: headerAndMetadataSize mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: headerAndMetadataSize mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
                         }
 
                         if (ioBufferSize0 != ioBufferSize1)
                         {
                             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+                            KDbgPrintf(
+                                "ReportLogStateDifferences: ioBufferSize mismatch for stream %s: %i\n",
+                                Utf16To8((WCHAR*)streamId).c_str(),
+                                __LINE__);
+#else
                             KDbgPrintf(
                                 "ReportLogStateDifferences: ioBufferSize mismatch for stream %S: %i\n",
                                 (WCHAR*)streamId,
                                 __LINE__);
+#endif
                         }
                     }
                 }
@@ -2644,7 +2865,11 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
         if (ix1 ==  LogState._NumberOfStreams)
         {
             comparedOk = FALSE;
+#if defined(PLATFORM_UNIX)
+            KDbgPrintf("ReportLogStateDifferences: Stream %s is missing: %i\n", Utf16To8((WCHAR*)streamId).c_str(), __LINE__);
+#else
             KDbgPrintf("ReportLogStateDifferences: Stream %S is missing: %i\n", (WCHAR*)streamId, __LINE__);
+#endif
         }
     }
 

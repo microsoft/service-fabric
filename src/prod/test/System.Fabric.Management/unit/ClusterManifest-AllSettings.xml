@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClusterManifest Name="Server-Default-SingleNode" Version="1.0" xsi:schemaLocation="http://schemas.microsoft.com/2011/01/fabric .\ServiceFabricServiceModel.xsd" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <NodeTypes>
+    <NodeType Name="NodeType1" >
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000"/>
+        <LeaseDriverEndpoint Port="19001"/>
+        <ClusterConnectionEndpoint Port="19002"/>
+        <ServiceConnectionEndpoint Port="19006"/>
+        <HttpGatewayEndpoint Port="19007" Protocol="https"/>
+        <ApplicationEndpoints StartPort="30001" EndPort="31000"/>
+      </Endpoints>
+      <Certificates>
+        <ServerCertificate X509FindValue="7c 97 51 2a 7b 66 82 1d 8a 72 48 55 8b 7c 62 67 33 07 96 c5" />
+      </Certificates>
+      <Capacities>
+        <Capacity Name="Metric1" Value="50" />
+        <Capacity Name="Metric2" Value="50" />
+      </Capacities>
+    </NodeType>
+  </NodeTypes>
+  <Infrastructure>
+    <WindowsServer IsScaleMin="false">
+      <NodeList>
+        <Node NodeTypeRef="NodeType1" IsSeedNode="true" IPAddressOrFQDN="localhost" NodeName="Node1" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1" />
+      </NodeList>
+    </WindowsServer>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="HttpGateway">
+      <Parameter Name="IsEnabled" Value="true"/>
+    </Section>
+    <Section Name="FabricHost">
+      <Parameter Name="StopTimeout" Value="1.0" />
+      <Parameter Name="StartTimeout" Value="1.0" />
+      <Parameter Name="ActivationMaxFailureCount" Value="1" />
+      <Parameter Name="ActivationRetryBackoffInterval" Value="1.0" />
+      <Parameter Name="ActivationMaxRetryInterval" Value="1.0" />
+    </Section>
+    <Section Name="LocalLogStore">
+      <Parameter Name="LocalLogDeletionEnabled" Value="true" />
+      <Parameter Name="LogDeletionAgeInDays" Value="1" />
+    </Section>
+    <Section Name="Trace/Etw">
+      <Parameter Name="Level" Value="1" />
+      <Parameter Name="Filters" Value="ABCD" />
+      <Parameter Name="Sampling" Value="1" />
+    </Section>
+    <Section Name="Trace/File">
+      <Parameter Name="Level" Value="1" />
+      <Parameter Name="Filters" Value="ABCD" />
+      <Parameter Name="Path" Value="ABCD" />
+      <Parameter Name="Option" Value="1.0" />
+    </Section>
+    <Section Name="Trace/Console">
+      <Parameter Name="Filters" Value="ABCD" />
+      <Parameter Name="Level" Value="1" />
+    </Section>
+    <Section Name="Common">
+      <Parameter Name="DebugBreakEnabled" Value="true" />
+      <Parameter Name="TestAssertEnabled" Value="true" />
+      <Parameter Name="PerfMonitorInterval" Value="1.0" />
+    </Section>
+    <Section Name="Security">
+      <Parameter Name="SettingsX509StoreName" Value="ABCD" />
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="ClusterProtectionLevel" Value="ABCD" />
+      <Parameter Name="ClusterAllowedCommonNames" Value="ABCD" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+      <Parameter Name="ClientServerProtectionLevel" Value="ABCD" />
+      <Parameter Name="ClientAuthAllowedCommonNames" Value="ABCD" />
+      <Parameter Name="ServerAuthAllowedCommonNames" Value="ABCD" />
+      <Parameter Name="SessionExpiration" Value="1.0" />
+    </Section>
+    <Section Name="DSTSTokenValidationService">
+      <Parameter Name="DSTSDnsName" Value="ABCD" />
+      <Parameter Name="DSTSRealm" Value="ABCD" />
+      <Parameter Name="CloudServiceDnsName" Value="ABCD" />
+      <Parameter Name="CloudServiceName" Value="ABCD" />
+      <Parameter Name="PublicCertificateFindValue" Value="6a b6 e9 6e 92 69 c5 ed 42 15 a0 3a 16 09 1c 19 ee 75 47 cb" />
+      <Parameter Name="PublicCertificateFindType" Value="FindByThumbprint" />
+      <Parameter Name="PublicCertificateStoreName" Value="My" />
+    </Section>
+    <Section Name="Federation">
+      <Parameter Name="NeighborhoodSize" Value="1" />
+      <Parameter Name="NodeUnknownStateDuration" Value="1.0" />
+      <Parameter Name="EdgeProbeInterval" Value="1.0" />
+      <Parameter Name="TokenProbeInterval" Value="1.0" />
+      <Parameter Name="NeighborhoodExchangeTimeout" Value="1.0" />
+      <Parameter Name="NodeInformationExpirationTimeout" Value="1.0" />
+      <Parameter Name="RoutingTableCompactInterval" Value="1.0" />
+      <Parameter Name="RoutingTableCapacity" Value="1" />
+      <Parameter Name="MaxNeighborhoodHeaders" Value="1" />
+      <Parameter Name="MaxGapsInCluster" Value="1" />
+      <Parameter Name="MessageTimeout" Value="1.0" />
+      <Parameter Name="MaxMessageSize" Value="1" />      
+      <Parameter Name="InMemoryTransportEnabled" Value="true" />
+      <Parameter Name="JoinLockDuration" Value="1.0" />
+      <Parameter Name="JoinStateMachineInterval" Value="1.0" />
+      <Parameter Name="LockRequestTimeout" Value="1.0" />
+      <Parameter Name="TokenAcquireTimeout" Value="1.0" />
+      <Parameter Name="PingInterval" Value="1.0" />
+      <Parameter Name="UpdateInterval" Value="1.0" />
+      <Parameter Name="MaxUpdateTarget" Value="1" />
+      <Parameter Name="GlobalTicketLeaseDuration" Value="1.0" />
+      <Parameter Name="BootstrapTicketLeaseDuration" Value="1.0" />
+      <Parameter Name="VoteOwnershipLeaseInterval" Value="1.0" />
+      <Parameter Name="BootstrapVoteRequestInterval" Value="1.0" />
+      <Parameter Name="BootstrapVoteAcquireRetryInterval" Value="1.0" />
+      <Parameter Name="BootstrapStateMachineInterval" Value="1.0" />
+      <Parameter Name="GlobalTicketRenewInterval" Value="1.0" />
+      <Parameter Name="BootstrapTicketAcquireLimit" Value="1.0" />
+      <Parameter Name="LeaseDuration" Value="1.0" />
+      <Parameter Name="LeaseSuspendTimeout" Value="1.0" />
+      <Parameter Name="LeaseRetryCount" Value="1" />
+      <Parameter Name="LeaseRenewBeginRatio" Value="1" />
+      <Parameter Name="ApplicationLeaseDuration" Value="1.0" />
+      <Parameter Name="ArbitrationTimeout" Value="1.0" />
+      <Parameter Name="ArbitrationRequestDelay" Value="1.0" />
+      <Parameter Name="ArbitrationRetryInterval" Value="1.0" />
+      <Parameter Name="ArbitrationCleanupInterval" Value="1.0" />
+    </Section>
+    <Section Name="Votes">
+      <Parameter Name="PropertyGroup" Value="SqlServer,1.0" />
+    </Section>
+    <Section Name="Hosting">
+      <Parameter Name="CreateFabricRuntimeTimeout" Value="1.0" />
+      <Parameter Name="ServiceFactoryRegistrationTimeout" Value="1.0" />
+      <Parameter Name="RegisterCodePackageHostTimeout" Value="1.0" />
+      <Parameter Name="GetCodePackageActivationContextTimeout" Value="1.0" />
+      <Parameter Name="ApplicationHostCloseTimeout" Value="1.0" />
+      <Parameter Name="RequestTimeout" Value="1.0" />      
+      <Parameter Name="DeploymentRetryBackoffInterval" Value="1.0" />
+      <Parameter Name="DeploymentMaxRetryInterval" Value="1.0" />
+      <Parameter Name="DeploymentMaxFailureCount" Value="1" />
+      <Parameter Name="ActivationTimeout" Value="1.0" />
+      <Parameter Name="ActivationRetryBackoffInterval" Value="1.0" />
+      <Parameter Name="ActivationMaxRetryInterval" Value="1.0" />
+      <Parameter Name="ActivationMaxFailureCount" Value="1" />
+      <Parameter Name="EnableActivateNoWindow" Value="true" />
+      <Parameter Name="ActivatedProcessDieOnUnhandledExceptionEnabled" Value="true" />
+      <Parameter Name="RunAsPolicyEnabled" Value="true" />
+      <Parameter Name="NTLMAuthenticationEnabled" Value="true" />
+      <Parameter Name="NTLMAuthenticationPasswordSecret" Value="1.0"/>
+      <Parameter Name="EndpointProviderEnabled" Value="true" />
+      <Parameter Name="InteractiveRunAsEnabled" Value="true" />
+      <Parameter Name="DeactivationScanInterval" Value="1.0" />
+      <Parameter Name="DeactivationGraceInterval" Value="1.0" />
+      <Parameter Name="ServiceTypeDisableGraceInterval" Value="1.0" />
+      <Parameter Name="ServiceTypeDisableFailureThreshold" Value="1" />
+      <Parameter Name="DisabledServiceTypeRecoveryInterval" Value="1.0" />
+      <Parameter Name="AzureLogCollectorConfigurationTimeout" Value="1.0" />
+      <Parameter Name="DllHostExePath" Value="ABCD" />
+      <Parameter Name="FabricTypeHostPath" Value="ABCD" />
+    </Section>
+    <Section Name="Lease">
+      <Parameter Name="DebugLeaseDriverEnabled" Value="true" />
+    </Section>
+    <Section Name="Management">
+      <Parameter Name="ImageStoreConnectionString" Value="file:abcd"/>
+      <Parameter Name="ImageStoreMinimumTransferBPS" Value="1" />
+      <Parameter Name="ImageCachingEnabled" Value="true" />
+      <Parameter Name="ImageCacheDirectory" Value="ABCD" />
+      <Parameter Name="DeploymentDirectory" Value="ABCD" />
+      <Parameter Name="MonitoringAgentStorageAccount" Value="1.0" />
+      <Parameter Name="MonitoringAgentDirectoryQuota" Value="1" />
+      <Parameter Name="MonitoringAgentTransferInterval" Value="1.0" />
+    </Section>
+    <Section Name="ClusterManager">
+      <Parameter Name="TargetReplicaSetSize" Value="7" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="PlacementConstraints" Value="ABCD" />
+      <Parameter Name="UpgradeStatusPollInterval" Value="1.0" />
+      <Parameter Name="MinOperationTimeout" Value="1.0" />
+      <Parameter Name="MaxOperationTimeout" Value="1.0" />
+      <Parameter Name="MaxCommunicationTimeout" Value="1.0" />
+      <Parameter Name="MaxOperationRetryDelay" Value="1.0" />
+    </Section>
+    <Section Name="FileStoreService/Replication">
+      <Parameter Name="InitialReplicationQueueSize" Value="2" />
+      <Parameter Name="MaxReplicationQueueSize" Value="4" />
+      <Parameter Name="InitialCopyQueueSize" Value="2" />
+      <Parameter Name="MaxCopyQueueSize" Value="4" />
+      <Parameter Name="RetryInterval" Value="1.0" />
+      <Parameter Name="CompleteReplicateThreadCount" Value="1" />
+      <Parameter Name="AllowMultipleQuorumSet" Value="true" />
+      <Parameter Name="BatchAcknowledgementInterval" Value="0.5" />
+      <Parameter Name="QueueHealthWarningAtUsagePercent" Value="50" />
+      <Parameter Name="SlowIdleRestartAtQueueUsagePercent" Value="50" />
+      <Parameter Name="MaxPendingAcknowledgements" Value="1" />      
+      <Parameter Name="MaxReplicationMessageSize" Value="1" />
+      <Parameter Name="RequireServiceAck" Value="true" />
+      <Parameter Name="SecondaryClearAcknowledgedOperations" Value="true" />
+      <Parameter Name="UseStreamFaultsAndEndOfStreamOperationAck" Value="true" />
+    </Section>
+    <Section Name="ClusterManager/Replication">
+      <Parameter Name="InitialReplicationQueueSize" Value="2" />
+      <Parameter Name="MaxReplicationQueueSize" Value="4" />
+      <Parameter Name="InitialCopyQueueSize" Value="2" />
+      <Parameter Name="MaxCopyQueueSize" Value="4" />
+      <Parameter Name="RetryInterval" Value="1.0" />
+      <Parameter Name="CompleteReplicateThreadCount" Value="1" />
+      <Parameter Name="AllowMultipleQuorumSet" Value="true" />
+      <Parameter Name="BatchAcknowledgementInterval" Value="0.5" />
+      <Parameter Name="QueueHealthWarningAtUsagePercent" Value="50" />
+      <Parameter Name="SlowIdleRestartAtQueueUsagePercent" Value="50" />
+      <Parameter Name="MaxPendingAcknowledgements" Value="1" />
+      <Parameter Name="MaxReplicationMessageSize" Value="1" />
+      <Parameter Name="RequireServiceAck" Value="true" />
+      <Parameter Name="SecondaryClearAcknowledgedOperations" Value="true" />
+      <Parameter Name="UseStreamFaultsAndEndOfStreamOperationAck" Value="true" />
+    </Section>
+    <Section Name="HealthManager/ClusterHealthPolicy">
+      <Parameter Name="MaxPercentUnhealthyNodes" Value="0" />
+      <Parameter Name="MaxPercentUnhealthyApplications" Value="0" />
+    </Section>
+    <Section Name="FabricClient">
+      <Parameter Name="NodeAddresses" Value="ABCD" />
+      <Parameter Name="ConnectionInitializationTimeout" Value="1.0" />
+      <Parameter Name="PartitionLocationCacheLimit" Value="1" />
+      <Parameter Name="ServiceChangePollInterval" Value="1.0" />
+    </Section>
+    <Section Name="NamingService">
+      <Parameter Name="MaxOperationTimeout" Value="1.0" />
+      <Parameter Name="OperationRetryInterval" Value="1.0" />
+      <Parameter Name="MaxMessageSize" Value="1" />
+      <Parameter Name="PartitionCount" Value="1" />
+      <Parameter Name="TargetReplicaSetSize" Value="1" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="RepairOperationTimeout" Value="1.0" />
+      <Parameter Name="RepairInterval" Value="1.0" />
+      <Parameter Name="PlacementConstraints" Value="ABCD" />
+    </Section>
+    <Section Name="Naming/Replication">
+      <Parameter Name="InitialReplicationQueueSize" Value="2" />
+      <Parameter Name="MaxReplicationQueueSize" Value="4" />
+      <Parameter Name="InitialCopyQueueSize" Value="2" />
+      <Parameter Name="MaxCopyQueueSize" Value="4" />
+      <Parameter Name="RetryInterval" Value="1.0" />
+      <Parameter Name="CompleteReplicateThreadCount" Value="1" />
+      <Parameter Name="AllowMultipleQuorumSet" Value="true" />
+      <Parameter Name="BatchAcknowledgementInterval" Value="0.5" />
+      <Parameter Name="QueueHealthWarningAtUsagePercent" Value="50" />
+      <Parameter Name="SlowIdleRestartAtQueueUsagePercent" Value="50" />
+      <Parameter Name="MaxPendingAcknowledgements" Value="1" />
+      <Parameter Name="MaxReplicationMessageSize" Value="1" />
+      <Parameter Name="RequireServiceAck" Value="true" />
+      <Parameter Name="SecondaryClearAcknowledgedOperations" Value="true" />
+      <Parameter Name="UseStreamFaultsAndEndOfStreamOperationAck" Value="true" />
+    </Section>
+    <Section Name="Failover">
+      <Parameter Name="SendToFMRetryInterval" Value="1.0" />
+      <Parameter Name="SendToFMTimeout" Value="1.0" />
+      <Parameter Name="SendToNodeTimeout" Value="1.0" />
+      <Parameter Name="RoutingRetryTimeout" Value="1.0" />
+    </Section>
+    <Section Name="FailoverManager">
+      <Parameter Name="ClusterStableWaitDuration" Value="1.0" />
+      <Parameter Name="StoreOpenTimeout" Value="1.0" />
+      <Parameter Name="StoreRetryInterval" Value="1.0" />
+      <Parameter Name="PeriodicStateScanInterval" Value="1.0" />
+      <Parameter Name="ServiceLocationBroadcastInterval" Value="1.0" />
+      <Parameter Name="MinActionRetryIntervalPerReplica" Value="1.0" />
+      <Parameter Name="PeriodicStateCleanupScanInterval" Value="1.0" />
+      <Parameter Name="UserReplicaRestartWaitDuration" Value="1.0" />
+      <Parameter Name="SystemReplicaRestartWaitDuration" Value="1.0" />
+      <Parameter Name="StandByReplicaKeepDuration" Value="1.0" />
+      <Parameter Name="OfflineReplicaKeepDuration" Value="1.0" />
+      <Parameter Name="DroppedReplicaKeepDuration" Value="1.0" />
+      <Parameter Name="MinRebuildRetryInterval" Value="1.0" />
+      <Parameter Name="MaxRebuildRetryInterval" Value="1.0" />
+      <Parameter Name="LockAcquireTimeout" Value="1.0" />
+      <Parameter Name="FullRebuildWaitDuration" Value="1.0" />
+      <Parameter Name="QuorumLossWaitDuration" Value="1.0" />
+      <Parameter Name="ExpectedClusterSize" Value="1" />
+      <Parameter Name="ClusterPauseThreshold" Value="1" />
+      <Parameter Name="TargetReplicaSetSize" Value="1" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="BackgroundThreadCount" Value="1" />
+      <Parameter Name="ProcessingQueueThreadCount" Value="1" />
+      <Parameter Name="CommitQueueThreadCount" Value="1" />
+      <Parameter Name="CommonQueueThreadCount" Value="1" />
+      <Parameter Name="MaxActionsPerIteration" Value="1" />
+      <Parameter Name="StoreRetryAttempt" Value="1" />
+      <Parameter Name="ServiceLookupTableBroadcastAttemptCount" Value="1" />
+      <Parameter Name="ServiceLookupTableMessageMaxEntries" Value="1" />
+      <Parameter Name="ServiceLookupTableEmptyBroadcastInterval" Value="1.0" />
+      <Parameter Name="PlacementConstraints" Value="ABCD" />
+      <Parameter Name="MaxParallelLoadUpdates" Value="1" />
+      <Parameter Name="MaxLoadUpdateBatchSize" Value="1" />
+      <Parameter Name="StoreConnectionString" Value="ABCD" />
+      <Parameter Name="FMStoreDirectory" Value="ABCD" />
+      <Parameter Name="FMStoreFilename" Value="ABCD" />
+      <Parameter Name="DummyPLBEnabled" Value="true" />
+      <Parameter Name="IsTestMode" Value="true" />
+    </Section>
+    <Section Name="FailoverManager/Store">
+      <Parameter Name="CommitBatchingPeriod" Value="1" />
+      <Parameter Name="CommitBatchingSizeLimitInKB" Value="1" />
+      <Parameter Name="TransactionLowWatermark" Value="1" />
+      <Parameter Name="TransactionHighWatermark" Value="1" />
+      <Parameter Name="CommitBatchingPeriodExtension" Value="1" />
+    </Section>
+    <Section Name="ReconfigurationAgent">
+      <Parameter Name="MessageRetryInterval" Value="1.0" />
+      <Parameter Name="ReplicaUpMessageRetryInterval" Value="1.0" />
+      <Parameter Name="ReconfigurationMessageRetryInterval" Value="1.0" />
+      <Parameter Name="ReopenReplicaMessageRetryInterval" Value="1.0" />
+      <Parameter Name="RAStoreOpenTimeout" Value="1.0" />
+      <Parameter Name="RAStoreOpenRetryInterval" Value="1.0" />
+      <Parameter Name="RAUpgradeProgressCheckInterval" Value="1.0" />
+      <Parameter Name="SendLoadReportInterval" Value="1.0" />
+      <Parameter Name="FailoverUnitProxyCleanupInterval" Value="1.0" />
+      <Parameter Name="MaxNumberOfLoadReportsPerMessage" Value="1" />
+      <Parameter Name="FailoverUnitProcessingQueueThreadCount" Value="1" />
+      <Parameter Name="RAPMessageProcessingQueueThreadCount" Value="1" />
+      <Parameter Name="MessageProcessingQueueThreadCount" Value="1" />
+      <Parameter Name="PerNodeMinimumIntervalBetweenReplicaUpMessages" Value="1.0" />
+      <Parameter Name="PerReplicaMinimumIntervalBetweenReplicaUpMessages" Value="1.0" />
+      <Parameter Name="DroppedFailoverUnitTombstoneDuration" Value="1.0" />
+      <Parameter Name="DeletedFailoverUnitTombstoneDuration" Value="1.0" />
+      <Parameter Name="PeriodicStateCleanupInterval" Value="1.0" />
+    </Section>
+    <Section Name="Failover/Replication">
+      <Parameter Name="InitialReplicationQueueSize" Value="2" />
+      <Parameter Name="MaxReplicationQueueSize" Value="4" />
+      <Parameter Name="InitialCopyQueueSize" Value="2" />
+      <Parameter Name="MaxCopyQueueSize" Value="4" />
+      <Parameter Name="RetryInterval" Value="1.0" />
+      <Parameter Name="CompleteReplicateThreadCount" Value="1" />
+      <Parameter Name="AllowMultipleQuorumSet" Value="true" />
+      <Parameter Name="BatchAcknowledgementInterval" Value="0.5" />
+      <Parameter Name="QueueHealthWarningAtUsagePercent" Value="50" />
+      <Parameter Name="SlowIdleRestartAtQueueUsagePercent" Value="50" />
+      <Parameter Name="MaxPendingAcknowledgements" Value="1" />      
+      <Parameter Name="MaxReplicationMessageSize" Value="1" />
+      <Parameter Name="RequireServiceAck" Value="true" />
+      <Parameter Name="SecondaryClearAcknowledgedOperations" Value="true" />
+      <Parameter Name="UseStreamFaultsAndEndOfStreamOperationAck" Value="true" />
+    </Section>
+    <Section Name="PlacementAndLoadBalancing">
+      <Parameter Name="PLBRefreshInterval" Value="1.0" />
+      <Parameter Name="MinLoadBalancingInterval" Value="1.0" />
+      <Parameter Name="BalancingDelayAfterNodeDown" Value="1.0" />
+      <Parameter Name="PLBRewindInterval" Value="1.0" />
+      <Parameter Name="PLBActionRetryTimes" Value="1" />
+      <Parameter Name="MaxMovementHoldingTime" Value="1.0" />
+      <Parameter Name="MaxMovementExecutionTime" Value="1.0" />
+      <Parameter Name="AvgStdDevDeltaThrottleThreshold" Value="1.0" />
+      <Parameter Name="GlobalMovementThrottleThreshold" Value="1" />
+      <Parameter Name="GlobalMovementThrottleCountingInterval" Value="1.0" />
+      <Parameter Name="MovementPerPartitionThrottleThreshold" Value="1" />
+      <Parameter Name="MovementPerPartitionThrottleCountingInterval" Value="1.0" />
+      <Parameter Name="MovementThrottledPartitionsPercentageThreshold" Value="1.0" />
+      <Parameter Name="PlacementSearchTimeout" Value="1.0" />
+      <Parameter Name="ConstraintCheckSearchTimeout" Value="1.0" />
+      <Parameter Name="FastBalancingSearchTimeout" Value="1.0" />
+      <Parameter Name="SlowBalancingSearchTimeout" Value="1.0" />
+      <Parameter Name="LoadBalancingEnabled" Value="true" />
+      <Parameter Name="IsTestMode" Value="true" />
+      <Parameter Name="AllowedBalancingScoreDifference" Value="1.0" />
+      <Parameter Name="FaultDomainEnabled" Value="true" />
+      <Parameter Name="UpgradeDomainEnabled" Value="true" />
+      <Parameter Name="LocalBalancingThreshold" Value="1.0" />
+      <Parameter Name="YieldDurationPer10ms" Value="1" />
+      <Parameter Name="InitialRandomSeed" Value="1" />
+      <Parameter Name="MaxSimulatedAnnealingIterations" Value="1" />
+      <Parameter Name="MaxPercentageToMove" Value="1.0" />
+      <Parameter Name="FastBalancingPopulationSize" Value="1" />
+      <Parameter Name="SlowBalancingPopulationSize" Value="1" />
+      <Parameter Name="FastBalancingTemperatureDecayRate" Value="1.0" />
+      <Parameter Name="SlowBalancingTemperatureDecayRate" Value="1.0" />
+      <Parameter Name="IgnoreCostInScoring" Value="true" />
+      <Parameter Name="ScoreImprovementThreshold" Value="1.0" />
+      <Parameter Name="NodeLoadsTracingInterval" Value="1.0" />
+      <Parameter Name="MaxInvalidReplicasToTrace" Value="1" />
+      <Parameter Name="InBuildThrottlingEnabled" Value="true" />
+      <Parameter Name="InBuildThrottlingAssociatedMetric" Value="Metric1" />
+      <Parameter Name="InBuildThrottlingGlobalMaxValue" Value="1" />
+      <Parameter Name="SwapPrimaryThrottlingEnabled" Value="true" />
+      <Parameter Name="SwapPrimaryThrottlingAssociatedMetric" Value="Metric1" />
+      <Parameter Name="SwapPrimaryThrottlingGlobalMaxValue" Value="1" />
+      <Parameter Name="TraceSimulatedAnnealingStatistics" Value="true" />
+      <Parameter Name="SimulatedAnnealingStatisticsInterval" Value="1" />
+      <Parameter Name="InitialTemperatureProbeCount" Value="1" />
+      <Parameter Name="SimulatedAnnealingIterationsPerRound" Value="1" />
+      <Parameter Name="ProcessPendingUpdatesInterval" Value="1.0" />
+      <Parameter Name="SwapPrimaryProbability" Value="1.0" />
+      <Parameter Name="LoadDecayInterval" Value="1.0" />
+      <Parameter Name="LoadDecayFactor" Value="1.0" />
+      <Parameter Name="PlacementConstraintPriority" Value="0" />
+      <Parameter Name="CapacityConstraintPriority" Value="0" />
+      <Parameter Name="AffinityConstraintPriority" Value="0" />
+      <Parameter Name="FaultDomainConstraintPriority" Value="1" />
+      <Parameter Name="UpgradeDomainConstraintPriority" Value="1" />
+	</Section>
+    <Section Name="MetricActivityThresholds">
+      <Parameter Name="Metric1" Value="85" />
+      <Parameter Name="Metric2" Value="0" />
+    </Section>
+    <Section Name="MetricBalancingThresholds">
+      <Parameter Name="Metric1" Value="3.9" />
+      <Parameter Name="Metric2" Value="1.0" />
+    </Section>
+    <Section Name="GlobalMetricWeights">
+      <Parameter Name="Metric1" Value="1.2" />
+      <Parameter Name="Metric2" Value="0.0" />
+    </Section>
+    <Section Name="Replication">
+      <Parameter Name="InitialReplicationQueueSize" Value="2" />
+      <Parameter Name="MaxReplicationQueueSize" Value="4" />
+      <Parameter Name="InitialCopyQueueSize" Value="2" />
+      <Parameter Name="MaxCopyQueueSize" Value="4" />
+      <Parameter Name="RetryInterval" Value="1.0" />
+      <Parameter Name="CompleteReplicateThreadCount" Value="1" />
+      <Parameter Name="AllowMultipleQuorumSet" Value="true" />
+      <Parameter Name="BatchAcknowledgementInterval" Value="0.5" />
+      <Parameter Name="QueueHealthWarningAtUsagePercent" Value="50" />
+      <Parameter Name="SlowIdleRestartAtQueueUsagePercent" Value="50" />
+      <Parameter Name="MaxPendingAcknowledgements" Value="1" />      
+      <Parameter Name="MaxReplicationMessageSize" Value="1" />
+      <Parameter Name="RequireServiceAck" Value="true" />
+      <Parameter Name="SecondaryClearAcknowledgedOperations" Value="true" />
+      <Parameter Name="UseStreamFaultsAndEndOfStreamOperationAck" Value="true" />
+    </Section>
+    <Section Name="EseStore">
+      <Parameter Name="DatabasePageSizeInKB" Value="1" />
+      <Parameter Name="VerPageSizeInKB" Value="1" />
+      <Parameter Name="EseLogBufferSizeInKB" Value="1" />
+      <Parameter Name="EsePoolMinSize" Value="1" />
+      <Parameter Name="EsePoolAdjustmentSize" Value="1" />
+      <Parameter Name="EsePoolEvictionPeriodInSeconds" Value="1" />
+      <Parameter Name="MaxAsyncCommitDelayInMilliseconds" Value="1" />
+      <Parameter Name="EseMinDatabasePagesInBufferPoolCache" Value="1" />
+      <Parameter Name="MaxJetInstances" Value="1" />
+      <Parameter Name="MaxSessions" Value="1" />
+      <Parameter Name="MaxCursors" Value="1" />
+      <Parameter Name="MaxOpenTables" Value="1" />
+      <Parameter Name="MaxVerPages" Value="1" />
+      <Parameter Name="CheckpointDepthMaxInMB" Value="1" />
+    </Section>
+    <Section Name="ReplicatedStore">
+      <Parameter Name="TombstoneCleanupLimit" Value="1" />
+      <Parameter Name="ThrottleCountersRefreshIntervalInOperationCount" Value="1" />
+      <Parameter Name="ThrottleCountersRefreshInterval" Value="1" />
+    </Section>
+    <Section Name="Setup">
+      <Parameter Name="FabricDataRoot" Value="" />
+      <Parameter Name="FabricLogRoot" Value="" />
+      <Parameter Name="ServiceRunAsAccountName" Value="" />
+      <Parameter Name="ServiceRunAsPassword" Value="" />
+      <Parameter Name="ServiceStartupType" Value="" />
+    </Section>
+    <Section Name="Transport">
+      <Parameter Name="ThreadThrottle" Value="1" />
+      <Parameter Name="ThreadTestLimit" Value="1" />
+      <Parameter Name="ThrottleTestAssertThreshold" Value="1.0" />
+      <Parameter Name="MemoryThrottleInMB" Value="1" />
+      <Parameter Name="ResolveOption" Value="ABCD" />
+      <Parameter Name="IpcMaxMessageSize" Value="1" />
+      <Parameter Name="ConnectionIdleTimeout" Value="1.0" />
+      <Parameter Name="SendTargetSoftLimit" Value="1" />
+      <Parameter Name="ReceiveMissingThreshold" Value="1.0" />
+      <Parameter Name="ConnectionConfirmWaitLimit" Value="1.0" />
+    </Section>
+    <Section Name="LBSimulator">
+      <Parameter Name="VerifyTimeout" Value="1.0" />
+      <Parameter Name="MaxNodes" Value="1" />
+      <Parameter Name="MaxServices" Value="1" />
+      <Parameter Name="InitialServices" Value="1" />
+      <Parameter Name="MaxPartitions" Value="1" />
+      <Parameter Name="MaxReplicas" Value="1" />
+      <Parameter Name="MaxDynamism" Value="1" />
+      <Parameter Name="ServiceDynamicIterations" Value="1" />
+      <Parameter Name="Level1FaultDomainCount" Value="1" />
+      <Parameter Name="Level2FaultDomainCount" Value="1" />
+      <Parameter Name="AffinitySimulationThreshold" Value="1.0" />
+      <Parameter Name="CapacityOrCapacityRatioChangeThreshold" Value="1.0" />
+    </Section>
+  </FabricSettings>
+</ClusterManifest>

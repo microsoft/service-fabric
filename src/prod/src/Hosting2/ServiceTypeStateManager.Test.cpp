@@ -90,7 +90,11 @@ void ServiceTypeStateManagerTest::SetupServiceTypeIds()
 			ServicePackageIdentifier svcPkgId(appId, ServicePackageName);
             ServicePackageActivationContext activationCtx(sortedGuids[svcPkgNum]);
 
-			auto svcPkgActivationId = fabricNodeHost_->GetHosting().GetOrAddServicePackagePublicActivationId(svcPkgId, activationCtx, serviceName_);
+			auto svcPkgActivationId = fabricNodeHost_->GetHosting().GetOrAddServicePackagePublicActivationId(
+                svcPkgId, 
+                activationCtx, 
+                serviceName_,
+                applicationName_);
 
 			ServicePackageInstanceIdentifier svcPkgInstanceId(svcPkgId, activationCtx, svcPkgActivationId);
 

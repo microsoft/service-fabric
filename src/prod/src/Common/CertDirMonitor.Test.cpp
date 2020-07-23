@@ -12,14 +12,12 @@
 using namespace std;
 using namespace Common;
 
-#define CertDirMonitorTraceType "CertDirMonitorTraceType"
-
 #define FAIL_TEST( fmt, ...) \
     { \
         wstring tmp; \
         StringWriter writer(tmp); \
         writer.Write(fmt, __VA_ARGS__); \
-        Trace.WriteError(CertDirMonitorTraceType, "{0}", tmp); \
+        Trace.WriteError(TraceType, "{0}", tmp); \
         VERIFY_IS_TRUE( false, tmp.c_str() ); \
     } \
 
@@ -44,7 +42,7 @@ wstring CertDirMonitorTest::TestDirectoryName = L"CertDirMonitorTest.Data";
 wstring CertDirMonitorTest::TestSrcDirectoryName = L"waagent";
 wstring CertDirMonitorTest::TestDestDirectoryName = L"waagent_mirror";
 
-BOOST_FIXTURE_TEST_SUITE(CertDirMonitorSuite, CertDirMonitorTest)
+BOOST_FIXTURE_TEST_SUITE2(CertDirMonitorSuite, CertDirMonitorTest)
 
 BOOST_AUTO_TEST_CASE(CertMonitorTest1)
 {
@@ -148,7 +146,7 @@ BOOST_AUTO_TEST_SUITE_END()
 bool CertDirMonitorTest::SetupTestCase()
 {
     testCaseFolder_ = Path::Combine(TestDirectoryName, Guid::NewGuid().ToString());
-    Trace.WriteInfo(CertDirMonitorTraceType, "creating test folder {0}", testCaseFolder_);
+    Trace.WriteInfo(TraceType, "creating test folder {0}", testCaseFolder_);
     auto error = Directory::Create2(testCaseFolder_);
     if (!error.IsSuccess())
     {

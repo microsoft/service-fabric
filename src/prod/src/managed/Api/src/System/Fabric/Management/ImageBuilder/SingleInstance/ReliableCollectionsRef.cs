@@ -12,9 +12,11 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
         public ReliableCollectionsRef()
         {
             this.name = null;
+            this.doNotPersistState = false;
         }
 
         public string name;
+        public bool doNotPersistState;
     };
 }
 

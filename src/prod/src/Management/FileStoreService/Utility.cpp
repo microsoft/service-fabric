@@ -701,7 +701,7 @@ ErrorCode Utility::GetAccessToken(
             error = AccountHelper::GetServiceAccountName(accountName, userName, domainName, dlnFormatName);
             if (error.IsSuccess())
             {
-                error = AccessToken::CreateServiceAccountToken(userName, domainName, SERVICE_ACCOUNT_PASSWORD, NULL, accessToken);
+                error = AccessToken::CreateServiceAccountToken(userName, domainName, SERVICE_ACCOUNT_PASSWORD, false, NULL, accessToken);
             }
         }
         else if (accountType == SecurityPrincipalAccountType::DomainUser)

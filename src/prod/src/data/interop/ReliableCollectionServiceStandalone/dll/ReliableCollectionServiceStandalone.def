@@ -6,3 +6,4 @@ EXPORTS
     ReliableCollectionStandalone_ResetReplica
     ReliableCollectionStandalone_OpenReplica
     ReliableCollectionStandalone_Cleanup
+    ReliableCollectionStandalone_InitializeEx

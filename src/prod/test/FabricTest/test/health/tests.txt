@@ -1,4 +1,0 @@
-SingleMachine-CIT.json
-  TAGS:health
-SingleMachine-Functional.json
-  TAGS:health

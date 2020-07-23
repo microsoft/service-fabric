@@ -90,9 +90,7 @@ Common::ErrorCode ReplicaHealthEvaluation::FromPublicApi(
 void ReplicaHealthEvaluation::SetDescription()
 {
     description_ = wformatString(
-        "{0} PartitionId='{1}', ReplicaOrInstanceId='{2}', AggregatedHealthState='{3}'.", 
         HMResource::GetResources().HealthEvaluationUnhealthyReplica,
-        partitionId_,
         replicaId_,
         aggregatedHealthState_);
 }

@@ -30,6 +30,7 @@ using System.Fabric.Common;
     {
         private const string ApplicationManifestFileName = "ApplicationManifest.xml";
         private const string ServiceManifestFileName = "ServiceManifest.xml";
+        private const string SettingXmlFileName = "Settings.xml";
         private const int MaxAttempts = 60;
         private const int MaxRetryIntervalMillis = 1000;
         private const int MinRetryIntervalMillis = 100;
@@ -57,6 +58,11 @@ using System.Fabric.Common;
             }
         }
 
+        public static string GetSettingXmlFilePath(string appPackagePath, string servicePackageName, string configPackageName)
+        {
+            return Path.Combine(appPackagePath, servicePackageName, configPackageName, SettingXmlFileName);
+        }
+
         public static string GetCodePackageName(string name)
         {
             return String.Format(CultureInfo.InvariantCulture, "{0}.Code", name);
@@ -70,6 +76,25 @@ using System.Fabric.Common;
         public static string GetApplicationManifestFilePath(string appPackagePath)
         {
             return Path.Combine(appPackagePath, ApplicationManifestFileName);
+        }
+
+        public static void GenerateApplicationPackage(
+            ApplicationManifestType applicationManifest,
+            IList<ServiceManifestType> serviceManifests,
+            Dictionary<string, Dictionary<string, SettingsType>> settingsType,
+            string packageOutputLocation)
+        {
+            GenerateApplicationPackage(applicationManifest, serviceManifests, packageOutputLocation);
+
+            foreach (var settingsByService in settingsType)
+            {
+                string serviceManifestName = settingsByService.Key;
+                foreach (var settingsTypeByConfig in settingsByService.Value)
+                {
+                    string configPackageName = settingsTypeByConfig.Key;
+                    WriteFile(GetSettingXmlFilePath(packageOutputLocation, serviceManifestName, configPackageName), SerializeXml(settingsTypeByConfig.Value));
+                }
+            }
         }
 
         public static void GenerateApplicationPackage(

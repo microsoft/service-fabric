@@ -378,7 +378,23 @@ namespace System.Fabric.Interop
             
             FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC,
 
-            FABRIC_E_LAST_USED_HRESULT = FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC
+            FABRIC_E_SECRET_INVALID,
+
+            FABRIC_E_SECRET_VERSION_ALREADY_EXISTS,
+
+            FABRIC_E_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS,
+
+            FABRIC_E_OPERATION_NOT_SUPPORTED,
+
+            FABRIC_E_COMPOSE_DEPLOYMENT_NOT_UPGRADING,
+
+            FABRIC_E_SECRET_TYPE_CANNOT_BE_CHANGED,
+
+            FABRIC_E_NETWORK_NOT_FOUND,
+
+            FABRIC_E_NETWORK_IN_USE,
+
+            FABRIC_E_LAST_USED_HRESULT = FABRIC_E_NETWORK_IN_USE
         }
 
         [Guid("e0ed62e6-087b-4ed8-97b7-9f17a90bea75")]
@@ -1730,7 +1746,7 @@ namespace System.Fabric.Interop
             FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_AUTOMATIC = 0x0002,
             FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_MANUAL = 0x0003,
         }
-		
+        
         [Guid("f22165b2-fdc7-4bfa-aea4-aa3af0e1be90")]
         internal enum FABRIC_PLACEMENT_POLICY_TYPE
         {
@@ -1852,6 +1868,37 @@ namespace System.Fabric.Interop
             FABRIC_KEY_VALUE_STORE_PROVIDER_KIND_TSTORE = 2,
         }
 
+        [Guid("8D8DA86D-A812-4DAF-8D5C-7399B3685E8A")]
+        internal enum FABRIC_NETWORK_TYPE : int
+        {
+            FABRIC_NETWORK_TYPE_INVALID = 0x0000,
+            FABRIC_NETWORK_TYPE_LOCAL = 0x0001,
+            FABRIC_NETWORK_TYPE_FEDERATED = 0x0002,
+        }
+
+        [Guid("EBBE4CB8-322D-4E44-8ACB-2CEFA19F08F6")]
+        internal enum FABRIC_NETWORK_STATUS : int
+        {
+            FABRIC_NETWORK_STATUS_INVALID = 0x0000,
+            FABRIC_NETWORK_STATUS_READY = 0x0001,
+            FABRIC_NETWORK_STATUS_CREATING = 0x0002,
+            FABRIC_NETWORK_STATUS_DELETING = 0x0003,
+            FABRIC_NETWORK_STATUS_UPDATING = 0x0004,
+            FABRIC_NETWORK_STATUS_FAILED = 0x0005,
+        }
+
+        [Guid("B492938D-9991-4613-84F5-3C10BF4E52A8")]
+        internal enum FABRIC_NETWORK_STATUS_FILTER : int
+        {
+            FABRIC_NETWORK_STATUS_FILTER_DEFAULT = 0x0000,
+            FABRIC_NETWORK_STATUS_FILTER_ALL = 0xFFFF,
+            FABRIC_NETWORK_STATUS_FILTER_READY = 0x0001,
+            FABRIC_NETWORK_STATUS_FILTER_CREATING = 0x0002,
+            FABRIC_NETWORK_STATUS_FILTER_DELETING = 0x0004,
+            FABRIC_NETWORK_STATUS_FILTER_UPDATING = 0x0008,
+            FABRIC_NETWORK_STATUS_FILTER_FAILED = 0x0010
+        }
+
         //// ----------------------------------------------------------------------------
         //// Structures
 
@@ -1963,7 +2010,7 @@ namespace System.Fabric.Interop
             public IntPtr ImageName;
             public IntPtr Commands;
             public IntPtr EntryPoint;
-            public IntPtr Reserved;            
+            public IntPtr Reserved;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 8)]
@@ -3585,6 +3632,13 @@ namespace System.Fabric.Interop
             public IntPtr Reserved;
         }
 
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_COMPOSE_DEPLOYMENT_ROLLBACK_DESCRIPTION
+        {
+            public IntPtr DeploymentName;
+            public IntPtr Reserved;
+        }
+
         #region  Secret Store Structures
 
         [StructLayout(LayoutKind.Sequential, Pack = 8)]
@@ -5174,6 +5228,13 @@ namespace System.Fabric.Interop
         internal struct FABRIC_SERVICE_QUERY_DESCRIPTION_EX2
         {
             public IntPtr ServiceTypeNameFilter;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_SERVICE_QUERY_DESCRIPTION_EX3
+        {
+            public Int64 MaxResults;
             public IntPtr Reserved;
         }
 
@@ -7910,6 +7971,188 @@ namespace System.Fabric.Interop
             public IntPtr Reserved;
         }
 
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_DESCRIPTION
+        {
+            public FABRIC_NETWORK_TYPE NetworkType;
+            public IntPtr Value;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_LOCAL_NETWORK_DESCRIPTION
+        {
+            public IntPtr NetworkConfiguration;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_LOCAL_NETWORK_CONFIGURATION_DESCRIPTION
+        {
+            public IntPtr NetworkAddressPrefix;
+            public IntPtr Reserved;
+        };
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_DELETE_NETWORK_DESCRIPTION
+        {
+            public IntPtr NetworkName;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_INFORMATION
+        {
+            public FABRIC_NETWORK_TYPE NetworkType;
+            public IntPtr Value;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_LOCAL_NETWORK_INFORMATION
+        {
+            public IntPtr NetworkName;
+            public IntPtr NetworkConfiguration;
+            public FABRIC_NETWORK_STATUS NetworkStatus;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_QUERY_DESCRIPTION
+        {
+            public IntPtr NetworkNameFilter;
+            public UInt32 NetworkStatusFilter;
+            public IntPtr PagingDescription;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_QUERY_RESULT_LIST
+        {
+            public UInt32 Count;
+            public IntPtr Items;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_APPLICATION_QUERY_DESCRIPTION
+        {
+            public IntPtr NetworkName;
+            public IntPtr ApplicationNameFilter;
+            public IntPtr PagingDescription;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_APPLICATION_QUERY_RESULT_ITEM
+        {
+            public IntPtr ApplicationName;
+            public IntPtr Reserved;
+        };
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_APPLICATION_QUERY_RESULT_LIST
+        {
+            public UInt32 Count;
+            public IntPtr Items;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_NODE_QUERY_DESCRIPTION
+        {
+            public IntPtr NetworkName;
+            public IntPtr NodeNameFilter;
+            public IntPtr PagingDescription;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_NODE_QUERY_RESULT_ITEM
+        {
+            public IntPtr NodeName;
+            public IntPtr Reserved;
+        };
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_NETWORK_NODE_QUERY_RESULT_LIST
+        {
+            public UInt32 Count;
+            public IntPtr Items;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_APPLICATION_NETWORK_QUERY_DESCRIPTION
+        {
+            public IntPtr ApplicationName;
+            public IntPtr PagingDescription;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_APPLICATION_NETWORK_QUERY_RESULT_ITEM
+        {
+            public IntPtr NetworkName;
+            public IntPtr Reserved;
+        };
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_APPLICATION_NETWORK_QUERY_RESULT_LIST
+        {
+            public UInt32 Count;
+            public IntPtr Items;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_DEPLOYED_NETWORK_QUERY_DESCRIPTION
+        {
+            public IntPtr NodeName;
+            public IntPtr PagingDescription;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_DEPLOYED_NETWORK_QUERY_RESULT_ITEM
+        {
+            public IntPtr NetworkName;
+            public IntPtr Reserved;
+        };
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_DEPLOYED_NETWORK_QUERY_RESULT_LIST
+        {
+            public UInt32 Count;
+            public IntPtr Items;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_DESCRIPTION
+        {
+            public IntPtr NodeName;
+            public IntPtr NetworkName;
+            public IntPtr ApplicationNameFilter;
+            public IntPtr ServiceManifestNameFilter;
+            public IntPtr CodePackageNameFilter;
+            public IntPtr PagingDescription;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_RESULT_ITEM
+        {
+            public IntPtr ApplicationName;
+            public IntPtr NetworkName;
+            public IntPtr CodePackageName;
+            public IntPtr CodePackageVersion;
+            public IntPtr ServiceManifestName;
+            public IntPtr ServicePackageActivationId;
+            public IntPtr ContainerAddress;
+            public IntPtr ContainerId;
+            public IntPtr Reserved;
+        };
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_RESULT_LIST
+        {
+            public UInt32 Count;
+            public IntPtr Items;
+        }
         //// ----------------------------------------------------------------------------
         //// Internal structure required for CITs
 
@@ -7936,12 +8179,40 @@ namespace System.Fabric.Interop
             FABRIC_CONTAINER_ISOLATION_MODE_HYPER_V = 0x0002,
         }
 
+        [Guid("06F434AA-2DE9-4C64-9697-92D02B4F07C3")]
+        internal enum FABRIC_CONTAINER_NETWORK_TYPE : int
+        {
+            FABRIC_CONTAINER_NETWORK_TYPE_OTHER = 0x0000,
+            FABRIC_CONTAINER_NETWORK_TYPE_OPEN = 0x0001,
+            FABRIC_CONTAINER_NETWORK_TYPE_ISOLATED = 0x0002,
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_CONTAINER_NETWORK_CONFIG_DESCRIPTION
+        {
+            public IntPtr OpenNetworkAssignedIp;
+            public IntPtr OverlayNetworkResources;
+            public IntPtr PortBindings;
+            public IntPtr NodeId;
+            public IntPtr NodeName;
+            public IntPtr NodeIpAddress;
+            public FABRIC_CONTAINER_NETWORK_TYPE NetworkType;
+            public IntPtr Reserved;
+         } 
+
         [StructLayout(LayoutKind.Sequential, Pack = 8)]
         internal struct FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION
         {
             public IntPtr Name;
             public IntPtr Value;
             public BOOLEAN IsEncrypted;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_EX1
+        {
+            public IntPtr Type;
             public IntPtr Reserved;
         }
 
@@ -8004,10 +8275,32 @@ namespace System.Fabric.Interop
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION_EX1
+        {
+            public IntPtr Type;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
         internal struct FABRIC_CONTAINER_HEALTH_CONFIG_DESCRIPTION
         {
             public BOOLEAN IncludeDockerHealthStatusInSystemHealthReport;
             public BOOLEAN RestartContainerOnUnhealthyDockerHealthStatus;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_CONTAINER_UPDATE_ROUTE_ARGS
+        {
+            public IntPtr ContainerId;
+            public IntPtr ContainerName;
+            public IntPtr ApplicationId;
+            public IntPtr ApplicationName;
+            public FABRIC_CONTAINER_NETWORK_TYPE NetworkType;
+            public IntPtr GatewayIpAddresses;
+            public BOOLEAN AutoRemove;
+            public BOOLEAN IsContainerRoot;
+            public IntPtr CgroupName;
             public IntPtr Reserved;
         }
 
@@ -8055,6 +8348,13 @@ namespace System.Fabric.Interop
         internal struct FABRIC_CONTAINER_DESCRIPTION_EX2
         {
             public BOOLEAN UseTokenAuthenticationCredentials;
+            public IntPtr Reserved;
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_CONTAINER_DESCRIPTION_EX3
+        {
+            public IntPtr ContainerNetworkConfigDescription;
             public IntPtr Reserved;
         }
 
@@ -8187,6 +8487,13 @@ namespace System.Fabric.Interop
             public IntPtr ProcessDescription;
             public IntPtr FabricBinPath;
             public IntPtr GatewayIpAddress;
+            public IntPtr Reserved;
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_CONTAINER_ACTIVATION_ARGS_EX1
+        {
+            public IntPtr GatewayIpAddresses;
             public IntPtr Reserved;
         }
 

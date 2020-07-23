@@ -5,7 +5,7 @@
     {
       "Name": "E2EDictionary-3P-3N-Backup (PerfLab)",
       "Type": "V2_ScriptTest_Perf_NoValidation_Quark",
-      "Owners": "imang",
+      "Owners": "hrushib,raunakp,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
       "Tags": "E2EPerf,Lab,36P3N",
@@ -21,7 +21,7 @@
     {
       "Name": "E2EDictionary-999P-3N (PerfLab)",
       "Type": "V2_ScriptTest_Perf_NoValidation_Quark",
-      "Owners": "imang",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
       "Tags": "E2EPerf,Lab,999P3N",
@@ -37,7 +37,7 @@
     {
       "Name": "E2EDictionary-Longhaul-6P6N-Restore (PerfLab)",
       "Type": "V2_ScriptTest_Archive_No_Etl",
-      "Owners": "imang",
+      "Owners": "kailasl,preethas",
       "Environment": "Iaas",
       "Tags": "E2EPerf,Longhaul,6P6N",
       "ResourcesRequired": "Server:7;Group=ReplicatorPerfVoter",
@@ -53,7 +53,7 @@
     {
       "Name": "E2EDictionary-Longhaul-6P6N-Producer (PerfLab)",
       "Type": "V2_ScriptTest_Archive_No_Etl",
-      "Owners": "imang",
+      "Owners": "kailasl,preethas",
       "Environment": "Iaas",
       "Tags": "E2EPerf,Longhaul,6P6N",
       "ResourcesRequired": "Server:7;Group=ReplicatorPerfVoter",
@@ -69,7 +69,7 @@
     {
       "Name": "Recovery Perf (LAB)",
       "Type": "V2_ScriptTest",
-      "Owners": "imang, AlanWar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
       "Tags": "Hairball,Lab,1P",
@@ -85,7 +85,7 @@
     {
       "Name": "Hairball DD Perf (LAB)",
       "Type": "V2_ScriptTest",
-      "Owners": "ImanG",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags": "Hairball,Lab,1P",
@@ -101,7 +101,7 @@
     {
       "Name": "Hairball DD Perf 3-Replica (LAB)",
       "Type": "V2_ScriptTest",
-      "Owners": "ImanG",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags": "Hairball,Lab,1P",
@@ -117,7 +117,7 @@
     {
       "Name": "Hairball KVS Perf (LAB)",
       "Type": "V2_ScriptTest",
-      "Owners": "harahma",
+      "Owners": "shalabhs,kailasl,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags": "Hairball,Lab,1P",
@@ -133,7 +133,7 @@
     {
       "Name": "Hairball KVS Perf 3-Replica (LAB)",
       "Type": "V2_ScriptTest",
-      "Owners": "harahma",
+      "Owners": "shalabhs,kailasl,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags": "Hairball,Lab,1P",
@@ -149,7 +149,7 @@
     {
       "Name": "Hairball DD Perf 3-Replica-6P (LAB)",
       "Type": "V2_ScriptTest_Cleanup_Fusion",
-      "Owners": "ImanG",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags" : "Hairball,Lab,6P",
@@ -165,7 +165,7 @@
     {
       "Name": "Hairball DD Perf-1R-6P DirectDedicatedLog",
       "Type": "V2_ScriptTest_Cleanup_Fusion",
-      "Owners": "AlanWar",
+      "Owners": "alanwar,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags" : "Hairball,Lab,6P",
@@ -181,7 +181,7 @@
     {
       "Name": "Hairball KVS Perf 3-Replica-6P (LAB)",
       "Type": "V2_ScriptTest_Cleanup_Fusion",
-      "Owners": "harahma",
+      "Owners": "shalabhs,kailasl,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags" : "Hairball,Lab,6P",
@@ -197,7 +197,7 @@
     {
       "Name": "Hairball V1Repl Perf 3-Replica-6P (LAB)",
       "Type": "V2_ScriptTest_Cleanup_Fusion",
-      "Owners": "ImanG",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags": "Hairball,Lab,6P",
@@ -213,7 +213,7 @@
     {
       "Name": "Hairball V1Repl Perf 3-Replica (LAB)",
       "Type": "V2_ScriptTest",
-      "Owners": "ImanG",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
       "Tags": "Hairball,Lab",

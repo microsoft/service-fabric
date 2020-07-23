@@ -55,9 +55,9 @@ namespace Naming
         void OnWriteServiceComplete(Common::AsyncOperationSPtr const &, bool expectedCompletedSynchronously);
 
         mutable PartitionedServiceDescriptor psd_;
+
         bool isRebuildFromFM_;
 
         Common::ErrorCode revertError_;
-
     };
 }

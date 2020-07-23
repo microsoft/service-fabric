@@ -449,11 +449,12 @@ VOID MBInfoAccess::InitializeMetadataFSM(
                                         GetThisAllocationTag());
             if (! NT_SUCCESS(Status))
             {
+                KDbgPrintfInformational("Failed to create MBInfo file %ws", (LPCWSTR)fileName);
                 KTraceFailedAsyncRequest(Status, this, _OperationState, 0);
                 DoComplete(Status);
                 return;             
             }
-
+            
             break;
         }
 
@@ -3186,7 +3187,7 @@ SharedLCMBInfoAccess::AsyncAddEntryContext::AddEntryFSM(
             if (_Alias)
             {
                 KInvariant(_Alias->Length() <= KtlLogContainer::MaxAliasLength);
-                ULONG len = min(KtlLogContainer::MaxAliasLength, _Alias->Length());
+                ULONG len = MIN(KtlLogContainer::MaxAliasLength, _Alias->Length());
                 
                 KMemCpySafe(entry->AliasName, sizeof(entry->AliasName), *_Alias, len*sizeof(WCHAR));
                 entry->AliasName[len] = 0;
@@ -3197,7 +3198,7 @@ SharedLCMBInfoAccess::AsyncAddEntryContext::AddEntryFSM(
             if (_DedicatedContainerPath)
             {
                 KInvariant(_DedicatedContainerPath->Length() <= (KtlLogManager::MaxPathnameLengthInChar-1));
-                ULONG len = min(KtlLogManager::MaxPathnameLengthInChar-1, _DedicatedContainerPath->Length());
+                ULONG len = MIN(KtlLogManager::MaxPathnameLengthInChar-1, _DedicatedContainerPath->Length());
                 
                 KMemCpySafe(
                     entry->PathToDedicatedContainer, 
@@ -3518,7 +3519,7 @@ SharedLCMBInfoAccess::AsyncUpdateEntryContext::UpdateEntryFSM(
             if (_Alias)
             {
                 KInvariant(_Alias->Length() <= KtlLogContainer::MaxAliasLength);
-                ULONG len = min(KtlLogContainer::MaxAliasLength, _Alias->Length());
+                ULONG len = MIN(KtlLogContainer::MaxAliasLength, _Alias->Length());
                 
                 KMemCpySafe(entry->AliasName, KtlLogManager::MaxPathnameLengthInChar*sizeof(WCHAR), *_Alias, len*sizeof(WCHAR));
                 entry->AliasName[len] = 0;
@@ -3527,7 +3528,7 @@ SharedLCMBInfoAccess::AsyncUpdateEntryContext::UpdateEntryFSM(
             if (_DedicatedContainerPath)
             {
                 KInvariant(_DedicatedContainerPath->Length() <= (KtlLogManager::MaxPathnameLengthInChar-1));
-                ULONG len = min(KtlLogManager::MaxPathnameLengthInChar-1, _DedicatedContainerPath->Length());
+                ULONG len = MIN(KtlLogManager::MaxPathnameLengthInChar-1, _DedicatedContainerPath->Length());
                 
                 KMemCpySafe(
                     entry->PathToDedicatedContainer, 

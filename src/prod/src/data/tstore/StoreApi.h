@@ -67,5 +67,32 @@ namespace Data
               Complete = 8
           };
       }
+
+      namespace VolatileStoreCopyOperation
+      {
+          enum Enum : byte
+          {
+              // The operation data contains the version (ULONG32) of the copy protocol
+              Version = 0,
+
+              // The operation data contains the metadata for the incoming copy
+              Metadata = 1,
+
+              // The operation data contains key and value data
+              Data = 2,
+
+              // Indicates the copy operation is complete
+              Complete = 3
+          };
+      }
+
+      namespace VolatileStoreCopyOptionalFlags
+      {
+          enum Enum : byte
+          {
+              // The operation has a TTL value 
+              HasTTL = 1 << 0
+          };
+      }
    }
 }

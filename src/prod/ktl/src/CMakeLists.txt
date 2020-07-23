@@ -12,7 +12,12 @@ endif()
 set(WARNINGS)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-set(EXTERNAL_DEPS_DIR "${PROJECT_SOURCE_DIR}/../../../../external/")
+option(ARM_CROSS_COMPILE OFF)
+if (ARM_CROSS_COMPILE)
+    set(EXTERNAL_DEPS_DIR "${ARM_SYS_ROOT}/external")
+else()
+    set(EXTERNAL_DEPS_DIR "${PROJECT_SOURCE_DIR}/../../../../external/")
+endif()
 
 option(BUILD_THIRD_PARTY OFF)
 if (BUILD_THIRD_PARTY)
@@ -99,7 +104,7 @@ endif()
 
 # CPP Flags
 add_compile_options(-stdlib=libc++)
-set (CMAKE_CXX_FLAGS "-std=c++14")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 # Adding linker flags for static library
 set (CMAKE_STATIC_LIBRARY_FLAGS "-pthread")
 # Adding linker flags for shared library

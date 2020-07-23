@@ -40,6 +40,7 @@ namespace Reliability
                 MoveParentToFixAffinityViolation = config.MoveParentToFixAffinityViolation;
                 IsAffinityBidirectional = config.IsAffinityBidirectional;
                 PreventTransientOvercommit = config.PreventIntermediateOvercommit || config.PreventTransientOvercommit;
+                CountDisappearingLoadForSimulatedAnnealing = config.CountDisappearingLoadForSimulatedAnnealing;
                 CheckAlignedAffinityForUpgrade = config.CheckAlignedAffinityForUpgrade;
                 SwapPrimaryProbability = config.SwapPrimaryProbability;
                 UseMoveCostReports = config.UseMoveCostReports;
@@ -88,6 +89,11 @@ namespace Reliability
                 PreferExistingReplicaLocations = config.PreferExistingReplicaLocations;
                 BalancingByPercent = config.BalancingByPercentage;
                 PreferNodesForContainerPlacement = config.PreferNodesForContainerPlacement;
+                PreferUpgradedUDs = config.PreferUpgradedUDs;
+                MaximumInBuildReplicasPerNode = config.MaximumInBuildReplicasPerNode;
+                MaximumInBuildReplicasPerNodeBalancingThrottle = config.MaximumInBuildReplicasPerNodeBalancingThrottle;
+                MaximumInBuildReplicasPerNodeConstraintCheckThrottle = config.MaximumInBuildReplicasPerNodeConstraintCheckThrottle;
+                MaximumInBuildReplicasPerNodePlacementThrottle = config.MaximumInBuildReplicasPerNodePlacementThrottle;
             }
 
             bool IgnoreCostInScoring;
@@ -100,6 +106,7 @@ namespace Reliability
             bool MoveParentToFixAffinityViolation;
             bool IsAffinityBidirectional;
             bool PreventTransientOvercommit;
+            bool CountDisappearingLoadForSimulatedAnnealing;
             bool CheckAlignedAffinityForUpgrade;
             double SwapPrimaryProbability;
             bool UseMoveCostReports;
@@ -122,6 +129,7 @@ namespace Reliability
             bool UseScoreInConstraintCheck;
             double MoveParentToFixAffinityViolationTransitionPercentage;
             bool NodesWithReservedLoadOverlap;
+            bool PreferUpgradedUDs;
 
             //we need to treat this one separately as this also affects frontend behavior
             bool UseSeparateSecondaryLoad;
@@ -161,6 +169,10 @@ namespace Reliability
             bool PreferExistingReplicaLocations;
 
             bool PreferNodesForContainerPlacement;
+            PLBConfig::KeyIntegerValueMap MaximumInBuildReplicasPerNode;
+            PLBConfig::KeyIntegerValueMap MaximumInBuildReplicasPerNodeBalancingThrottle;
+            PLBConfig::KeyIntegerValueMap MaximumInBuildReplicasPerNodeConstraintCheckThrottle;
+            PLBConfig::KeyIntegerValueMap MaximumInBuildReplicasPerNodePlacementThrottle;
         };
 
     }

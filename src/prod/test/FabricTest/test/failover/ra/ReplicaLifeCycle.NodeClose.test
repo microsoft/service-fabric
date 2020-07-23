@@ -6,14 +6,17 @@ set NamingOperationTimeout 10
 set GracefulReplicaShutdownMaxDuration 60
 set AsyncNodeCloseEnabled true
 set StartNodeCloseOnSeparateThread true
+set FMPlacementConstraints system==true
 
-votes 10 
+votes 10 20 30
 cmservice 1 1
-fmservice 1 1
+fmservice 3 1
 namingservice 1 1 1
 cleantest
 
 +10 nodeprops=system:true
++20 nodeprops=system:true
++30 nodeprops=system:true
 verify
 
 app.add version10 TestApp 1.0
@@ -86,6 +89,66 @@ verify
 
 client.removebehavior * 40
 deleteservice fabric:/app/test2 
+verify
+
+#####################################################
+# Scenario 3: If FM moves while node is closing, replica down should be sent to new FM
+#####################################################
+
+# Later in the test, we will block the close message to prevent the replica and hence
+# the node from closing. In order to make this work, we also need to set
+# GracefulReplicaShutdownMaxDuration to a high value. RA will forcibly close the replica
+# and the node after GracefulReplicaShutdownMaxDuration elapses. So if this value is too
+# low, it will defeat the mechanism that we are using in this test to block the close.
+set GracefulReplicaShutdownMaxDuration 3600
+
+createservice fabric:/app/test3a TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 1 persist constraint=(system!=true) appname=fabric:/app
+createservice fabric:/app/test3b TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 1 persist constraint=(system!=true) appname=fabric:/app
+verify
+
+!var PartitionIdService3a FM.FT.PartitionId.fabric:/app/test3a
+!var PartitionIdService3b FM.FT.PartitionId.fabric:/app/test3b
+
+addbehavior bBlockService3aClose 40 * ReplicaClose 1.0 Max 0.0 0 -1 PartitionId:<var.PartitionIdService3a>
+addbehavior bBlockService3bClose 40 * ReplicaClose 1.0 Max 0.0 0 -1 PartitionId:<var.PartitionIdService3b>
+
+# take down the node and pause for some time
+-40
+!pause 18
+
+# the node close should still be blocked at RA because the close is blocked.
+!waitforstate FM.Replica.IsUp.fabric:/app/test3a.40 true
+!waitforstate FM.Replica.IsUp.fabric:/app/test3b.40 true
+!waitforstate FM.Node.IsUp.40 true
+
+# move the FM primary and pause for some time
+!var FMServiceFTID FM.FT.PartitionId.FMService
+moveprimaryclient RANDOM <var.FMServiceFTID>
+!pause 3
+
+# now remove the block for one of the services
+removebehavior bBlockService3aClose
+
+# The new FM primary should get notifed about the closing of replica for service 3a
+!waitforstate FM.Replica.IsUp.fabric:/app/test3a.40 false
+
+# pause for some more time
+!pause 5
+
+# now remove the block for the other service also
+removebehavior bBlockService3bClose
+
+# wait for replica of service 3b to close and for the node to close
+!waitforstate FM.Replica.IsUp.fabric:/app/test3b.40 false
+!waitforstate FM.Node.IsUp.40 false
+
+# Bring the node back up and wait for the services to stabilize
++40 nodeprops=system:false
+!pause 25
+verify
+
+deleteservice fabric:/app/test3a
+deleteservice fabric:/app/test3b
 verify
 
 !q

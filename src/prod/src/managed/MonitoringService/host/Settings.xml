@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Section Name="HealthDataProducer">
+    <Parameter Name="HealthDataReadIntervalInMinutes" Value="" MustOverride="true" />
+    <Parameter Name="HealthDataReadTimeoutInSeconds" Value="" MustOverride="false" />
+    <Parameter Name="ClusterName" Value="" MustOverride="true" />
+    <Parameter Name="HealthQueryTimeoutInSeconds" Value="" MustOverride="false" />
+    <Parameter Name="ReportServiceHealth" Value="" MustOverride="false" />
+    <Parameter Name="ApplicationsThatReportServiceHealth" Value="" MustOverride="false" />
+    <Parameter Name="ReportPartitionHealth" Value="" MustOverride="false" />
+    <Parameter Name="ApplicationsThatReportPartitionHealth" Value="" MustOverride="false" />
+    <Parameter Name="ReportReplicaHealth" Value="" MustOverride="false" />
+    <Parameter Name="ApplicationsThatReportReplicaHealth" Value="" MustOverride="false" />
+    <Parameter Name="ReportDeployedApplicationHealth" Value="" MustOverride="false" />
+    <Parameter Name="ApplicationsThatReportDeployedApplicationHealth" Value="" MustOverride="false" />
+    <Parameter Name="ReportServicePackageHealth" Value="" MustOverride="false" />
+    <Parameter Name="ApplicationsThatReportServicePackageHealth" Value="" MustOverride="false" />
+    <Parameter Name="ReportHealthEvents" Value="" MustOverride="false" />
+    <Parameter Name="ApplicationsThatReportHealthEvents" Value="" MustOverride="false" />
+  </Section>
+  <Section Name="MdsHealthDataConsumer">
+    <Parameter Name="MdmAccountName" Value="" MustOverride="false" />
+    <Parameter Name="MdmNamespace" Value="" MustOverride="false" />
+    <Parameter Name="DataCenter" Value="" MustOverride="false" />
+  </Section>
+</Settings>

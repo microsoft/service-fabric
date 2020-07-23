@@ -657,6 +657,13 @@ namespace System.Fabric.Management.WindowsFabricValidator
 
             CompareParameterValue(
                 sectionName,
+                FabricValidatorConstants.ParameterNames.GatewayResourceManagerReplicatorAddress,
+                (newEndpoints != null && newEndpoints.GatewayResourceManagerReplicatorEndpoint != null) ? newEndpoints.GatewayResourceManagerReplicatorEndpoint.Port : null,
+                (existingEndpoints != null && existingEndpoints.GatewayResourceManagerReplicatorEndpoint != null) ? existingEndpoints.GatewayResourceManagerReplicatorEndpoint.Port : null,
+                modifiedSettings);
+
+            CompareParameterValue(
+                sectionName,
                 FabricValidatorConstants.ParameterNames.StartApplicationPortRange,
                 (newEndpoints != null && newEndpoints.ApplicationEndpoints != null) ? newEndpoints.ApplicationEndpoints.StartPort.ToString() : null,
                 (existingEndpoints != null && existingEndpoints.ApplicationEndpoints != null) ? existingEndpoints.ApplicationEndpoints.StartPort.ToString() : null,
@@ -667,6 +674,13 @@ namespace System.Fabric.Management.WindowsFabricValidator
                 FabricValidatorConstants.ParameterNames.EndApplicationPortRange,
                 (newEndpoints != null && newEndpoints.ApplicationEndpoints != null) ? newEndpoints.ApplicationEndpoints.EndPort.ToString() : null,
                 (existingEndpoints != null && existingEndpoints.ApplicationEndpoints != null) ? existingEndpoints.ApplicationEndpoints.EndPort.ToString() : null,
+                modifiedSettings);
+
+            CompareParameterValue(
+                sectionName,
+                FabricValidatorConstants.ParameterNames.EventStoreServiceReplicatorAddress,
+                (newEndpoints != null && newEndpoints.EventStoreServiceReplicatorEndpoint != null) ? newEndpoints.EventStoreServiceReplicatorEndpoint.Port : null,
+                (existingEndpoints != null && existingEndpoints.EventStoreServiceReplicatorEndpoint != null) ? existingEndpoints.EventStoreServiceReplicatorEndpoint.Port : null,
                 modifiedSettings);
         }
 

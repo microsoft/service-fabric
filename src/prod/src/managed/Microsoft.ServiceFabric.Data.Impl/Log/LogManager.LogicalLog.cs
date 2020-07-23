@@ -918,7 +918,7 @@ namespace System.Fabric.Data.Log
                             r = await GetReadResults(task).ConfigureAwait(false);
 
                         } catch(Exception ex) {
-                            AppTrace.TraceSource.WriteWarning(
+                            AppTrace.TraceSource.WriteInfo(
                                     TraceType,
                                     "InternalReadAsync: background read task exception {0} {1} {2}",
                                     task._Offset,

@@ -1,0 +1,24 @@
+setcfg Config.TraceEtw.Level 4
+setcfg Config.ApplicationGatewayHttp.IsEnabled true
+
+# Create 5 node cluster.
+load FabSrvFiveNodeLocalCluster.test
+
+# Deploy the Service App
+uploadapp TStoreLonghaulApp apppackages\TStoreLonghaulApp
+provisionapp TStoreLonghaulApp
+
+createapp fabric:/TStoreLonghaulApp TStoreLonghaulApp
+createservice fabric:/TStoreLonghaulApp fabric:/TStoreLonghaulApp/Service TStoreLonghaulServiceType true minReplicaSetSize=2 targetReplicaSetSize=3 partitionCount=1 lowKey=0 highKey=5 uniformInt64Partition=true hasPersistedState=true
+
+verify
+
+# Start client and test
+client.newclient TStoreLonghaul NativeReplicatorHTTPClient.HTTPClient,NativeReplicatorHTTPClient parameters=serviceName:fabric:/TStoreLonghaulApp/Service
+
+client.starttask TStoreLonghaul TStoreLonghaulTask StartTest parameters={"loopCount":"8","int64PartitionKey":"1","retryCount":"256","sendTimeout":"30"}
+
+# Todo: Need to modify timeout, set to 10 hours for now.
+client.waittask taskIds=TStoreLonghaulTask timeout=36000
+
+quit

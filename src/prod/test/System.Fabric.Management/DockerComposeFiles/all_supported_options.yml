@@ -1,0 +1,52 @@
+version: '3'
+services:
+  FrontendService:
+    image: bharattest/sffrontend:v1 ## This container is in a private repo
+    isolation: "hyperv"
+    environment:
+      - HttpGatewayPort=19080 
+      - BackendServiceName=SimpleContainerApp/BackendService
+    volumes:
+      - c:\temp:c:\temp1:ro
+      - mydriver:c:\foo
+    ports: 
+      - "80:8905/http"
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://192.168.0.42:123"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  BackendService:
+    image: bharattest/sfbackend:v1
+    isolation: "process"
+    entrypoint: cmd.exe1 # DUMMY VALUE FOR TESTING - THE CONTAINER's DEFAULT ENTRYPOINT WORKS
+    command: ipconfig # DUMMY VALUE FOR TESTING - THE CONTAINER's DEFAULT ENTRYPOINT WORKS
+    ports:
+     - "8905/http"
+     - "81"
+    deploy: 
+      mode: replicated
+      replicas: 5
+      resources:
+        limits:
+          cpu_shares: 75
+          cpus: 1
+          memory: 500M
+        reservations:
+          memory: 1000M
+      placement:
+        constraints:
+          - NodeType==BE
+volumes:
+  mydriver:
+    driver: test
+    driver_opts:
+      key1: value1
+      key2: value2
+networks:
+  default:
+    external:
+      name: nat

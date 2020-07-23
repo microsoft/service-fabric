@@ -206,12 +206,11 @@ private:
                             GET_RC(Deployment_Upgrading_To_Version),
                             owner_.ComposeUpgradeContext.CurrentTypeVersion,
                             owner_.ComposeUpgradeContext.TargetTypeVersion));
+                    if (error.IsSuccess())
+                    {
+                        error = SetupApplicationContextForUpgrade(storeTx);
+                    }
                 }
-            }
-
-            if (error.IsSuccess())
-            {
-                error = SetupApplicationContextForUpgrade(storeTx);
             }
         }
         else

@@ -101,7 +101,6 @@ namespace System.Fabric.UpgradeService
                 "Certificates {0}not authorized to access URL {1}", certificateListStringBuilder.ToString(), requestUri.ToString()));
         }
 
-#if DotNetCoreClr
         private static Task<HttpResponseMessage> InvokeWithCertificateAsync(
             Uri requestUri,
             HttpMethod method,
@@ -111,56 +110,7 @@ namespace System.Fabric.UpgradeService
             string correlationId,
             CancellationToken token)
         {
-            InternalRestClientHelper internalRestClientHelper = new InternalRestClientHelper();
-            return internalRestClientHelper.InvokeWithCertificateAsync(
-                requestUri,
-                method,
-                requestBody,
-                clientCertificate,
-                clusterId,
-                correlationId,
-                token);
-        }
-
-        internal class InternalRestClientHelper : HttpClientHandler
-        {
-            internal Task<HttpResponseMessage> InvokeWithCertificateAsync(
-                Uri requestUri,
-                HttpMethod method,
-                string requestBody,
-                X509Certificate2 clientCertificate,
-                string clusterId,
-                string correlationId,
-                CancellationToken token)
-            {
-                HttpRequestMessage requestMessage = new HttpRequestMessage(method, requestUri)
-                {
-                    Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
-                };
-
-                requestMessage.Headers.Add("x-ms-correlation-request-id", correlationId);
-                requestMessage.Headers.Add("x-ms-client-request-id", clusterId);
-
-                if (clientCertificate != null)
-                {
-                    this.ClientCertificates.Add(clientCertificate);
-                }
-
-                return this.SendAsync(requestMessage, token);
-            }
-        }
-#else
-
-        private static Task<HttpResponseMessage> InvokeWithCertificateAsync(
-            Uri requestUri,
-            HttpMethod method,
-            string requestBody,
-            X509Certificate2 clientCertificate,
-            string clusterId,
-            string correlationId,
-            CancellationToken token)
-        {
-            var requestHandler = CreateWebRequestHandler(clientCertificate);
+            HttpClientHandler requestHandler = CreateHttpClientHandler(clientCertificate);
             HttpClient httpClient = new HttpClient(requestHandler, true)
             {
                 Timeout = TimeSpan.FromMinutes(1)
@@ -179,7 +129,21 @@ namespace System.Fabric.UpgradeService
             return httpClient.SendAsync(requestMessage, token);
         }
 
-        private static WebRequestHandler CreateWebRequestHandler(X509Certificate2 clientCertificate)
+#if DotNetCoreClr
+        private static HttpClientHandler CreateHttpClientHandler(X509Certificate2 clientCertificate)
+        {
+            HttpClientHandler handler = new HttpClientHandler();
+
+            if (clientCertificate != null)
+            {
+                handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+                handler.ClientCertificates.Add(clientCertificate);
+            }
+
+            return handler;
+        }
+#else
+        private static HttpClientHandler CreateHttpClientHandler(X509Certificate2 clientCertificate)
         {
             WebRequestHandler handler = new WebRequestHandler();
 

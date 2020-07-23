@@ -12,14 +12,20 @@ namespace Management
         class CentralSecretServiceReplica;
         using CloseReplicaCallback = std::function<void(Common::Guid const &)>;
 
-        using ProcessRequestHandler =
+        using StartRequestProcessHandler =
             std::function<Common::AsyncOperationSPtr(
                 __in CentralSecretServiceReplica &,
                 __in Transport::MessageUPtr,
                 __in Transport::IpcReceiverContextUPtr,
                 Common::TimeSpan const &,
                 Common::AsyncCallback const &,
-                Common::AsyncOperationSPtr const &)> ;
+                Common::AsyncOperationSPtr const &)>;
+
+        using CompleteRequestProcessHandler =
+            std::function<Common::ErrorCode(
+                Common::AsyncOperationSPtr const & asyncOperation,
+                __out Transport::MessageUPtr & replyMsgUPtr,
+                __out Transport::IpcReceiverContextUPtr & receiverContextUPtr)>;
 
         class CentralSecretServiceReplica
             : public Store::KeyValueStoreReplica
@@ -69,6 +75,15 @@ namespace Management
             virtual void OnAbort();
 
         private:
+            struct RequestProcessor
+            {
+            public:
+                StartRequestProcessHandler const StartHandler;
+                CompleteRequestProcessHandler const CompleteHandler;
+
+                RequestProcessor(StartRequestProcessHandler const & startHandler, CompleteRequestProcessHandler const & completeHandler);
+            };
+
             Management::ResourceManager::IpcResourceManagerServiceSPtr resourceManagerSvc_;
             Api::IClientFactoryPtr clientFactory_;
             SecretManagerUPtr secretManager_;
@@ -82,7 +97,18 @@ namespace Management
             void UnregisterMessageHandler();
 
             void ProcessMessage(Transport::MessageUPtr &&, Transport::IpcReceiverContextUPtr &&);
-            void OnProcessMessageComplete(Common::ActivityId const &, Transport::MessageId const &, Common::AsyncOperationSPtr const &, bool expectedCompletedSynchronously);
+
+            void OnProcessMessageComplete(
+                CentralSecretServiceReplica::RequestProcessor const & requestProcessor,
+                Common::ActivityId const &,
+                Transport::MessageId const &,
+                Common::AsyncOperationSPtr const &,
+                bool expectedCompletedSynchronously);
+
+            void AddHandler(
+                wstring const & action,
+                StartRequestProcessHandler const & startHandler,
+                CompleteRequestProcessHandler const & completeHandler);
 
             Common::ErrorCode QuerySecretResourceMetadata(
                 __in std::wstring const & resourceName,
@@ -96,7 +122,7 @@ namespace Management
             // The reference of the RoutingAgentProxy is held by CentralSecretServiceFactory
             SystemServices::ServiceRoutingAgentProxy & routingAgentProxy_;
 
-            unordered_map<wstring, ProcessRequestHandler> requestHandlers_;
+            unordered_map<wstring, RequestProcessor> requestHandlers_;
         };
     }
 }

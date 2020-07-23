@@ -27,12 +27,22 @@ BuiltinServiceAccount::BuiltinServiceAccount(
     wstring const & accountName,
     wstring const & password,
     bool isPasswordEncrypted,
+    bool loadProfile,
     SecurityPrincipalAccountType::Enum accountType,
     vector<wstring> parentApplicationGroups,
-    vector<wstring> parentSystemGroups) : SecurityUser( applicationId, name, accountName, password, isPasswordEncrypted, accountType, parentApplicationGroups, parentSystemGroups),
+    vector<wstring> parentSystemGroups)
+    : SecurityUser(
+        applicationId,
+        name,
+        accountName,
+        password,
+        isPasswordEncrypted,
+        accountType,
+        parentApplicationGroups,
+        parentSystemGroups,
+        loadProfile),
     configured_(false)
 {
-
 }
 
 BuiltinServiceAccount::~BuiltinServiceAccount()
@@ -112,7 +122,7 @@ ErrorCode BuiltinServiceAccount::CreateLogonToken(__out AccessTokenSPtr & userTo
             AccountName,
             AccountType);
 
-        error = AccessToken::CreateServiceAccountToken(accountName_, domain_, password_, this->SidToAdd, userToken_);
+        error = AccessToken::CreateServiceAccountToken(accountName_, domain_, password_, this->LoadProfile, this->SidToAdd, userToken_);
 
         if (!error.IsSuccess())
         {

@@ -972,6 +972,41 @@ namespace System.Fabric
         /// <summary>
         /// Indicates generic error happens in central secret service
         /// </summary>
-        CentralSecretServiceGenericError = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC
+        CentralSecretServiceGenericError = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC,
+
+        /// <summary>
+        /// <para>A <see cref="System.Fabric.FabricErrorCode" /> that indicates the compose deployment is not upgrading. Call <see cref="System.Fabric.FabricClient.ComposeDeploymentClient.GetComposeDeploymentUpgradeProgressAsync(string)" /> to get more information.</para>
+        /// </summary>
+        ComposeDeploymentNotUpgrading = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_COMPOSE_DEPLOYMENT_NOT_UPGRADING,
+		
+        /// <summary>
+        /// A <see cref="System.Fabric.FabricErrorCode" /> that indicates that the secret is invalid
+        /// </summary>
+        SecretInvalid = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SECRET_INVALID,
+
+        /// <summary>
+        /// A <see cref="System.Fabric.FabricErrorCode" /> that indicates that the secret version already exists
+        /// </summary>
+        SecretVersionAlreadyExists = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SECRET_VERSION_ALREADY_EXISTS,
+
+        /// <summary>
+        /// A <see cref="System.Fabric.FabricErrorCode" /> that indicates that the single instance application's upgrade is in progress.
+        /// </summary>
+        SingleInstanceApplicationUpgradeInProgress = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS,
+
+        /// <summary>
+        /// A <see cref="System.Fabric.FabricErrorCode" /> that indicates that the operation is not supported.
+        /// </summary>
+        OperationNotSupported = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_OPERATION_NOT_SUPPORTED,
+
+        /// <summary>
+        /// A <see cref="System.Fabric.FabricErrorCode" /> that indicates that the network is not found.
+        /// </summary>
+        NetworkNotFound = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NETWORK_NOT_FOUND,
+
+        /// <summary>
+        /// A <see cref="System.Fabric.FabricErrorCode" /> that indicates that the network is currently in use.
+        /// </summary>
+        NetworkInUse = NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NETWORK_IN_USE
     }
 }

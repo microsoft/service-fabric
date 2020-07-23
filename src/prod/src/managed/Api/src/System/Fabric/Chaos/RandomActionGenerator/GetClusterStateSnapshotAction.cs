@@ -8,6 +8,7 @@ namespace System.Fabric.Chaos.RandomActionGenerator
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Fabric.Chaos.Common;
+    using System.Fabric.Chaos.Common.Exceptions;
     using System.Fabric.Chaos.DataStructures;
     using System.Fabric.Common;
     using System.Fabric.Common.Tracing;
@@ -124,9 +125,9 @@ namespace System.Fabric.Chaos.RandomActionGenerator
                                                                                                             action,
                                                                                                             cancellationToken).ConfigureAwait(false);
                     }
-                    catch (FabricException fabricException)
+                    catch (Exception exception) when (exception is FabricException || exception is ChaosInconsistentClusterSnapshotException)
                     {
-                        string exceptionString = fabricException.Message;
+                        string exceptionString = exception.Message;
 
                         if (ExceptionHistory.ContainsKey(exceptionString))
                         {
@@ -140,7 +141,10 @@ namespace System.Fabric.Chaos.RandomActionGenerator
 
                     string allExceptions = string.Join(ExceptionDelimeter, ExceptionHistory);
 
-                    TestabilityTrace.TraceSource.WriteWarning(TraceType, "While taking a consistent cluster snapshot, following exceptions occurred: {0}", allExceptions);
+                    if (retries >= action.MaximumNumberOfRetries)
+                    {
+                        TestabilityTrace.TraceSource.WriteWarning(TraceType, "While taking a consistent cluster snapshot, following exceptions occurred: {0}", allExceptions);
+                    }
 
                     ChaosUtility.ThrowOrAssertIfTrue(
                         ChaosConstants.GetClusterSnapshotAction_MaximumNumberOfRetriesAchieved_TelemetryId,
@@ -325,7 +329,9 @@ namespace System.Fabric.Chaos.RandomActionGenerator
                         }
                     }
 
-                    throw new FabricException(exceptionMessageBuilder.ToString());
+                    TestabilityTrace.TraceSource.WriteWarning(TraceType, string.Format(CultureInfo.InvariantCulture, "{0}", exceptionMessageBuilder.ToString()));
+
+                    throw new ChaosInconsistentClusterSnapshotException(exceptionMessageBuilder.ToString());
                 }
 
                 return clusterSnapshot;
@@ -504,7 +510,24 @@ namespace System.Fabric.Chaos.RandomActionGenerator
                     deployedCodePackageName + deployedCodePackageVersion + deployedServiceManifestName);
 
                 return deployedReplica.CodePackageName.Equals(deployedCodePackageName, StringComparison.OrdinalIgnoreCase)
-                       && deployedReplica.ServiceManifestName.Equals(deployedServiceManifestName, StringComparison.OrdinalIgnoreCase);
+                       && deployedReplica.ServiceManifestName.Equals(deployedServiceManifestName, StringComparison.OrdinalIgnoreCase)
+                       && MatchServicePackageActivationId(deployedReplica.ServicePackageActivationId, deployedCodePackage.ServicePackageActivationId);
+            }
+
+            private bool MatchServicePackageActivationId(string replicaActivationId, string codePackageActivationId)
+            {
+                if (string.IsNullOrEmpty(replicaActivationId) && string.IsNullOrEmpty(codePackageActivationId))
+                {
+                    return true;
+                }
+                else if (!string.IsNullOrEmpty(replicaActivationId) && !string.IsNullOrEmpty(codePackageActivationId))
+                {
+                    return replicaActivationId.Equals(codePackageActivationId, StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    return false;
+                }
             }
 
             private bool MatchFmCmNsReplicaWithDummyCodepackage(

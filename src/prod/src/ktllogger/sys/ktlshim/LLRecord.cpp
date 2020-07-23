@@ -9,7 +9,7 @@
 
 #include <ktl.h>
 #include <ktrace.h>
-#include <minmax.h>
+#include "minmax.h"
 
 #include "KtlPhysicalLog.h"
 #include "../inc/ktllogger.h"
@@ -631,7 +631,7 @@ KtlLogVerify::ComputeCrc64ForIoBuffer(
          ((ioBufferElement) && (bytesLeft > 0));
          ioBufferElement = IoBuffer->Next(*ioBufferElement))
     {
-        ULONG bytesToChecksum = min(ioBufferElement->QuerySize(), bytesLeft);
+        ULONG bytesToChecksum = MIN(ioBufferElement->QuerySize(), bytesLeft);
         bytesLeft -= bytesToChecksum;
         
         Crc64 = KChecksum::Crc64(ioBufferElement->GetBuffer(),

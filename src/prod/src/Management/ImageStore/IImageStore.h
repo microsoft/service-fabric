@@ -11,9 +11,6 @@ namespace Management
     {
         class IImageStore : public Common::TextTraceComponent<Common::TraceTaskCodes::ImageStore>
         {
-        private:
-            static Common::GlobalWString ArchiveMarkerFileName;
-
         public:
 
             virtual ~IImageStore() {}

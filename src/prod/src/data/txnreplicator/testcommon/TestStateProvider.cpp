@@ -360,13 +360,15 @@ void TestStateProvider::Initialize(
         StateProviderId,
         static_cast<int>(lifeState_));
 
+    hasPersistedState_ = transactionalReplicatorWRef.TryGetTarget()->HasPeristedState;
+
     KString::SPtr tmp = nullptr;
     NTSTATUS status = KString::Create(tmp, GetThisAllocator(), workFolder);
     TraceAndThrowOnFailure(status, L"Initialize: Create workFolder string failed.");
 
     workFolder_ = KString::CSPtr(tmp.RawPtr());
 
-    if (!Common::Directory::Exists(static_cast<LPCWSTR>(workFolder)))
+    if (hasPersistedState_ && !Common::Directory::Exists(static_cast<LPCWSTR>(workFolder)))
     {
         Common::ErrorCode errorCode = Common::Directory::Create2(static_cast<LPCWSTR>(workFolder));
         if (errorCode.IsSuccess() == false)
@@ -561,9 +563,12 @@ Awaitable<void> TestStateProvider::PerformCheckpointAsync(__in CancellationToken
 
     performCheckpointLSN_ = prepareCheckpointLSN_;
 
-    // Take checkpoint then set the value
-    VersionedState::CSPtr snappedCheckpointData = lastPrepareCheckpointData_.Get();
-    co_await CreateCheckpointFileAsync(*snappedCheckpointData->Value, snappedCheckpointData->Version, false);
+    if (hasPersistedState_)
+    {
+        // Take checkpoint then set the value
+        VersionedState::CSPtr snappedCheckpointData = lastPrepareCheckpointData_.Get();
+        co_await CreateCheckpointFileAsync(*snappedCheckpointData->Value, snappedCheckpointData->Version, false);
+    }
 
     VersionedState::CSPtr lastPrepareCheckpointData = lastPrepareCheckpointData_.Get();
     lastCheckpointedData_.Put(Ktl::Move(lastPrepareCheckpointData));
@@ -1056,13 +1061,16 @@ Awaitable<void> TestStateProvider::RecoverCheckpointAsync(__in CancellationToken
 
     KWString filePath = KWString(GetThisAllocator(), currentCheckpointFilePath_->ToUNICODE_STRING());
 
-    // CurrentValue is already read from init params.
-    // If there is a checkpoint value and version will be reset.
-    // Note that below function simply returns if there is no checkpoint to recover.
-    bool isCheckpointRecovered = co_await OpenCheckpointFileAsync(filePath);
-    if (isCheckpointRecovered == false)
+    if (hasPersistedState_)
     {
-        co_await CreateCheckpointFileAsync(*currentValue_, currentVersion_, true);
+        // CurrentValue is already read from init params.
+        // If there is a checkpoint value and version will be reset.
+        // Note that below function simply returns if there is no checkpoint to recover.
+        bool isCheckpointRecovered = co_await OpenCheckpointFileAsync(filePath);
+        if (isCheckpointRecovered == false)
+        {
+            co_await CreateCheckpointFileAsync(*currentValue_, currentVersion_, true);
+        }
     }
 
     // Update the last CheckpointData to reflect the recovered state.

@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{AC5A6453-2C75-4E83-BAA0-322B76EB454A}</ProjectGuid>
+    <AssemblyName>Microsoft.ServiceFabric.Monitoring</AssemblyName>
+    <AssemblyDescription>Module that reads health data from health manager</AssemblyDescription>
+    <RootNamespace>Microsoft.ServiceFabric.Monitoring</RootNamespace>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationEntity.cs" />
+    <Compile Include="ClusterEntity.cs" />
+    <Compile Include="DeployedApplicationEntity.cs" />
+    <Compile Include="DeployedServicePackageEntity.cs" />
+    <Compile Include="FabricHealthClientWrapper.cs" />
+    <Compile Include="Guard.cs" />
+    <Compile Include="HealthDataService.cs" />
+    <Compile Include="Filters\EntityFilter.cs" />
+    <Compile Include="Filters\EntityFilterRepository.cs" />
+    <Compile Include="Health\ApplicationHealth.cs" />
+    <Compile Include="Health\ClusterHealth.cs" />
+    <Compile Include="Health\HealthStateExtensions.cs" />
+    <Compile Include="Health\ServiceHealthState.cs" />
+    <Compile Include="Health\NodeHealthState.cs" />
+    <Compile Include="Health\PartitionHealthState.cs" />
+    <Compile Include="Health\ReplicaHealthState.cs" />
+    <Compile Include="Health\DeployedApplicationHealthState.cs" />
+    <Compile Include="Health\DeployedServicePackageHealthState.cs" />
+    <Compile Include="Health\ApplicationHealthState.cs" />
+    <Compile Include="Health\ClusterHealthState.cs" />
+    <Compile Include="Health\DeployedApplicationHealth.cs" />
+    <Compile Include="Health\DeployedServicePackageHealth.cs" />
+    <Compile Include="Health\EntityHealth.cs" />
+    <Compile Include="Health\EntityHealthEvent.cs" />
+    <Compile Include="Health\EntityHealthState.cs" />
+    <Compile Include="Health\NodeHealth.cs" />
+    <Compile Include="Health\PartitionHealth.cs" />
+    <Compile Include="Health\ReplicaHealth.cs" />
+    <Compile Include="Health\ServiceHealth.cs" />
+    <Compile Include="IEntity.cs" />
+    <Compile Include="HealthDataConsumer.cs" />
+    <Compile Include="Interfaces\IServiceConfiguration.cs" />
+    <Compile Include="Filters\WhenToReportEntityHealth.cs" />
+    <Compile Include="MonitoringServiceEventSource.cs" />
+    <Compile Include="TraceWriterWrapper.cs" />
+    <Compile Include="_friends.cs" />
+    <Compile Include="Entity.cs" />
+    <Compile Include="HealthDataProducer.cs" />
+    <Compile Include="NodeEntity.cs" />
+    <Compile Include="PartitionEntity.cs" />
+    <Compile Include="ReplicaEntity.cs" />
+    <Compile Include="ServiceEntity.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\Microsoft.ServiceFabric.Internal.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\Microsoft.ServiceFabric.Internal.Strings.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\System.Fabric.dll">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(PkgMicrosoft_Diagnostics_Tracing_EventRegister)\build\Microsoft.Diagnostics.Tracing.EventRegister.targets" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\MonitoringServiceApplication\MonitoringServicePackage\MonitoringService.Code\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

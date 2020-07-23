@@ -5,6 +5,24 @@
 
 #include "stdafx.h"
 
+BOOLEAN FabricRuntimeKInvariantCallout(
+    __in LPCSTR Condition,
+    __in LPCSTR File,
+    __in ULONG Line
+    )
+{
+    KDbgPrintfInformational("KInvariant(%s) failure at file %s line %d\n",
+              Condition,
+              File,
+              Line);
+    
+    //
+    // Default behavior is to assert or crash system
+    //
+    return(TRUE);
+}
+
+
 BOOL APIENTRY DllMain(
     HMODULE module,
     DWORD reason,
@@ -16,9 +34,17 @@ BOOL APIENTRY DllMain(
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+    {
+        EventRegisterMicrosoft_Windows_KTL();
+        SetKInvariantCallout(FabricRuntimeKInvariantCallout);
+        break;
+    }
+    case DLL_PROCESS_DETACH:
+    {
+        EventUnregisterMicrosoft_Windows_KTL();
+    }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
         break;
     }
     return TRUE;
@@ -356,7 +382,7 @@ Api::IClientFactoryPtr GetGlobalClientFactory()
 
     std::wstring result;
     auto error = Common::FabricEnvironment::GetFabricVersion(result);
-	
+    
     if(error.IsSuccess())
     {
         return Common::ComStringResult::ReturnStringResult(result, runtimeDllVersion);
@@ -643,10 +669,16 @@ extern "C" HRESULT FabricGetReliableCollectionApiTable(uint16_t apiVersion, Reli
     wstring env;
 
     if (apiVersion > 0x100)
+    {
+        Trace.WriteError("FabricRuntime", "[FabricGetReliableCollectionApiTable] Unsupported api version {0}", apiVersion);
         return E_NOTIMPL;
+    }
 
     if (reliableCollectionApis == nullptr)
+    {
+        Trace.WriteError("FabricRuntime", "[FabricGetReliableCollectionApiTable] required out param reliableCollectionApis is null");
         return E_INVALIDARG;
+    }
 
     if (Environment::GetEnvironmentVariable(L"SF_RELIABLECOLLECTION_MOCK", env, NOTHROW()))
         GetReliableCollectionMockApiTable(reliableCollectionApis);

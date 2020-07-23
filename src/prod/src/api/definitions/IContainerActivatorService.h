@@ -62,5 +62,14 @@ namespace Api
         virtual Common::ErrorCode EndInvokeContainerApi(
             Common::AsyncOperationSPtr const & operation,
             __out Hosting2::ContainerApiExecutionResponse & apiExecResp) = 0;
+
+        virtual Common::AsyncOperationSPtr BeginContainerUpdateRoutes(
+            Hosting2::ContainerUpdateRoutesRequest const & updateRoutesRequest,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent) = 0;
+
+        virtual Common::ErrorCode EndContainerUpdateRoutes(
+            Common::AsyncOperationSPtr const & operation) = 0;
     };
 }

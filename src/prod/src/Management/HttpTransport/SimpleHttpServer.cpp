@@ -78,12 +78,18 @@ void LHttpServer::OnInitialize()
                 ctx.use_certificate_chain_file(this->serverCertPath);
                 ctx.use_private_key_file(this->serverPkPath, boost::asio::ssl::context::pem);
 
-                ctx.set_verify_mode(boost::asio::ssl::verify_peer | boost::asio::ssl::verify_fail_if_no_peer_cert);
-                ctx.set_verify_callback(
-                    [this](bool p, boost::asio::ssl::verify_context& context) {
-                    return this->VerifyCertificateCallback(p, context);
+                if (SecurityConfig::GetConfig().ClientClaimAuthEnabled)
+                {
+                    ctx.set_verify_mode(boost::asio::ssl::verify_none);
                 }
-                );
+                else
+                {
+                    ctx.set_verify_mode(boost::asio::ssl::verify_peer | boost::asio::ssl::verify_fail_if_no_peer_cert);
+                    ctx.set_verify_callback([this](bool p, boost::asio::ssl::verify_context& context)
+                    {
+                        return this->VerifyCertificateCallback(p, context);
+                    });
+                }
             }
             catch (boost::system::system_error ec)
             {

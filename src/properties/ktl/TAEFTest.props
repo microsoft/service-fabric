@@ -1,0 +1,48 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <!--Standard user mode imports-->
+  <Import Project="$(SRCROOT)\properties\ktl\imports\KtlUserImports.props" />
+  <!-- CPP imports have been now added -->
+
+  <!--Post-CPP overrides-->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories)
+        $(PkgTaef_Redist)\Build\Include\;
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+        <!-- $(PkgTAEF_amd64)\Library\Release\$(PlatformShortName)\Wex.Common.lib;
+        $(PkgTAEF_amd64)\Library\Release\$(PlatformShortName)\Wex.Logger.lib;
+        $(PkgTAEF_amd64)\Library\Release\$(PlatformShortName)\Te.Common.lib; -->
+        Crypt32.lib;
+        Iphlpapi.lib;
+        Shell32.lib;
+        advapi32.lib;
+        dbghelp.lib;
+        kernel32.lib;
+        setupapi.lib;
+        netapi32.lib;
+        ntdll.lib;
+        odbc32.lib;
+        ole32.lib;
+        rpcrt4.lib;
+        secur32.lib;
+        shlwapi.lib;
+        strsafe.lib;
+        user32.lib;
+        userenv.lib;
+        uuid.lib;
+        ws2_32.lib;
+        xmllite.lib;
+      </AdditionalDependencies>
+    </Link>  
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <PostBuildCopy Include="$(PkgTaef_Redist)\Build\Binaries\Release\x64\TestExecution\*.*">
+      <DestinationFolder>$(OutDir)</DestinationFolder>
+    </PostBuildCopy>
+  </ItemGroup>
+</Project>

@@ -43,6 +43,8 @@ namespace System.Fabric.Common
         public const string ResourceMonitorServce           = "fabric:/System/ResourceMonitorService";
         public const string CentralSecretService            = "fabric:/System/CentralSecretService";
         public const string LocalSecretService              = "fabric:/System/LocalSecretService";
+        public const string EventStoreService               = "fabric:/System/EventStoreService";
+        public const string GatewayResourceManager          = "fabric:/System/GatewayResourceManager";
 
         public static readonly List<Uri> SystemServiceList  = new List<Uri>()
                                                              {
@@ -62,7 +64,9 @@ namespace System.Fabric.Common
                                                                  new Uri(BackupRestoreService),
                                                                  new Uri(ResourceMonitorServce),
                                                                  new Uri(CentralSecretService),
-                                                                 new Uri(LocalSecretService)
+                                                                 new Uri(LocalSecretService),
+                                                                 new Uri(EventStoreService),
+                                                                 new Uri(GatewayResourceManager)
                                                              };
 
         #endregion

@@ -1,0 +1,4 @@
+SingleMachine-CIT.json
+    TYPES:FederationTest,FabricTest
+SingleMachine-Functional.json
+    TYPES:FederationTest,FabricTest

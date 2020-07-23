@@ -127,3 +127,9 @@ GlobalWString QueryResourceProperties::ContainerInfo::InfoArgsFilter = make_glob
 GlobalWString QueryResourceProperties::ContainerInfo::ContainerName = make_global<std::wstring>(L"ContainerName");
 
 GlobalWString QueryResourceProperties::VolumeResource::VolumeName = make_global<wstring>(L"VolumeName");
+
+GlobalWString QueryResourceProperties::Network::NetworkName = make_global<std::wstring>(L"NetworkName");
+GlobalWString QueryResourceProperties::Network::NetworkStatusFilter = make_global<std::wstring>(L"NetworkStatusFilter");
+GlobalWString QueryResourceProperties::Network::NetworkType = make_global<std::wstring>(L"NetworkType");
+
+GlobalWString QueryResourceProperties::GatewayResource::GatewayName = make_global<wstring>(L"GatewayName");

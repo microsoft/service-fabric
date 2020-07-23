@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+  <PropertyGroup>
+    <RootNamespace>EventsStore.EventsModels</RootNamespace>
+    <AssemblyName>EventsStore.EventsModels</AssemblyName>
+    <AssemblyTitle>Events Models</AssemblyTitle>
+    <OutputType>library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\CoreCLR\Common\ClusterAnalysis.Common.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\CoreCLR\TraceAccessLayer\ClusterAnalysis.TraceAccessLayer.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" /> 
+  </ItemGroup>
+
+  <ItemGroup>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationHealthReportExpiredEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ChaosRestartCodePackageFaultScheduledEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ContainerDeactivatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\DeployedApplicationHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\DeployedApplicationHealthReportExpiredEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\DeployedServiceHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\DeployedServiceHealthReportExpiredEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ProcessDeactivatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ChaosStartedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ChaosStoppedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterHealthReportExpiredEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\FabricEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\AnalysisEventMetadata.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Container\ContainerEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationDeletedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationEventAdapter.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationUpgradeCompleteEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationUpgradeDomainCompleteEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationUpgradeRollbackCompleteEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationUpgradeRollbackStartEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Application\ApplicationUpgradeStartEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterEventAdapter.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterUpgradeCompleteEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterUpgradeDomainCompleteEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterUpgradeRollbackCompleteEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterUpgradeRollbackStartEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Cluster\ClusterUpgradeStartEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\ChaosRestartNodeFaultScheduledEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeAbortedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeAddedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeClosedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeDeactivateCompleteEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeDeactivateStartEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeDownEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeEventAdapter.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeHealthReportExpiredEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeOpenedSuccessEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeOpenFailedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeRemovedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Node\NodeUpEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\ChaosMovePrimaryFaultScheduledEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\ChaosMoveSecondaryFaultScheduledEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\PartitionAnalysisEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\PartitionEventAdapter.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\PartitionHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\PartitionHealthReportExpiredEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\PartitionReconfigurationCompletedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\PartitionPrimaryMoveAnalysisEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Replica\ChaosRemoveReplicaFaultScheduledEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Replica\ChaosRestartReplicaFaultScheduledEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Replica\ReplicaEventAdapter.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Replica\StatefulReplicaHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Replica\StatefulReplicaHealthReportExpiredEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Replica\StatelessReplicaHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Replica\StatelessReplicaHealthReportExpiredEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Service\ServiceCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Service\ServiceDeletedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Service\ServiceEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Service\ServiceEventAdapter.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Partition\PartitionEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Replica\ReplicaEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Service\ServiceHealthReportCreatedEvent.cs"/>
+        <Compile Include="..\..\EventsStore.EventsModels\Service\ServiceHealthReportExpiredEvent.cs"/>
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

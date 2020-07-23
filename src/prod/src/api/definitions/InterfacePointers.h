@@ -146,6 +146,11 @@ namespace Api
     class IChaosScheduleDescriptionResult;
     class ISecretStoreClient;
     class IResourceManagerClient;
+    class INetworkManagementClient;
+    class IGatewayResourceManager;
+    class IGatewayResourceManagerAgent;
+    class IGatewayResourceManagerAgentFactory;
+    class IGatewayResourceManagerClient;
 
     typedef Common::RootedObjectPointer<IRuntime> IRuntimePtr;
     typedef Common::RootedObjectPointer<IRuntime2> IRuntime2Ptr;
@@ -282,6 +287,11 @@ namespace Api
     typedef Common::RootedObjectPointer<IContainerActivatorService> IContainerActivatorServicePtr;
     typedef Common::RootedObjectPointer<ISecretStoreClient> ISecretStoreClientPtr;
     typedef Common::RootedObjectPointer<IResourceManagerClient> IResourceManagerClientPtr;
+    typedef Common::RootedObjectPointer<INetworkManagementClient> INetworkManagementClientPtr;
+    typedef Common::RootedObjectPointer<IGatewayResourceManager> IGatewayResourceManagerPtr;
+    typedef Common::RootedObjectPointer<IGatewayResourceManagerAgent> IGatewayResourceManagerAgentPtr;
+    typedef Common::RootedObjectPointer<IGatewayResourceManagerAgentFactory> IGatewayResourceManagerAgentFactoryPtr;
+    typedef Common::RootedObjectPointer<IGatewayResourceManagerClient> IGatewayResourceManagerClientPtr;
 
     typedef std::shared_ptr<IPrimaryReplicator> IPrimaryReplicatorSPtr;
     typedef std::shared_ptr<IStatefulServicePartition> IStatefulServicePartitionSPtr;

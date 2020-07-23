@@ -125,7 +125,7 @@ ErrorCode XmlWriter::WriteAttribute(std::wstring const & attrName, std::wstring 
 
 
 
-ErrorCode XmlWriter::WriteBooleanAttribute(std::wstring const & attrName, bool const & value,
+ErrorCode XmlWriter::WriteBooleanAttribute(std::wstring const & attrName, bool & value,
 	std::wstring const & prefix, std::wstring const & nameSpace)
 {
 	wstring attrValue = value ? L"true" : L"false";

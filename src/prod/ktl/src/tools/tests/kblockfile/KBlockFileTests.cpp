@@ -3029,6 +3029,15 @@ KBlockFileTest(
     NTSTATUS status;
     KtlSystem*  defaultSys;
 
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     status = KtlSystem::Initialize(&defaultSys);
     defaultSys->SetStrictAllocationChecks(TRUE);    
 
@@ -3047,6 +3056,11 @@ KBlockFileTest(
     }
 
     KTestPrintf("KBlockFileTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return status;
 }
 

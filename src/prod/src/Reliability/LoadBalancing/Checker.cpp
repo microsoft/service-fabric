@@ -19,6 +19,7 @@
 #include "NodeCapacityConstraint.h"
 #include "ScaleoutCountConstraint.h"
 #include "ApplicationCapacityConstraint.h"
+#include "ThrottlingConstraint.h"
 
 #include "PLBDiagnostics.h"
 
@@ -35,7 +36,8 @@ Checker::Checker(Placement const* pl, PLBEventSource const& trace, PLBDiagnostic
     plbDiagnosticsSPtr_(plbDiagnosticsSPtr),
     settings_(pl->Settings),
     batchIndex_(0),
-    maxPriorityToUse_(-1)
+    maxPriorityToUse_(-1),
+    maxMovementSlots_(SIZE_MAX)
 {
     PLBConfig const& config = PLBConfig::GetConfig();
 
@@ -52,6 +54,16 @@ Checker::Checker(Placement const* pl, PLBEventSource const& trace, PLBDiagnostic
     {
         constraints_.push_back(make_unique<PreferredLocationConstraint>(config.PreferredLocationConstraintPriority));
         staticConstraintIndexes_.push_back(constraints_.size() - 1);
+    }
+
+    if (pl->IsThrottlingConstraintNeeded)
+    {
+        constraints_.push_back(make_unique<ThrottlingConstraint>(pl->ThrottlingConstraintPriority));
+        if (0 == config.ThrottlingConstraintPriority)
+        {
+            // Limit the number of movement slots only if thrittling constraint is hard.
+            maxMovementSlots_ = pl->GetThrottledMoveCount();
+        }
     }
 
     if (config.FaultDomainConstraintPriority >= 0 && !pl->BalanceCheckerObj->FaultDomainStructure.IsEmpty)

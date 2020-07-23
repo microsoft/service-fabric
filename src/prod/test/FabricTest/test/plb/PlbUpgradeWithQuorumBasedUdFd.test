@@ -21,6 +21,7 @@ set DeletedReplicaKeepDuration 1
 set QuorumBasedReplicaDistributionPerUpgradeDomains true
 set QuorumBasedReplicaDistributionPerFaultDomains true
 set BalancingDelayAfterNewNode 1
+set EnableConstraintCheckDuringFabricUpgrade true
 
 +10 ud=UD2 fd=fd:/dc0/dc00/r0/x0
 +20 ud=UD3 fd=fd:/dc0/dc00/r0/x1

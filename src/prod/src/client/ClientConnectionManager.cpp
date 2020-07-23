@@ -510,7 +510,7 @@ private:
         {
             ClientProtocolVersionHeader versionHeader;
             if (reply->Headers.TryReadFirst(versionHeader)
-                && ClientProtocolVersionHeader::IsMinorAtLeast(versionHeader, ClientProtocolVersionHeader::CurrentMinorVersion))
+                && versionHeader.IsPingReplyBodySupported())
             {
                 PingReplyMessageBody body;
                 if (reply->GetBody(body))

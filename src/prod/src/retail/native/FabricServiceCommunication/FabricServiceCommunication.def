@@ -1,0 +1,4 @@
+LIBRARY FabricServiceCommunication
+EXPORTS
+	CreateServiceCommunicationListener
+	CreateServiceCommunicationClient

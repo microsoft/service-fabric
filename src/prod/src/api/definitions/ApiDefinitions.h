@@ -24,6 +24,7 @@
 #include "FabricUpgradeOrchestrationService_.h"
 #include "FabricBackupRestoreService_.h"
 #include "FabricContainerActivatorService_.h"
+#include "FabricGatewayResourceManager_.h"
 
 //
 // api definitions Public Header Files
@@ -148,3 +149,8 @@
 #include "api/definitions/IChaosDescriptionResult.h"
 #include "api/definitions/IChaosScheduleDescriptionResult.h"
 #include "api/definitions/ISecretStoreClient.h"
+#include "api/definitions/INetworkManagementClient.h"
+#include "api/definitions/IGatewayResourceManager.h"
+#include "api/definitions/IGatewayResourceManagerAgent.h"
+#include "api/definitions/IGatewayResourceManagerAgentFactory.h"
+#include "api/definitions/IGatewayResourceManagerClient.h"

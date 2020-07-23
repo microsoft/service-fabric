@@ -1,0 +1,9 @@
+; KNodeTableUser.def : Declares the module parameters for the DLL.
+
+LIBRARY      "KNodeTableUser"
+
+EXPORTS
+; Explicit exports can go here
+QueryNumberOfTests      PRIVATE
+QueryTests              PRIVATE
+RunTest                 PRIVATE

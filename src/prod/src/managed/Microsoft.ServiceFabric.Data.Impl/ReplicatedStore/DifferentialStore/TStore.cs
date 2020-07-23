@@ -221,25 +221,6 @@ namespace System.Fabric.Store
         /// </summary>
         private long stateProviderId;
 
-        /// <summary>
-        /// Store's performance counter set instance
-        /// </summary>
-        private FabricPerformanceCounterSetInstance perfCounterSetInstance = null;
-
-        /// <summary>
-        /// Performance counter for total number of items in the store
-        /// </summary>
-        private TStoreItemCountCounterWriter itemCountPerfCounterWriter = null;
-
-        /// <summary>
-        /// Performance counter for total disk size of the store
-        /// </summary>
-        private TStoreDiskSizeCounterWriter diskSizePerfCounterWriter = null;
-
-        private TStoreMetricProvider metrics;
-
-        private ReadLatencyMetric readLatencyMetric;
-
         private bool IsClearApplied;
 
         private bool IsPrepareAfterClear;
@@ -321,6 +302,35 @@ namespace System.Fabric.Store
         /// This setting indicates whether strict 2PL is enabled.
         /// </summary>
         private bool enableStrict2PL = false;
+
+        #region Performance Counters
+
+        /// <summary>
+        /// Store's performance counter set instance
+        /// </summary>
+        private FabricPerformanceCounterSetInstance perfCounterSetInstance = null;
+
+        /// <summary>
+        /// Performance counter for total disk size of the store
+        /// </summary>
+        private TStoreDiskSizeCounterWriter diskSizePerfCounterWriter = null;
+
+        /// <summary>
+        /// Performance counter for total number of items in the store
+        /// </summary>
+        private TStoreItemCountCounterWriter itemCountPerfCounterWriter = null;
+
+        #endregion
+
+        #region Metrics
+
+        private TStoreMetricProvider metrics;
+
+        private long lastRecordedDiskSize = 0;
+
+        private long lastRecordedItemCount = 0;
+
+        #endregion
 
         #endregion
 
@@ -901,16 +911,27 @@ namespace System.Fabric.Store
             // Extract key and value bytes.
             var keyBytes = this.GetKeyBytes(key);
             var valueBytes = this.GetValueBytes(default(TValue), value);
-
-            // Compute locking constructs.
-            var milliseconds = this.GetTimeoutInMilliseconds(timeout);
-            var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
+            var valueSize = this.GetValueSize(valueBytes);
 
             // Compute redo and undo information. This can be done outside the lock.
             MetadataOperationData<TKey, TValue> metadata = new MetadataOperationData<TKey, TValue>(key, value, TStoreConstants.SerializedVersion, StoreModificationType.Add, keyBytes, rwtx.Id, this.traceType);
             RedoUndoOperationData redo = new RedoUndoOperationData(valueBytes, null, this.traceType);
             IOperationData undo = null;
-            var millisecondsRemaining = 0;
+
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterWrite();
+            }
+
+            if (this.metrics.KeyValueSizeMetric.GetSamplingSuggestion())
+            {
+                this.metrics.KeyValueSizeMetric.Add(keyBytes.Count, valueSize);
+            }
+
+            // Compute locking constructs.
+            var milliseconds = this.GetTimeoutInMilliseconds(timeout);
+            var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
+            int millisecondsRemaining;
 
             try
             {
@@ -970,8 +991,7 @@ namespace System.Fabric.Store
                     !IsNull(value) ? value.GetHashCode() : int.MinValue);
 
                 // Add the change to the store transaction write-set.
-                TVersionedItem<TValue> insertedVersion = new TInsertedItem<TValue>(value, this.CanItemBeSweepedToDisk(value));
-                insertedVersion.ValueSize = this.GetValueSize(valueBytes);
+                TVersionedItem<TValue> insertedVersion = new TInsertedItem<TValue>(value, valueSize, this.CanItemBeSweepedToDisk(value));
                 rwtx.Component.Add(false, key, insertedVersion);
             }
             catch (Exception e)
@@ -1024,16 +1044,27 @@ namespace System.Fabric.Store
             // Extract key and value bytes.
             var keyBytes = this.GetKeyBytes(key);
             var valueBytes = this.GetValueBytes(default(TValue), value);
-
-            // Compute locking constructs.
-            var milliseconds = this.GetTimeoutInMilliseconds(timeout);
-            var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
+            var valueSize = this.GetValueSize(valueBytes);
 
             // Compute redo and undo information. This can be done outside the lock.
             MetadataOperationData<TKey, TValue> metadata = new MetadataOperationData<TKey, TValue>(key, value, TStoreConstants.SerializedVersion, StoreModificationType.Add, keyBytes, rwtx.Id, this.traceType);
             RedoUndoOperationData redo = new RedoUndoOperationData(valueBytes, null, this.traceType);
             IOperationData undo = null;
-            var millisecondsRemaining = 0;
+
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterWrite();
+            }
+
+            if (this.metrics.KeyValueSizeMetric.GetSamplingSuggestion())
+            {
+                this.metrics.KeyValueSizeMetric.Add(keyBytes.Count, valueSize);
+            }
+
+            // Compute locking constructs.
+            var milliseconds = this.GetTimeoutInMilliseconds(timeout);
+            var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
+            int millisecondsRemaining;
 
             try
             {
@@ -1093,9 +1124,7 @@ namespace System.Fabric.Store
                     !IsNull(value) ? value.GetHashCode() : int.MinValue);
 
                 // Add the change to the store transaction write-set.
-                TVersionedItem<TValue> insertedVersion = new TInsertedItem<TValue>(value, this.CanItemBeSweepedToDisk(value));
-
-                insertedVersion.ValueSize = this.GetValueSize(valueBytes);
+                TVersionedItem<TValue> insertedVersion = new TInsertedItem<TValue>(value, valueSize, this.CanItemBeSweepedToDisk(value));
                 rwtx.Component.Add(false, key, insertedVersion);
             }
             catch (Exception e)
@@ -1494,15 +1523,26 @@ namespace System.Fabric.Store
             // Extract key and value bytes.
             var keyBytes = this.GetKeyBytes(key);
             var valueBytes = this.GetValueBytes(default(TValue), newValue);
-
-            // Compute locking constructs.
-            var milliseconds = this.GetTimeoutInMilliseconds(timeout);
-            var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
+            var valueSize = this.GetValueSize(valueBytes);
 
             // Compute redo/undo information. This part can be done outside the lock.
             MetadataOperationData<TKey, TValue> metadata = new MetadataOperationData<TKey, TValue>(key, newValue, TStoreConstants.SerializedVersion, StoreModificationType.Update, keyBytes, rwtx.Id, this.traceType);
             RedoUndoOperationData redoUpdate = new RedoUndoOperationData(valueBytes, null, this.traceType);
-            var millisecondsRemaining = 0;
+
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterWrite();
+            }
+
+            if (this.metrics.KeyValueSizeMetric.GetSamplingSuggestion())
+            {
+                this.metrics.KeyValueSizeMetric.Update(valueSize);
+            }
+
+            // Compute locking constructs.
+            var milliseconds = this.GetTimeoutInMilliseconds(timeout);
+            var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
+            int millisecondsRemaining;
 
             try
             {
@@ -1541,13 +1581,8 @@ namespace System.Fabric.Store
             }
 
             StoreComponentReadResult<TValue> readResult = await this.TryGetValueForReadWriteTransactionAsync(rwtx, key, ReadMode.ReadValue, cancellationToken).ConfigureAwait(false);
+            TVersionedItem<TValue> versionedItem = readResult.VersionedItem;
             bool isVersionedItemFound = readResult.HasValue;
-            TVersionedItem<TValue> versionedItem = null;
-
-            if (isVersionedItemFound)
-            {
-                versionedItem = readResult.VersionedItem;
-            }
 
             // An item that does not exist, cannot be updated.
             if (isVersionedItemFound == false || versionedItem.Kind == RecordKind.DeletedVersion)
@@ -1603,9 +1638,7 @@ namespace System.Fabric.Store
                     null != newValue ? newValue.GetHashCode() : int.MinValue);
 
                 // Add the change to the store transaction write-set.
-                var updatedVersion = new TUpdatedItem<TValue>(newValue, this.CanItemBeSweepedToDisk(newValue));
-
-                updatedVersion.ValueSize = this.GetValueSize(valueBytes);
+                var updatedVersion = new TUpdatedItem<TValue>(newValue, valueSize, this.CanItemBeSweepedToDisk(newValue));
                 rwtx.Component.Add(false, key, updatedVersion);
             }
             catch (Exception e)
@@ -1667,7 +1700,7 @@ namespace System.Fabric.Store
             // Compute locking constructs.
             var milliseconds = this.GetTimeoutInMilliseconds(timeout);
             var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
-            var timeoutLeftOver = 0;
+            int timeoutLeftOver;
 
             try
             {
@@ -1728,16 +1761,16 @@ namespace System.Fabric.Store
 
             // Check to see if this key was already added.
             StoreComponentReadResult<TValue> readResult = await this.TryGetValueForReadWriteTransactionAsync(rwtx, key, ReadMode.CacheResult, cancellationToken).ConfigureAwait(false);
+            TVersionedItem<TValue> versionedItem = readResult.VersionedItem;
             bool isVersionedItemFound = readResult.HasValue;
-            TVersionedItem<TValue> versionedItem = null;
 
-            if (isVersionedItemFound)
+            if (isVersionedItemFound == true && (versionedItem is TInsertedItem<TValue> || versionedItem is TUpdatedItem<TValue>))
             {
-                versionedItem = readResult.VersionedItem;
-            }
+                if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+                {
+                    this.metrics.ReadWriteMetric.RegisterRead();
+                }
 
-            if (versionedItem != null && (versionedItem is TInsertedItem<TValue> || versionedItem is TUpdatedItem<TValue>))
-            {
                 // Re-certify the read.
                 var lockHints = rwtx.LockingHints;
                 rwtx.LockingHints = LockingHints.UpdateLock;
@@ -1748,6 +1781,11 @@ namespace System.Fabric.Store
                 // Value has already been loaded above.
                 this.AssertIfUnexpectedVersionedItemValue(readResult, ReadMode.CacheResult);
                 return readResult.UserValue;
+            }
+
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterWrite();
             }
 
             try
@@ -1781,10 +1819,13 @@ namespace System.Fabric.Store
             // Execute delegate to obtain the value.
             var value = default(TValue);
             ArraySegment<byte>[] valueBytes;
+            int valueSize;
+
             try
             {
                 value = valueFactory(key);
                 valueBytes = this.GetValueBytes(default(TValue), value);
+                valueSize = this.GetValueSize(valueBytes);
             }
             catch (Exception e)
             {
@@ -1803,6 +1844,11 @@ namespace System.Fabric.Store
             RedoUndoOperationData redo = new RedoUndoOperationData(valueBytes, null, this.traceType);
             IOperationData undo = null;
 
+            if (this.metrics.KeyValueSizeMetric.GetSamplingSuggestion())
+            {
+                this.metrics.KeyValueSizeMetric.Add(keyBytes.Count, valueSize);
+            }
+
             try
             {
                 // Replicate.
@@ -1815,9 +1861,7 @@ namespace System.Fabric.Store
                     null != value ? value.GetHashCode() : int.MinValue);
 
                 // Add the change to the store transaction write-set.
-                var insertedVersion = new TInsertedItem<TValue>(value, this.CanItemBeSweepedToDisk(value));
-
-                insertedVersion.ValueSize = this.GetValueSize(valueBytes);
+                var insertedVersion = new TInsertedItem<TValue>(value, valueSize, this.CanItemBeSweepedToDisk(value));
                 rwtx.Component.Add(false, key, insertedVersion);
             }
             catch (Exception e)
@@ -1887,10 +1931,15 @@ namespace System.Fabric.Store
             // Extract key bytes.
             var keyBytes = this.GetKeyBytes(key);
 
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterWrite();
+            }
+
             // Compute locking constructs.
             var milliseconds = this.GetTimeoutInMilliseconds(timeout);
             var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
-            var millisecondsRemaining = 0;
+            int millisecondsRemaining;
 
             try
             {
@@ -1930,13 +1979,8 @@ namespace System.Fabric.Store
             }
 
             StoreComponentReadResult<TValue> readResult = await this.TryGetValueForReadWriteTransactionAsync(rwtx, key, ReadMode.ReadValue, cancellationToken).ConfigureAwait(false);
+            TVersionedItem<TValue> versionedItem = readResult.VersionedItem;
             bool isVersionedItemFound = readResult.HasValue;
-            TVersionedItem<TValue> versionedItem = null;
-
-            if (isVersionedItemFound)
-            {
-                versionedItem = readResult.VersionedItem;
-            }
 
             // An item that does not exist, cannot be updated.
             if (isVersionedItemFound == false || versionedItem.Kind == RecordKind.DeletedVersion)
@@ -1951,11 +1995,14 @@ namespace System.Fabric.Store
             // Execute delegate to obtain the value. Serialize old and new value.
             var value = default(TValue);
             ArraySegment<byte>[] valueBytes;
+            int valueSize;
+
             try
             {
                 // Get new value.
                 value = updateValueFactory(key, readResult.UserValue);
                 valueBytes = this.GetValueBytes(default(TValue), value);
+                valueSize = this.GetValueSize(valueBytes);
             }
             catch (Exception e)
             {
@@ -1978,6 +2025,11 @@ namespace System.Fabric.Store
             IOperationData undoUpdate = null;
             RedoUndoOperationData redoUpdate = new RedoUndoOperationData(valueBytes, null, this.traceType);
 
+            if (this.metrics.KeyValueSizeMetric.GetSamplingSuggestion())
+            {
+                this.metrics.KeyValueSizeMetric.Update(valueSize);
+            }
+
             try
             {
                 // Replicate.
@@ -1990,9 +2042,7 @@ namespace System.Fabric.Store
                     null != value ? value.GetHashCode() : int.MinValue);
 
                 // Add the changes to the store transaction write-set.
-                var updatedVersion = new TUpdatedItem<TValue>(value, this.CanItemBeSweepedToDisk(value));
-
-                updatedVersion.ValueSize = this.GetValueSize(valueBytes);
+                var updatedVersion = new TUpdatedItem<TValue>(value, valueSize, this.CanItemBeSweepedToDisk(value));
                 rwtx.Component.Add(false, key, updatedVersion);
             }
             catch (Exception e)
@@ -2115,18 +2165,15 @@ namespace System.Fabric.Store
             // Extract key bytes.
             var keyBytes = this.GetKeyBytes(key);
 
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterWrite();
+            }
+
             // Compute locking constructs.
             var milliseconds = this.GetTimeoutInMilliseconds(timeout);
             var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
-
-            // Compute redo and undo information. This can be done outside the lock.
-            MetadataOperationData<TKey, TValue> metadataUpdate = null;
-            MetadataOperationData<TKey, TValue> metadataInsert = null;
-            RedoUndoOperationData redoUpdate = null;
-            IOperationData undoUpdate = null;
-            RedoUndoOperationData redoInsert = null;
-            IOperationData undoInsert = null;
-            var millisecondsRemaining = 0;
+            int millisecondsRemaining;
 
             try
             {
@@ -2165,120 +2212,106 @@ namespace System.Fabric.Store
             }
 
             // Check to see if the key can be added or it needs to be updated.
-            var isAdded = false;
-            var updateValue = default(TValue);
-            var addValue = default(TValue);
-
-            var valueSize = -1;
+            string operationType;
+            TValue value;
+            TValue oldValue;
+            StoreModificationType modification;
+            bool isAdded;
 
             if (this.CanKeyBeAdded(rwtx, key))
             {
                 // Key will be added.
+                operationType = "add";
+                oldValue = default(TValue);
+                modification = StoreModificationType.Add;
                 isAdded = true;
-                ArraySegment<byte>[] addValueBytes;
-
-                // Execute delegate to obtain the add value.
-                try
-                {
-                    addValue = addValueFactory(key);
-                    addValueBytes = this.GetValueBytes(default(TValue), addValue);
-                    valueSize = this.GetValueSize(addValueBytes);
-                }
-                catch (Exception e)
-                {
-                    // Check inner exception.
-                    e = Diagnostics.ProcessException(string.Format("TStore.AddOrUpdateAsync@{0}", this.traceType), e, "add value factory key={0} ", keyLockResourceNameHash);
-
-                    // Terminate store transaction.
-                    this.FixupDanglingStoreTransactionIfNeeded(rwtx);
-
-                    // Rethrow
-                    throw e;
-                }
-
-                metadataInsert = new MetadataOperationData<TKey, TValue>(key, addValue, TStoreConstants.SerializedVersion, StoreModificationType.Add, keyBytes, rwtx.Id, this.traceType);
-                redoInsert = new RedoUndoOperationData(addValueBytes, null, this.traceType);
-                undoInsert = null;
             }
             else
             {
                 // Key will be updated.
                 StoreComponentReadResult<TValue> readResult = await this.TryGetValueForReadWriteTransactionAsync(rwtx, key, ReadMode.ReadValue, cancellationToken).ConfigureAwait(false);
+                TVersionedItem<TValue> versionedItem = readResult.VersionedItem;
                 bool isVersionedItemFound = readResult.HasValue;
-                TVersionedItem<TValue> versionedItem = null;
 
-                if (isVersionedItemFound)
-                {
-                    versionedItem = readResult.VersionedItem;
-                }
-
-                Diagnostics.Assert(isVersionedItemFound == true && versionedItem.Kind != RecordKind.DeletedVersion, this.TraceType, "key must either be added or updated");
+                Diagnostics.Assert(
+                    isVersionedItemFound == true && versionedItem.Kind != RecordKind.DeletedVersion,
+                    this.TraceType,
+                    "key must either be added or updated");
 
                 // Ensure that the value is in-memory
                 this.AssertIfUnexpectedVersionedItemValue(readResult, ReadMode.ReadValue);
 
-                // Execute delegate to obtain the update value.
-                ArraySegment<byte>[] updateValueBytes;
-                try
-                {
-                    updateValue = updateValueFactory(key, readResult.UserValue);
-                    updateValueBytes = this.GetValueBytes(default(TValue), updateValue);
-                    valueSize = this.GetValueSize(updateValueBytes);
-                }
-                catch (Exception e)
-                {
-                    // Check inner exception.
-                    e = Diagnostics.ProcessException(string.Format("TStore.AddOrUpdateAsync@{0}", this.traceType), e, "update value factory key={0} ", keyLockResourceNameHash);
-
-                    // Terminate store transaction.
-                    this.FixupDanglingStoreTransactionIfNeeded(rwtx);
-
-                    // Rethrow
-                    throw e;
-                }
-
-                metadataUpdate = new MetadataOperationData<TKey, TValue>(key, updateValue, TStoreConstants.SerializedVersion, StoreModificationType.Update, keyBytes, rwtx.Id, this.traceType);
-                redoUpdate = new RedoUndoOperationData(updateValueBytes, null, this.traceType);
-                undoUpdate = null;
+                operationType = "update";
+                oldValue = readResult.UserValue;
+                modification = StoreModificationType.Update;
+                isAdded = false;
             }
+            
+            try
+            {
+                // Execute delegate to obtain the value.
+                value = isAdded
+                    ? addValueFactory(key)
+                    : updateValueFactory(key, oldValue);
+            }
+            catch (Exception e)
+            {
+                // Check inner exception.
+                e = Diagnostics.ProcessException(
+                    string.Format("TStore.AddOrUpdateAsync@{0}", this.traceType),
+                    e,
+                    "{0} value factory key={1} ",
+                    operationType,
+                    keyLockResourceNameHash);
+
+                // Terminate store transaction.
+                this.FixupDanglingStoreTransactionIfNeeded(rwtx);
+
+                // Rethrow
+                throw e;
+            }
+
+            var valueBytes = this.GetValueBytes(default(TValue), value);
+            var valueSize = this.GetValueSize(valueBytes);
+
+            var metadataOperationData = new MetadataOperationData<TKey, TValue>(key, value, TStoreConstants.SerializedVersion, modification, keyBytes, rwtx.Id, this.traceType);
+            var redo = new RedoUndoOperationData(valueBytes, null, this.traceType);
+            IOperationData undo = null;
 
             try
             {
+                // Replicate.
+                await this.ReplicateOperationAsync(rwtx, metadataOperationData, redo, undo, millisecondsRemaining, cancellationToken).ConfigureAwait(false);
+
+                FabricEvents.Events.AcceptAddOrUpdateAsync(
+                    this.traceType,
+                    operationType,
+                    rwtx.Id,
+                    keyLockResourceNameHash,
+                    null != value ? value.GetHashCode() : int.MinValue);
+
+                // Add the change to the store transaction write-set.
+                TVersionedItem<TValue> versionedItem;
                 if (isAdded)
                 {
-                    // Replicate.
-                    await this.ReplicateOperationAsync(rwtx, metadataInsert, redoInsert, undoInsert, millisecondsRemaining, cancellationToken).ConfigureAwait(false);
+                    versionedItem = new TInsertedItem<TValue>(value, valueSize, this.CanItemBeSweepedToDisk(value));
 
-                    FabricEvents.Events.AcceptAddOrUpdateAsync(
-                        this.traceType,
-                        "add",
-                        rwtx.Id,
-                        keyLockResourceNameHash,
-                        null != addValue ? addValue.GetHashCode() : int.MinValue);
-
-                    // Add the change to the store transaction write-set.
-                    var insertedVersion = new TInsertedItem<TValue>(addValue, this.CanItemBeSweepedToDisk(addValue));
-
-                    insertedVersion.ValueSize = valueSize;
-                    rwtx.Component.Add(false, key, insertedVersion);
+                    if (this.metrics.KeyValueSizeMetric.GetSamplingSuggestion())
+                    {
+                        this.metrics.KeyValueSizeMetric.Add(keyBytes.Count, valueSize);
+                    }
                 }
                 else
                 {
-                    // Replicate.
-                    await this.ReplicateOperationAsync(rwtx, metadataUpdate, redoUpdate, undoUpdate, millisecondsRemaining, cancellationToken).ConfigureAwait(false);
+                    versionedItem = new TUpdatedItem<TValue>(value, valueSize, this.CanItemBeSweepedToDisk(value));
 
-                    FabricEvents.Events.AcceptAddOrUpdateAsync(
-                        this.traceType,
-                        "update",
-                        rwtx.Id,
-                        keyLockResourceNameHash,
-                        null != updateValue ? updateValue.GetHashCode() : int.MinValue);
-
-                    // Add the changes to the store transaction write-set.
-                    var updatedVersion = new TUpdatedItem<TValue>(updateValue, this.CanItemBeSweepedToDisk(updateValue));
-                    updatedVersion.ValueSize = valueSize;
-                    rwtx.Component.Add(false, key, updatedVersion);
+                    if (this.metrics.KeyValueSizeMetric.GetSamplingSuggestion())
+                    {
+                        this.metrics.KeyValueSizeMetric.Update(valueSize);
+                    }
                 }
+
+                rwtx.Component.Add(false, key, versionedItem);
             }
             catch (Exception e)
             {
@@ -2294,8 +2327,7 @@ namespace System.Fabric.Store
                 throw e;
             }
 
-            // Return the appropriate version of the modification.
-            return isAdded ? addValue : updateValue;
+            return value;
         }
 
         #endregion
@@ -2737,10 +2769,7 @@ namespace System.Fabric.Store
             FabricEvents.Events.OpenAsync(this.traceType, DifferentialStoreConstants.Open_Starting);
 
             this.InitializeLockManager();
-
             this.InitializePerformanceCounters();
-
-            // Initialize metrics
             this.InitializeMetrics();
 
             // Ensure the state provider's working sub-directory exists (no-op if it already exists).
@@ -2881,11 +2910,7 @@ namespace System.Fabric.Store
             this.lastPerformCheckpointLSN = this.lastPrepareCheckpointLSN;
             this.lastPrepareCheckpointLSN = DifferentialStoreConstants.InvalidLSN;
 
-            long itemCount = this.Count;
-            long diskSize = GetDiskSize(NextMetadataTable);
-
-            this.itemCountPerfCounterWriter.SetCount(itemCount);
-            this.diskSizePerfCounterWriter.SetSize(diskSize);
+            UpdateInstantaneousStoreCounters(this.NextMetadataTable, out long itemCount, out long diskSize);
 
 #if !DotNetCoreClr
             FabricEvents.Events.PerformCheckpointAsyncCompleted(this.traceType, this.FileId, checkpointDuration.TotalMilliseconds, itemCount, diskSize);
@@ -3523,8 +3548,13 @@ namespace System.Fabric.Store
                 }
             }
 
-            this.diskSizePerfCounterWriter.SetSize(0);
             this.itemCountPerfCounterWriter.ResetCount();
+            this.metrics.ItemCountMetric.Add(-this.lastRecordedItemCount);
+            this.lastRecordedItemCount = 0;
+
+            this.diskSizePerfCounterWriter.SetSize(0);
+            this.metrics.DiskSizeMetric.Add(-this.lastRecordedDiskSize);
+            this.lastRecordedDiskSize = 0;
 
             FabricEvents.Events.RemoveStateAsync(this.traceType, DifferentialStoreConstants.RemoveState_Completed, stateProviderId);
         }
@@ -4019,14 +4049,11 @@ namespace System.Fabric.Store
                 Diagnostics.Assert(consolidatedCount == this.Count, traceType, "consolidatedComponent.Count {0} == this.Count {1}", consolidatedCount, this.Count);
             }
 
-            var itemCount = this.Count;
-            var diskSize = GetDiskSize(this.CurrentMetadataTable);
+            UpdateInstantaneousStoreCounters(this.CurrentMetadataTable, out long itemCount, out long diskSize);
+
 #if !DotNetCoreClr
             FabricEvents.Events.StoreSize(this.traceType, itemCount, diskSize);
 #endif
-
-            this.itemCountPerfCounterWriter.SetCount(itemCount);
-            this.diskSizePerfCounterWriter.SetSize(diskSize);
         }
 
         /// <summary>
@@ -4609,9 +4636,24 @@ namespace System.Fabric.Store
         {
             this.metrics = this.transactionalReplicator.MetricManager.GetProvider(MetricProviderType.TStore) as TStoreMetricProvider;
             Diagnostics.Assert(this.metrics != null, this.TraceType, "TStore metrics could not be found");
+            
+            this.metrics.KeyTypeMetric.RegisterKeyType(typeof(TKey));
+            this.metrics.StoreCountMetric.RegisterStore();
+        }
 
-            this.readLatencyMetric = this.metrics[TStoreMetricType.ReadLatency] as ReadLatencyMetric;
-            Diagnostics.Assert(this.readLatencyMetric != null, this.TraceType, "Read latency metric could not be found");
+        /// <summary>
+        /// Uninitialize metrics
+        /// </summary>
+        private void UninitializeMetrics()
+        {
+            this.metrics.StoreCountMetric.UnregisterStore();
+            this.metrics.KeyTypeMetric.UnregisterKeyType(typeof(TKey));
+
+            this.metrics.DiskSizeMetric.Add(-this.lastRecordedDiskSize);
+            this.lastRecordedDiskSize = 0;
+
+            this.metrics.ItemCountMetric.Add(-this.lastRecordedItemCount);
+            this.lastRecordedItemCount = 0;
         }
 
         /// <summary>
@@ -4731,8 +4773,8 @@ namespace System.Fabric.Store
                 rwtx.Dispose();
 
                 this.UninitializeLockManager();
-
                 this.UninitializePerformanceCounters();
+                this.UninitializeMetrics();
 
                 FabricEvents.Events.OnCleanup(this.traceType, DifferentialStoreConstants.Cleanup_Completed);
             }
@@ -5085,8 +5127,11 @@ namespace System.Fabric.Store
                 if (!isIdempotent || this.ShouldValueBeAddedToDifferentialState(key, txn.CommitSequenceNumber))
                 {
                     // Add the change to the store transaction write-set.
-                    TVersionedItem<TValue> insertedVersion = new TInsertedItem<TValue>(txn.CommitSequenceNumber, value, this.CanItemBeSweepedToDisk(value));
-                    insertedVersion.ValueSize = this.GetValueSize(operationRedoUndo.ValueBytes);
+                    TVersionedItem<TValue> insertedVersion = new TInsertedItem<TValue>(
+                        txn.CommitSequenceNumber,
+                        value,
+                        this.GetValueSize(operationRedoUndo.ValueBytes),
+                        this.CanItemBeSweepedToDisk(value));
                     this.DifferentialState.Add(key, insertedVersion, this.ConsolidationManager);
 
                     long newCount = this.IncrementCount(txn.Id, txn.CommitSequenceNumber);
@@ -5185,8 +5230,11 @@ namespace System.Fabric.Store
                 if (!isIdempotent || (isIdempotent && this.ShouldValueBeAddedToDifferentialState(key, txn.CommitSequenceNumber)))
                 {
                     // Add the change to the store transaction write-set.
-                    TVersionedItem<TValue> updatedVersion = new TUpdatedItem<TValue>(txn.CommitSequenceNumber, value, this.CanItemBeSweepedToDisk(value));
-                    updatedVersion.ValueSize = this.GetValueSize(operationRedoUndo.ValueBytes);
+                    TVersionedItem<TValue> updatedVersion = new TUpdatedItem<TValue>(
+                        txn.CommitSequenceNumber,
+                        value,
+                        this.GetValueSize(operationRedoUndo.ValueBytes),
+                        this.CanItemBeSweepedToDisk(value));
                     this.DifferentialState.Add(key, updatedVersion, this.ConsolidationManager);
 
                     this.FireItemUpdatedNotificationOnSecondary(txn, key, value);
@@ -5489,15 +5537,9 @@ namespace System.Fabric.Store
                 }
             }
 
-            if (versionedItem == null)
+            if (versionedItem == null || versionedItem is TDeletedItem<TValue>)
             {
-                // The key does not exist. It cannot be updated or deleted.
-                return false;
-            }
-
-            if (versionedItem is TDeletedItem<TValue>)
-            {
-                // The key was deleted. It cannot be updated or deleted.
+                // The key does not exist, or was deleted. It cannot be updated or deleted.
                 return false;
             }
 
@@ -5510,7 +5552,7 @@ namespace System.Fabric.Store
                     return false;
                 }
             }
-
+            
             return true;
         }
 
@@ -5769,6 +5811,10 @@ namespace System.Fabric.Store
 
                     if (LockStatus.Timeout == keyLock.Status)
                     {
+#if DEBUG
+                        Diagnostics.Assert(keyLock.OldestGrantee != -1, "OldestGrantee should not be -1. There should be at least one grantee");
+#endif
+
                         throw new TimeoutException(
                             string.Format(
                                 CultureInfo.CurrentCulture,
@@ -5777,7 +5823,8 @@ namespace System.Fabric.Store
                                 this.traceType,
                                 lockTimeout,
                                 rtx.Id,
-                                keyLockResourceNameHash));
+                                keyLockResourceNameHash,
+                                keyLock.OldestGrantee));
                     }
                 }
             }
@@ -5863,15 +5910,26 @@ namespace System.Fabric.Store
                 throw new ArgumentNullException(SR.Error_Key);
             }
 
+            // Compute redo/undo information. This part can be done outside the lock.
+            var valueBytes = this.GetValueBytes(default(TValue), value);
+            var valueSize = this.GetValueSize(valueBytes);
+            MetadataOperationData metadata = new MetadataOperationData<TKey, TValue>(key, value, TStoreConstants.SerializedVersion, StoreModificationType.Update, keyBytes, rwtx.Id, this.traceType);
+            RedoUndoOperationData redoUpdate = new RedoUndoOperationData(valueBytes, null, this.traceType);
+
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterWrite();
+            }
+
+            if (this.metrics.KeyValueSizeMetric.GetSamplingSuggestion())
+            {
+                this.metrics.KeyValueSizeMetric.Update(valueSize);
+            }
+
             // Compute locking constructs.
             var milliseconds = this.GetTimeoutInMilliseconds(timeout);
             var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
-
-            // Compute redo/undo information. This part can be done outside the lock.
-            var valueBytes = this.GetValueBytes(default(TValue), value);
-            MetadataOperationData metadata = new MetadataOperationData<TKey, TValue>(key, value, TStoreConstants.SerializedVersion, StoreModificationType.Update, keyBytes, rwtx.Id, this.traceType);
-            RedoUndoOperationData redoUpdate = new RedoUndoOperationData(valueBytes, null, this.traceType);
-            var millisecondsRemaining = 0;
+            int millisecondsRemaining;
 
             try
             {
@@ -5911,8 +5969,7 @@ namespace System.Fabric.Store
             }
 
             // Check to see if this key exists.
-            var isVersionMismatch = false;
-            if (!this.CanKeyBeUpdatedOrDeleted(rwtx, key, conditionalCheckVersion, performVersionCheck, out isVersionMismatch))
+            if (!this.CanKeyBeUpdatedOrDeleted(rwtx, key, conditionalCheckVersion, performVersionCheck, out bool isVersionMismatch))
             {
                 if (isVersionMismatch)
                 {
@@ -5942,9 +5999,7 @@ namespace System.Fabric.Store
                     null != value ? value.GetHashCode() : int.MinValue);
 
                 // Add the change to the store transaction write-set.
-                var updatedVersion = new TUpdatedItem<TValue>(value, this.CanItemBeSweepedToDisk(value));
-
-                updatedVersion.ValueSize = this.GetValueSize(valueBytes);
+                var updatedVersion = new TUpdatedItem<TValue>(value, valueSize, this.CanItemBeSweepedToDisk(value));
                 rwtx.Component.Add(false, key, updatedVersion);
             }
             catch (Exception e)
@@ -6005,15 +6060,20 @@ namespace System.Fabric.Store
                 throw new ArgumentNullException(SR.Error_Key);
             }
 
-            // Compute locking constructs.
-            var milliseconds = this.GetTimeoutInMilliseconds(timeout);
-            var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
-
             // Compute redo information. This can be done outside the lock.
             MetadataOperationData metadata = new MetadataOperationData<TKey>(key, TStoreConstants.SerializedVersion, StoreModificationType.Remove, keyBytes, rwtx.Id, this.traceType);
             RedoUndoOperationData redo = new RedoUndoOperationData(null, null, this.traceType);
             TVersionedItem<TValue> deletedVersion = null;
-            var millisecondsRemaining = 0;
+
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterWrite();
+            }
+
+            // Compute locking constructs.
+            var milliseconds = this.GetTimeoutInMilliseconds(timeout);
+            var keyLockResourceNameHash = CRC64.ToCRC64(keyBytes);
+            int millisecondsRemaining;
 
             try
             {
@@ -6053,13 +6113,8 @@ namespace System.Fabric.Store
             }
 
             StoreComponentReadResult<TValue> readResult = await this.TryGetValueForReadWriteTransactionAsync(rwtx, key, ReadMode.ReadValue, cancellationToken).ConfigureAwait(false);
+            TVersionedItem<TValue> versionedItem = readResult.VersionedItem;
             bool isVersionedItemFound = readResult.HasValue;
-            TVersionedItem<TValue> versionedItem = null;
-
-            if (isVersionedItemFound)
-            {
-                versionedItem = readResult.VersionedItem;
-            }
 
             // An item that does not exist cannot be removed.
             if (isVersionedItemFound == false || versionedItem.Kind == RecordKind.DeletedVersion)
@@ -6105,7 +6160,6 @@ namespace System.Fabric.Store
             }
 
             // Return the appropriate version of the modification.
-
             this.AssertIfUnexpectedVersionedItemValue(readResult, ReadMode.ReadValue);
             return new ConditionalValue<TValue>(true, readResult.UserValue);
         }
@@ -6126,8 +6180,9 @@ namespace System.Fabric.Store
         private async Task<ConditionalValue<TValue>> ConditionalGetAsync(IStoreTransaction transaction, TKey key, ReadMode readMode, TimeSpan timeout, CancellationToken cancellationToken)
         {
             Stopwatch stopwatch = null;
-            bool shouldSampleMetricMeasurement = this.readLatencyMetric.GetSamplingSuggestion();
-            
+            var readLatencyMetric = this.metrics.ReadLatencyMetric;
+            bool shouldSampleMetricMeasurement = readLatencyMetric.GetSamplingSuggestion();
+
             if (shouldSampleMetricMeasurement)
             {
                 stopwatch = Stopwatch.StartNew();
@@ -6149,6 +6204,11 @@ namespace System.Fabric.Store
             // Make sure reads are allowed.
             this.ThrowIfFaulted(rwtx);
             this.ThrowIfNotReadable(rwtx);
+
+            if (this.metrics.ReadWriteMetric.GetSamplingSuggestion())
+            {
+                this.metrics.ReadWriteMetric.RegisterRead();
+            }
 
             var milliseconds = this.GetTimeoutInMilliseconds(timeout);
 
@@ -6205,7 +6265,7 @@ namespace System.Fabric.Store
                         if (shouldSampleMetricMeasurement)
                         {
                             stopwatch.Stop();
-                            this.readLatencyMetric.Update(stopwatch.ElapsedTicks);
+                            readLatencyMetric.Update(stopwatch.ElapsedTicks);
                         }
 
                         return readReturn;
@@ -6225,7 +6285,6 @@ namespace System.Fabric.Store
 
                     var visibilitySequenceNumber = await ((ITransaction)rwtx.ReplicatorTransactionBase).GetVisibilitySequenceNumberAsync().ConfigureAwait(false);
 
-                    TVersionedItem<TValue> versionedItem = null;
                     var readResult = await this.TryGetValueForReadOnlyTransactionsAsync(key, visibilitySequenceNumber, true, readMode, cancellationToken);
 
                     // Check if transaction has been disposed since replicator can dispose  a long running tx or 
@@ -6235,7 +6294,7 @@ namespace System.Fabric.Store
 
                     if (readResult.HasValue)
                     {
-                        versionedItem = readResult.VersionedItem;
+                        TVersionedItem<TValue> versionedItem = readResult.VersionedItem;
 
                         // Key is visible.
                         if (versionedItem is TDeletedItem<TValue>)
@@ -6366,7 +6425,7 @@ namespace System.Fabric.Store
                 if (shouldSampleMetricMeasurement)
                 {
                     stopwatch.Stop();
-                    this.readLatencyMetric.Update(stopwatch.ElapsedTicks);
+                    readLatencyMetric.Update(stopwatch.ElapsedTicks);
                 }
 
                 return readReturn;
@@ -7342,6 +7401,22 @@ namespace System.Fabric.Store
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Update store counters where we want to get the most recent count measurement.
+        /// </summary>
+        private void UpdateInstantaneousStoreCounters(MetadataTable metadataTable, out long itemCount, out long diskSize)
+        {
+            itemCount = this.Count;
+            this.itemCountPerfCounterWriter.SetCount(itemCount);
+            this.metrics.ItemCountMetric.Add(itemCount - this.lastRecordedItemCount);
+            this.lastRecordedItemCount = itemCount;
+
+            diskSize = GetDiskSize(metadataTable);
+            this.diskSizePerfCounterWriter.SetSize(diskSize);
+            this.metrics.DiskSizeMetric.Add(diskSize - this.lastRecordedDiskSize);
+            this.lastRecordedDiskSize = diskSize;
         }
 
         #region Notifications

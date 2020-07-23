@@ -54,6 +54,8 @@ namespace ServiceModel
         DECLARE_SYSTEM_SERVICE_NAMES( ResourceMonitorService )
         DECLARE_SYSTEM_SERVICE_NAMES( CentralSecretService )
         DECLARE_SYSTEM_SERVICE_NAMES( LocalSecretService )
+        DECLARE_SYSTEM_SERVICE_NAMES( EventStoreService )
+        DECLARE_SYSTEM_SERVICE_NAMES( GatewayResourceManager )
 
     public:
         static bool TryGetSystemApplicationName(ServiceTypeIdentifier const & serviceTypeId, __out std::wstring & applicationName);

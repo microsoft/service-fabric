@@ -51,6 +51,9 @@ namespace Reliability
                 NodeSet & nodesPreferredContainerPlacement,
                 PlacementReplica const* replica) const;
 
+        private:
+            static std::set<Common::TreeNodeIndex> const& EmptyUpgradedUDs;
+
         };
 
         class PreferredLocationSubspace : public StaticSubspace

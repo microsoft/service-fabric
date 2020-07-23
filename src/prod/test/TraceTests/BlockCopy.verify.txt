@@ -1,0 +1,7 @@
+###Partition d59c77df-23d1-4f03-a923-629b47984705 time range 10/31/2014 7:38:02 PM-10/31/2014 7:43:26 PM
+1 replica(s) are being built for at least ###00:04:58.8000000
+Analyzing replica on 40
+Checking primary
+Copy progress: received 0, acknowledged: 0
+Progress on secondary not found, there is likely a communication problem between the primary and the secondary
+

@@ -1,0 +1,52 @@
+﻿{
+    "RequiredParameters": [ "TaskName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "Params": "",
+        "CleanupType": "",
+        "SetupTimeout": "1200",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+    },
+
+   "TestSetupLinux": {
+        "ExeName": "[BINS]/FabricUnitTests/testrunsetup.sh",
+        "Arguments": "[SETUPTYPE] [SETUPARGS] ",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[BINS]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]/ktl/src/test/[TASKNAME].exe",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
+        }
+    ],
+
+    "IndividualTestCleanupLinux": [
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+
+   "TestCleanupLinux": {
+        "ExeName": "[BINS]/FabricUnitTests/testruncleanup.sh",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[BINS]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.out$,.-*\\.trace$,.*\\.pdb$,.*\\.dmp$,.*\\.etl$,.*\\.xml,.*\\.json,.*\\.man"
+    }
+}

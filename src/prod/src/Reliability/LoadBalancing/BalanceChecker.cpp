@@ -545,3 +545,12 @@ void BalanceChecker::CalculateMetricStatisticsForTracing(bool isBegin, const Sco
         }
     }
 }
+
+void BalanceChecker::UpdateNodeThrottlingLimit(int nodeIndex, int throttlingLimit)
+{
+    if (nodeIndex >= nodeEntries_.size())
+    {
+        return;
+    }
+    nodeEntries_[nodeIndex].MaxConcurrentBuilds = throttlingLimit;
+}

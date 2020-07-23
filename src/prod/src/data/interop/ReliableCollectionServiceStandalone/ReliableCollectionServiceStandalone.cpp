@@ -6,8 +6,28 @@
 #include "stdafx.h"
 #include <stdlib.h>
 
+#include <ktlevents.um.h>
+
 using namespace Common;
 using namespace Data::Integration;
+
+enum ReliableCollectionMode : uint64_t
+{
+    /// <summary>
+    /// Recover from previous checkpoint, if available
+    /// </summary>
+    OpenOrCreate = 0x4,
+
+    /// <summary>
+    /// No Recovery, removes previous checkpoints and provides fresh reliable collections.
+    /// </summary>
+    CreateAsNew = 0x8,
+
+    /// <summary>
+    /// Use Volatile Reliable collections
+    /// </summary>
+    Volatile = 0x10
+};
 
 namespace Data
 {
@@ -18,6 +38,19 @@ namespace Data
         using namespace Data::Utilities;
         using namespace Data::TStore;
         using namespace Data::Log;
+
+        class InitConfig
+        {
+        public:
+            InitConfig() {
+#if defined(PLATFORM_UNIX)
+        #define DEFINE_STRING_RESOURCE(id,str) StringResourceRepo::Get_Singleton()->AddResource(id, str);
+            #include "rcstringtbl.inc"
+#endif
+            }
+        };
+
+        InitConfig __init;
 
         class RCStandaloneCommonConfig : ComponentConfig
         {
@@ -35,7 +68,7 @@ namespace Data
                 testName_ = testName;
             }
 
-            void Setup(__in bool allowRecovery);
+            void Setup(__in ReliableCollectionMode mode);
             void Cleanup();
             void OpenReplica();
             void RequestCheckpointAfterNextTransaction();
@@ -84,6 +117,7 @@ namespace Data
             wstring testFolderPath_;
             wstring testName_;
             LONGLONG epoch_;
+            BOOLEAN hasPersistedState_;
 
             static const wstring DEFAULT_TEST_PARTITION_GUID;
             static const long DEFAULT_TEST_REPLICA_ID;
@@ -92,7 +126,7 @@ namespace Data
         const wstring CExportTests::DEFAULT_TEST_PARTITION_GUID = L"45AEFD6F-1CCE-4A2E-8C58-9AD7D6A9CC7C";
         const long CExportTests::DEFAULT_TEST_REPLICA_ID = 1234567890;
 
-        void CExportTests::Setup(__in bool allowRecovery)
+        void CExportTests::Setup(__in ReliableCollectionMode mode)
         {
             NTSTATUS status;
 
@@ -102,6 +136,8 @@ namespace Data
             status = KtlSystem::Initialize(FALSE, &underlyingSystem_); 
             ASSERT_IFNOT(NT_SUCCESS(status), "Status not success: {0}", status); 
 
+            bool allowRecovery = !(mode & ReliableCollectionMode::CreateAsNew);
+            hasPersistedState_ = !(mode & ReliableCollectionMode::Volatile);
             if (!allowRecovery)
                Directory::Delete_WithRetry(testFolderPath_, true, true);
 
@@ -142,7 +178,10 @@ namespace Data
                 testFolder,
                 *logManager_,
                 underlyingSystem_->PagedAllocator(),
-                factory.RawPtr());
+                factory.RawPtr(),
+                nullptr,
+                nullptr,
+                hasPersistedState_);
             return replica;
         }
 
@@ -214,7 +253,10 @@ namespace Data
         wstring CExportTests::CreateFileName(
             __in wstring const & folderName)
         {
-            wstring testFolderPath = Directory::GetCurrentDirectoryW();
+            wstring testFolderPath = L"";
+            if (!Environment::GetEnvironmentVariable(L"Fabric_RCStandaloneWorkDirOverride", testFolderPath, NOTHROW()))
+                testFolderPath = Directory::GetCurrentDirectoryW();
+
             Path::CombineInPlace(testFolderPath, folderName);
 
             return testFolderPath;
@@ -252,18 +294,20 @@ namespace Data
 
 static Data::Interop::CExportTests* tests = nullptr;
 
-extern "C" HRESULT ReliableCollectionStandalone_Initialize(
-    __in LPCWSTR testname, 
-    __in bool allowRecovery,
-    __out void** txnReplicator, 
+extern "C" HRESULT ReliableCollectionStandalone_InitializeEx(
+    __in LPCWSTR testname,
+    __in ReliableCollectionMode mode,
+    __out void** txnReplicator,
     __out void** partition,
     __out GUID* partitionId,
     __out int64_t* replicaId)
 {
     wstring env;
-    HRESULT hr = ReliableCollectionRuntime_Initialize2(RELIABLECOLLECTION_API_VERSION, /*standaloneMode*/ true);
-    if (!SUCCEEDED(hr))
-        return hr;
+
+    //
+    // Enable KTL tracing
+    //
+    EventRegisterMicrosoft_Windows_KTL();
 
     if (Environment::GetEnvironmentVariable(L"SF_RELIABLECOLLECTION_MOCK", env, NOTHROW()))
     {
@@ -273,12 +317,24 @@ extern "C" HRESULT ReliableCollectionStandalone_Initialize(
     }
 
     tests = new Data::Interop::CExportTests(testname);
-    tests->Setup(allowRecovery);
+    tests->Setup(mode);
     *txnReplicator = tests->GetTxnReplicator();
     *partition = nullptr;
     *partitionId = tests->PartitionId;
     *replicaId = tests->ReplicaId;
     return S_OK;
+}
+
+extern "C" HRESULT ReliableCollectionStandalone_Initialize(
+    __in LPCWSTR testname,
+    __in bool allowRecovery,
+    __out void** txnReplicator,
+    __out void** partition,
+    __out GUID* partitionId,
+    __out int64_t* replicaId)
+{
+    ReliableCollectionMode reliableCollectionMode = allowRecovery ? ReliableCollectionMode::OpenOrCreate : ReliableCollectionMode::CreateAsNew;
+    return ReliableCollectionStandalone_InitializeEx(testname, reliableCollectionMode, txnReplicator, partition, partitionId, replicaId);
 }
 
 extern "C" void ReliableCollectionStandalone_ResetReplica(__out void** txnReplicator)
@@ -305,6 +361,11 @@ extern "C" void ReliableCollectionStandalone_Cleanup()
         delete tests;
         tests = nullptr;
     }
+
+    //
+    // Disable KTL Tracing
+    //
+    EventUnregisterMicrosoft_Windows_KTL();
 }
 
 extern "C" HRESULT FabricGetReliableCollectionApiTable(uint16_t apiVersion, ReliableCollectionApis* reliableCollectionApis)

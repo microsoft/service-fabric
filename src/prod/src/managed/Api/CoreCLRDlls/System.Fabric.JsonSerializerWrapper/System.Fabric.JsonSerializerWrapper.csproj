@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Microsoft Azure Service Fabric Json Serializer Wrapper</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputType>Library</OutputType>
+    <AssemblyName>System.Fabric.JsonSerializerWrapper</AssemblyName>
+    <PackageId>System.Fabric.JsonSerializerWrapper</PackageId>
+    <AssemblyDescription>Microsoft Azure Service Fabric Json Serializer Wrapper</AssemblyDescription>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\Dlls\System.Fabric.JsonSerializerWrapper\_friends.cs;
+      ..\..\src\System\Fabric\JsonSerializerWrapper\IJsonSerializer.cs;
+      ..\..\src\System\Fabric\JsonSerializerWrapper\JsonSerializerImplDllLoader.cs"  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

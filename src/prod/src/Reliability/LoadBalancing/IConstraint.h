@@ -65,6 +65,7 @@ namespace Reliability
                 PreferredLocation = 7,
                 ScaleoutCount = 8,
                 ApplicationCapacity = 9,
+                Throttling = 10
             };
 
         public:
@@ -255,7 +256,7 @@ namespace Reliability
         class StaticSubspace : public ISubspace
         {
         public:
-            StaticSubspace(IStaticConstraint const* constraint) : constraint_(constraint) { }
+            StaticSubspace(IStaticConstraint const* constraint, bool relaxed);
 
             virtual void GetTargetNodes(
                 TempSolution const& tempSolution,
@@ -282,6 +283,7 @@ namespace Reliability
             virtual IConstraint::Enum get_Type() const { return constraint_->Type; }
         private:
             IStaticConstraint const* constraint_;
+            bool relaxed_;
         };
 
         class IDynamicConstraint: public IConstraint

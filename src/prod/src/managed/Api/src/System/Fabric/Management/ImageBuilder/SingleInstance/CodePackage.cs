@@ -5,6 +5,7 @@
 namespace System.Fabric.Management.ImageBuilder.SingleInstance
 {
     using System.Collections.Generic;
+    using System.Fabric.Management.ImageBuilder.DockerCompose;
     using System.Linq;
 
     internal class CodePackage
@@ -19,6 +20,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             this.endpoints = new List<Endpoint>();
             this.certificateRefs = new List<CertificateRef>();
             this.environmentVariables = new List<EnvironmentVariable>();
+            this.settings = new List<Setting>();
             this.volumeRefs = new List<IndependentVolumeMount>();
             this.volumes = new List<ApplicationScopedVolume>();
             this.labels = new List<Label>();
@@ -35,6 +37,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
         public List<Endpoint> endpoints;
         public List<CertificateRef> certificateRefs;
         public List<EnvironmentVariable> environmentVariables;
+        public List<Setting> settings;
         public List<IndependentVolumeMount> volumeRefs;
         public List<ApplicationScopedVolume> volumes;
         public List<Label> labels;
@@ -75,6 +78,21 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
         {
             return Enumerable.Concat<VolumeMount>(this.volumeRefs, this.volumes)
                 .Any(vr => vr.IsReplicatedStoreVolume());
+        }
+
+        public bool HasPersistedState()
+        {
+            if (reliableCollectionsRefs.Count == 0)
+                return true; // stateless service code package 
+
+            List<ReliableCollectionsRef> reliableCollectionsRefsWithPersistedState = this.reliableCollectionsRefs.FindAll(rf => rf.doNotPersistState == false);
+            if (this.reliableCollectionsRefs.Count == reliableCollectionsRefsWithPersistedState.Count)
+                return true; // All reliable collection refs has doNotPersistState = false
+
+            if (reliableCollectionsRefsWithPersistedState.Count == 0)
+                return false; // All reliable collection refs has doNotPersistState = true
+
+            throw new FabricComposeException(String.Format("doNotPersistState config values are not consistent across reliableCollectionRefs in code package '{0}", this.name));
         }
     };
 }

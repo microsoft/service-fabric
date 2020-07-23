@@ -32,7 +32,7 @@ namespace ServiceModel
         __declspec(property(get=get_ReplicaId)) int64 ReplicaId;
         int64 get_ReplicaId() const { return replicaId_; }
 
-        __declspec(property(get = get_QueryPagingDescription, put = set_QueryPagingDescription)) QueryPagingDescription const & QueryPagingDescriptionObject;
+        __declspec(property(get = get_QueryPagingDescription, put = set_QueryPagingDescription)) QueryPagingDescription const & PagingDescription;
         QueryPagingDescription const & get_QueryPagingDescription() const { return queryPagingDescription_; }
         void set_QueryPagingDescription(QueryPagingDescription && queryPagingDescription) { queryPagingDescription_ = std::move(queryPagingDescription); }
 

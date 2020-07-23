@@ -473,6 +473,15 @@ KBitmapTest(
     KTestPrintf("KBitmapTest: START\n");
     NTSTATUS status;
 
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     status = KtlSystem::Initialize();
 
     if (!NT_SUCCESS(status)) {
@@ -484,6 +493,11 @@ KBitmapTest(
     KtlSystem::Shutdown();
 
     KTestPrintf("KBitmapTest: COMPLETE\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+
     return status;
 }
 

@@ -95,6 +95,8 @@ namespace Common
             Type_FABRIC_PROVISION_APPLICATION_TYPE_KIND = 76,
             TypeTextWritablePointer = 77,
             Type_FABRIC_DIAGNOSTICS_SINKS_KIND = 78,
+            Type_FABRIC_NETWORK_TYPE = 79,
+            Type_FABRIC_NETWORK_STATUS = 80
         };
 
         struct StringValue
@@ -220,6 +222,8 @@ namespace Common
         VariableArgument(FABRIC_RECONFIGURATION_TYPE value);
         VariableArgument(FABRIC_PROVISION_APPLICATION_TYPE_KIND value);
         VariableArgument(FABRIC_DIAGNOSTICS_SINKS_KIND value);
+        VariableArgument(FABRIC_NETWORK_TYPE value);
+        VariableArgument(FABRIC_NETWORK_STATUS value);
         VariableArgument(XmlNodeType value);
         VariableArgument(ErrorCode const & value);
         VariableArgument(std::exception const & value);

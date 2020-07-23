@@ -171,6 +171,9 @@ CheckVersion() {
 
 for pkg in "${PkgsList[@]}"
 do
+    if [ -z ${pkg} ]; then 
+        continue
+    fi 
     echo -n "Checking ${pkg}:"
     pkgNameVerSuf=$(ParsePkgNameVersionSuf $pkg)
     IFS=',' read -ra pkgNameVerSuf <<< "${pkgNameVerSuf}"

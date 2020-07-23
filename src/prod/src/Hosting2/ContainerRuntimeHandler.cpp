@@ -265,10 +265,10 @@ bool ContainerRuntimeHandler::InitializationThreadLoop(int iteration)
         if (!(success = error.IsSuccess()))  break;
 
         wstring fabricContainerLogRootW = Path::Combine(fabricLogRootW, L"Containers");
-        if (!Directory::Exists(fabricContainerLogRootW))
+        if (!(success = Directory::Exists(fabricContainerLogRootW)))
         {
-            error = Directory::Create2(fabricContainerLogRootW);
-            if (!error.IsSuccess()) break;
+            WriteWarning(TraceType_ContainerRuntimeHandler, "fabricContainerLogRoot doen't exist {0}", fabricContainerLogRootW);
+            break;
         }
         string fabricBinRoot,fabricDataRoot, fabricLogRoot, fabricContainerLogRoot;
         StringUtility::Utf16ToUtf8(fabricBinRootW, fabricBinRoot);
@@ -277,7 +277,16 @@ bool ContainerRuntimeHandler::InitializationThreadLoop(int iteration)
         StringUtility::Utf16ToUtf8(fabricContainerLogRootW, fabricContainerLogRoot);
         ContainerLogRoot = fabricContainerLogRoot + "/";
 
-        string crioPath = fabricBinRoot + "/Fabric/Fabric.Code/crio.sh";
+        string crioPath;
+        string crioConfigFile;
+        if (HostingConfig::GetConfig().UseKataContainerRuntime) {
+            crioPath = fabricBinRoot + "/Fabric/Fabric.Code/crio.kata.sh";
+            crioConfigFile = "crio.kata.conf";
+        } else {
+            crioPath = fabricBinRoot + "/Fabric/Fabric.Code/crio.cc.sh";
+            crioConfigFile = "crio.cc.conf";
+        }
+
         vector<string> crioArgs = { crioPath };
 
         const char* pathEnv = getenv("PATH");
@@ -286,7 +295,8 @@ bool ContainerRuntimeHandler::InitializationThreadLoop(int iteration)
                                     string("FabricBinRoot=") + fabricBinRoot,
                                     string("FabricLogRoot=") + fabricLogRoot,
                                     string("FabricContainerLogRoot=") + fabricContainerLogRoot,
-                                    string("FabricCrioSock=") + fabricCrioSock};
+                                    string("FabricCrioSock=") + fabricCrioSock,
+                                    string("FabricCrioConfig=") + crioConfigFile};
         if (pathEnv) crioEnvs.push_back(string("PATH=") + pathEnv);
         if (libEnv) crioEnvs.push_back(string("LD_LIBRARY_PATH=") + libEnv);
 
@@ -865,13 +875,15 @@ runtime::ContainerConfig* ContainerRuntimeHandler::genContainerConfig(
     return pconfig;
 }
 
-runtime::PodSandboxConfig* ContainerRuntimeHandler::genPodSandboxConfig(std::string  const & name,
+runtime::PodSandboxConfig* ContainerRuntimeHandler::genPodSandboxConfig(std::string  const & name, 
                                                             std::string const & cgparent,
-                                                            string const & hostname, 
+                                                            string const & hostname,
                                                             string const & logdirectory,
+                                                            ServiceModel::NetworkType::Enum networkType,
                                                             bool isdnsserviceenabled,
                                                             string const & dnssearchoptions,
-                                                            vector<tuple<string,int,int,int>> const &portmappings)
+                                                            vector<string> & dnsServers,
+                                                            vector<tuple<string, int, int, int>> const & portmappings)
 {
     PodSandboxConfig *pconfig = new PodSandboxConfig();
     PodSandboxMetadata *pmeta = new PodSandboxMetadata();
@@ -889,23 +901,36 @@ runtime::PodSandboxConfig* ContainerRuntimeHandler::genPodSandboxConfig(std::str
     pconfig->set_log_directory(logdirectory);
 
     pconfig->clear_dns_config();
- 
-    if(isdnsserviceenabled)
-    {
-        WriteInfo(
-                TraceType_ContainerRuntimeHandler,
-                "DnsService is enabled, setting SF dnsservice {0}  as the nameserver inside the container.",
-                ClearContainerHelper::ClearContainerLogHelperConstants::DnsServiceIP4Address);
 
-        // If the dnsservice is enabled we set the nameserver to host ip on cni bridge network
-        // and domain to the application name. ndots value is explicitly specified to avoid any issues
-        // arising from the default behavior clear container run time. 
+    if (isdnsserviceenabled)
+    {
+        // If the dnsservice is enabled, we set the nameserver to host ip on cni bridge network (for nat and isolated network type) 
+        // or host ip of the vm (for open network). The domain is set to the application name. ndots value is explicitly specified
+        // to avoid any issues arising from the default behavior of clear container run time. 
         runtime::DNSConfig *dnsconfig = new runtime::DNSConfig();
-        dnsconfig->add_servers(ClearContainerHelper::ClearContainerLogHelperConstants::DnsServiceIP4Address);
+
+        if ((networkType & NetworkType::Enum::Open) != NetworkType::Enum::Open)
+        {
+            dnsServers.push_back(ClearContainerHelper::ClearContainerLogHelperConstants::DnsServiceIP4Address);
+        }
+        
+        WriteInfo(
+            TraceType_ContainerRuntimeHandler,
+            "DnsService is enabled.");
+
+        for (auto const & dnsServer : dnsServers)
+        {
+            WriteInfo(
+                TraceType_ContainerRuntimeHandler,
+                "{0} set as dns server inside the container.",
+                dnsServer);
+
+            dnsconfig->add_servers(dnsServer);
+        }
+
         if(!dnssearchoptions.empty())
         {
             dnsconfig->add_searches(dnssearchoptions);
-            
         }
 
         dnsconfig->add_options(ClearContainerHelper::ClearContainerLogHelperConstants::NDotsConfig);
@@ -965,6 +990,89 @@ runtime::PodSandboxConfig* ContainerRuntimeHandler::genPodSandboxConfig(std::str
     pconfig->set_allocated_linux(plinux);
 
     return pconfig;
+}
+
+void ContainerRuntimeHandler::printPodSandboxConfig(runtime::PodSandboxConfig* podSandboxConfig)
+{
+    if (podSandboxConfig->has_metadata())
+    {
+        runtime::PodSandboxMetadata pmeta = podSandboxConfig->metadata();
+        WriteNoise(TraceType_ContainerRuntimeHandler,
+            "Pod sandbox metadata name:{0}, uid:{1}, namespace:{2}, attempt:{3}",
+            pmeta.name(),
+            pmeta.uid(),
+            pmeta.namespace_(),
+            pmeta.attempt());
+    }
+
+    WriteNoise(TraceType_ContainerRuntimeHandler, "Pod sandbox host name:{0}", podSandboxConfig->hostname());
+    WriteNoise(TraceType_ContainerRuntimeHandler, "Pod sandbox log directory:{0}", podSandboxConfig->log_directory());
+
+    if (podSandboxConfig->has_dns_config())
+    {
+        runtime::DNSConfig dnsConfig = podSandboxConfig->dns_config();
+        
+        if (dnsConfig.servers_size() > 0)
+        {
+            wstring servers;
+            for (auto const & s : dnsConfig.servers())
+            {
+                if (servers.empty())
+                {
+                    servers = wformatString("{0}", s);
+                }
+                else
+                {
+                    servers = wformatString("{0},{1}", servers, s);
+                }
+            }
+
+            WriteNoise(TraceType_ContainerRuntimeHandler,
+                "Pod sandbox dns config servers:{0}",
+                servers);
+        }
+
+        if (dnsConfig.searches_size() > 0)
+        {
+            wstring searches;
+            for (auto const & s : dnsConfig.searches())
+            {
+                if (searches.empty())
+                {
+                    searches = wformatString("{0}", s);
+                }
+                else
+                {
+                    searches = wformatString("{0},{1}", searches, s);
+                }
+            }
+
+            WriteNoise(TraceType_ContainerRuntimeHandler,
+                "Pod sandbox dns config searches:{0}",
+                searches);
+        }
+    }
+
+    if (podSandboxConfig->port_mappings_size() > 0)
+    {
+        for (auto const & pm : podSandboxConfig->port_mappings())
+        {
+            WriteNoise(TraceType_ContainerRuntimeHandler,
+                "Pod sandbox port mapping host ip:{0}, protocol:{1}, container port:{2}, host port:{3}",
+                pm.host_ip(),
+                pm.protocol() == runtime::Protocol::TCP ? "TCP" : "UDP",
+                pm.container_port(),
+                pm.host_port());
+        }
+    }
+
+    if (podSandboxConfig->has_linux())
+    {
+        runtime::LinuxPodSandboxConfig linux = podSandboxConfig->linux();
+        WriteNoise(TraceType_ContainerRuntimeHandler,
+            "Pod sandbox linux cgroup parent:{0}",
+             linux.cgroup_parent());
+    }
 }
 
 class ContainerRuntimeHandler::InitializeAsyncOperation : public AsyncOperation, private TextTraceComponent<TraceTaskCodes::Hosting>
@@ -1270,8 +1378,10 @@ public:
             string const & cgparent,
             string const & hostname,
             string const & logdirectory,
+            ServiceModel::NetworkType::Enum networkType,
             bool isdnsserviceenabled,
             string const & dnssearchoptions,
+            vector<string> const & dnsServers,
             vector<tuple<string,int,int,int>> portmappings,
             wstring const & traceid,
             Common::TimeSpan timeout,
@@ -1279,8 +1389,9 @@ public:
             Common::AsyncOperationSPtr const & parent)
             : CrioInvokeAsyncOperation(traceid, timeout, callback, parent),
               appHostId_(apphostid), nodeId_(nodeid), podName_(name), cgParent_(cgparent),
-              hostname_(hostname), logdirectory_(logdirectory), 
-              isdnsserviceenabled_(isdnsserviceenabled), dnssearchoptions_(dnssearchoptions), portMappings_(portmappings)
+              hostname_(hostname), logdirectory_(logdirectory), networkType_(networkType),
+              isdnsserviceenabled_(isdnsserviceenabled), dnssearchoptions_(dnssearchoptions), 
+              dnsServers_(dnsServers), portMappings_(portmappings)
     {
     }
 
@@ -1292,8 +1403,9 @@ protected:
         runtime::RunPodSandboxRequest request;
         grpc::ClientContext context;
 
-        runtime::PodSandboxConfig *pconfig = genPodSandboxConfig(podName_, cgParent_, hostname_, logdirectory_, isdnsserviceenabled_, dnssearchoptions_, portMappings_);
+        runtime::PodSandboxConfig *pconfig = genPodSandboxConfig(podName_, cgParent_, hostname_, logdirectory_, networkType_, isdnsserviceenabled_, dnssearchoptions_, dnsServers_, portMappings_);
         request.set_allocated_config(pconfig);
+        printPodSandboxConfig(pconfig);
 
         RunPodSandboxClientCallStruct *call = new RunPodSandboxClientCallStruct();
         call->respReader = handler->rtStub_->PrepareAsyncRunPodSandbox(&call->context, request, &handler->compQueue_);
@@ -1318,8 +1430,10 @@ private:
     string cgParent_;
     string hostname_;
     string logdirectory_;
+    ServiceModel::NetworkType::Enum networkType_;
     bool isdnsserviceenabled_;
     string dnssearchoptions_;
+    vector<string> dnsServers_;
     vector<tuple<string,int,int,int>> portMappings_;
     string podSandboxId_;
 };
@@ -2195,8 +2309,10 @@ Common::AsyncOperationSPtr ContainerRuntimeHandler::BeginRunPodSandbox(
         std::wstring const & cgparent,
         std::wstring const & hostname,
         std::wstring const & logdirectory,
+        ServiceModel::NetworkType::Enum networkType,
         bool isdnsserviceenabled,
         std::wstring const & dnssearchoptions,
+        std::vector<std::wstring> const & dnsServers,
         std::vector<std::tuple<std::wstring,int,int,int>> portmappings,
         std::wstring const & traceid,
         Common::TimeSpan const timeout,
@@ -2210,6 +2326,13 @@ Common::AsyncOperationSPtr ContainerRuntimeHandler::BeginRunPodSandbox(
     std::string hostnameA = Common::StringUtility::Utf16ToUtf8(hostname);
     std::string logdirectoryA = Common::StringUtility::Utf16ToUtf8(logdirectory);
     std::string dnssearchoptionsA = Common::StringUtility::Utf16ToUtf8(dnssearchoptions);
+
+    std::vector<std::string> dnsServersA;
+    for (auto const & dnsServer : dnsServers)
+    {
+        dnsServersA.push_back(Common::StringUtility::Utf16ToUtf8(dnsServer));
+    }
+
     std::vector<std::tuple<std::string,int,int,int>> portmappingsA;
     for (auto pm : portmappings)
     {
@@ -2218,7 +2341,7 @@ Common::AsyncOperationSPtr ContainerRuntimeHandler::BeginRunPodSandbox(
     }
 
     return AsyncOperation::CreateAndStart<CrioRunPodSandboxAsyncOperation>(
-            apphostidA, nodeidA, podnameA, cgparentA, hostnameA, logdirectoryA, isdnsserviceenabled, dnssearchoptionsA, portmappingsA, traceid, TimeSpan::MaxValue, callback, parent);
+            apphostidA, nodeidA, podnameA, cgparentA, hostnameA, logdirectoryA, networkType, isdnsserviceenabled, dnssearchoptionsA, dnsServersA, portmappingsA, traceid, TimeSpan::MaxValue, callback, parent);
 }
 
 Common::ErrorCode ContainerRuntimeHandler::EndRunPodSandbox(

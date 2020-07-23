@@ -65,6 +65,8 @@ namespace Data
 
             bool Test_Equals(__in LogRecord const & other) const override;
 
+            virtual std::wstring ToString() const override;
+
         protected:
 
             virtual void Read(

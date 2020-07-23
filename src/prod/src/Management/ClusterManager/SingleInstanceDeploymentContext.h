@@ -46,6 +46,9 @@ namespace Management
             ServiceModel::SingleInstanceDeploymentStatus::Enum get_DeploymentStatus() const { return deploymentStatus_; }
             void put_DeploymentStatus(ServiceModel::SingleInstanceDeploymentStatus::Enum const value) { deploymentStatus_ = value; }
 
+            __declspec(property(get=get_IsUpgrading)) bool IsUpgrading;
+            bool get_IsUpgrading() const { return deploymentStatus_ == ServiceModel::SingleInstanceDeploymentStatus::Upgrading; }
+
             __declspec(property(get=get_ApplicationId, put=put_ApplicationId)) ServiceModelApplicationId const & ApplicationId;
             ServiceModelApplicationId const & get_ApplicationId() const { return applicationId_; }
             void put_ApplicationId(ServiceModelApplicationId const & value) { applicationId_ = value; }

@@ -267,6 +267,8 @@ namespace TxnReplicator
             KGuid partitionId_;
             FABRIC_REPLICA_ID replicaId_;
 
+            bool hasPersistedState_ = true;
+
             Data::Utilities::OperationData::CSPtr initializationParameters_;
             KWeakRef<ITransactionalReplicator>::SPtr replicatorWRef_;
         };

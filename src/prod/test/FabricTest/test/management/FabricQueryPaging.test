@@ -278,6 +278,99 @@ query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationTo
 query getapplicationservicelist ApplicationName=<string.app1Name> ServiceTypeName=ServiceTypeB1 ContinuationToken=<string.app1svcA1Name> verify \
     ServiceName=<string.app1svcB1Name>,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0
 
+# These are the same ones which are present in the deployed service DCR
+createservice fabric:/app/FabricQueryPagingTest1/s1 ServiceTypeB1 n 1 -1 appname=fabric:/app/FabricQueryPagingTest1 servicePackageActivationMode=ExclusiveProcess
+verify
+createservice fabric:/app/FabricQueryPagingTest1/s2 ServiceTypeB1 n 1 -1 appname=fabric:/app/FabricQueryPagingTest1 servicePackageActivationMode=ExclusiveProcess
+verify
+createservice fabric:/app/FabricQueryPagingTest1/s3 ServiceTypeB1 n 1 -1 appname=fabric:/app/FabricQueryPagingTest1 servicePackageActivationMode=ExclusiveProcess
+verify
+createservice fabric:/app/FabricQueryPagingTest1/s4 ServiceTypeB1 n 1 -1 appname=fabric:/app/FabricQueryPagingTest1 servicePackageActivationMode=ExclusiveProcess
+verify
+
+# Test max results parameter
+# All results in order:
+# ServiceName=<string.app1svcA1Name>,Type=Stateful,ServiceTypeName=ServiceTypeA1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+# ServiceName=<string.app1svcB1Name>,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+# ServiceName=fabric:/app/FabricQueryPagingTest1/s1,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+# ServiceName=fabric:/app/FabricQueryPagingTest1/s2,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+# ServiceName=fabric:/app/FabricQueryPagingTest1/s3,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+# ServiceName=fabric:/app/FabricQueryPagingTest1/s4,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+
+set QueryPagerContentRatio 1
+query getapplicationservicelist ApplicationName=<string.app1Name> MaxResults=1 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/ServiceA1,Type=Stateful,ServiceTypeName=ServiceTypeA1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceA1
+
+query getapplicationservicelist ApplicationName=<string.app1Name> MaxResults=1 ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceA1 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/ServiceB1,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceB1
+
+query getapplicationservicelist ApplicationName=<string.app1Name> MaxResults=1 ContinuationToken=fabric:/app/FabricQueryPagingTest1/s3 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s4,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active 
+
+query getapplicationservicelist ApplicationName=<string.app1Name> MaxResults=1 ContinuationToken=fabric:/app/FabricQueryPagingTest1/s4 expectempty=true
+
+query getapplicationservicelist ApplicationName=<string.app1Name> MaxResults=2 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/ServiceA1,Type=Stateful,ServiceTypeName=ServiceTypeA1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/ServiceB1,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceB1
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceB1 MaxResults=2 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s1,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s2,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ContinuationToken=fabric:/app/FabricQueryPagingTest1/s2
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/s2 MaxResults=2 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s3,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s4,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/s3 MaxResults=2 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s4,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/s4 MaxResults=2 expectempty=true
+
+# Allow one service
+# set QueryPagerContentRatio 0.00015
+set QueryPagerContentRatio 0.00015
+
+query getapplicationservicelist ApplicationName=<string.app1Name> verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/ServiceA1,Type=Stateful,ServiceTypeName=ServiceTypeA1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceA1
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceA1 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/ServiceB1,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceB1
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/s3 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s4,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active 
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/s4 expectempty=true
+
+# Allow two services
+set QueryPagerContentRatio 0.00020
+
+query getapplicationservicelist ApplicationName=<string.app1Name> verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/ServiceA1,Type=Stateful,ServiceTypeName=ServiceTypeA1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/ServiceB1,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceB1
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/ServiceB1 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s1,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s2,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ContinuationToken=fabric:/app/FabricQueryPagingTest1/s2
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/s2 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s3,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s4,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/s3 verify \
+    ServiceName=fabric:/app/FabricQueryPagingTest1/s4,Type=Stateless,ServiceTypeName=ServiceTypeB1,HealthState=ok,ServiceManifestVersion=1.0,ServiceStatus=Active
+
+query getapplicationservicelist ApplicationName=<string.app1Name> ContinuationToken=fabric:/app/FabricQueryPagingTest1/s4 expectempty=true
+
+verify 
+
 ##################################################
 # Testcase: PARTITION: HM and merged queries with continuation token
 ##################################################

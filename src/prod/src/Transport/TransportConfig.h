@@ -111,6 +111,9 @@ namespace Transport
         // IpcClient exits process when disconnect count reaches the following limit, set to 0 to disable such process exit.
         INTERNAL_CONFIG_ENTRY(uint, L"Transport", IpcClientDisconnectLimit, 100, Common::ConfigEntryUpgradePolicy::Dynamic);
 
+        // The time Ipc server and client connection needs to remain idle before TCP starts sending keepalive probes.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Transport", IpcKeepaliveIdleTime, Common::TimeSpan::FromSeconds(5), Common::ConfigEntryUpgradePolicy::Static);
+
         // Default close delay for scheduled close
         DEPRECATED_CONFIG_ENTRY(Common::TimeSpan, L"Transport", DefaultCloseDelay, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic, Common::TimeSpanNoLessThan(Common::TimeSpan::Zero));
 

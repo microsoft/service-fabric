@@ -28,6 +28,6 @@
         "RunTestsExe": "test\\RunTests.exe",
         "ConfigFilesPath": "test",
         "TimeToWaitForWERFaultExitInSeconds": "900",
-        "LinuxSuiteWhitelist": "SingleMachine-CIT.json,SingleMachine-Functional.json",
+        "LinuxSuiteWhitelist": "SingleMachine-CIT.json,SingleMachine-Functional.json,LinuxKtlUnitTests.json",
     }
 }

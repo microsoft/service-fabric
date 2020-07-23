@@ -44,7 +44,6 @@ namespace Common
         pthread_mutex_t mutex_;
         bool signaled_ = false;
         bool closed_ = false;
-
 #else
 
         ::HANDLE handle_;

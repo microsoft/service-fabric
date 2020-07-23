@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceConfiguration serviceName="WindowsFabricWACluster" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2015-04.2.6">
+  <Role name="WindowsFabricRole">
+    <Instances count="7" />
+    <ConfigurationSettings>
+      <!-- This setting specifies location of bootstrap cluster manifest. It could be '_default_' when the cluster manifest in plugin directory will be used. It could also be a XStore blob location. -->
+      <!-- The bootstrap cluster manifest will only be used for initial node configuration on a VM with no Windows Fabric installation, including a fresh VM and a VM whose OS disk has just been replaced. -->
+      <Setting name="WindowsFabric.ClusterManifestLocation" value = "_default_"/>
+      <!-- This setting needs to match the port range specified in the 'ApplicationPorts' endpoint in service definition -->
+      <Setting name="WindowsFabric.ApplicationPortCount" value="6000"/>
+
+      <!-- Default settings-->
+      <!-- This setting specifies the portion of port range defined by endpoint ApplicationPorts that will be used for ephemeral ports. -->
+      <!-- The last WindowsFabric.EphemeralPortCount ports of the port range will be used for ephemeral ports and the remaining will be used for Windows Fabric application ports. -->
+      <!-- If the setting is not specified, by default the second half of the port range will be used for ephemeral ports. -->
+      <Setting name="WindowsFabric.EphemeralPortCount" value="3000" />
+      <!-- This specifies the retry interval for Windows Fabric deployment on each node-->
+      <Setting name="WindowsFabric.DeploymentRetryIntervalSeconds" value="180"/>
+      <!-- This specifies the trace level for the Windows Fabric AzureWrapper service text logs. -->
+      <!-- The logs are in C:\WFRoot\WindowsFabricDeployment -->
+      <!-- Valid values for this setting are 'info', 'warning', 'error' (Case insensitive) -->
+      <Setting name="WindowsFabric.TextLogTraceLevel" value="Info"/>
+    </ConfigurationSettings>
+  </Role>
+</ServiceConfiguration>

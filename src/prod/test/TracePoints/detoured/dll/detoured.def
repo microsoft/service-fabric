@@ -1,0 +1,3 @@
+LIBRARY detoured
+EXPORTS
+    Detoured

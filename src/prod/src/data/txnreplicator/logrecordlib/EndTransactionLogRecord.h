@@ -43,6 +43,8 @@ namespace Data
                 return true;
             }
 
+            virtual std::wstring ToString() const override;
+
             __declspec(property(get = get_IsCommitted)) bool IsCommitted;
             bool get_IsCommitted() const
             {

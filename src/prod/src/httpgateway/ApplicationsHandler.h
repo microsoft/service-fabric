@@ -174,6 +174,9 @@ namespace HttpGateway
         void OnPerformBackupRestoreOperationComplete(Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
 #endif
 
+        void GetAllApplicationNetworks(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnGetAllApplicationNetworksComplete(Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+
         class CreateServiceFromTemplateData : public Common::IFabricJsonSerializable
         {
         public:

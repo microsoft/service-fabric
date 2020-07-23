@@ -896,6 +896,15 @@ KMemChannelTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
+#if defined(PLATFORM_UNIX)
+    NTSTATUS status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     KTestPrintf("KMemChannelTest: STARTED\n");
 
     EventRegisterMicrosoft_Windows_KTL();
@@ -910,6 +919,11 @@ KMemChannelTest(
     EventUnregisterMicrosoft_Windows_KTL();
 
     KTestPrintf("KMemChannelTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return Result;
 }
 

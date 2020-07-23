@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="BRS" 
+    Version="Current"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>A Microsoft Service Fabric system service that facilitates Backup and Restore.</Description>
+    <ServiceTypes>
+        <StatefulServiceType ServiceTypeName="BackupRestoreServiceType" HasPersistedState="true" />
+    </ServiceTypes>
+    <CodePackage Name="Code" Version="Current">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>FabricBRSSetup.exe</Program>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <ExeHost>
+                <Program>FabricBRS.exe</Program>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <Resources>
+      <Endpoints>
+        <Endpoint Name="RestEndpoint" Type="Internal" Protocol="tcp" />
+      </Endpoints>
+    </Resources>
+</ServiceManifest>

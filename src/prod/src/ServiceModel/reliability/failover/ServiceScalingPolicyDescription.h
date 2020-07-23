@@ -25,6 +25,10 @@ namespace Reliability
         bool operator == (ServiceScalingPolicyDescription const & other) const;
         bool operator != (ServiceScalingPolicyDescription const & other) const;
 
+        virtual Common::ErrorCode Equals(
+            ServiceScalingPolicyDescription const & other,
+            bool ignoreDynamicContent) const;
+
         virtual ~ServiceScalingPolicyDescription() = default;
 
         __declspec(property(get = get_Mechanism)) ScalingMechanismSPtr const& Mechanism;
@@ -32,8 +36,6 @@ namespace Reliability
 
         __declspec(property(get = get_Trigger)) ScalingTriggerSPtr const& Trigger;
         ScalingTriggerSPtr get_Trigger() const { return trigger_; }
-
-        virtual bool Equals(ServiceScalingPolicyDescription const & other, bool ignoreDynamicContent) const;
 
         virtual void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
 

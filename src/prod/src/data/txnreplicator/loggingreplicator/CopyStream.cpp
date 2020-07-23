@@ -22,6 +22,7 @@ CopyStream::CopyStream(
     __in OperationDataStream & copyContext,
     __in CopyStageBuffers & copyStageBuffers,
     __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in bool hasPersistedState,
     __in KAllocator & allocator)
     : OperationDataStream()
     , PartitionedReplicaTraceComponent(traceId)
@@ -48,6 +49,7 @@ CopyStream::CopyStream(
     , targetStartingLsn_(Constants::InvalidLsn)
     , uptoLsn_(uptoLsn)
     , bw_(allocator)
+    , hasPersistedState_(hasPersistedState)
 #ifdef DBG
     , previousGetNextCallReturnedTime_(Common::Stopwatch::Now())
 #endif
@@ -86,6 +88,7 @@ CopyStream::SPtr CopyStream::Create(
     __in OperationDataStream & copyContext,
     __in CopyStageBuffers & copyStageBuffers,
     __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in bool hasPersistedState,
     __in KAllocator & allocator)
 {
     CopyStream * pointer = _new(COPYSTREAM_TAG, allocator) CopyStream(
@@ -99,6 +102,7 @@ CopyStream::SPtr CopyStream::Create(
         copyContext, 
         copyStageBuffers, 
         transactionalReplicatorConfig,
+        hasPersistedState,
         allocator);
 
     THROW_ON_ALLOCATION_FAILURE(pointer);
@@ -160,32 +164,58 @@ Awaitable<NTSTATUS> CopyStream::GetNextAsyncSafe(
 
     if (copyStage_ == CopyStage::Enum::CopyMetadata)
     {
+        status = co_await waitForLogFlushUptoLsn_(uptoLsn_);
+        CO_RETURN_ON_FAILURE(status);
+
+        targetProgressVector_ = ProgressVector::Create(this->GetThisAllocator());
+        Epoch lastTargetProgressVectorEntryEpoch;
+
         status = co_await copyContext_->GetNextAsync(cancellationToken, data);
 
         CO_RETURN_ON_FAILURE(status);
 
-        ASSERT_IF(
-            data->get_BufferCount() != 1,
-            "{0}: data buffer count != 1. count is {1}",
-            TraceId,
-            data->get_BufferCount());
+        if (data != nullptr)
+        {
+            ASSERT_IF(
+                data->get_BufferCount() != 1,
+                "{0}: data buffer count != 1. count is {1}",
+                TraceId,
+                data->get_BufferCount());
 
-        KBuffer::CSPtr buffer = (*data)[0];
-        BinaryReader br(*buffer, GetThisAllocator());
+            KBuffer::CSPtr buffer = (*data)[0];
+            BinaryReader br(*buffer, GetThisAllocator());
 
-        br.Read(targetReplicaId_);
-        targetProgressVector_ = ProgressVector::Create(GetThisAllocator());
-        targetProgressVector_->Read(br, false);
-        LONG64 targetLogHeadDataLossNumber;
-        LONG64 targetLogHeadConfigurationNumber;
-        br.Read(targetLogHeadDataLossNumber);
-        br.Read(targetLogHeadConfigurationNumber);
-        targetLogHeadEpoch_ = Epoch(targetLogHeadDataLossNumber, targetLogHeadConfigurationNumber);
-        br.Read(targetLogHeadLsn_);
-        br.Read(currentTargetLsn_);
-        br.Read(latestRecoveredAtomicRedoOperationLsn_);
+            br.Read(targetReplicaId_);
+            targetProgressVector_ = ProgressVector::Create(GetThisAllocator());
+            targetProgressVector_->Read(br, false);
+            LONG64 targetLogHeadDataLossNumber;
+            LONG64 targetLogHeadConfigurationNumber;
+            br.Read(targetLogHeadDataLossNumber);
+            br.Read(targetLogHeadConfigurationNumber);
+            targetLogHeadEpoch_ = Epoch(targetLogHeadDataLossNumber, targetLogHeadConfigurationNumber);
+            br.Read(targetLogHeadLsn_);
+            br.Read(currentTargetLsn_);
+            br.Read(latestRecoveredAtomicRedoOperationLsn_);
+        }
+        else
+        {
+            ASSERT_IFNOT(hasPersistedState_ == false, "{0}: Copy context should not be null if hasPersistedState=true", TraceId);
 
-        Epoch lastTargetProgressVectorEntryEpoch = targetProgressVector_->LastProgressVectorEntry.CurrentEpoch;
+            // Since copy context is null, we don't know at this level which replica we are copying to, so we will use an arbitrary id.
+            // The replica id is used for tracing, and thus doesn't affect correctness
+            targetReplicaId_ = 999;
+
+            // Because state is not persisted, we know that the target replica is starting empty so the entire log has to be copied
+            targetLogHeadEpoch_ = Epoch(0, 0);
+
+            ProgressVectorEntry pe(targetLogHeadEpoch_, 1, 1, Common::DateTime::Now());
+            targetProgressVector_->Insert(pe);
+
+            targetLogHeadLsn_ = 1;
+            currentTargetLsn_ = 1;
+        }
+
+        lastTargetProgressVectorEntryEpoch = targetProgressVector_->LastProgressVectorEntry.CurrentEpoch;
         Epoch currentLogHeadRecordEpoch = replicatedLogManager_->CurrentLogHeadRecord->CurrentEpoch;
         Epoch currentLogTailRecordEpoch = replicatedLogManager_->CurrentLogTailEpoch;
 
@@ -198,7 +228,7 @@ Awaitable<NTSTATUS> CopyStream::GetNextAsyncSafe(
             lastTargetProgressVectorEntryEpoch.ConfigurationVersion,
             currentTargetLsn_);
 
-        wstring sourceMessage = Common::wformatString("\r\nSourceLogHeadEpoch: <{0}:{1:x}> \r\nSourceLogHeadLsn: {2} \r\nSourceLogTailEpoch: <{3}:{4:x}> \r\nSourceLogTailLsn: {5}\r\n\r\nTarget ProgressVector: {6}\r\n\r\nSource ProgressVector: {7} \r\nLastRecoveredAtomicRedoOperationLsn: {8}\r\n",
+        wstring sourceMessage = Common::wformatString("\r\nSourceLogHeadEpoch: <{0}:{1:x}> \r\nSourceLogHeadLsn: {2} \r\nSourceLogTailEpoch: <{3}:{4:x}> \r\nSourceLogTailLsn: {5}\r\n\r\nTarget ProgressVector: {6}\r\n\r\nSource ProgressVector: {7} \r\nLastRecoveredAtomicRedoOperationLsn: {8}\r\n HasPersistedState: {9}\r\n",
             currentLogHeadRecordEpoch.DataLossVersion,
             currentLogHeadRecordEpoch.ConfigurationVersion,
             replicatedLogManager_->CurrentLogHeadRecord->Lsn,
@@ -207,17 +237,14 @@ Awaitable<NTSTATUS> CopyStream::GetNextAsyncSafe(
             replicatedLogManager_->CurrentLogTailLsn,
             targetProgressVector_->ToString(Constants::ProgressVectorMaxStringSizeInKb / 2),
             replicatedLogManager_->ProgressVectorValue->ToString(Constants::ProgressVectorMaxStringSizeInKb / 2),
-            latestRecoveredAtomicRedoOperationLsn_);
+            latestRecoveredAtomicRedoOperationLsn_,
+            hasPersistedState_);
 
         EventSource::Events->CopyStream(
             TracePartitionId,
             ReplicaId,
             targetMessage,
             sourceMessage);
-
-        status = co_await waitForLogFlushUptoLsn_(uptoLsn_);
-
-        CO_RETURN_ON_FAILURE(status);
 
         bool lockAcquired = co_await checkpointManager_->AcquireBackupAndCopyConsistencyLockAsync(L"Copy", KDuration(MAXLONGLONG), CancellationToken::None);
 

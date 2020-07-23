@@ -130,7 +130,6 @@ namespace FabricDCA
             }
 
             this.checkpointManager = new CheckpointManager(
-               this.providers,
                this.etlInMemoryProducerWorkerSettings.EtlPath,
                initParam.LogDirectory,
                this.traceDirectory,
@@ -360,7 +359,7 @@ namespace FabricDCA
 
             if (!Directory.Exists(this.traceDirectory) &&
                 this.traceDirectory.StartsWith(
-                    ContainerEnvironment.ContainerLogRootDirectory,
+                    (new ContainerEnvironment()).ContainerLogRootDirectory,
                     StringComparison.InvariantCultureIgnoreCase))
             {
                 // A temporary handling for the containers case, where DCA could be processing an instance's
@@ -622,7 +621,7 @@ namespace FabricDCA
 
             // Name of the file that stores the latest timestamp up to which all
             // ETW events have been processed by the DCA
-            internal string LastEtlReadFileName { get; set; }
+            internal string LastEtlReadFileName { get; }
         }
     }
 }

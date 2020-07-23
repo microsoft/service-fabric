@@ -1,0 +1,8 @@
+###Partition dcf6ee81-c988-40ed-a0cf-2f454b4c1379 time range 7/23/2014 6:52:16 AM-7/23/2014 6:57:07 AM
+Partition stuck in reconfiguration for at least ###00:04:07.8780000
+Checking primary on node 30
+Primary is stuck in Phase4_Activate for at least ###00:04:01.6280000
+Primary is still waiting for 40 to complete activation
+ActivateSecondary for 40 not completed
+Failed Task: ActivateSecondary(ChangeRole(RAPChangeRoleActions(ApiError: ServiceChangeRoleOperation->E_FAIL))[*3])
+

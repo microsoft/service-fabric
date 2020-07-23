@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_winfabrictest.props" />
+  <PropertyGroup>
+    <ProjectGuid>{A0E9C358-184C-4806-A962-530B599C1EF9}</ProjectGuid>
+    <RootNamespace>System.Fabric.JsonSerializerImpl</RootNamespace>
+    <AssemblyName>System.Fabric.JsonSerializerImpl</AssemblyName>
+    <AssemblyDescription>Microsoft Azure Service Fabric JsonSerializerImpl</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <DefineConstants>WINDOWS_BUILD;TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\ApplicationHealthPolicyJsonConverter.cs">
+      <Link>ApplicationHealthPolicyJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\ApplicationHealthPolicyMapConverter.cs">
+      <Link>ApplicationHealthPolicyMapConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\ApplicationTypeHealthPolicyMapConverter.cs">
+      <Link>ApplicationTypeHealthPolicyMapConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\ApplicationUpgradeDescriptionJsonConverter.cs">
+      <Link>ApplicationUpgradeDescriptionJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\ApplicationUpgradeUpdateDescriptionJsonConverter.cs">
+      <Link>ApplicationUpgradeUpdateDescriptionJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\ClusterHealthPolicyJsonConverter.cs">
+      <Link>ClusterHealthPolicyJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\CustomContractResolver.cs">
+      <Link>CustomContractResolver.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\CustomCreationJsonConverterBase.cs">
+      <Link>CustomCreationJsonConverterBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\CustomIListJsonConverter.cs">
+      <Link>CustomIListJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\CustomPagedIListJsonConverter.cs">
+      <Link>CustomPagedIListJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\CustomHealthStateChunkListJsonConverter.cs">
+      <Link>CustomHealthStateChunkListJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\DateTimeJsonConverter.cs">
+      <Link>DateTimeJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\FabricSerializationException.cs">
+      <Link>FabricSerializationException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\FabricUpgradeDescriptionJsonConverter.cs">
+      <Link>FabricUpgradeDescriptionJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\FabricUpgradeUpdateDescriptionJsonConverter.cs">
+      <Link>FabricUpgradeUpdateDescriptionJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\HealthEvaluationJsonConverter.cs">
+      <Link>HealthEvaluationJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\HealthEventJsonConverter.cs">
+      <Link>HealthEventJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\Int64JsonConverter.cs">
+      <Link>Int64JsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\JsonSerializerImpl.cs">
+      <Link>JsonSerializerImpl.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\KnownTypeJsonConverter.cs">
+      <Link>KnownTypeJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\NodeIdJsonConverter.cs">
+      <Link>NodeIdJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\RollingUpgradePolicyDescriptionJsonConverter.cs">
+      <Link>RollingUpgradePolicyDescriptionJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\TimeSpanJsonConverter.cs">
+      <Link>TimeSpanJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\UpgradePolicyDescriptionJsonConverter.cs">
+      <Link>UpgradePolicyDescriptionJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\ChaosEventJsonConverter.cs">
+      <Link>ChaosEventJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\ChaosParametersJsonConverter.cs">
+      <Link>ChaosParametersJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\SafetyCheckJsonConverter.cs">
+      <Link>SafetyCheckJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\JsonSerializerImpl\Constants.cs">
+      <Link>Constants.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.JsonSerializerWrapper\System.Fabric.JsonSerializerWrapper.csproj">
+      <Project>{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}</Project>
+      <Name>System.Fabric.JsonSerializerWrapper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Testability\System.Fabric.Testability.csproj">
+      <Name>System.Fabric.Testability</Name>
+    </ProjectReference>
+    <Reference Include="System.Management" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.XML" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext_4_5_4)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

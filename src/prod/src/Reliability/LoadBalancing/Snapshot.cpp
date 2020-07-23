@@ -41,13 +41,3 @@ ServiceDomain::DomainData const * Reliability::LoadBalancingComponent::Snapshot:
     return nullptr;
 }
 
-void Snapshot::GetFullSnapshot(std::wstring domainId)
-{
-    auto serviceDomainIt = serviceDomainSnapshot_.find(domainId);
-    if (serviceDomainIt == serviceDomainSnapshot_.end())
-    {
-        return;
-    }
-
-    serviceDomainIt->second.state_.CreatePlacementAndChecker(PartitionClosureType::Full);
-}

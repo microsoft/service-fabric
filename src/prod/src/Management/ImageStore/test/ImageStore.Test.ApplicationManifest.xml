@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="TestApplicationType" ApplicationTypeVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Description>Test Application</Description>
+
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="TestServices" ServiceManifestVersion="1.0" />
+    <ConfigOverrides />
+  </ServiceManifestImport>
+
+  <ServiceTemplates>
+    <StatelessService ServiceTypeName="TestServiceType1" InstanceCount="3">
+      <SingletonPartition />
+    </StatelessService>
+    <StatefulService ServiceTypeName="TestServiceType2" TargetReplicaSetSize="5" MinReplicaSetSize="3">
+      <UniformInt64Partition PartitionCount="7" LowKey="13" HighKey="20" />
+    </StatefulService>
+    <StatefulService ServiceTypeName="TestServiceType3" TargetReplicaSetSize="6" MinReplicaSetSize="4">
+      <NamedPartition>
+        <Partition Name="Partition1" />
+        <Partition Name="Partition2" />
+      </NamedPartition>
+    </StatefulService>
+  </ServiceTemplates>
+
+  <DefaultServices>
+    <Service Name="DefaultService1">
+      <StatelessService ServiceTypeName="TestServiceType1" InstanceCount="23">
+        <SingletonPartition />
+        <LoadMetrics>
+          <LoadMetric Name="MetricA" PrimaryDefaultLoad="0" Weight="Low"/>
+        </LoadMetrics>
+        <ServiceCorrelations>
+          <ServiceCorrelation ServiceName="fabric:/TheAppName/Test" Scheme="Affinity"/>
+        </ServiceCorrelations>
+      </StatelessService>
+    </Service>
+
+    <Service Name="DefaultService2">
+      <StatefulService ServiceTypeName="TestServiceType2" TargetReplicaSetSize="11" MinReplicaSetSize="6">
+        <UniformInt64Partition PartitionCount="13" LowKey="17" HighKey="30" />
+      </StatefulService>
+    </Service>
+
+    <Service Name="DefaultService3">
+      <StatefulService ServiceTypeName="TestServiceType3" TargetReplicaSetSize="5" MinReplicaSetSize="3">
+        <NamedPartition>
+          <Partition Name="Partition1" />
+          <Partition Name="Partition2" />
+          <Partition Name="Partition3" />
+        </NamedPartition>
+      </StatefulService>
+    </Service>
+
+  </DefaultServices>
+
+</ApplicationManifest>

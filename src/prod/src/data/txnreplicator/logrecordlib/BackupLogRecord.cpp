@@ -107,6 +107,21 @@ BackupLogRecord::SPtr BackupLogRecord::CreateZeroBackupLogRecord(
     return BackupLogRecord::SPtr(pointer);
 }
 
+std::wstring BackupLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CompEndlJSON;
+
+    logRecordString += L"Highest Backedup LSN" + Constants::DivisionJSON +
+        std::to_wstring(highestBackedupLsn_) + Constants::EndlJSON;
+    logRecordString += L"Backup count" + Constants::DivisionJSON +
+        std::to_wstring(backupLogRecordCount_) + Constants::EndlJSON;
+    logRecordString += L"Backup size" + Constants::DivisionJSON +
+        std::to_wstring(backupLogSize_) + Constants::Quote;
+    logRecordString += Constants::CloseJSON;
+    
+    return __super::ToString() + logRecordString;
+}
+
 bool BackupLogRecord::IsZeroBackupLogRecord() const
 {
     KGuid emptyGuid(TRUE);

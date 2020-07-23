@@ -60,20 +60,33 @@ ServicePlacementPolicyDescription & ServicePlacementPolicyDescription::operator 
 
 bool ServicePlacementPolicyDescription::operator == (ServicePlacementPolicyDescription const & other) const
 {
-    bool equals = true;
-
-    equals = StringUtility::AreEqualCaseInsensitive(this->DomainName, other.DomainName);
-    if (!equals) { return equals; }
-
-    equals = this->Type == other.Type;
-    if (!equals) { return equals; }
-
-    return equals;
+    return Equals(other).IsSuccess();
 }
 
 bool ServicePlacementPolicyDescription::operator != (ServicePlacementPolicyDescription const & other) const
 {
     return !(*this == other);
+}
+
+ErrorCode ServicePlacementPolicyDescription::Equals(ServicePlacementPolicyDescription const & other) const
+{
+    if (!StringUtility::AreEqualCaseInsensitive(domainName_, other.domainName_))
+    {
+        return ErrorCode(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(
+                GET_FM_RC(ServicePlacementPolicyDescription_DomainName_Changed), domainName_, other.domainName_));
+    }
+
+    if (type_ != other.type_)
+    {
+        return ErrorCode(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(
+                GET_FM_RC(ServicePlacementPolicyDescription_Type_Changed), type_, other.type_));
+    }
+
+    return ErrorCode::Success();
 }
 
 void ServicePlacementPolicyDescription::WriteToEtw(uint16 contextSequenceId) const

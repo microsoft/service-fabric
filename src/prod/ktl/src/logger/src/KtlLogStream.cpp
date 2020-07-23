@@ -36,7 +36,8 @@ RvdLogStreamImp::RvdLogStreamImp(
     : _Log(&Log),
       _LogStreamDescriptor(StreamDesc),
       _ThisInstanceId(UniqueInstanceId),
-      _ReservationHeld(0)
+      _ReservationHeld(0),
+      _TruncationCompletionEvent(nullptr)
 {
       _TruncationCompletion = KAsyncContextBase::CompletionCallback(this, &RvdLogStreamImp::OnTruncationComplete);
       NTSTATUS      status = AsyncWriteStream::CreateUpdateReservationAsyncWriteContext(
@@ -48,7 +49,7 @@ RvdLogStreamImp::RvdLogStreamImp(
       if (!NT_SUCCESS(status))
       {
           SetConstructorStatus(status);
-		  return;
+          return;
       }
 }
 
@@ -71,6 +72,8 @@ RvdLogStreamImp::~RvdLogStreamImp()
         // Report into _Log that interest in this version of the stream is closing
         _Log->StreamClosed(_LogStreamDescriptor, _ThisInstanceId);
     }
+    
+    KInvariant(_TruncationCompletionEvent == nullptr);
 }
 
 LONGLONG
@@ -242,6 +245,23 @@ RvdLogStreamImp::DeleteRecord(
     return(status);
 }
 
+NTSTATUS
+RvdLogStreamImp::SetTruncationCompletionEvent(__in_opt KAsyncEvent* const EventToSignal)
+{
+    K_LOCK_BLOCK(_ThisLock)
+    {
+        if ((_TruncationCompletionEvent != nullptr) && (EventToSignal != nullptr))
+        {
+            return STATUS_OBJECT_NAME_COLLISION;
+        }
+
+        _TruncationCompletionEvent = EventToSignal;
+    }
+
+    return STATUS_SUCCESS;  
+}
+
+
 VOID
 RvdLogStreamImp::InitiateTruncationWrite(
 )
@@ -250,16 +270,32 @@ RvdLogStreamImp::InitiateTruncationWrite(
     {
         // This thread has responsibility to start a real truncation process
         AddRef();               // #1 used to protect the truncation completion callback
-
+        
+#ifdef EXTRA_TRACING
+        KDbgCheckpointWDataInformational(GetRvdLogStreamActivityId(), "TRUNC** start truncation op", STATUS_SUCCESS,
+                            (ULONGLONG)this,
+                            (ULONGLONG)_LogStreamDescriptor.LsnTruncationPointForStream.Get(),
+                            (ULONGLONG)0,
+                            (ULONGLONG)0);        
+#endif
+        
         InterlockedIncrement(&_Log->_CountOfOutstandingWrites);
         _LogStreamDescriptor.StreamTruncateWriteOp->StartTruncation(
-			FALSE,                         // Truncation may be skipped if not freeing any space
+            FALSE,                         // Truncation may be skipped if not freeing any space
             _LogStreamDescriptor.LsnTruncationPointForStream,
             _Log,
             nullptr,
             _TruncationCompletion);
 
         // Continues @ OnTruncationComplete
+    } else {
+#ifdef EXTRA_TRACING
+        KDbgCheckpointWDataInformational(GetRvdLogStreamActivityId(), "TRUNC** truncation already in progress", STATUS_SUCCESS,
+                            (ULONGLONG)this,
+                            (ULONGLONG)_LogStreamDescriptor.LsnTruncationPointForStream.Get(),
+                            (ULONGLONG)0,
+                            (ULONGLONG)0);
+#endif
     }
 }
 
@@ -273,11 +309,20 @@ RvdLogStreamImp::TruncateBelowVersion(
     // below that have a higher Version
     //
     BOOLEAN b;
+    ULONGLONG higherVersion;
 
-    b = _LogStreamDescriptor.AsnIndex.CheckForRecordsWithHigherVersion(NewTruncationPoint, Version);
+    b = _LogStreamDescriptor.AsnIndex.CheckForRecordsWithHigherVersion(NewTruncationPoint, Version, higherVersion);
     if (!b)
     {
         Truncate(NewTruncationPoint, NewTruncationPoint);
+    } else {
+#ifdef EXTRA_TRACING
+        KDbgCheckpointWDataInformational(GetRvdLogStreamActivityId(), "TRUNC** skip truncation due to higher version", STATUS_SUCCESS,
+                            (ULONGLONG)this,
+                            (ULONGLONG)NewTruncationPoint.Get(),
+                            (ULONGLONG)Version,
+                            (ULONGLONG)higherVersion);
+#endif
     }
 }
 
@@ -323,6 +368,14 @@ RvdLogStreamImp::OnTruncationComplete(
 {
     UNREFERENCED_PARAMETER(Parent);
 
+    K_LOCK_BLOCK(_ThisLock)
+    {
+        if (_TruncationCompletionEvent != nullptr)
+        {
+            _TruncationCompletionEvent->SetEvent();
+        }
+    }
+    
     if (!NT_SUCCESS(CompletingSubOp.Status()))
     {
          KTraceFailedAsyncRequest(CompletingSubOp.Status(), &CompletingSubOp, 0, 0);
@@ -340,7 +393,7 @@ RvdLogStreamImp::OnTruncationComplete(
 
         // Start next truncation op on this stream
         _LogStreamDescriptor.StreamTruncateWriteOp->StartTruncation(
-			FALSE,                         // Truncation may be skipped if not freeing any space
+            FALSE,                         // Truncation may be skipped if not freeing any space
             _LogStreamDescriptor.LsnTruncationPointForStream,
             _Log, 
             nullptr,

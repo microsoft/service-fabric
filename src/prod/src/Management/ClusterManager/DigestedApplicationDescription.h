@@ -23,7 +23,8 @@ namespace Management
                 CodePackageDescriptionMap const & codePackages,
                 std::vector<StoreDataServiceTemplate> const & serviceTemplates,
                 std::vector<Naming::PartitionedServiceDescriptor> const & defaultServices,
-                std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> const & rgDescription);
+                std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> const & rgDescription,
+                std::vector<wstring> const & networks);
 
             bool TryValidate(__out std::wstring & errorDetails);
 
@@ -50,6 +51,7 @@ namespace Management
             std::vector<StoreDataServiceTemplate> ServiceTemplates;
             std::vector<Naming::PartitionedServiceDescriptor> DefaultServices;
             CodePackageDescriptionMap CodePackages;
+            std::vector<wstring> Networks;
 
             std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> ResourceGovernanceDescriptions;
             std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> CodePackageContainersImages;

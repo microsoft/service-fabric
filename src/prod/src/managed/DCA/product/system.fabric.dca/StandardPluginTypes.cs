@@ -27,9 +27,10 @@ namespace System.Fabric.Dca
         internal const string AzureTableQueryableCsvUploader = "AzureTableQueryableCsvUploader";
         internal const string MdsEtwEventUploader = "MdsEtwEventUploader";
         internal const string MdsFileProducer = "MdsFileProducer";
+        internal const string SyslogConsumer = "SyslogConsumer";
         
         internal static readonly ReadOnlyDictionary<string, PluginType> PluginTypeMap = new ReadOnlyDictionary<string, PluginType>(
-            new Dictionary<string, PluginType>()
+            new Dictionary<string, PluginType>
             { 
                 { EtlFileProducer, PluginType.EtlFileProducer },
                 { EtlInMemoryProducer, PluginType.EtlInMemoryProducer },
@@ -47,6 +48,7 @@ namespace System.Fabric.Dca
                 { AzureTableQueryableCsvUploader, PluginType.AzureTableQueryableCsvUploader },
                 { MdsEtwEventUploader, PluginType.MdsEtwEventUploader },
                 { MdsFileProducer, PluginType.MdsFileProducer },
+                { SyslogConsumer, PluginType.SyslogConsumer }
             });
 
         /// <summary>
@@ -71,7 +73,8 @@ namespace System.Fabric.Dca
             AzureTableQueryableEventUploader = 1 << 12,
             AzureTableQueryableCsvUploader = 1 << 13,
             MdsEtwEventUploader = 1 << 14,
-            MdsFileProducer = 1 << 15
+            MdsFileProducer = 1 << 15,
+            SyslogConsumer = 1 << 16
         }
     }
 }

@@ -106,6 +106,8 @@ DEFINE_SYSTEM_SERVICE_NAMES( BackupRestoreService, BRS)
 DEFINE_SYSTEM_SERVICE_NAMES( ResourceMonitorService, RMS)
 DEFINE_SYSTEM_SERVICE_NAMES( CentralSecretService, CSS)
 DEFINE_SYSTEM_SERVICE_NAMES( LocalSecretService, LSS)
+DEFINE_SYSTEM_SERVICE_NAMES( EventStoreService, ES)
+DEFINE_SYSTEM_SERVICE_NAMES( GatewayResourceManager, GRM)
 
 bool SystemServiceApplicationNameHelper::TryGetSystemApplicationName(ServiceTypeIdentifier const & serviceTypeId, __out wstring & applicationName)
 {
@@ -133,11 +135,12 @@ wstring SystemServiceApplicationNameHelper::GetPublicServiceName(wstring const &
     TRY_GET_PUBLIC_SINGLETON_NAME( ResourceMonitorService );
     TRY_GET_PUBLIC_SINGLETON_NAME( CentralSecretService );
     TRY_GET_PUBLIC_SINGLETON_NAME( LocalSecretService );
+    TRY_GET_PUBLIC_SINGLETON_NAME( EventStoreService );
 
     TRY_GET_PUBLIC_MULTI_INSTANCE_NAME( InfrastructureService );
     TRY_GET_PUBLIC_MULTI_INSTANCE_NAME( DSTSTokenValidationService );
     TRY_GET_PUBLIC_MULTI_INSTANCE_NAME( TokenValidationService );
-
+    TRY_GET_PUBLIC_MULTI_INSTANCE_NAME( GatewayResourceManager );
     return internalServiceName;
 }
 
@@ -156,11 +159,12 @@ wstring SystemServiceApplicationNameHelper::GetInternalServiceName(wstring const
     TRY_GET_INTERNAL_SINGLETON_NAME( ResourceMonitorService );
     TRY_GET_INTERNAL_SINGLETON_NAME( CentralSecretService );
     TRY_GET_INTERNAL_SINGLETON_NAME( LocalSecretService );
+    TRY_GET_INTERNAL_SINGLETON_NAME( EventStoreService );
 
     TRY_GET_INTERNAL_MULTI_INSTANCE_NAME( InfrastructureService );
     TRY_GET_INTERNAL_MULTI_INSTANCE_NAME( DSTSTokenValidationService );
     TRY_GET_INTERNAL_MULTI_INSTANCE_NAME( TokenValidationService );
-
+    TRY_GET_INTERNAL_MULTI_INSTANCE_NAME( GatewayResourceManager );
     return publicServiceName;
 }
 
@@ -190,10 +194,12 @@ bool SystemServiceApplicationNameHelper::IsInternalServiceName(std::wstring cons
         CHECK_INTERNAL_SINGLETON( ResourceMonitorService ) ||
         CHECK_INTERNAL_SINGLETON( CentralSecretService ) ||
         CHECK_INTERNAL_SINGLETON( LocalSecretService ) ||
+        CHECK_INTERNAL_SINGLETON( EventStoreService ) ||
 
         CHECK_INTERNAL_MULTI_INSTANCE( InfrastructureService ) ||
         CHECK_INTERNAL_MULTI_INSTANCE( DSTSTokenValidationService ) ||
-        CHECK_INTERNAL_MULTI_INSTANCE( TokenValidationService ));
+        CHECK_INTERNAL_MULTI_INSTANCE(TokenValidationService ) ||
+        CHECK_INTERNAL_MULTI_INSTANCE( GatewayResourceManager ));
 }
 
 bool SystemServiceApplicationNameHelper::IsPublicServiceName(std::wstring const& publicServiceName)
@@ -212,10 +218,12 @@ bool SystemServiceApplicationNameHelper::IsPublicServiceName(std::wstring const&
         CHECK_PUBLIC_SINGLETON( ResourceMonitorService ) ||
         CHECK_PUBLIC_SINGLETON( CentralSecretService ) ||
         CHECK_PUBLIC_SINGLETON( LocalSecretService ) ||
+        CHECK_PUBLIC_SINGLETON( EventStoreService ) ||
 
         CHECK_PUBLIC_MULTI_INSTANCE( InfrastructureService ) ||
         CHECK_PUBLIC_MULTI_INSTANCE( DSTSTokenValidationService ) ||
-        CHECK_PUBLIC_MULTI_INSTANCE( TokenValidationService ));
+        CHECK_PUBLIC_MULTI_INSTANCE( TokenValidationService ) ||
+        CHECK_PUBLIC_MULTI_INSTANCE( GatewayResourceManager ));
 }
 
 bool SystemServiceApplicationNameHelper::IsSystemServiceName(std::wstring const& serviceName)
@@ -228,12 +236,13 @@ bool SystemServiceApplicationNameHelper::IsSystemServiceDeletable(std::wstring c
     return (
         CHECK_INTERNAL_SINGLETON( UpgradeService ) ||
         CHECK_INTERNAL_SINGLETON( DnsService ) ||
-        CHECK_INTERNAL_SINGLETON( BackupRestoreService ) ||
         CHECK_INTERNAL_SINGLETON( ResourceMonitorService ) ||
+        CHECK_INTERNAL_SINGLETON( EventStoreService ) ||
 
         CHECK_INTERNAL_MULTI_INSTANCE( InfrastructureService ) ||
         CHECK_INTERNAL_MULTI_INSTANCE( DSTSTokenValidationService ) ||
-        CHECK_INTERNAL_MULTI_INSTANCE( TokenValidationService ));
+        CHECK_INTERNAL_MULTI_INSTANCE( TokenValidationService ) ||
+        CHECK_INTERNAL_MULTI_INSTANCE( GatewayResourceManager ));
 }
 
 bool SystemServiceApplicationNameHelper::IsNamespaceManagerName(std::wstring const& publicServiceName)

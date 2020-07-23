@@ -1,0 +1,31 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <PropertyGroup>
+    <BoostInclude>$(PkgWinFab_Boost_Test)\lib\native\include</BoostInclude>
+   </PropertyGroup>
+   <PropertyGroup>
+    <BoostLib Condition="'$(CRuntimeLibrary)' == 'MultiThreadedDebugDLL'">$(PkgWinFab_Boost_Test)\lib\native\boost_unit_test_framework-vc140-mt-gd-1_61.lib</BoostLib>
+    <BoostLib Condition="'$(CRuntimeLibrary)' == 'MultiThreadedDLL'">$(PkgWinFab_Boost_Test)\lib\native\boost_unit_test_framework-vc140-mt-1_61.lib</BoostLib>
+
+    <BoostLib Condition="'$(CRuntimeLibrary)' == 'MultiThreadedDebug'">$(PkgWinFab_Boost_Test)\lib\native\libboost_unit_test_framework-vc140-mt-sgd-1_61.lib</BoostLib>
+    <BoostLib Condition="'$(CRuntimeLibrary)' == 'MultiThreaded'">$(PkgWinFab_Boost_Test)\lib\native\libboost_unit_test_framework-vc140-mt-s-1_61.lib</BoostLib>
+
+    <BoostDll Condition="'$(CRuntimeLibrary)' == 'MultiThreadedDebugDLL'">$(PkgWinFab_Boost_Test)\lib\native\boost_unit_test_framework-vc140-mt-gd-1_61.dll</BoostDll>
+    <BoostDll Condition="'$(CRuntimeLibrary)' == 'MultiThreadedDLL'">$(PkgWinFab_Boost_Test)\lib\native\boost_unit_test_framework-vc140-mt-1_61.dll</BoostDll>
+
+    <BoostCompileOption Condition="'$(CRuntimeLibrary)' == 'MultiThreadedDebugDLL'">BOOST_TEST_DYN_LINK;</BoostCompileOption>
+    <BoostCompileOption Condition="'$(CRuntimeLibrary)' == 'MultiThreadedDLL'">BOOST_TEST_DYN_LINK;</BoostCompileOption>
+
+   </PropertyGroup>
+   <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
+         $(BoostInclude);
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        $(BoostCompileOption) 
+      </PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

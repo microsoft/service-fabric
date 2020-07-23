@@ -198,6 +198,8 @@ namespace Naming
         class ResolveSystemServiceAsyncOperation;
         class ResolveSystemServiceGatewayAsyncOperation;
         class PrefixResolveServiceAsyncOperation;
+        class CreateNetworkAsyncOperation;
+        class DeleteNetworkAsyncOperation;
         class Test_TestNamespaceManagerAsyncOperation;
 
         class ProcessQueryAsyncOperation;

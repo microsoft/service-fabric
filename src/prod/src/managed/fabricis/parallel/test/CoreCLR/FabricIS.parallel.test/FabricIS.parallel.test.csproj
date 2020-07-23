@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+
+  <PropertyGroup>
+    <Description>FabricIS.parallel.Test</Description>
+    
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <DefineConstants>$(DefineConstants);DotNetCoreClr;DotNetCoreClrLinux</DefineConstants>
+    <AssemblyName>FabricIS.parallel.test</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>FabricIS.parallel.test</PackageId>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\AzureParallelInfrastructureCoordinatorTest.cs;..\..\BondHelperTest.cs;..\..\ConfigTenantJobMapperTest.cs;..\..\CoordinatorHelperTest.cs;..\..\ImpactTranslatorTest.cs;..\..\Json\JsonExpectedActions.cs;..\..\Json\JsonExpectedTestOutput.cs;..\..\Json\JsonInputRepairTasks.cs;..\..\Json\JsonTestFileLoader.cs;..\..\ManualTester.cs;..\..\Mock\MockImpactInfo.cs;..\..\Mock\MockJobStepInfo.cs;..\..\Mock\MockPolicyAgentDocumentForTenant.cs;..\..\Mock\MockRoleInstanceImpactedByJob.cs;..\..\Mock\MockTenantJob.cs;..\..\Mock\MockInfrastructureCoordinatorFactory.cs;..\..\Mock\MockPolicyAgentService.cs;..\..\Mock\MockRepairManager.cs;..\..\Mock\MockRepairManagerFactory.cs;..\..\Program.cs;..\..\ReconcilerTest.cs;..\..\RepairTaskExecutorDataTest.cs;..\..\TenantJobHelper.cs;..\..\WorkflowExecutor.cs;..\..\Mock\MockRepairTask.cs;..\..\Workflows\WorkflowExternalRepairTaskWithFCNotRespondingTest.cs;..\..\Workflows\WorkflowHIDetectionTest.cs;..\..\Workflows\WorkflowExternalRepairTaskTest.cs;..\..\Workflows\WorkflowRunAsyncRetryLogicTest.cs;..\..\Workflows\WorkflowRunAsyncTest3.cs;..\..\Workflows\WorkflowRunAsyncTest4.cs;..\..\Workflows\WorkflowRunAsyncTest2.cs;..\..\Workflows\WorkflowRunAsyncTest5.cs" Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\schema\CoreCLR\FabricIS.parallel.schema\FabricIS.parallel.schema.csproj" />
+    <ProjectReference Include="..\..\..\CoreCLR\FabricIS.parallel\FabricIS.parallel.csproj" />
+    <ProjectReference Include="..\..\..\..\common\test\CoreCLR\FabricIS.common.test\FabricIS.common.test.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-20170106-08" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.1.8-rc" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.0.8-rc" />
+    <PackageReference Include="NSubstitute" Version="3.1.0" />
+    <PackageReference Include="Bond.Core.CSharp" Version="4.2.1" />
+    <PackageReference Include="Bond.Compiler.CSharp" Version="4.2.1" />
+  </ItemGroup>
+
+</Project>

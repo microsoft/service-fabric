@@ -1,0 +1,18 @@
+{
+    "Default": {},
+    "Tests": [
+        {
+            "Name": "SFVolumeDiskE2EUbuntu",
+            "Type": "Linux_ScriptTest",
+            "Owners": "mevora,deepakj",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "TaskName": "BlockStoreE2ECloudUbuntu.test",
+                "ExecutionTimeout": "14400",
+                "CleanupTimeout": "2100"
+            }
+        }
+    ]
+}

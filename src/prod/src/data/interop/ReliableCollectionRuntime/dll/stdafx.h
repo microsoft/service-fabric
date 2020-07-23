@@ -7,6 +7,7 @@
 
 #include "targetver.h"
 #include "Common/Common.h"
+#include "Common/TraceSession.h"
 #ifndef WIN32  
 #define UNDER_PAL
 #endif

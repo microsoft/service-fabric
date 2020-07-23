@@ -4,6 +4,9 @@
     <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
     <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
     <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+    <PropertyGroup Label="Globals">
+      <ProjectGuid>ce87318d-87f2-478c-a303-0006cf7797c7</ProjectGuid>
+    </PropertyGroup>
 
     <PropertyGroup>
         <Description>FabricDCA</Description>
@@ -16,34 +19,35 @@
 
     <ItemGroup>
         <Compile Include="..\..\AppInstance.cs;
-      ..\..\AppInstanceEtlFileDataReader.cs;
-      ..\..\AppInstanceEtwDataReader.cs;
-      ..\..\AppInstanceManager.cs;
-      ..\..\ConfigUpdateHandler.cs;
-      ..\..\ConsumerFactory.cs;
-      ..\..\ContainerManager.cs;
-      ..\..\DCASettings.cs;
-      ..\..\EtwEventTimestamp.cs;
-      ..\..\FabricDCA.cs;
-      ..\..\ProducerFactory.cs;
-      ..\..\Program.cs;
-      ..\..\ServicePackageTable.cs;
-      ..\..\ServicePackageTableBackup.cs;
-      ..\..\ServicePackageTableManager.cs;
-      ..\..\ServicePackageTableRecord.cs;
-      ..\..\StandardPlugins.cs;
-      ..\..\TelemetryConsumerBase.cs;
-      ..\..\TelemetryConsumerLinux.cs;
-      ..\..\TelemetryConsumerWindows.cs;
-      ..\..\TelemetryEtwSink.cs;
-      ..\..\TelemetryPerformanceInstrumentation.cs;
-      ..\..\TelemetryScheduler.cs;
-      ..\..\TelemetryWriterFactory.cs;
-      ..\..\TelemetryUtility.cs;
-      ..\..\TelemetryFilter.cs;
-      ..\..\EnvironmentTelemetry.cs;
-      ..\..\DriveInfoTelemetry.cs"
-          Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+        ..\..\AppInstanceEtlFileDataReader.cs;
+        ..\..\AppInstanceEtwDataReader.cs;
+        ..\..\AppInstanceManager.cs;
+        ..\..\ConfigUpdateHandler.cs;
+        ..\..\ConsumerFactory.cs;
+        ..\..\ContainerManager.cs;
+        ..\..\ContainerFolderScheduledForRemoval.cs;
+        ..\..\DCASettings.cs;
+        ..\..\EtwEventTimestamp.cs;
+        ..\..\FabricDCA.cs;
+        ..\..\ProducerFactory.cs;
+        ..\..\Program.cs;
+        ..\..\ServicePackageTable.cs;
+        ..\..\ServicePackageTableBackup.cs;
+        ..\..\ServicePackageTableManager.cs;
+        ..\..\ServicePackageTableRecord.cs;
+        ..\..\StandardPlugins.cs;
+        ..\..\TelemetryConsumerBase.cs;
+        ..\..\TelemetryConsumerLinux.cs;
+        ..\..\TelemetryConsumerWindows.cs;
+        ..\..\TelemetryEtwSink.cs;
+        ..\..\TelemetryPerformanceInstrumentation.cs;
+        ..\..\TelemetryScheduler.cs;
+        ..\..\TelemetryWriterFactory.cs;
+        ..\..\TelemetryUtility.cs;
+        ..\..\TelemetryFilter.cs;
+        ..\..\EnvironmentTelemetry.cs;
+        ..\..\DriveInfoTelemetry.cs"
+            Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -61,7 +65,7 @@
         <ProjectReference Include="..\..\..\plugins\azure\common\CoreCLRDll\AzureUploaderCommon\AzureUploaderCommon.csproj" />
         <ProjectReference Include="..\..\..\plugins\folderproducer\CoreCLRDll\FolderProducer\FolderProducer.csproj" />
         <ProjectReference Include="..\..\..\plugins\lttproducer\CoreCLRDll\LttProducer\LttProducer.csproj" />
-        <ProjectReference Include="..\..\..\..\..\LttngReader\CoreCLR\dll\LttngReader.csproj" /> <!-- This should be transitive reference from project LttngProducer but there is a bug in dotnet and it does not work in current version-->
+        <ProjectReference Include="..\..\..\plugins\syslog\CoreCLRDll\SyslogConsumer.csproj" />
         <ProjectReference Include="..\..\..\..\..\CoreCLR\EtlReader\EtlReader.csproj" />
         <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
         <ProjectReference Include="..\..\..\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
@@ -93,7 +97,7 @@
     <PublishExtraFilesOutList Include="$(PublishDir)\TableEvents.config" />
     <PublishExtraFilesOutList Include="$(PublishDir)\tconfig.ini" />
   </ItemGroup>
-  <Target Name="PubishExtraFiles" AfterTargets="Publish" >
+  <Target Name="PubishExtraFiles" AfterTargets="Publish">
     <Copy SourceFiles="@(PublishExtraFilesInList)" DestinationFiles="@(PublishExtraFilesOutList)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

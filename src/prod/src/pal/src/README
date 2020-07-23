@@ -1,0 +1,78 @@
+###################
+What is this folder
+###################
+
+This folder contains the PAL layer created as part of the Linux porting effort.
+
+
+#####################
+What's in this folder
+#####################
+
+PAL.h:
+This file includes all windows headers that've been ported. This is the Pal
+equivalent of stdafx.h
+
+Windows headers:
+These are the windows headers that have been ported to Linux. Each of them
+includes pal/pal_common.h, which contains some common type definition for
+Linux.
+
+/internal/:
+This is the pal folder. Most of the files under this directory came from
+coreclr. You can find the source of clr from github
+(https://github.com/dotnet/coreclr). There is a special file called
+pal_common.h which is included by all ported Windows headers.
+
+/util/:
+This is the util folder, which includes utlities for Pal implementations.
+
+
+#########################
+How to use this PAL layer
+#########################
+
+To use this layer in your code, the easiest way is just including 'PAL.h' in
+each of the header files in your code. This is, however, not recommended since
+it violates the C++ Include-What-You-Use principle. If you open 'PAL.h' you can
+see that it includes all the header files in this folder. The 'PAL.h' is simply
+the PAL equivalent of 'stdafx.h'. Instead, you should only include the windows
+headers that you really need. For example, if you code only need 'rpc.h', you
+should just include 'rpc.h' in your code. We tried very hard to make each
+ported Windows header file self contained, which means your code will probably
+just build on Linux whithout you changing anything. The whole pal layer will be
+just transparent to you.
+
+To include this folder in your build, if you are using cmake, then all you need
+to do is include the CMakeLists.txt file in this folder to your CMake list
+tree.
+
+
+############################
+How to port a new Window API
+############################
+
+1. Find which Windows header file this API belongs to.
+
+2. If the header file already exists in this directory, simply add the
+declaration to this file. Otherwise, create a new header file with it's Windows
+name, and then add the declaration to this file.
+
+3. Create a corresponding cpp file if it doest not exist already. Write the
+implementation of that API in the cpp file.
+
+Example:
+You need to use a new Windows API called 'HeapAlloc', and it hasn't been ported
+to Linux. You find out this function belongs to the header winbase.h. You
+create the header file in this folder if it doesn't exist already yet. You
+header file should have "pal/pal_common.h" as the first include. You add the
+declaration of your function. Then you create a cpp file, and add your
+implementation.
+
+
+TODO
+
+1. Unfortunatly the current pal has a dependecy on Common, and Common also
+depends on pal, which creates a mutual dependency. Considering remove the
+dependency on Common in the future.
+

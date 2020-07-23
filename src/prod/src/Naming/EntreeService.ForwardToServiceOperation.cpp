@@ -350,6 +350,21 @@ namespace Naming
             return (expectedUriPrefix == targetUri) || expectedUriPrefix.IsPrefixOf(targetUri);
         }
 
+        case Actor::GatewayResourceManager:
+        {
+            NamingUri expectedUriPrefix;
+            if (!NamingUri::TryParse(
+                *SystemServiceApplicationNameHelper::PublicGatewayResourceManagerName,
+                expectedUriPrefix))
+            {
+                Assert::CodingError(
+                    "SystemServiceApplicationNameHelper::PublicGatewayResourceManagerName is not a valid NamingUri: {0}",
+                    SystemServiceApplicationNameHelper::PublicGatewayResourceManagerName);
+            }
+
+            return (expectedUriPrefix == targetUri) || expectedUriPrefix.IsPrefixOf(targetUri);
+        }
+
         default:
             WriteWarning(
                 TraceComponent,

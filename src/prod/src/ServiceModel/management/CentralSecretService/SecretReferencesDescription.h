@@ -7,35 +7,35 @@
 
 namespace Management
 {
-	namespace CentralSecretService
-	{
-		class SecretReferencesDescription : public ServiceModel::ClientServerMessageBody
-		{
-			DEFAULT_COPY_CONSTRUCTOR(SecretReferencesDescription)
-			DEFAULT_COPY_ASSIGNMENT(SecretReferencesDescription)
+    namespace CentralSecretService
+    {
+        class SecretReferencesDescription : public ServiceModel::ClientServerMessageBody
+        {
+            DEFAULT_COPY_CONSTRUCTOR(SecretReferencesDescription)
+            DEFAULT_COPY_ASSIGNMENT(SecretReferencesDescription)
 
-		public:
+        public:
 
-			SecretReferencesDescription();
-			SecretReferencesDescription(std::vector<SecretReference> const & references);
+            SecretReferencesDescription();
+            SecretReferencesDescription(std::vector<SecretReference> const & references);
 
-			__declspec(property(get = get_SecretReferences)) std::vector<SecretReference> const & SecretReferences;
-			std::vector<SecretReference> const & get_SecretReferences() const { return secretReferences_; }
+            __declspec(property(get = get_SecretReferences)) std::vector<SecretReference> const & SecretReferences;
+            std::vector<SecretReference> const & get_SecretReferences() const { return secretReferences_; }
 
-			Common::ErrorCode FromPublicApi(__in FABRIC_SECRET_REFERENCE_LIST const * referenceList);
-			Common::ErrorCode ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_SECRET_REFERENCE_LIST & referenceList) const;
-			Common::ErrorCode Validate() const;
+            Common::ErrorCode FromPublicApi(__in FABRIC_SECRET_REFERENCE_LIST const * referenceList);
+            Common::ErrorCode ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_SECRET_REFERENCE_LIST & referenceList) const;
+            Common::ErrorCode Validate() const;
 
-			BEGIN_JSON_SERIALIZABLE_PROPERTIES()
-				SERIALIZABLE_PROPERTY_CHAIN()
-				SERIALIZABLE_PROPERTY(L"SecretReferences", secretReferences_)
-			END_JSON_SERIALIZABLE_PROPERTIES()
+            BEGIN_JSON_SERIALIZABLE_PROPERTIES()
+                SERIALIZABLE_PROPERTY_CHAIN()
+                SERIALIZABLE_PROPERTY(L"SecretReferences", secretReferences_)
+            END_JSON_SERIALIZABLE_PROPERTIES()
 
-			FABRIC_FIELDS_01(
-				secretReferences_)
+            FABRIC_FIELDS_01(
+                secretReferences_)
 
-		private:
-			std::vector<SecretReference> secretReferences_;
-		};
-	}
+        private:
+            std::vector<SecretReference> secretReferences_;
+        };
+    }
 }

@@ -834,8 +834,13 @@ NTSTATUS TestSplitObjectPathInPathAndFilename(
                                                                     filename);
         if (status != testCase[i].ExpectedStatus)
         {
+#if defined(PLATFORM_UNIX)
+            KTestPrintf("TestSplitObjectPathInPathAndFilename: %s expected status %x, actual status %x\n",
+                         Utf16To8((PWCHAR)testCase[i].ObjectPath).c_str(), testCase[i].ExpectedStatus, status);
+#else
             KTestPrintf("TestSplitObjectPathInPathAndFilename: %ws expected status %x, actual status %x\n",
                         (PWCHAR)testCase[i].ObjectPath, testCase[i].ExpectedStatus, status);
+#endif
             KInvariant(FALSE);
         }
 
@@ -844,16 +849,30 @@ NTSTATUS TestSplitObjectPathInPathAndFilename(
             KWString expectedPath(KtlSystem::GlobalNonPagedAllocator(), (PWCHAR)(testCase[i].ExpectedPath));
             if (path != expectedPath)
             {
+#if defined(PLATFORM_UNIX)
+                KTestPrintf("TestSplitObjectPathInPathAndFilename: %s expected path %s, actual path %s\n",
+                            Utf16To8((PWCHAR)testCase[i].ObjectPath).c_str(),
+                            Utf16To8((PWCHAR)testCase[i].ExpectedPath).c_str(),
+                            Utf16To8((PWCHAR)path).c_str());
+#else
                 KTestPrintf("TestSplitObjectPathInPathAndFilename: %ws expected path %ws, actual path %ws\n",
                             (PWCHAR)testCase[i].ObjectPath, (PWCHAR)testCase[i].ExpectedPath, (PWCHAR)path);
+#endif
                 KInvariant(FALSE);
             }
 
             KWString expectedFilename(KtlSystem::GlobalNonPagedAllocator(), (PWCHAR)(testCase[i].ExpectedFilename));
             if (filename != expectedFilename)
             {
+#if defined(PLATFORM_UNIX)
+                KTestPrintf("TestSplitObjectPathInPathAndFilename: %s expected filename %s, actual filename %s\n",
+                            Utf16To8((PWCHAR)testCase[i].ObjectPath).c_str(),
+                            Utf16To8((PWCHAR)testCase[i].ExpectedFilename).c_str(),
+                            Utf16To8((PWCHAR)filename).c_str());
+#else
                 KTestPrintf("TestSplitObjectPathInPathAndFilename: %ws expected filename %ws, actual filename %ws\n",
                             (PWCHAR)testCase[i].ObjectPath, (PWCHAR)testCase[i].ExpectedFilename, (PWCHAR)filename);
+#endif
                 KInvariant(FALSE);
             }
         }
@@ -1810,7 +1829,7 @@ Finish:
 #if defined(PLATFORM_UNIX)
 static std::string utf16to8X(const wchar_t *wstr)
 {
-	std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
     return conv.to_bytes((const char16_t *) wstr);
 }
 #endif
@@ -1833,7 +1852,7 @@ LongPathnameTestAsync(
         for (ULONG i = 0; i < 8; i++)
         {
             dirName += KVolumeNamespace::PathSeparator;
-            dirName += longPath128;		
+            dirName += longPath128;     
             KInvariant(NT_SUCCESS(dirName.Status()));
 
             status = co_await KVolumeNamespace::CreateDirectoryAsync((LPCWSTR)dirName, Allocator);
@@ -1873,7 +1892,7 @@ LongPathnameTestAsync(
     //         file
     //
     {
-		
+        
         status = co_await KVolumeNamespace::RenameFileAsync((LPCWSTR)fileName, (LPCWSTR)fileName2, FALSE, Allocator, NULL);
         KInvariant(NT_SUCCESS(status));
 
@@ -2224,9 +2243,18 @@ KVolumeNamespaceTest(
     int argc, WCHAR* args[]
     )
 {
-    KTestPrintf("KVolumeNamespaceTest: STARTED\n");
-
     NTSTATUS status;
+
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
+    KTestPrintf("KVolumeNamespaceTest: STARTED\n");
 
     status = KtlSystem::Initialize();
 
@@ -2251,6 +2279,11 @@ KVolumeNamespaceTest(
     KtlSystem::Shutdown();
 
     KTestPrintf("KVolumeNamespaceTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return status;
 }
 

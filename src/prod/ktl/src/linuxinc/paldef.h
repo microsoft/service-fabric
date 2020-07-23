@@ -40,7 +40,9 @@
 // Map string safe functions to ktl
 //
 #define StringCchLengthW KtlStringCchLengthW
+#define StringCchLengthA KtlStringCchLengthA
 #define StringCopyWorkerW KtlStringCopyWorkerW
+#define StringCopyWorkerA KtlStringCopyWorkerA
 #define StringVPrintfWorkerW KtlStringVPrintfWorkerW
 #define StringCbPrintfW KtlStringCbPrintfW
 #define StringVPrintfWorkerA KtlStringVPrintfWorkerA
@@ -52,6 +54,7 @@
 #define StringCbLengthW KtlStringCbLengthW
 #define StringCchVPrintfW KtlStringCchVPrintfW
 #define StringCchCopyW KtlStringCchCopyW
+#define StringCchCopyA KtlStringCchCopyA
 
 
 //#define __int2c __Ktlint2c
@@ -385,6 +388,19 @@ StringCchCopyW(
         _Out_writes_(cchDest) _Always_(_Post_z_) STRSAFE_LPWSTR pszDest,
         _In_ size_t cchDest,
         _In_ STRSAFE_LPCWSTR pszSrc);
+
+WINBASEAPI HRESULT StringCchLengthA(
+        _In_  LPCSTR psz,
+        _In_  size_t  cchMax,
+        _Out_ size_t  *pcch
+);
+STRSAFEAPI
+StringCchCopyA(
+        _Out_writes_(cchDest) _Always_(_Post_z_) STRSAFE_LPSTR pszDest,
+        _In_ size_t cchDest,
+        _In_ STRSAFE_LPCSTR pszSrc);
+
+
 STRSAFEAPI
 StringCbPrintfW(WCHAR* pszDest, size_t cbDest, const WCHAR* pszFormat, ...);
 errno_t memcpy_s(void *dest, size_t destsz, const void *src, size_t count);

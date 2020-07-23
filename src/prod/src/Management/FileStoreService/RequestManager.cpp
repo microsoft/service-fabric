@@ -777,7 +777,33 @@ void RequestManager::OnRecoveryCompleted(AsyncOperationSPtr const & operation, b
         {
             return;
         }
-        
+
+        // Clean up all the directories in the staging location
+        if (Directory::Exists(serviceReplicaHolder_.Value.StagingRoot))
+        {
+            auto subDirs = Directory::GetSubDirectories(serviceReplicaHolder_.Value.StagingRoot);
+            for (auto const &subDir : subDirs)
+            {
+                WriteInfo(
+                    TraceComponent,
+                    TraceId,
+                    "Deleting subdirectory under staging root after recovery. Path:{0}, Error:{1}",
+                    subDir,
+                    error);
+
+                auto deleteError = Directory::Delete(subDir, true, true);
+                if (!deleteError.IsSuccess())
+                {
+                    WriteInfo(
+                        TraceComponent,
+                        TraceId,
+                        "Unable to delete StagingLocation sub-directory during recovery completion. Path:{0}, Error:{1}",
+                        subDir,
+                        deleteError);
+                }
+            }
+        }
+
         if(!Directory::Exists(localStagingLocation_))
         {
             error = Directory::Create2(this->localStagingLocation_);
@@ -858,15 +884,18 @@ void RequestManager::OnProcessRequest(
     auto messageId = request->MessageId;
     auto action = request->Action;
 
-    WriteInfo(
-        TraceComponent,
-        TraceId,
-        "ProcessRequest: Action:{0}, ActivityId:{1}, MessageId:{2}, Timeout:{3}, RequestManagerState:{4}",
-        action,
-        activityId,
-        messageId,
-        timeout,
-        this->GetState());
+    if (!IsChunkAction(action))
+    {
+        WriteInfo(
+            TraceComponent,
+            TraceId,
+            "ProcessRequest: Action:{0}, ActivityId:{1}, MessageId:{2}, Timeout:{3}, RequestManagerState:{4}",
+            action,
+            activityId,
+            messageId,
+            timeout,
+            this->GetState());
+    }
 
     if(this->GetState() != RequestManager::Active)
     {
@@ -908,7 +937,7 @@ void RequestManager::OnProcessRequest(
         std::replace(storeRelativePath.begin(),storeRelativePath.end(), '\\', '/');
         uploadRequest.StoreRelativePath = storeRelativePath;
 #endif
-
+        this->ReplicaObj.FileStoreServiceCounters->OnUploadActionRequest();
         AsyncOperation::CreateAndStart<ProcessUploadRequestAsyncOperation>(
             *this,
             move(uploadRequest),
@@ -930,6 +959,7 @@ void RequestManager::OnProcessRequest(
             return;
         }
 
+        this->ReplicaObj.FileStoreServiceCounters->OnCopyActionRequest();
         AsyncOperation::CreateAndStart<ProcessCopyRequestAsyncOperation>(
             *this,
             move(copyRequest),
@@ -1003,6 +1033,7 @@ void RequestManager::OnProcessRequest(
             return;
         }
 
+        this->ReplicaObj.FileStoreServiceCounters->OnInternalListRequest();
         AsyncOperation::CreateAndStart<ProcessInternalListRequestAsyncOperation>(
             *this,
             move(listRequest),
@@ -1024,6 +1055,7 @@ void RequestManager::OnProcessRequest(
             return;
         }
 
+        this->ReplicaObj.FileStoreServiceCounters->OnDeleteRequest();
         AsyncOperation::CreateAndStart<ProcessDeleteRequestAsyncOperation>(
             *this,
             move(deleteRequest),
@@ -1055,6 +1087,18 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        WriteInfo(
+            TraceComponent,
+            TraceId,
+            "ProcessRequest: Action:{0}, SessionId:{1} StoreRelativePath:{2} Timeout:{3}  ActivityId:{4} MessageId:{5} State:{6}",
+            action,
+            uploadSessionRequest.SessionId,
+            uploadSessionRequest.StoreRelativePath,
+            timeout,
+            activityId,
+            messageId,
+            this->GetState());
+
         wstring storeRelativePath = uploadSessionRequest.StoreRelativePath;
         Guid sessionId = uploadSessionRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessListUploadSessionRequestAsyncOperation>(
@@ -1065,7 +1109,7 @@ void RequestManager::OnProcessRequest(
             timeout,
             [this, storeRelativePath, sessionId](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, storeRelativePath);
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, storeRelativePath, 0);
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1088,6 +1132,18 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        WriteInfo(
+            TraceComponent,
+            TraceId,
+            "ProcessRequest: Action:{0}, SessionId:{1} Timeout:{2} ActivityId:{3} MessageId:{4} State:{5}",
+            action,
+            deleteUploadSessionRequest.SessionId,
+            timeout,
+            activityId,
+            messageId,
+            this->GetState());
+
+        this->ReplicaObj.FileStoreServiceCounters->OnDeleteUploadSessionRequest();
         Guid sessionId = deleteUploadSessionRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessDeleteUploadSessionRequestAsyncOperation>(
             *this,
@@ -1097,7 +1153,7 @@ void RequestManager::OnProcessRequest(
             timeout,
             [this, sessionId](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"");
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"", 0);
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1138,6 +1194,20 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        WriteInfo(
+            TraceComponent,
+            TraceId,
+            "ProcessRequest: Action:{0}, SessionId:{1} StoreRelativePath:{2} Timeout:{3} ActivityId:{4} MessageId:{5} State:{6}",
+            action,
+            createUploadSessionRequest.SessionId,
+            createUploadSessionRequest.StoreRelativePath,
+            timeout,
+            activityId,
+            messageId,
+            this->GetState());
+
+        this->ReplicaObj.FileStoreServiceCounters->OnCreateUploadSessionRequest();
+
         wstring storeRelativePath = createUploadSessionRequest.StoreRelativePath;
         Guid sessionId = createUploadSessionRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessCreateUploadSessionRequestAsyncOperation>(
@@ -1148,7 +1218,7 @@ void RequestManager::OnProcessRequest(
             timeout,
             [this, sessionId, storeRelativePath](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, storeRelativePath);
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, storeRelativePath, 0);
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1190,6 +1260,19 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        WriteInfo(
+            TraceComponent,
+            TraceId,
+            "ProcessRequest: Action:{0}, SessionId:{1} StartPosition:{2} EndPosition:{3} Timeout:{4} ActivityId:{5} MessageId:{6} State:{7}",
+            action,
+            uploadChunkRequest.SessionId,
+            uploadChunkRequest.StartPosition,
+            uploadChunkRequest.EndPosition,
+            timeout,
+            activityId,
+            messageId,
+            this->GetState());
+
         Guid sessionId = uploadChunkRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessUploadChunkRequestAsyncOperation>(
             *this,
@@ -1199,7 +1282,7 @@ void RequestManager::OnProcessRequest(
             timeout,
             [this, sessionId](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"");
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"", 0);
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1222,6 +1305,19 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        WriteInfo(
+            TraceComponent,
+            TraceId,
+            "ProcessRequest: Action:{0}, SessionId:{1} StartPosition:{2} EndPosition:{3} Timeout:{4} ActivityId:{5} MessageId:{6} State:{7}",
+            action,
+            uploadChunkContentRequest.SessionId,
+            uploadChunkContentRequest.StartPosition,
+            uploadChunkContentRequest.EndPosition,
+            timeout,
+            activityId,
+            messageId,
+            this->GetState());
+
         Guid sessionId = uploadChunkContentRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessUploadChunkContentRequestAsyncOperation>(
             *this,
@@ -1231,7 +1327,7 @@ void RequestManager::OnProcessRequest(
             timeout,
             [this, sessionId](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"");
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"", 0);
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1272,19 +1368,34 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        WriteInfo(
+            TraceComponent,
+            TraceId,
+            "ProcessRequest: Action:{0}, SessionId:{1} StoreRelativePath:{2} Timeout:{3} ActivityId:{4} MessageId:{5} State:{6}",
+            action,
+            uploadSessionRequest.SessionId,
+            uploadSessionRequest.StoreRelativePath,
+            timeout,
+            activityId,
+            messageId,
+            this->GetState());
+
+        this->ReplicaObj.FileStoreServiceCounters->OnCommitUploadSessionRequest();
         wstring storeRelativePath = uploadSessionRequest.StoreRelativePath;
         Guid sessionId = uploadSessionRequest.SessionId;
+        int64 startTime(Stopwatch::GetTimestamp());
         AsyncOperation::CreateAndStart<ProcessCommitUploadSessionRequestAsyncOperation>(
             *this,
             move(uploadSessionRequest),
             move(receiverContext),
             activityId,
             timeout,
-            [this, storeRelativePath, sessionId](AsyncOperationSPtr const & asyncOperation)
+            [this, storeRelativePath, sessionId, startTime](AsyncOperationSPtr const & asyncOperation)
         {
             this->OnProcessChunkRequestComplete(asyncOperation,
                 sessionId,
-                storeRelativePath);
+                storeRelativePath,
+                startTime);
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1297,7 +1408,8 @@ void RequestManager::OnProcessRequest(
 void RequestManager::OnProcessChunkRequestComplete(
     Common::AsyncOperationSPtr const & operation,
     Guid const& sessionId,
-    wstring const &storeRelativePath)
+    wstring const &storeRelativePath,
+    int64 startTime)
 {
     IpcReceiverContextUPtr receiverContext;
     MessageUPtr reply;
@@ -1308,6 +1420,53 @@ void RequestManager::OnProcessChunkRequestComplete(
     auto error = ProcessRequestAsyncOperation::End(operation, receiverContext, reply, activityId);
     if (error.IsSuccess())
     {
+        // Perf counters update
+        if (processRequestOperation->IsCreateUploadSessionOperation())
+        {
+            this->ReplicaObj.FileStoreServiceCounters->OnSuccessfulCreateUploadSessionRequest();
+        }
+        else if (processRequestOperation->IsCommitUploadSessionOperation())
+        {
+            UploadSessionMetadataSPtr uploadSessionMetadata;
+            auto metadataError = this->UploadSessionMap->GetUploadSessionMapEntry(sessionId, uploadSessionMetadata);
+            if (!metadataError.IsSuccess() || !uploadSessionMetadata)
+            {
+                WriteWarning(
+                    TraceComponent,
+                    "Unable to get session map data during CommitUploadSessionOperation reply. sessionId:{0} error:{1} ",
+                    sessionId,
+                    metadataError);
+            }
+            else
+            {
+                int64 endTime(Stopwatch::GetTimestamp());
+                auto elapsedTime = (endTime - startTime);
+
+                int64 fileSize = uploadSessionMetadata->FileSize == 0 ? 1 : (static_cast<int64>(uploadSessionMetadata->FileSize));
+                auto elapsedTimePerKBSize = (elapsedTime * 1000) / fileSize;
+
+                WriteInfo(
+                    TraceComponent,
+                    "CommitUploadSession Successful for sessionId:{0} storeRelativePath:{1} fileSize:{2} elapsedTime:{3}",
+                    sessionId,
+                    uploadSessionMetadata->StoreRelativePath,
+                    uploadSessionMetadata->FileSize,
+                    TimeSpan::FromTicks(elapsedTime).TotalMilliseconds()
+                );
+
+                this->ReplicaObj.FileStoreServiceCounters->OnSuccessfulCommitUploadSessionRequest(elapsedTimePerKBSize);
+            }
+        }
+        else if (processRequestOperation->IsDeleteUploadSessionOperation())
+        {
+            this->ReplicaObj.FileStoreServiceCounters->OnSuccessfulDeleteUploadSessionRequest();
+        }
+        else if (processRequestOperation->IsUploadChunkContentOperation())
+        {
+            this->ReplicaObj.FileStoreServiceCounters->OnSuccessfulUploadChunkContentRequest();
+        }
+
+        // Chaos testing
         if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
         {
             if (processRequestOperation->IsCommitUploadSessionOperation())
@@ -1364,6 +1523,7 @@ void RequestManager::OnProcessChunkRequestComplete(
     {
         if (processRequestOperation->IsCommitUploadSessionOperation())
         {
+            this->ReplicaObj.FileStoreServiceCounters->OnNonTransientFailedCommitUploadSessionRequest();
             if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
             {
                 if (commitUploadChunkCount_.load() % 7 == 0)
@@ -1447,4 +1607,21 @@ bool RequestManager::ValidateClientMessage(__in Transport::MessageUPtr & message
 StoreFileVersion RequestManager::GetNextFileVersion()
 {
     return StoreFileVersion(epochDataLossNumber_, epochConfigurationNumber_, ++versionNumber_);
+}
+
+bool RequestManager::IsChunkAction(std::wstring const &action)
+{
+    if (action == FileStoreServiceTcpMessage::CreateUploadSessionAction ||
+        action == FileStoreServiceTcpMessage::CommitUploadSessionAction ||
+        action == FileStoreServiceTcpMessage::DeleteUploadSessionAction ||
+        action == FileStoreServiceTcpMessage::UploadChunkContentAction ||
+        action == FileStoreServiceTcpMessage::UploadChunkAction)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
 }

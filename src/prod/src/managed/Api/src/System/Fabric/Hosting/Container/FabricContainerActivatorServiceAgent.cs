@@ -18,7 +18,7 @@ namespace System.Fabric
 
         internal static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(1);
 
-        private NativeContainerActivatorService.IFabricContainerActivatorServiceAgent nativeManager;
+        private NativeContainerActivatorService.IFabricContainerActivatorServiceAgent2 nativeManager;
 
         #endregion
 
@@ -33,7 +33,7 @@ namespace System.Fabric
 
         private void CreateNativeAgent()
         {
-            var iid = typeof(NativeContainerActivatorService.IFabricContainerActivatorServiceAgent).GetTypeInfo().GUID;
+            var iid = typeof(NativeContainerActivatorService.IFabricContainerActivatorServiceAgent2).GetTypeInfo().GUID;
 
             this.nativeManager = NativeContainerActivatorService.CreateFabricContainerActivatorServiceAgent(ref iid);
         }

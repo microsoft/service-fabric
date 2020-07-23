@@ -1,0 +1,21 @@
++10  fd://fd/rack1 ud://ud1 m1/5,m2/5
++20 fd://fd/rack1 ud://ud2 m1/5,m2/5
++30 fd://fd/rack1 ud://ud1 m1/5,m2/5
+-20
++40 fd://fd/rack2 ud://ud2 m1/5,m2/5
++50 fd://fd/rack3 ud://ud1 m1/5,m2/5
++60 fd://fd/rack3 ud://ud1 m1/5,m2/5
++70 fd://fd/rack3 ud://ud1 m1/5,m2/5
+
+createservice 2 true 3 3 -1 50,60,70 m1/1/10/5,m2/0.5/2/1
+reportload 0 0 m1 1
+reportload 0 1 m1 1
+reportload 1 0 m1 1
+reportload 1 1 m1 1
+reportload 2 0 m1 3
+reportload 2 1 m1 1
+verify
+deleteservice 2
+verify
+createservice 3 true 10 3 0 -1
+verify

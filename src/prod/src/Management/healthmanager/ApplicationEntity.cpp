@@ -310,6 +310,7 @@ Common::ErrorCode ApplicationEntity::GetServicesAggregatedHealthStates(
     // - ConsiderWarningAsError
     // - ServiceType specific health policy
     ListPager<ServiceAggregatedHealthState> pager;
+    pager.SetMaxResults(context.MaxResults);
     for (auto it = services.begin(); it != services.end(); ++it)
     {
         auto & service = it->second;
@@ -320,15 +321,17 @@ Common::ErrorCode ApplicationEntity::GetServicesAggregatedHealthStates(
         if (error.IsSuccess())
         {
             error = pager.TryAdd(ServiceAggregatedHealthState(move(it->first), serviceHealthState));
-            if (error.IsError(ErrorCodeValue::EntryTooLarge))
+
+            bool benignError;
+            bool hasError;
+            CheckListPagerErrorAndTrace(error, this->EntityIdString, context.ActivityId, service->EntityIdString, hasError, benignError);
+            if (hasError && benignError)
             {
-                HMEvents::Trace->Query_MaxMessageSizeReached(
-                    this->EntityIdString,
-                    context.ActivityId,
-                    service->EntityIdString,
-                    error,
-                    error.Message);
                 break;
+            }
+            else if (hasError && !benignError)
+            {
+                return error;
             }
         }
         else

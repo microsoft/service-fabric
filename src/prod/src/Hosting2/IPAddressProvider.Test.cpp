@@ -20,7 +20,7 @@ class DummyRoot : public Common::ComponentRoot
 };
 
 #if defined(PLATFORM_UNIX)
-class MockAzureVnetPluginProcessManager : public IAzureVnetPluginProcessManager
+class MockAzureVnetPluginProcessManager : public INetworkPluginProcessManager
 {
     DENY_COPY(MockAzureVnetPluginProcessManager)
 
@@ -155,9 +155,10 @@ class MockIpamClient : public IIPAM
             return ghostReservations;
         }
 
-        virtual Common::ErrorCode GetGatewayIpAddress(uint &gatewayIpAddress) override
+        virtual Common::ErrorCode GetSubnetAndGatewayIpAddress(wstring &subnetCIDR, uint &gatewayIpAddress) override
         {
             gatewayIpAddress = 0;
+            subnetCIDR = L"";
             return ErrorCodeValue::Success;
         }
 
@@ -187,12 +188,7 @@ BOOST_AUTO_TEST_CASE(InitializeIPAddressProviderSuccessTest)
 
     std::wstring clusterId = L"test";
     bool ipAddressProviderEnabled = true;
-#if defined(PLATFORM_UNIX)
-    IAzureVnetPluginProcessManagerSPtr azureVnetPluginProcessManager = make_shared<MockAzureVnetPluginProcessManager>();
-    auto ipAddressProvider = new IPAddressProvider(ipam, azureVnetPluginProcessManager, clusterId, ipAddressProviderEnabled, root);
-#else
     auto ipAddressProvider = new IPAddressProvider(ipam, clusterId, ipAddressProviderEnabled, root);
-#endif
 
     ipAddressProvider->BeginOpen(
         TimeSpan::FromSeconds(1),
@@ -214,12 +210,7 @@ BOOST_AUTO_TEST_CASE(AcquireAndReleaseIPAddressNonAzureTest)
 
     std::wstring clusterId = L"";
     bool ipAddressProviderEnabled = true;
-#if defined(PLATFORM_UNIX)
-    IAzureVnetPluginProcessManagerSPtr azureVnetPluginProcessManager = make_shared<MockAzureVnetPluginProcessManager>();
-    auto ipAddressProvider = new IPAddressProvider(ipam, azureVnetPluginProcessManager, clusterId, ipAddressProviderEnabled, root);
-#else
     auto ipAddressProvider = new IPAddressProvider(ipam, clusterId, ipAddressProviderEnabled, root);
-#endif
 
     ipAddressProvider->BeginOpen(
         TimeSpan::FromSeconds(1),
@@ -259,12 +250,7 @@ BOOST_AUTO_TEST_CASE(AcquireAndReleaseIPAddressProviderDisabledTest)
 
     std::wstring clusterId = L"test";
     bool ipAddressProviderEnabled = false;
-#if defined(PLATFORM_UNIX)
-    IAzureVnetPluginProcessManagerSPtr azureVnetPluginProcessManager = make_shared<MockAzureVnetPluginProcessManager>();
-    auto ipAddressProvider = new IPAddressProvider(ipam, azureVnetPluginProcessManager, clusterId, ipAddressProviderEnabled, root);
-#else
     auto ipAddressProvider = new IPAddressProvider(ipam, clusterId, ipAddressProviderEnabled, root);
-#endif
 
     ipAddressProvider->BeginOpen(
         TimeSpan::FromSeconds(1),
@@ -306,12 +292,7 @@ BOOST_AUTO_TEST_CASE(AcquireAndReleaseIPAddressSuccessTest)
 
     std::wstring clusterId = L"test";
     bool ipAddressProviderEnabled = true;
-#if defined(PLATFORM_UNIX)
-    IAzureVnetPluginProcessManagerSPtr azureVnetPluginProcessManager = make_shared<MockAzureVnetPluginProcessManager>();
-    auto ipAddressProvider = new IPAddressProvider(ipam, azureVnetPluginProcessManager, clusterId, ipAddressProviderEnabled, root);
-#else
     auto ipAddressProvider = new IPAddressProvider(ipam, clusterId, ipAddressProviderEnabled, root);
-#endif
 
     ipAddressProvider->BeginOpen(
         TimeSpan::FromSeconds(1),
@@ -382,12 +363,7 @@ BOOST_AUTO_TEST_CASE(AcquireIPAddressesFailureTest)
 
     std::wstring clusterId = L"test";
     bool ipAddressProviderEnabled = true;
-#if defined(PLATFORM_UNIX)
-    IAzureVnetPluginProcessManagerSPtr azureVnetPluginProcessManager = make_shared<MockAzureVnetPluginProcessManager>();
-    auto ipAddressProvider = new IPAddressProvider(ipam, azureVnetPluginProcessManager, clusterId, ipAddressProviderEnabled, root);
-#else
     auto ipAddressProvider = new IPAddressProvider(ipam, clusterId, ipAddressProviderEnabled, root);
-#endif
 
     ipAddressProvider->BeginOpen(
         TimeSpan::FromSeconds(1),
@@ -426,12 +402,7 @@ BOOST_AUTO_TEST_CASE(ReleaseIPAddressesFailureTest)
 
     std::wstring clusterId = L"test";
     bool ipAddressProviderEnabled = true;
-#if defined(PLATFORM_UNIX)
-    IAzureVnetPluginProcessManagerSPtr azureVnetPluginProcessManager = make_shared<MockAzureVnetPluginProcessManager>();
-    auto ipAddressProvider = new IPAddressProvider(ipam, azureVnetPluginProcessManager, clusterId, ipAddressProviderEnabled, root);
-#else
     auto ipAddressProvider = new IPAddressProvider(ipam, clusterId, ipAddressProviderEnabled, root);
-#endif
 
     ipAddressProvider->BeginOpen(
         TimeSpan::FromSeconds(1),
@@ -502,12 +473,7 @@ BOOST_AUTO_TEST_CASE(StartRefreshProcessingInitializationFailureTest)
 
     std::wstring clusterId = L"test";
     bool ipAddressProviderEnabled = false;
-#if defined(PLATFORM_UNIX)
-    IAzureVnetPluginProcessManagerSPtr azureVnetPluginProcessManager = make_shared<MockAzureVnetPluginProcessManager>();
-    auto ipAddressProvider = new IPAddressProvider(ipam, azureVnetPluginProcessManager, clusterId, ipAddressProviderEnabled, root);
-#else
     auto ipAddressProvider = new IPAddressProvider(ipam, clusterId, ipAddressProviderEnabled, root);
-#endif
 
     ipAddressProvider->BeginOpen(
         TimeSpan::FromSeconds(1),

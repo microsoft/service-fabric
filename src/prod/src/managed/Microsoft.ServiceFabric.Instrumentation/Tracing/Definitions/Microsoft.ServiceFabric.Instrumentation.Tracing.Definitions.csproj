@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{EAEB4646-0308-4321-A87B-003D6C58F8FF}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions</AssemblyName>
+    <AssemblyDescription>Service Fabric Tracing Definitions</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BinaryPackagePath>.\$(BinaryPackageName)</BinaryPackagePath>
+    <BinaryPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\Tracing</BinaryPackageDropPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="TypedTraceRecords\CM\ApplicationCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ApplicationDefinitionKind.cs" />
+    <Compile Include="TypedTraceRecords\CM\ApplicationDeletedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ApplicationUpgradeCompleteTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ApplicationUpgradeDomainCompleteTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ApplicationUpgradeRollbackCompleteTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ApplicationUpgradeRollbackStartTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ApplicationUpgradeStartTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ClusterUpgradeCompleteTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ClusterUpgradeDomainCompleteTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ClusterUpgradeRollbackCompleteTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ClusterUpgradeRollbackStartTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\ClusterUpgradeStartTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CM\UpgradeEnums.cs" />
+    <Compile Include="TypedTraceRecords\FabricNode\ErrorCodeValue.cs" />
+    <Compile Include="TypedTraceRecords\FabricNode\NodeAbortedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FabricNode\NodeClosedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FabricNode\NodeOpenedSuccessTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FabricNode\NodeOpenedFailedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FM\NodeAddedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FM\NodeDeactivateCompleteTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FM\NodeDeactivateStartTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FM\NodeDeactivationIntent.cs" />
+    <Compile Include="TypedTraceRecords\FM\NodeDownTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FM\NodeRemovedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FM\NodeUpTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FM\ServiceCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\FM\ServiceDeletedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\ApplicationHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\ApplicationHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\ClusterHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\ClusterHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\DeployedApplicationHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\DeployedApplicationHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\DeployedServiceHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\DeployedServiceHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\HealthState.cs" />
+    <Compile Include="TypedTraceRecords\HM\NodeHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\NodeHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\PartitionHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\PartitionHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\ServiceHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\ServiceHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\StatefulReplicaHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\StatefulReplicaHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\StatelessReplicaHealthReportCreatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\HM\StatelessReplicaHealthReportExpiredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Hosting\ContainerExitedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Hosting\EntryPointType.cs" />
+    <Compile Include="TypedTraceRecords\Hosting\ProcessExitedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\RA\ReconfigurationCompletedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\RA\ReconfigurationResult.cs" />
+    <Compile Include="TypedTraceRecords\RA\ReconfigurationType.cs" />
+    <Compile Include="TypedTraceRecords\Testability\ChaosMovePrimaryFaultScheduledTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\ChaosMoveSecondaryFaultScheduledTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\ChaosRemoveReplicaFaultScheduledTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\ChaosRestartCodePackageFaultScheduledTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\ChaosRestartNodeFaultScheduledTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\ChaosRestartReplicaFaultScheduledTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\ChaosStartedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\ChaosStoppedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\CorrelationTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Testability\PrimaryMoveAnalysisTraceRecord.cs" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <Compile Include="TypedTraceRecords\Hosting\ProcessUnexpectedTerminationTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Hosting\ApplicationHostTerminatedTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\RA\HostingActivityName.cs" />
+    <Compile Include="TypedTraceRecords\RA\ApiEnums.cs" />
+    <Compile Include="TypedTraceRecords\CRM\OperationTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\CRM\OperationIgnoredTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\Client\BeginReportFaultTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\RA\ReportFaultTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\RA\ReplicaStateChangeTraceRecord.cs" />
+    <Compile Include="TypedTraceRecords\RAP\ApiReportFaultTraceRecord.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinaryPackageDropPath)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <ItemGroup />
+</Project>

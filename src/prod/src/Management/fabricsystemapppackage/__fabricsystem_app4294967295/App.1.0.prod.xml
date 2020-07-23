@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    ApplicationTypeName="__fabricSystem" 
+    RolloutVersion="1.0" 
+    NameUri="fabric:/System" 
+    ApplicationId="__fabricSystem_App4294967295" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <DigestedEnvironment RolloutVersion="1.0">
+        <Principals>
+            <Users>
+                <!-- Please see IS.Package.1.0.xml for details on this -->
+                <User Name="ISMain" AccountType="LocalSystem" />
+                <User Name="BRSSetup" AccountType="LocalSystem" />
+                <User Name="EventStoreServiceSetup" AccountType="LocalSystem" />
+            </Users>
+        </Principals>
+        <Policies />
+        <Diagnostics />
+    </DigestedEnvironment>
+    <DigestedCertificates RolloutVersion="1.0" />
+</ApplicationPackage>

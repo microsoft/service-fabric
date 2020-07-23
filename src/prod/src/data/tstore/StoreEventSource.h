@@ -141,6 +141,19 @@ namespace Data
             DECLARE_STORE_STRUCTURED_TRACE(StoreDestructor, Common::Guid, Common::WStringLiteral);
             DECLARE_STORE_STRUCTURED_TRACE(StoreSize, Common::Guid, Common::WStringLiteral, LONG64, ULONG64, LONG64);
 
+            // Volatile Store Copy Stream
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileStoreCopyStreamStageVersion, Common::Guid, Common::WStringLiteral, ULONG32, ULONG32);
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileStoreCopyStreamStageMetadata, Common::Guid, Common::WStringLiteral, ULONG32, ULONG32);
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileStoreCopyStreamStageData, Common::Guid, Common::WStringLiteral, LONG64, LONG64, ULONG32, ULONG32);
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileStoreCopyStreamStageComplete, Common::Guid, Common::WStringLiteral, LONG64);
+
+            // Volatile Copy Manager
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileCopyManagerAddCopyDataAsync, Common::Guid, Common::WStringLiteral, LONG64);
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessVersionCopyOperationData, Common::Guid, Common::WStringLiteral, ULONG32);
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessVersionCopyOperationMsg, Common::Guid, Common::WStringLiteral, ULONG32);
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessMetadataCopyOperation, Common::Guid, Common::WStringLiteral, ULONG32);
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessDataCopyOperation, Common::Guid, Common::WStringLiteral, LONG64, LONG64, ULONG32, ULONG32);
+            DECLARE_STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessCompleteCopyOperation, Common::Guid, Common::WStringLiteral, LONG64);
 
             StoreEventSource() :
                 // Note: TraceId starts from 4, this is because 0-3 has already been defined as trace type: Info, Warning, Error, Noise.
@@ -173,7 +186,7 @@ namespace Data
                 STORE_STRUCTURED_TRACE(CopyManagerAddCopyDataAsync, 18, Info, "{1}: Received bytes={2}", "id", "TraceTag", "ReceivedBytes"),
                 STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationData, 19, Info, "{1}: directory={2} bytes={3}", "id", "TraceTag", "Directory", "ReceivedBytes"),
                 STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationProtocol, 20, Info, "{1}: directory={2} version={3}", "id", "TraceTag", "Direcotry", "Version"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationMsg, 21, Info, "{1}: Unknown copy protocol version={2}", "id", "TraceTag", "Version"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationMsg, 21, Warning, "{1}: Unknown copy protocol version={2}", "id", "TraceTag", "Version"),
                 STORE_STRUCTURED_TRACE(CopyManagerProcessMetadataTableCopyOperation, 22, Info, "{1}: directory={2} bytes={3}", "id", "TraceTag", "Directory", "ReceivedBytes"),
                 STORE_STRUCTURED_TRACE(CopyManagerProcessStartKeyFileCopyOperation, 23, Info, "{1}: directory={2} filename={3} bytes={4} fileid={5}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes", "FileId"),
                 STORE_STRUCTURED_TRACE(CopyManagerProcessWriteKeyFileCopyOperation, 24, Info, "{1}: directory={2} filename={3} bytes={4}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes"),
@@ -262,7 +275,21 @@ namespace Data
                 STORE_STRUCTURED_TRACE(StoreThrowIfNotWritable, 164, Warning, "{1}: txn={2} status={3} role={4}", "id", "TraceTag", "Transaction", "Status", "Role"),
                 STORE_STRUCTURED_TRACE(StoreThrowIfNotReadable, 165, Warning, "{1}: txn={2} status={3} role={4}", "id", "TraceTag", "Transaction", "Status", "Role"),
                 STORE_STRUCTURED_TRACE(StoreOnCleanupAsyncApiPrimeLockNotAcquired, 166, Warning, "{1}: timed out trying to acquire prime lock", "id", "TraceTag"),
-                STORE_STRUCTURED_TRACE(StoreSize, 167, Info, "{1}: itemcount={2} disksize={3} memorysize={4}", "id", "TraceTag", "ItemCount", "DiskSize", "MemorySize")
+                STORE_STRUCTURED_TRACE(StoreSize, 167, Info, "{1}: itemcount={2} disksize={3} memorysize={4}", "id", "TraceTag", "ItemCount", "DiskSize", "MemorySize"),
+
+                // Volatile Store Copy Stream
+                STORE_STRUCTURED_TRACE(VolatileStoreCopyStreamStageVersion, 200, Info, "{1}: version={2} bytes={3}", "id", "TraceTag", "Version", "Bytes"),
+                STORE_STRUCTURED_TRACE(VolatileStoreCopyStreamStageMetadata, 201, Info, "{1}: metadataSize={2} bytes={3}", "id", "TraceTag", "metadataSize", "Bytes"),
+                STORE_STRUCTURED_TRACE(VolatileStoreCopyStreamStageData, 202, Info, "{1}: keysInChunk={2} runningTotal={3} keyBytes={4} valueBytes={5}", "id", "TraceTag", "KeysInChunk", "TotalKeys", "KeyBytes", "ValueBytes"),
+                STORE_STRUCTURED_TRACE(VolatileStoreCopyStreamStageComplete, 203, Info, "{1}: totalKeys={2}", "id", "TraceTag", "TotalKeys"),
+
+                // Volatile Copy Manager 
+                STORE_STRUCTURED_TRACE(VolatileCopyManagerAddCopyDataAsync, 204, Info, "{1}: Received bytes={2}", "id", "TraceTag", "ReceivedBytes"),
+                STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessVersionCopyOperationData, 205, Info, "{1}: version={2}", "id", "TraceTag", "Version"),
+                STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessVersionCopyOperationMsg, 206, Warning, "{1}: Unknown copy protocol version={2}", "id", "TraceTag", "Version"),
+                STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessMetadataCopyOperation, 207, Info, "{1}: metadataSize={2}", "id", "TraceTag", "MetadataSize"),
+                STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessDataCopyOperation, 208, Info, "{1}: keysInChunk={2} runningTotal={3} keyBytes={4} valueBytes={5}", "id", "TraceTag", "KeysInChunk", "RunningTotal", "KeyBytes", "ValueBytes"),
+                STORE_STRUCTURED_TRACE(VolatileCopyManagerProcessCompleteCopyOperation, 209, Info, "{1}: totalKeys={2}", "id", "TraceTag", "TotalKeys")
             {
             }
             static Common::Global<StoreEventSource> Events;

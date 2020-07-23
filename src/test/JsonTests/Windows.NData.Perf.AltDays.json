@@ -5,7 +5,7 @@
         {
             "Name": "NW-V1Repl-3R-6P-PaaS (D14)",
             "Type": "Azure_ScriptTest_Perf",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "ResourcesRequired": "Server:1&Azure:1",
             "TestExecutionParameters": {
               "SetupType": "XCopy",
@@ -22,7 +22,7 @@
         {
             "Name": "NW-V1Repl-3R-1P-PaaS (D14)",
             "Type": "Azure_ScriptTest_Perf",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "ResourcesRequired": "Server:1&Azure:1",
             "TestExecutionParameters": {
               "SetupType": "XCopy",
@@ -39,7 +39,7 @@
         {
             "Name": "NW-TXR-3R-6P-PaaS (D14)",
             "Type": "Azure_ScriptTest_Perf",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "ResourcesRequired": "Server:1&Azure:1",
             "TestExecutionParameters": {
               "SetupType": "XCopy",
@@ -56,7 +56,7 @@
         {
             "Name": "NW-TXR-1R-1P-PaaS (D14)",
             "Type": "Azure_ScriptTest_Perf",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "ResourcesRequired": "Server:1&Azure:1",
             "TestExecutionParameters": {
               "SetupType": "XCopy",
@@ -73,7 +73,7 @@
         {
             "Name": "NW-TXR-3R-1P-PaaS (D14)",
             "Type": "Azure_ScriptTest_Perf",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "ResourcesRequired": "Server:1&Azure:1",
             "TestExecutionParameters": {
               "SetupType": "XCopy",
@@ -90,7 +90,7 @@
         {
             "Name": "NW-TXR-1R-1P-IaaS (LAB)",
             "Type": "V2_ScriptTest",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
             "TestExecutionParameters": {
@@ -105,7 +105,7 @@
         {
             "Name": "NW-TXR-3R-1P-IaaS (LAB)",
             "Type": "V2_ScriptTest",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
             "TestExecutionParameters": {
@@ -120,7 +120,7 @@
         {
             "Name": "NW-TXR-3R-6P-IaaS (LAB)",
             "Type": "V2_ScriptTest",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
             "TestExecutionParameters": {
@@ -135,7 +135,7 @@
         {
             "Name": "NW-V1Repl-3R-1P-IaaS (LAB)",
             "Type": "V2_ScriptTest",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
             "TestExecutionParameters": {
@@ -150,7 +150,7 @@
         {
             "Name": "NW-V1Repl-3R-6P-IaaS (LAB)",
             "Type": "V2_ScriptTest",
-            "Owners": "ImanG, yzha",
+            "Owners": "rahku,tyadam,preethas",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
             "TestExecutionParameters": {
@@ -213,7 +213,7 @@
         {
 	    "Name": "E2ENativeDictionary-3P-3N (PerfLab)",
             "Type": "V2_ScriptTest_Perf_Quark",
-            "Owners": "Shalabhs, Yzha",
+            "Owners": "Shalabhs, preethas",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
             "Tags": "NativeE2EPerf,Lab,3P3N",

@@ -146,15 +146,23 @@ namespace Hosting2
             std::wstring const NodeDisabledNotification = L"NodeDisabledNotification";
             std::wstring const NodeEnabledNotification = L"NodeEnabledNotification";
             std::wstring const DownloadContainerImages = L"DownloadContainerImages";
+            std::wstring const ContainerUpdateRoutes = L"ContainerUpdateRoutes";
             std::wstring const DeleteContainerImages = L"DeleteContainerImages";
             std::wstring const GetContainerInfo = L"GetContainerInfo";
             std::wstring const ConfigureNodeForDnsService = L"ConfigureNodeForDnsService";
             std::wstring const AssignIpAddresses = L"AssignIpAddresses";
+            std::wstring const ManageOverlayNetworkResources = L"ManageOverlayNetworkResources";
+            std::wstring const UpdateOverlayNetworkRoutes = L"UpdateOverlayNetworkRoutes";
+            std::wstring const GetOverlayNetworkDefinition = L"GetOverlayNetworkDefinition";
+            std::wstring const DeleteOverlayNetworkDefinition = L"DeleteOverlayNetworkDefinition";
+            std::wstring const PublishNetworkTablesRequest = L"PublishNetworkTablesRequest";
             std::wstring const SetupContainerGroup = L"SetupContainerGroup";
             std::wstring const ConfigureEndpointCertificatesAndFirewallPolicy = L"ConfigureEndpointCertificatesAndFirewallPolicy";
             std::wstring const GetImages = L"GetImages"; // Header for GetImages request from FabricActivatorClient
             std::wstring const DockerProcessTerminatedNotificationRequest = L"DockerProcessTerminatedNotificationRequest";
             std::wstring const ApplicationHostCodePackageOperationRequest = L"ApplicationHostCodePackageOperationRequest";
+            std::wstring const GetNetworkDeployedCodePackages = L"GetNetworkDeployedCodePackages";
+            std::wstring const GetDeployedNetworks = L"GetDeployedNetworks";
         }
     }
 }

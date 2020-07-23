@@ -202,56 +202,96 @@ private:
                 {
                     joinedFile.close();
 
+                    bool exists = File::Exists(*it);
                     WriteWarning(
                         TraceComponent,
-                        "Opening of staging file failed:{0}",
-                        *it);
+                        "Opening of staging file failed:{0} exists:{1}",
+                        *it,
+                        exists);
 
-                    return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::ImageStoreIOError, callback, parent);
+                    if (File::Exists(this->joinedFileName_))
+                    {
+                        auto deleteError = File::Delete2(this->joinedFileName_, false);
+                        if (!deleteError.IsSuccess())
+                        {
+                            WriteWarning(
+                                TraceComponent,
+                                "Deleting joined file:{0}, Error:{1}",
+                                this->joinedFileName_,
+                                deleteError);
+                        }
+                    }
+
+                    return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::NotFound, callback, parent);
                 }
             }
             joinedFile.close();
         }
         else
         {
+            bool exists = File::Exists(this->joinedFileName_);
             WriteWarning(
                 TraceComponent,
-                "Opening of merge file failed:{0}",
-                this->joinedFileName_);
+                "Opening of merge file failed:{0}, exists:{1}",
+                this->joinedFileName_,
+                exists);
 
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::ImageStoreIOError, callback, parent);
+            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::NotFound, callback, parent);
         }
 
-#if _DEBUG
-        {
-            File mergedFile;
-            auto openError = mergedFile.TryOpen(
-                this->joinedFileName_,
-                FileMode::Open,
-                FileAccess::Read,
-                FileShare::Read,
+        // Validate file size after joining all the staged files
+        auto mergedFile = make_unique<File>();
+        auto openError = mergedFile->TryOpen(
+            this->joinedFileName_,
+            FileMode::Open,
+            FileAccess::Read,
+            FileShare::Read,
 #if defined(PLATFORM_UNIX)
-                FileAttributes::Normal
+            FileAttributes::Normal
 #else
-                FileAttributes::ReadOnly
+            FileAttributes::ReadOnly
 #endif
-            );
+        );
 
-            if (!openError.IsSuccess())
+        if (!openError.IsSuccess())
+        {
+            WriteWarning(
+                TraceComponent,
+                this->requestManager_.TraceId,
+                "Can't validate size for file {0}. Open file failed with {1}.",
+                this->joinedFileName_,
+                openError);
+        }
+        else
+        {
+            uint64 mergedFileSize = static_cast<uint64>(mergedFile->size());
+            mergedFile->Close2();
+
+            if (mergedFileSize != fileSize)
             {
                 WriteWarning(
                     TraceComponent,
                     this->requestManager_.TraceId,
-                    "Unable to open file to get size {0}",
-                    this->joinedFileName_);
-            }
-            else
-            {
-                ASSERT_IFNOT(fileSize == (uint64)mergedFile.size(), "Merged file size {0} didn't match expected size {1}.", mergedFile.size(), fileSize);
-                mergedFile.Close2();
-            }
+                    "Merged filesize:{0} didn't match the expected size:{1} for SessionId:{2} storeRelativePath:{3} mergedFileName:{4} totalChunkLocation:{5}",
+                    mergedFileSize,
+                    fileSize,
+                    this->sessionId_,
+                    this->storeRelativePath_,
+                    this->joinedFileName_,
+                    sortedStagingLocation.size());
+
+                wstring msg = wformatString(
+                    StringResource::Get(IDS_FSS_UnexpectedMergeSize),
+                    this->storeRelativePath_,
+                    fileSize,
+                    mergedFileSize);
+
+                ErrorCode invalidArgError(ErrorCodeValue::InvalidArgument, move(msg));
+                // Return invalid argument since client will try to resend the file again.
+                return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(move(invalidArgError), callback, parent);
+            }            
         }
-#endif
+
         return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(callback, parent);
     }
 

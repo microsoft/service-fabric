@@ -1,0 +1,463 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricRuntime.idl";
+import "FabricTypes_.idl";
+
+// ----------------------------------------------------------------------------
+// Forward Declaration of interfaces
+
+interface IFabricInternalBrokeredService;
+interface IFabricDisposable;
+interface IFabricCodePackageHost;
+interface IFabricBatchOperation;
+interface IFabricBatchOperationData;
+interface IFabricBatchOperationStream;
+interface IFabricInternalStateReplicator;
+interface IFabricInternalReplicator;
+interface IFabricStateProviderSupportsCopyUntilLatestLsn;
+interface IFabricInternalStatefulServiceReplica;
+interface IFabricStatefulServiceReplicaStatusResult;
+interface IFabricKeyValueStoreReplicaSettingsResult;
+interface IFabricKeyValueStoreReplicaSettings_V2Result;
+interface IFabricSharedLogSettingsResult;
+interface IFabricInternalManagedReplicator;
+interface IFabricTransactionalReplicatorSettingsResult;
+
+interface IFabricBackupRestoreAgent;
+interface IFabricBackupRestoreHandler;
+
+[
+    uuid(38a994bf-b6e4-460f-ab4b-bd27df4613a5),
+    version(1.0),
+]
+library FabricRuntime_Lib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // Enumerations
+
+    // ------------------------------------------------------------------------
+    // Structures
+
+    // ----------------------------------------------------------------------------
+    // List all interfaces to be included in the type library
+    
+    interface IFabricInternalBrokeredService;
+    interface IFabricDisposable;
+    interface IFabricCodePackageHost;
+    interface IFabricTransactionalReplicatorSettingsResult;
+
+    interface IFabricBackupRestoreAgent;
+    interface IFabricBackupRestoreHandler;
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+
+    
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(c082f01f-a951-4fdc-abda-f43ed4460254),
+        dllname("FabricRuntime.dll")
+    ]
+    module FabricRuntimeInternalModule {
+
+        [entry("FabricRegisterCodePackageHost")] HRESULT FabricRegisterCodePackageHost(
+            [in] IUnknown * codePackageHost);
+
+        [entry("FabricGetRuntimeDllVersion")] HRESULT FabricGetRuntimeDllVersion( 
+            [out] IFabricStringResult ** runtimeDllVersion);
+
+        [entry("GetFabricKeyValueStoreReplicaDefaultSettings")] HRESULT GetFabricKeyValueStoreReplicaDefaultSettings(
+            [out] IFabricKeyValueStoreReplicaSettingsResult ** result);
+
+        [entry("FabricLoadClusterSecurityCredentials")] HRESULT FabricLoadClusterSecurityCredentials(
+            [out] IFabricSecurityCredentialsResult ** securityCredentials);        
+
+        [entry("FabricDisableIpcLeasing")] void FabricDisableIpcLeasing(void);
+
+        [entry("FabricLoadTransactionalReplicatorSettings")] HRESULT FabricLoadTransactionalReplicatorSettings(
+            [in] IFabricCodePackageActivationContext const * codePackageActivationContext,
+            [in] LPCWSTR configurationPackageName,
+            [in] LPCWSTR sectionName,
+            [out, retval] IFabricTransactionalReplicatorSettingsResult ** replicatorSettings);
+
+        [entry("GetFabricKeyValueStoreReplicaDefaultSettings_V2")] HRESULT GetFabricKeyValueStoreReplicaDefaultSettings_V2(
+            [in] LPCWSTR workingDirectory,
+            [in] LPCWSTR sharedLogDirectory,
+            [in] LPCWSTR sharedLogFileName,
+            [in] GUID sharedLogGuid,
+            [out] IFabricKeyValueStoreReplicaSettings_V2Result ** result);
+
+        [entry("FabricCreateKeyValueStoreReplica_V2")] HRESULT FabricCreateKeyValueStoreReplica_V2(
+            [in] REFIID riid,
+            [in] FABRIC_PARTITION_ID partitionId,
+            [in] FABRIC_REPLICA_ID replicaId,
+            [in /*optional*/] FABRIC_KEY_VALUE_STORE_REPLICA_SETTINGS_V2 const * kvsSettings,
+            [in /*optional*/] FABRIC_REPLICATOR_SETTINGS const * replicatorSettings,
+            [in] IFabricStoreEventHandler * storeEventHandler,
+            [in] IFabricSecondaryEventHandler * secondaryEventHandler,
+            [out, retval] void ** keyValueStore);
+
+        [entry("GetFabricSharedLogDefaultSettings")] HRESULT GetFabricSharedLogDefaultSettings(
+            [in] LPCWSTR workingDirectory,
+            [in] LPCWSTR sharedLogDirectory,
+            [in] LPCWSTR sharedLogFileName,
+            [in] GUID sharedLogGuid,
+            [out] IFabricSharedLogSettingsResult ** result);
+
+        [entry("FabricCreateBackupRestoreAgent")] HRESULT FabricCreateBackupRestoreAgent(
+            [in] REFIID riid,
+            [out, retval] void ** backupRestoreAgent);
+    }
+#pragma pack (pop)
+
+}
+
+// ----------------------------------------------------------------------------
+// Interface Definitions
+
+[object, local, uuid(ed70f43b-8574-487c-b5ff-fcfcf6a6c6ea)]
+interface IFabricInternalBrokeredService : IUnknown
+{
+    [] HRESULT GetBrokeredService(
+        [out, retval] IUnknown ** service);
+}
+
+// Private contract for disposing off resources in managed code
+// This is because there is no deterministic cleanup of a managed object
+// implementing a COM interface when the corresponding CCW is released
+[object, local, uuid(0FE01003-90F4-456D-BD36-6B479B473978)]
+interface IFabricDisposable : IUnknown
+{
+    [] void Dispose();
+}
+
+
+[object, local, uuid(31027dc1-b9eb-4992-8793-67367bfc2d1a)]
+interface IFabricCodePackageHost : IUnknown
+{
+    [] HRESULT BeginActivate(
+        [in] LPCWSTR codePackageId,
+        [in] IFabricCodePackageActivationContext * activationContext,
+        [in] IFabricRuntime * fabricRuntime,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** operationContext);
+    [] HRESULT EndActivate(
+        [in] IFabricAsyncOperationContext * operationContext);
+
+    [] HRESULT BeginDeactivate(
+        [in] LPCWSTR codePackageId,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** operationContext);
+    [] HRESULT EndDeactivate(
+        [in] IFabricAsyncOperationContext * operationContext);
+}
+
+[object, local, uuid(4FFE9FB9-A70E-4C6A-8953-8D2FF79BCD9E)]
+interface IFabricBatchOperation : IUnknown
+{
+    [] FABRIC_SEQUENCE_NUMBER get_FirstSequenceNumber();
+
+    [] FABRIC_SEQUENCE_NUMBER get_LastSequenceNumber();
+
+    [] HRESULT GetOperation(
+        [in] FABRIC_SEQUENCE_NUMBER sequenceNumber, 
+        [out, retval] IFabricOperation ** operation);
+
+    [] HRESULT Acknowledge();
+}
+
+[object, local, uuid(329327F3-9221-4532-94B2-E3D9DA8956DB)]
+interface IFabricBatchOperationData : IUnknown
+{
+    [] FABRIC_SEQUENCE_NUMBER get_FirstSequenceNumber();
+
+    [] FABRIC_SEQUENCE_NUMBER get_LastSequenceNumber();
+
+    [] HRESULT GetData(
+        [in] FABRIC_SEQUENCE_NUMBER sequenceNumber, 
+        [out] ULONG * count,
+        [out, retval] const FABRIC_OPERATION_DATA_BUFFER ** buffers);
+}
+
+[object, local, uuid(F929D72F-9DE2-403F-B04B-CC4324AE4C71)]
+interface IFabricBatchOperationStream : IUnknown
+{
+    [] HRESULT BeginGetBatchOperation(
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndGetBatchOperation(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricBatchOperation ** batchOperation);
+}
+
+[object, local, uuid(4d76c2bb-f94b-49d0-b026-c22591ab6677)]
+interface IFabricInternalStateReplicator : IUnknown
+{
+    [] HRESULT ReserveSequenceNumber(
+        [in] BOOLEAN alwaysReserveWhenPrimary,
+        [out, retval] FABRIC_SEQUENCE_NUMBER * sequenceNumber);
+    [] HRESULT BeginReplicateBatch(
+        [in] IFabricBatchOperationData * operationData,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndReplicateBatch(
+        [in] IFabricAsyncOperationContext * context);
+    [] HRESULT GetBatchReplicationStream(
+        [out, retval] IFabricBatchOperationStream **stream);
+    [] HRESULT GetReplicationQueueCounters(
+        [out] FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS * counters);
+}
+
+[object, local, uuid(FE488461-2ED5-4D3B-8E4E-5D02D50827AB)]
+interface IFabricInternalReplicator : IUnknown 
+{
+    [] HRESULT GetReplicatorStatus(
+        [out, retval] IFabricGetReplicatorStatusResult ** result);
+}
+
+[object, local, uuid(D37CE92B-DB5A-430D-8D4D-B40A9331F263)]
+interface IFabricStateProviderSupportsCopyUntilLatestLsn : IUnknown 
+{
+}
+
+[object, local, uuid(E5395A45-C9FC-43F7-A5C7-4C34D6B56791)]
+interface IFabricInternalStatefulServiceReplica : IUnknown 
+{
+    [] HRESULT GetStatus(
+        [out, retval] IFabricStatefulServiceReplicaStatusResult ** result);
+}
+
+[object, local, uuid(1A670F6C-7C0E-4E64-850D-58DECCA2D88C)]
+interface IFabricInternalStatefulServiceReplica2 : IFabricInternalStatefulServiceReplica 
+{
+    [] HRESULT UpdateInitializationData(
+        [in] ULONG bufferSize,
+        [in] const BYTE * buffer);
+}
+
+[object, local, uuid(908DCBB4-BB4E-4B2E-AE0A-46DAC42184BC)]
+interface IFabricStatefulServiceReplicaStatusResult : IUnknown 
+{
+    [] const FABRIC_REPLICA_STATUS_QUERY_RESULT * get_Result();
+}
+
+[object, local, uuid(AE4F9D4A-406E-4FFE-A35D-0EF82A9D53CE)]
+interface IFabricKeyValueStoreReplicaSettingsResult : IUnknown 
+{
+    [] const FABRIC_KEY_VALUE_STORE_REPLICA_SETTINGS * get_Settings();
+}
+
+[object, local, uuid(63BE1B43-1519-43F3-A1F5-5C2F3010009A)]
+interface IFabricKeyValueStoreReplicaSettings_V2Result : IUnknown 
+{
+    [] const FABRIC_KEY_VALUE_STORE_REPLICA_SETTINGS_V2 * get_Settings();
+}
+
+[object, local, uuid(FDCEAB77-F1A2-4E87-8B41-4849C5EBB348)]
+interface IFabricSharedLogSettingsResult : IUnknown 
+{
+    [] const KTLLOGGER_SHARED_LOG_SETTINGS * get_Settings();
+}
+
+[object, local, uuid(ee723951-c3a1-44f2-92e8-f50691d7cd16)]
+interface IFabricInternalManagedReplicator : IUnknown
+{
+    [] HRESULT BeginReplicate2(
+        [in] ULONG bufferCount,
+        [in] FABRIC_OPERATION_DATA_BUFFER_EX1 const * buffers,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out] FABRIC_SEQUENCE_NUMBER * sequenceNumber,
+        [out, retval] IFabricAsyncOperationContext ** context) = 0;
+};
+
+[object, local, uuid(72d749db-c9f2-4da8-a2a7-6893dbd65727)] 
+interface IFabricTransactionalReplicatorRuntimeConfigurations : IUnknown
+{
+    [] LPCWSTR get_WorkDirectory();
+};
+
+// Private interface for creating a state provider 2. In private until public.
+[object, local, uuid(ebc51ff5-5ea6-4f5a-b74f-a00ee8720616)] 
+interface IFabricStateProvider2Factory : IUnknown 
+{
+    [] HRESULT Create(
+        [in] FABRIC_STATE_PROVIDER_FACTORY_ARGUMENTS const * factoryArguments,
+        [out, retval] void ** stateProvider);
+}
+
+[object, local, uuid(0bba0a6a-8f00-41b5-9bbf-3ee30357028d)]
+interface IFabricDataLossHandler : IUnknown
+{    
+    [] HRESULT BeginOnDataLoss(
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndOnDataLoss(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] BOOLEAN * isStateChanged);
+}
+
+// Private interface for creating the transactional replicator from the partition object
+[object, local, uuid(9f1f0101-1ab2-4a18-8b5b-17b61fd99699)] 
+interface IFabricInternalStatefulServicePartition : IUnknown 
+{
+    [] HRESULT CreateTransactionalReplicator(
+        [in] IFabricStateProvider2Factory * stateProviderFactory,
+        [in] IFabricDataLossHandler * dataLossHandler,
+        [in /*optional*/] FABRIC_REPLICATOR_SETTINGS const * replicatorSettings,
+        [in /*optional*/] TRANSACTIONAL_REPLICATOR_SETTINGS const * transactionalReplicatorSettings,
+        [in /*optional*/] KTLLOGGER_SHARED_LOG_SETTINGS const * ktlloggerSharedSettings,											 
+        [out] IFabricPrimaryReplicator ** primaryReplicator,
+        [out, retval] void ** transactionalReplicator);
+    
+    // Primarily for fabrictest and system services with unmanaged host scenario as hosting does not have a valid code package context
+    [] HRESULT CreateTransactionalReplicatorInternal(
+        [in] IFabricTransactionalReplicatorRuntimeConfigurations  * runtimeConfigurations,
+        [in] IFabricStateProvider2Factory * stateProviderFactory,
+        [in] IFabricDataLossHandler * dataLossHandler,
+        [in /*optional*/] FABRIC_REPLICATOR_SETTINGS const * replicatorSettings,
+        [in /*optional*/] TRANSACTIONAL_REPLICATOR_SETTINGS const * transactionalReplicatorSettings,
+        [in /*optional*/] KTLLOGGER_SHARED_LOG_SETTINGS const * ktlloggerSharedSettings,											 
+        [out] IFabricPrimaryReplicator ** primaryReplicator,
+        [out, retval] void ** transactionalReplicator);
+
+    [] HRESULT GetKtlSystem(
+        [out, retval] void ** ktlSystem);
+}
+
+[object, local, uuid(e4b0f177-4f61-41bc-996f-9560beb33d0c)] 
+interface IFabricTransactionalReplicator : IUnknown 
+{
+    [] HRESULT UpdateReplicatorSettings(
+        [in] FABRIC_REPLICATOR_SETTINGS const * replicatorSettings);
+}
+
+[object, local, uuid(d78caaf0-a190-414a-9de4-564ef6f25006)]
+interface IFabricTransactionalReplicatorSettingsResult : IUnknown
+{
+    [] const TRANSACTIONAL_REPLICATOR_SETTINGS * get_TransactionalReplicatorSettings();
+}
+
+[object, local, uuid(5b3e9db0-c280-4a16-ab73-2c0005c1543f)]
+interface IFabricGetBackupSchedulePolicyResult : IUnknown
+{
+    [] const FABRIC_BACKUP_POLICY * get_BackupSchedulePolicy();
+}
+
+[object, local, uuid(64965ed4-b3d0-4574-adb8-35f084f0aa06)]
+interface IFabricGetRestorePointDetailsResult : IUnknown
+{
+    [] const FABRIC_RESTORE_POINT_DETAILS * get_RestorePointDetails();
+}
+
+[object, local, uuid(39aa5c2c-7c6c-455a-b9a1-0c08964507c0)]
+interface IFabricBackupRestoreHandler : IUnknown
+{
+    [] HRESULT BeginUpdateBackupSchedulePolicy(
+        [in] FABRIC_BACKUP_POLICY * policy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndUpdateBackupSchedulePolicy(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginPartitionBackupOperation(
+        [in] FABRIC_BACKUP_OPERATION_ID operationId,
+        [in] FABRIC_BACKUP_CONFIGURATION * backupConfiguration,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndPartitionBackupOperation(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(1380040a-4cee-42af-92d5-25669ff45544)]
+interface IFabricBackupRestoreAgent : IUnknown
+{
+    [] HRESULT RegisterBackupRestoreReplica(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID,
+        [in] IFabricBackupRestoreHandler *);
+
+    [] HRESULT UnregisterBackupRestoreReplica(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID);
+        
+    [] HRESULT BeginGetBackupSchedulePolicy(
+        [in] FABRIC_BACKUP_PARTITION_INFO * info,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndGetBackupSchedulePolicy(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetBackupSchedulePolicyResult ** policyResult);
+
+    [] HRESULT BeginGetRestorePointDetails(
+        [in] FABRIC_BACKUP_PARTITION_INFO * info,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndGetRestorePointDetails(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetRestorePointDetailsResult ** restorePointDetails);
+
+    [] HRESULT BeginReportBackupOperationResult(
+        [in] FABRIC_BACKUP_OPERATION_RESULT * backupOperationResult,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndReportBackupOperationResult(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginReportRestoreOperationResult(
+        [in] FABRIC_RESTORE_OPERATION_RESULT * restoreOperationResult,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndReportRestoreOperationResult(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginUploadBackup(
+        [in] FABRIC_BACKUP_UPLOAD_INFO * uploadInfo,
+        [in] FABRIC_BACKUP_STORE_INFORMATION * storeInfo,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndUploadBackup(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDownloadBackup(
+        [in] FABRIC_BACKUP_DOWNLOAD_INFO * downloadInfo,
+        [in] FABRIC_BACKUP_STORE_INFORMATION * storeInfo,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndDownloadBackup(
+        [in] IFabricAsyncOperationContext * context);
+}

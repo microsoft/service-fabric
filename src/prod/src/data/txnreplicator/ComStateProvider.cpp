@@ -224,11 +224,6 @@ HRESULT ComStateProvider::GetCopyState(
     __in IFabricOperationDataStream * copyContextStream,
     __out IFabricOperationDataStream ** copyStateStream)
 {
-    if (!copyContextStream)
-    {
-        return E_POINTER;
-    }
-
     if (!copyStateStream)
     {
         return E_POINTER;
@@ -237,7 +232,11 @@ HRESULT ComStateProvider::GetCopyState(
     ComPointer<IFabricOperationDataStream> comCopyState;
     ComPointer<IFabricOperationDataStream> comCopyContext;
     
-    comCopyContext.SetAndAddRef(copyContextStream);
+    if (copyContextStream != nullptr)
+    {
+        comCopyContext.SetAndAddRef(copyContextStream);
+    }
+
     IOperationDataStream::SPtr copyState;
 
     ComProxyOperationDataStream::SPtr copyContext;

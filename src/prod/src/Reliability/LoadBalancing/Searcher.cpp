@@ -24,6 +24,9 @@ size_t Searcher::GetMoveNumber(double maxPercentageToMove)
     size_t result = static_cast<size_t>(ceil(maxMove));
     result = min(result, placement_->ExistingReplicaCount);
 
+    // Account for throttling (max number of slots based on per node in-builds)
+    result = min(result, checker_->MaxMovementSlots);
+
     return min(result, movementsAllowedGlobally_);
 }
 

@@ -20,7 +20,7 @@
     {
       "Name": "DCollections",
       "Type": "V2_ScriptTest",
-      "Owners": "tyadam,yzha,rajak",
+      "Owners": "deeom,zuparvez,viyogend,preethas",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win7Test",
       "TestExecutionParameters": {
@@ -34,7 +34,7 @@
     {
       "Name": "Backup-CIT_Win7",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,rajak",
+      "Owners": "hrushib,raunakp,shalabhs",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win7Test",
       "TestExecutionParameters": {

@@ -1,0 +1,53 @@
+{
+  "$type": "System.Fabric.InfrastructureService.Parallel.Test.MockPolicyAgentDocumentForTenant, FabricIS.parallel.Test",
+  "Incarnation": "1",
+  "JobDocumentIncarnation": 1,
+  "Jobs": [
+    {
+      "$type": "System.Fabric.InfrastructureService.Parallel.Test.MockTenantJob, FabricIS.parallel.Test",
+      "Id": "3cbd5a8b-1fa9-42b0-a4b1-aba8f0ded836",
+      "JobStatus": "Executing",
+      "RoleInstancesToBeImpacted": [
+        "Role_IN_0",
+        "Role_IN_1"
+      ],
+      "JobStep": {
+        "$type": "System.Fabric.InfrastructureService.Parallel.Test.MockJobStepInfo, FabricIS.parallel.Test",
+        "ImpactStep": "ImpactStart",
+        "AcknowledgementStatus": "WaitingForAcknowledgement",
+        "CurrentlyImpactedRoleInstances": [],
+        "ActionStatus": "NotExecuted"
+      },
+      "ImpactDetail": {
+        "$type": "System.Fabric.InfrastructureService.Parallel.Test.MockImpactInfo, FabricIS.parallel.Test",
+        "ImpactAction": "TenantUpdate",
+        "ImpactedResources": {
+          "$type": "RD.Fabric.PolicyAgent.AffectedResourceImpact, FabricIS.parallel.schema",
+          "ListOfImpactTypes": [
+            "Reboot"
+          ],
+          "DiskImpact": "Reset",
+          "ComputeImpact": "Reset",
+          "NetworkImpact": "Reset",
+          "OSImpact": "Reset",
+          "ApplicationConfigImpact": "None",
+          "EstimatedImpactDurationInSeconds": 0
+        }
+      }
+    }
+  ],
+  "RoleInstanceHealthInfoIncarnation": 2,
+  "RoleInstanceHealthInfoTimestamp": "9/15/2016 19:28:31 +00:00",
+  "RoleInstanceHealthInfos": [
+    {
+      "$type": "RD.Fabric.PolicyAgent.RoleInstanceHealthInfo, FabricIS.parallel.schema",
+      "RoleInstanceName": "Role_IN_0",
+      "Health": "ReadyRole"
+    },
+    {
+      "$type": "RD.Fabric.PolicyAgent.RoleInstanceHealthInfo, FabricIS.parallel.schema",
+      "RoleInstanceName": "Role_IN_1",
+      "Health": "StoppedVM"
+    }
+  ]
+}

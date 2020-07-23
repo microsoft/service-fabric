@@ -1,0 +1,1 @@
+The ktlwf/tools directory are set as OPTIONAL_DIRS now as part of ktl merge change to reduce WinFab build time; They should be included if build for RVD.

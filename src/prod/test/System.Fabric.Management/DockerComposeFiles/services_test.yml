@@ -1,0 +1,79 @@
+# Tests the scalar and sequence keys under service - image, isolation, ports, environment. The constants in this file are hardcoded and validated in the test
+# Separate test tests Volume key, since there are more scenarios to cover. Exceptions are not expected when parsing keys whose names start with 'valid*'
+services:
+  validservice1:
+    image: testRepo/Image1:1234
+    isolation: "hyperv"
+    environment:
+      - testEnviron1=1
+      - testEnviron2=a=b
+    entrypoint: myexe
+    ports:
+      - "80"
+      - "81:91"
+      - "82:92/http"
+  validservice2:
+    image: foo/bar
+    environment: # environment variables specified as a yaml mapping
+      sa_password: "Password1"
+      ACCEPT_EULA: "Y"
+  invalidService_noImageTag:
+    environment:
+      - testEnviron1=1
+    ports:
+      - "80"
+  invalidService_invalidport:
+    image: testRepo/Image1:1234
+    environment:
+      - testEnviron1=1
+    ports:
+      foo: "bar"
+  invalidService_invalidIsolation:
+    image: testRepo/Image1:1234
+    isolation: "foo"
+  invalidService_invalidEntrypoint:
+    image: testRepo/Image1:1234
+    entrypoint:
+      foo: bar
+ports:
+  - "" #empty - invalid
+  - ":91" # empty host port - invalid
+  - "10.0.0.3:80:90" # host IP :port format - not supported
+  - "80/http:91/http" # invalid format
+  - "80:91/http/tcp" # multiple protocol - invalid
+
+deploy: 
+  deployInvalidMode:
+    mode: foo
+  deployInvalidResources:
+    replicas: 5
+    resources:
+      limits:
+        memory: 500
+      reservations:
+        memory: 1000M
+  deployInvalidResources1:
+    mode: replicated
+    resources:
+      limits:
+        memory: 500M
+      reservations:
+        memory: 100
+  validdeployPlacementConstraints:
+      placement:
+       constraints: [node.role == manager]
+  validdeployPlacementConstraints1:
+      placement:
+       constraints:
+         - NodeType==BE
+         - Color=blue
+  deployInvalidplacementConstraints:
+      placement:
+       constraints:
+         foo: bar
+
+logging:
+  invalidloggingbadOptions:
+    driver: foo
+    options:
+      - hello

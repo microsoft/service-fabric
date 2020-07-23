@@ -339,10 +339,6 @@ Please check your implementation of IEquatable, IComparable, and custom serializ
                 if (skipEphemeralKeys == true && kvp.Value.CurrentVersion.Kind == RecordKind.DeletedVersion && (kvp.Value.flags & DifferentialStateFlags.NewKey) != DifferentialStateFlags.None)
                 {
                     // Skip keys which were inserted and then finally removed in current differential
-                    Diagnostics.Assert(
-                        kvp.Value.PreviousVersion != null,
-                        this.traceType,
-                        "Previous record cannot be null.");
                     continue;
                 }
 

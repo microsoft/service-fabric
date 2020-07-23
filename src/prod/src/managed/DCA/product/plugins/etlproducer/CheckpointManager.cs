@@ -19,9 +19,9 @@ namespace FabricDCA
     {
         private readonly FabricEvents.ExtensionsEvents traceSource;
         private readonly string logSourceId;
+        private readonly string lastEtlFileReadFileDirectoryPath;
 
         public CheckpointManager(
-            IEnumerable<EtlProducerWorker.ProviderInfo> providers,
             bool isReadingFromApplicationManifest, 
             string etlPath, 
             string logDirectory, 
@@ -35,7 +35,7 @@ namespace FabricDCA
 
             // Directory where the producer saves the file containing information 
             // about the point upto which we last read the ETL files
-            var lastEtlFileReadFilePath = InitializeLastEtlFileReadFilePath(
+            this.lastEtlFileReadFileDirectoryPath = InitializeLastEtlFileReadFilePath(
                 isReadingFromApplicationManifest,
                 etlPath,
                 logDirectory,
@@ -44,28 +44,27 @@ namespace FabricDCA
 
             // If the directory containing the last ETL read information is
             // different from the log directory, then create it now.
-            if (false == lastEtlFileReadFilePath.Equals(
+            if (false == this.lastEtlFileReadFileDirectoryPath.Equals(
                 logDirectory))
             {
-                FabricDirectory.CreateDirectory(lastEtlFileReadFilePath);
+                FabricDirectory.CreateDirectory(this.lastEtlFileReadFileDirectoryPath);
 
                 this.traceSource.WriteInfo(
                     this.logSourceId,
                     "Directory containing last ETL read info: {0}",
-                    lastEtlFileReadFilePath);
+                    this.lastEtlFileReadFileDirectoryPath);
             }
-
-            this.SetProviderCheckpointFileName(providers, lastEtlFileReadFilePath);
         }
 
-        public bool GetLastEndTime(string fileName, out DateTime lastEndTime)
+        public bool GetLastEndTime(string lastReadFileName, out DateTime lastEndTime)
         {
             lastEndTime = DateTime.MinValue;
+            var fileFullPath = Path.Combine(this.lastEtlFileReadFileDirectoryPath, lastReadFileName);
 
             var fileParam = new LastEndTimeFileParameters(this.traceSource, this.logSourceId)
             {
                 Fs = null,
-                FileName = fileName,
+                FileName = fileFullPath,
                 Mode = FileMode.Open,
                 Access = FileAccess.Read
             };
@@ -82,7 +81,7 @@ namespace FabricDCA
                     this.logSourceId,
                     e,
                     "Failed to open file {0} for read.",
-                    fileName);
+                    fileFullPath);
                 return false;
             }
 
@@ -111,7 +110,7 @@ namespace FabricDCA
                             this.logSourceId,
                             e,
                             "Failed to read last ETL read end time from file {0}.",
-                            fileName);
+                            fileFullPath);
                         return false;
                     }
                 }
@@ -130,12 +129,13 @@ namespace FabricDCA
             return true;
         }
 
-        public bool SetLastEndTime(string fileName, DateTime stopTime)
+        public bool SetLastEndTime(string lastReadFileName, DateTime stopTime)
         {
+            var fileFullPath = Path.Combine(this.lastEtlFileReadFileDirectoryPath, lastReadFileName);
             var fileParam = new LastEndTimeFileParameters(this.traceSource, this.logSourceId)
             {
                 Fs = null,
-                FileName = fileName,
+                FileName = fileFullPath,
                 Mode = FileMode.OpenOrCreate,
                 Access = FileAccess.Write,
 
@@ -157,7 +157,7 @@ namespace FabricDCA
                     this.logSourceId,
                     e,
                     "Failed to open file {0} for write.",
-                    fileName);
+                    fileFullPath);
                 return false;
             }
 
@@ -178,7 +178,7 @@ namespace FabricDCA
                             this.logSourceId,
                             e,
                             "Failed to write last ETL read end time to file {0}.",
-                            fileName);
+                            fileFullPath);
                         return false;
                     }
                 }
@@ -219,25 +219,6 @@ namespace FabricDCA
             }
 
             return logDirectory;
-        }
-
-        private void SetProviderCheckpointFileName(
-            IEnumerable<EtlProducerWorker.ProviderInfo> providers,
-            string lastEtlFileReadFilePath)
-        {
-            // Construct the full paths for the files that contain the last ETL
-            // read timestamps
-            foreach (var provider in providers)
-            {
-                provider.LastEtlReadFileName = Path.Combine(
-                    lastEtlFileReadFilePath,
-                    provider.LastEtlReadFileName);
-                this.traceSource.WriteInfo(
-                    this.logSourceId,
-                    "File containing last ETL read timestamp for {0} traces: {1}.",
-                    provider.FriendlyName,
-                    provider.LastEtlReadFileName);
-            }
         }
 
         private class LastEndTimeFileParameters

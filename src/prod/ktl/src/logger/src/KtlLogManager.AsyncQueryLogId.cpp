@@ -180,10 +180,6 @@ RvdLogManagerImp::AsyncQueryLogIdImp::ParseFileCompletion(
     NTSTATUS status;
 
     status = CompletingSubOp.Status();
-    if (!NT_SUCCESS(status))
-    {
-        KTraceFailedAsyncRequest(status, this, 0, 0);
-    }
 
 	DoComplete(status);
 }

@@ -8,11 +8,13 @@
 using namespace std;
 using namespace Common;
 
-// Should always be written and read through FabricGlobals
+// Should always be written and read through FabricCommon.dll.
 //
 // Cleanup happens when the ErrorCode object that set the 
 // message destructs.
 //
+ThreadErrorMessages GlobalThreadErrorMessages;
+
 ThreadErrorMessages::ThreadErrorMessages()
     : tidMessages_()
     , lock_()

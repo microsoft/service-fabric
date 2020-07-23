@@ -1,0 +1,3129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{65905332-C075-40A4-99DD-71800412191C}</ProjectGuid>
+    <RootNamespace>System.Fabric</RootNamespace>
+    <AssemblyName>System.Fabric</AssemblyName>
+    <AssemblyDescription>Fabric Library</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Fabric.Strings\system.fabric.strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(SrcRoot)\prod\src\ServiceModel\xsd\ServiceFabricServiceModel.xsd">
+      <LogicalName>System.Fabric.Description.ServiceFabricServiceModel.xsd</LogicalName>
+    </EmbeddedResource>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationNameResult.cs">
+      <Link>Query\ApplicationNameResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceNameResult.cs">
+      <Link>Query\ServiceNameResult.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="_friends.cs" />
+    <Compile Include="..\..\src\System\Fabric\ApplicationUpgradeProgress.cs">
+      <Link>ApplicationUpgradeProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ApplicationUpgradeState.cs">
+      <Link>ApplicationUpgradeState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\AtomicGroupStatefulPartition.cs">
+      <Link>AtomicGroupStatefulPartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\AtomicGroupStateProviderBroker.cs">
+      <Link>AtomicGroupStateProviderBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\AtomicGroupStateReplicator.cs">
+      <Link>AtomicGroupStateReplicator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ByteSerializable.cs">
+      <Link>ByteSerializable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ComposeDeploymentUpgradeProgress.cs">
+      <Link>ComposeDeploymentUpgradeProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ComposeDeploymentUpgradeState.cs">
+      <Link>ComposeDeploymentUpgradeState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IByteSerializable.cs">
+      <Link>IByteSerializable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupInfo.cs">
+      <Link>BackupRestore\BackupInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupOption.cs">
+      <Link>BackupRestore\BackupOption.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupRestoreManagerFactory.cs">
+      <Link>BackupRestore\BackupRestoreManagerFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\IBackupRestoreReplica.cs">
+      <Link>BackupRestore\IBackupRestoreReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\IBackupRestoreManager.cs">
+      <Link>BackupRestore\IBackupRestoreManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosEvent.cs">
+      <Link>Chaos\DataStructures\ChaosEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\StartedEvent.cs">
+      <Link>Chaos\DataStructures\StartedEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ExecutingFaultsEvent.cs">
+      <Link>Chaos\DataStructures\ExecutingFaultsEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ByteSerializationHelper.cs">
+      <Link>Common\ByteSerializationHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ValidationFailedEvent.cs">
+      <Link>Chaos\DataStructures\ValidationFailedEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\TestErrorEvent.cs">
+      <Link>Chaos\DataStructures\TestErrorEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\StoppedEvent.cs">
+      <Link>Chaos\DataStructures\StoppedEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\WaitingEvent.cs">
+      <Link>Chaos\DataStructures\WaitingEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosReport.cs">
+      <Link>Chaos\DataStructures\ChaosReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosReportFilter.cs">
+      <Link>Chaos\DataStructures\ChaosReportFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosEventType.cs">
+      <Link>Chaos\DataStructures\ChaosEventType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosTargetFilter.cs">
+      <Link>Chaos\DataStructures\ChaosTargetFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\Common\ChaosConstants.cs">
+      <Link>Chaos\Common\ChaosConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\Common\ChaosUtility.cs">
+      <Link>Chaos\Common\ChaosUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\ChaosReportResult.cs">
+      <Link>Result\ChaosReportResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosStatus.cs">
+      <Link>\Chaos\DataStructures\ChaosStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosParameters.cs">
+      <Link>\Chaos\DataStructures\ChaosParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosDescription.cs">
+      <Link>Chaos\DataStructures\ChaosDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosEventsSegment.cs">
+      <Link>Chaos\DataStructures\ChaosEventsSegment.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosEventsSegmentFilter.cs">
+      <Link>Chaos\DataStructures\ChaosEventsSegmentFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosScheduleStatus.cs">
+      <Link>Chaos\DataStructures\ChaosScheduleStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosScheduleDescription.cs">
+      <Link>Chaos\DataStructures\ChaosScheduleDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosSchedule.cs">
+      <Link>Chaos\DataStructures\ChaosSchedule.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosScheduleJob.cs">
+      <Link>Chaos\DataStructures\ChaosScheduleJob.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosScheduleJobActiveDays.cs">
+      <Link>Chaos\DataStructures\ChaosScheduleJobActiveDays.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosScheduleTimeRangeUtc.cs">
+      <Link>Chaos\DataStructures\ChaosScheduleTimeRangeUtc.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\DataStructures\ChaosScheduleTimeUtc.cs">
+      <Link>Chaos\DataStructures\ChaosScheduleTimeUtc.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\CheckExistsPropertyOperation.cs">
+      <Link>CheckExistsPropertyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\CheckSequencePropertyOperation.cs">
+      <Link>CheckSequencePropertyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\CheckValuePropertyOperation.cs">
+      <Link>CheckValuePropertyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClientRole.cs">
+      <Link>FabricClientRole.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricConstants.cs">
+      <Link>FabricConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricValidatorConstants.cs">
+      <Link>FabricValidatorConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\InvokeDataLossProgress.cs">
+      <Link>InvokeDataLossProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\InvokeQuorumLossProgress.cs">
+      <Link>InvokeQuorumLossProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\TestCommandProgress.cs">
+      <Link>TestCommandProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\RestartPartitionProgress.cs">
+      <Link>RestartPartitionProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeTransitionProgress.cs">
+      <Link>NodeOperationProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ProgressUnitType.cs">
+      <Link>ProgressUnitType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\RestoreSettings.cs">
+      <Link>RestoreSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\TestCommandProgressState.cs">
+      <Link>TestCommandProgressState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\TestCommandType.cs">
+      <Link>TestCommandType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UpgradeFailureReason.cs">
+      <Link>UpgradeFailureReason.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeConfiguration.cs">
+      <Link>NodeConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricValidationException.cs">
+      <Link>FabricValidationException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\AccountHelper.cs">
+      <Link>Common\AccountHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\BackupRestoreTrace.cs">
+      <Link>Common\BackupRestoreTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\NativeHelper.cs">
+      <Link>Common\NativeHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\TimeoutHelper.cs">
+      <Link>Common\TimeoutHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\SchemaLocation.cs">
+      <Link>Common\SchemaLocation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\AppTrace.cs">
+      <Link>Common\AppTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricAssemblyResolver.cs">
+      <Link>Common\AppTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\CabFileCreator.cs">
+      <Link>Common\CabFileCreator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\CabFileOperations.cs">
+      <Link>Common\CabFileOperations.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\CertificateManager.cs">
+      <Link>Common\CertificateManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ClaimsCredentials.cs">
+      <Link>Common\ClaimsCredentials.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\CodePackageDebugParameters.cs">
+      <Link>Common\CodePackageDebugParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricDirectory.cs">
+      <Link>Common\FabricDirectory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricEnvironment.cs">
+      <Link>Common\FabricEnvironment.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricFile.cs">
+      <Link>Common\FabricFile.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Interop\Kernel32Types.cs">
+      <Link>Common\Interop\Kernel32Types.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Interop\NTTypes.cs">
+      <Link>Common\Interop\NTTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricPath.cs">
+      <Link>Common\FabricPath.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricServiceModel.cs">
+      <Link>Common\FabricServiceModel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FxCop.cs">
+      <Link>Common\FXCop.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Helpers.cs">
+      <Link>Common\Helpers.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\IConfigStore.cs">
+      <Link>Common\IConfigStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\IConfigStoreUpdateHandler.cs">
+      <Link>Common\IConfigStoreUpdateHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ImageModel\BuildLayoutSpecification.cs">
+      <Link>Common\ImageModel\BuildLayoutSpecification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ImageModel\FabricDeploymentSpecification.cs">
+      <Link>Common\ImageModel\FabricDeploymentSpecification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ImageModel\NativeImageModel.cs">
+      <Link>Common\ImageModel\NativeImageModel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ImageModel\RunLayoutSpecification.cs">
+      <Link>Common\ImageModel\RunLayoutSpecification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ImageModel\StoreLayoutSpecification.cs">
+      <Link>Common\ImageModel\StoreLayoutSpecification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ImageModel\WinFabLayoutSpecification.cs">
+      <Link>Common\ImageModel\WinFabLayoutSpecification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ItemCollection.cs">
+      <Link>Common\ItemCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ItemList.cs">
+      <Link>Common\ItemList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\NativeConfigStore.cs">
+      <Link>Common\NativeConfigStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\PrivateNamespace.cs">
+      <Link>Common\PrivateNamespace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ProtectionLevel.cs">
+      <Link>Common\ProtectionLevel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ReadOnlyDictionary.cs">
+      <Link>Common\ReadOnlyDictionary.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ReleaseAssert.cs">
+      <Link>Common\ReleaseAssert.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Requires.cs">
+      <Link>Common\Requires.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\SecurityCredentials.cs">
+      <Link>Common\SecurityCredentials.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\NoneSecurityCredentials.cs">
+      <Link>Common\NoneSecurityCredentials.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\TemplateHelper.cs">
+      <Link>Common\TemplateHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\TVSSerializerUtility.cs">
+      <Link>Common\TVSSerializerUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\WindowsCredentials.cs">
+      <Link>Common\WindowsCredentials.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\X509Credentials.cs">
+      <Link>Common\X509Credentials.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Serialization\DerivedTypeResolverAttribute.cs">
+      <Link>Common\Serialization\DerivedTypeResolverAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Serialization\JsonCustomizationAttribute.cs">
+      <Link>Common\Serialization\JsonCustomizationAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Serialization\JsonPropertyNames.cs">
+      <Link>Common\Serialization\JsonPropertyNames.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ValidateAction.cs">
+      <Link>Common\ValidateAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ValidateAllServicesAction.cs">
+      <Link>Common\ValidateAllServicesAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ValidateApplicationServicesAction.cs">
+      <Link>Common\ValidateApplicationServicesAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ValidateClusterAction.cs">
+      <Link>Common\ValidateClusterAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ValidateServiceAction.cs">
+      <Link>Common\ValidateServiceAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ValidateSystemServicesAction.cs">
+      <Link>Common\ValidateSystemServicesAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ValidationCheckFlag.cs">
+      <Link>Common\ValidationCheckFlag.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FileSignatureVerifier.cs">
+      <Link>Common\FileSignatureVerifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ServiceQueryClient.cs">
+      <Link>Common\ServiceQueryClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ValidationReport.cs">
+      <Link>Common\ValidationReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceFieldDescription.cs">
+      <Link>Common\Tracing\TraceFieldDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceManifestGenerator.cs">
+      <Link>Common\Tracing\TraceManifestGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\EventChannel.cs">
+      <Link>Common\Tracing\EventChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\EventDataArrayBuilder.cs">
+      <Link>Common\Tracing\EventDataArrayBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\GenericEventDescriptor.cs">
+      <Link>Common\Tracing\GenericEventDescriptor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\FabricEventSource.cs">
+      <Link>Common\Tracing\FabricEventSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\ManagedEventSources.cs">
+      <Link>Common\Tracing\ManagedEventSources.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\EventExtendedMetadataAttribute.cs">
+      <Link>Common\Tracing\EventExtendedMetadataAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TableEntityKind.cs">
+      <Link>Common\Tracing\TableEntityKind.cs</Link>
+    </Compile>
+	<Compile Include="..\..\src\System\Fabric\Common\Tracing\FabricEventSourceConstants.cs">
+      <Link>Common\Tracing\FabricEventSourceConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceConsoleSink.cs">
+      <Link>Common\Tracing\TraceConsoleSink.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceEvent.cs">
+      <Link>Common\Tracing\TraceEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\ICache.cs">
+      <Link>Common\Tracing\ICache.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\AgeBasedCache.cs">
+      <Link>Common\Tracing\AgeBasedCache.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\ProvisionalMetadataAttribute.cs">
+      <Link>Common\Tracing\ProvisionalMetadataAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\VariantEventProvider.cs">
+      <Link>Common\Tracing\VariantEventProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceFilterDescription.cs">
+      <Link>Common\Tracing\TraceFilterDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceTextFileSink.cs">
+      <Link>Common\Tracing\TraceTextFileSink.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceSinkFilter.cs">
+      <Link>Common\Tracing\TraceSinkFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceConfig.cs">
+      <Link>Common\Tracing\TraceConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceSinkType.cs">
+      <Link>Common\Tracing\TraceSinkType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\Variant.cs">
+      <Link>Common\Tracing\Variant.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\VariantId.cs">
+      <Link>Common\Tracing\VariantId.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\IVariantEventWriter.cs">
+      <Link>Common\Tracing\IVariantEventWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\IFabricPerformanceCountersDefinition.cs">
+      <Link>Common\Counters\IFabricPerformanceCountersDefinition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricBaselessPerformanceCounterWriter.cs">
+      <Link>Common\Counters\FabricBaselessPerformanceCounterWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounter.cs">
+      <Link>Common\Counters\FabricPerformanceCounter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterCategoryType.cs">
+      <Link>Common\Counters\FabricPerformanceCounterCategoryType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterDefinition.cs">
+      <Link>Common\Counters\FabricPerformanceCounterDefinition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterInterop.cs">
+      <Link>Common\Counters\FabricPerformanceCounterInterop.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterSet.cs">
+      <Link>Common\Counters\FabricPerformanceCounterSet.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterSetDefinition.cs">
+      <Link>Common\Counters\FabricPerformanceCounterSetDefinition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterSetInstance.cs">
+      <Link>Common\Counters\FabricPerformanceCounterSetInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterType.cs">
+      <Link>Common\Counters\FabricPerformanceCounterType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterWriter.cs">
+      <Link>Common\Counters\FabricPerformanceCounterWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricAverageCount64PerformanceCounterWriter.cs">
+      <Link>Common\Counters\FabricAverageCount64PerformanceCounterWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricNumberOfItems64PerformanceCounterWriter.cs">
+      <Link>Common\Counters\FabricNumberOfItems64PerformanceCounterWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Monitoring\FabricMonitoringData.cs">
+      <Link>Common\Monitoring\FabricMonitoringData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Monitoring\FabricMonitoringParameters.cs">
+      <Link>Common\Monitoring\FabricMonitoringParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Monitoring\FabricApiCallDescription.cs">
+      <Link>Common\Monitoring\FabricApiCallDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Monitoring\FabricApiMonitoringComponent.cs">
+      <Link>Common\Monitoring\FabricApiMonitoringComponent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Monitoring\ExpiredApiCall.cs">
+      <Link>Common\Monitoring\ExpiredApiCall.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Monitoring\MonitoringComponentParameters.cs">
+      <Link>Common\Monitoring\MonitoringComponentParameters.cs</Link>
+      <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Pool\BufferPool.cs">
+      <Link>Common\Pool\BufferPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Pool\SynchronizedPool.cs">
+      <Link>Common\Pool\SynchronizedPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\CredentialType.cs">
+      <Link>CredentialType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\DeletePropertyOperation.cs">
+      <Link>DeletePropertyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\DeploymentStatus.cs">
+      <Link>DeploymentStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\HostType.cs">
+      <Link>HostType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\HostIsolationMode.cs">
+      <Link>HostIsolationMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationDefinitionKindFilter.cs">
+      <Link>Description\ApplicationDefinitionKindFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationDescription.cs">
+      <Link>Description\ApplicationDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationNameQueryDescription.cs">
+      <Link>Description\ApplicationNameQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationNetworkQueryDescription.cs">
+      <Link>Description\ApplicationNetworkQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationUpdateDescription.cs">
+      <Link>ApplicationUpdateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationHealthQueryDescription.cs">
+      <Link>Description\ApplicationHealthQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationPackageCleanupPolicy.cs">
+      <Link>Description\ApplicationPackageCleanupPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationParameter.cs">
+      <Link>Description\ApplicationParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationParameterList.cs">
+      <Link>Description\ApplicationParameterList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationPrincipalsDescription.cs">
+      <Link>Description\ApplicationPrincipalsDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationQueryDescription.cs">
+      <Link>Description\ApplicationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationMetricDescription.cs">
+      <Link>Description\ApplicationMetricDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationTypeQueryDescription.cs">
+      <Link>Description\ApplicationTypeQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationTypeDefinitionKindFilter.cs">
+      <Link>Description\ApplicationTypeDefinitionKindFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationUpgradeDescription.cs">
+      <Link>Description\ApplicationUpgradeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\CancelTestCommandDescription.cs">
+      <Link>Description\CancelTestCommandDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationUpgradeUpdateDescription.cs">
+      <Link>Description\ApplicationUpgradeUpdateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ClaimDescription.cs">
+      <Link>Description\ClaimDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ClaimDescriptionList.cs">
+      <Link>Description\ClaimDescriptionList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ClusterHealthQueryDescription.cs">
+      <Link>Description\ClusterHealthQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ClusterHealthChunkQueryDescription.cs">
+      <Link>Description\ClusterHealthChunkQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ClusterManifestQueryDescription.cs">
+      <Link>Description\ClusterManifestQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\CodePackageDescription.cs">
+      <Link>Description\CodePackageDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\CodePackageEntryPointType.cs">
+      <Link>Description\CodePackageEntryPointType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\CodePackageIsolationPolicy.cs">
+      <Link>Description\CodePackageIsolationPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ConfigurationPackageDescription.cs">
+      <Link>Description\ConfigurationPackageDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ConfigurationProperty.cs">
+      <Link>Description\ConfigurationProperty.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ConfigurationSection.cs">
+      <Link>Description\ConfigurationSection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ConfigurationSettings.cs">
+      <Link>Description\ConfigurationSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DataPackageDescription.cs">
+      <Link>Description\DataPackageDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeleteApplicationDescription.cs">
+      <Link>Description\DeleteApplicationDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeleteComposeDeploymentDescription.cs">
+      <Link>Description\DeleteComposeDeploymentDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeleteNetworkDescription.cs">
+      <Link>Description\DeleteNetworkDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeleteServiceDescription.cs">
+      <Link>Description\DeleteServiceDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceFromTemplateDescription.cs">
+      <Link>Description\ServiceFromTemplateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceGroupFromTemplateDescription.cs">
+      <Link>Description\ServiceGroupFromTemplateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedApplicationHealthQueryDescription.cs">
+      <Link>Description\DeployedApplicationHealthQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedApplicationQueryDescription.cs">
+      <Link>Description\DeployedApplicationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedCodePackageQueryDescription.cs">
+      <Link>Description\DeployedCodePackageQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedNetworkCodePackageQueryDescription.cs">
+      <Link>Description\DeployedNetworkCodePackageQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedNetworkQueryDescription.cs">
+      <Link>Description\DeployedNetworkQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedServicePackageHealthQueryDescription.cs">
+      <Link>Description\DeployedServicePackageHealthQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedServicePackageQueryDescription.cs">
+      <Link>Description\DeployedServicePackageQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedServiceReplicaDetailQueryDescription.cs">
+      <Link>Description\DeployedServiceReplicaDetailQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedServiceReplicaQueryDescription.cs">
+      <Link>Description\DeployedServiceReplicaQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DeployedServiceTypeQueryDescription.cs">
+      <Link>Description\DeployedServiceTypeQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DescriptionExtension.cs">
+      <Link>Description\DescriptionExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DllHostEntryPointDescription.cs">
+      <Link>Description\DllHostEntryPointDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DllHostItemDescription.cs">
+      <Link>Description\DllHostItemDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\DllHostItemKind.cs">
+      <Link>Description\DllHostItemKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ComposeDeploymentDescriptionWrapper.cs">
+      <Link>Description\ComposeDeploymentDescriptionWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ComposeDeploymentUpgradeDescriptionWrapper.cs">
+      <Link>Description\ComposeDeploymentUpgradeDescriptionWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ComposeDeploymentRollbackDescriptionWrapper.cs">
+      <Link>Description\ComposeDeploymentRollbackDescriptionWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ComposeDeploymentStatusQueryDescriptionWrapper.cs">
+      <Link>Description\ComposeDeploymentStatusQueryDescriptionWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\EndpointDescription.cs">
+      <Link>Description\EndpointDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\EndpointProtocol.cs">
+      <Link>Description\EndPointProtocol.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\EndpointType.cs">
+      <Link>Description\EndpointType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\EntryPointDescription.cs">
+      <Link>Description\EntryPointDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ExecutableEntryPointDescription.cs">
+      <Link>Description\ExecutableEntryPointDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ExeHostWorkingFolder.cs">
+      <Link>Description\ExeHostWorkingFolder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ExternalStoreProvisionApplicationTypeDescription.cs">
+      <Link>Description\ExternalStoreProvisionApplicationTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\FabricUpgradeDescription.cs">
+      <Link>Description\FabricUpgradeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\FabricUpgradeUpdateDescription.cs">
+      <Link>Description\FabricUpgradeUpdateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ImageStoreListDescription.cs">
+      <Link>Description\ImageStoreListDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\InfrastructureTaskDescription.cs">
+      <Link>Description\InfrastructureTaskDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\InvokeDataLossDescription.cs">
+      <Link>Description\InvokeDataLossDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\InvokeQuorumLossDescription.cs">
+      <Link>Description\InvokeQuorumLossDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\LocalNetworkConfigurationDescription.cs">
+      <Link>Description\LocalNetworkConfigurationDescriptioncs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\LocalNetworkDescription.cs">
+      <Link>Description\LocalNetworkDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NetworkDescription.cs">
+      <Link>Description\NetworkDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NetworkQueryDescription.cs">
+      <Link>Description\NetworkQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NetworkApplicationQueryDescription.cs">
+      <Link>Description\NetworkApplicationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NetworkNodeQueryDescription.cs">
+      <Link>Description\NetworkNodeQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\RestartPartitionDescription.cs">
+      <Link>Description\RestartPartitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StartChaosDescription.cs">
+      <Link>Description\StartChaosDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\SetChaosScheduleDescription.cs">
+      <Link>Description\SetChaosScheduleDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\GetChaosReportDescription.cs">
+      <Link>Description\GetChaosReportDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ChaosEventsDescription.cs">
+      <Link>Description\ChaosEventsDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\MonitoredRollingApplicationUpgradePolicyDescription.cs">
+      <Link>Description\MonitoredRollingApplicationUpgradePolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\MonitoredRollingFabricUpgradePolicyDescription.cs">
+      <Link>Description\MonitoredRollingFabricUpgradePolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\MonitoredRollingUpgradePolicyDescription.cs">
+      <Link>Description\MonitoredRollingUpgradePolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NamedPartitionDescription.cs">
+      <Link>Description\NamedPartitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NamedRepartitionDescription.cs">
+      <Link>Description\NamedRepartitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NodeHealthQueryDescription.cs">
+      <Link>Description\NodeHealthQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NodeQueryDescription.cs">
+      <Link>Description\NodeQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NodeTask.cs">
+      <Link>Description\NodeTask.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NodeTaskDescription.cs">
+      <Link>Description\NodeTaskDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\PackageDescription.cs">
+      <Link>Description\PackageDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\PartitionQueryDescription.cs">
+      <Link>Description\PartitionQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\PartitionHealthQueryDescription.cs">
+      <Link>Description\PartitionHealthQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\PartitionLoadInformationQueryDescription.cs">
+      <Link>Description\PartitionLoadInformationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ProvisionApplicationTypeDescription.cs">
+      <Link>Description\ProvisionApplicationTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ProvisionApplicationTypeDescriptionBase.cs">
+      <Link>Description\ProvisionApplicationTypeDescriptionBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ProvisionApplicationTypeKind.cs">
+      <Link>Description\ProvisionApplicationTypeKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NodeLoadInformationQueryDescription.cs">
+      <Link>Description\NodeLoadInformationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\RepartitionDescription.cs">
+      <Link>Description\RepartitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ReplicaLoadInformationQueryDescription.cs">
+      <Link>Description\ReplicaLoadInformationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\UnplacedReplicaInformationQueryDescription.cs">
+      <Link>Description\UnplacedReplicaInformationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\UnprovisionApplicationTypeDescription.cs">
+      <Link>Description\UnprovisionApplicationTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ReplicaQueryDescription.cs">
+      <Link>Description\ReplicaQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ReplicaHealthQueryDescription.cs">
+      <Link>Description\ReplicaHealthQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ApplicationLoadInformationQueryDescription.cs">
+      <Link>Description\ApplicationLoadInformationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ReplicaSetConfiguration.cs">
+      <Link>Description\ReplicaSetConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\RollingUpgradeMonitoringPolicy.cs">
+      <Link>Description\RollingUpgradeMonitoringPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\RollingUpgradePolicyDescription.cs">
+      <Link>Description\RollingUpgradePolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\RunAsPolicyDescription.cs">
+      <Link>Description\RunAsPolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\SecurityGroupDescription.cs">
+      <Link>Description\SecurityGroupDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\SecurityUserDescription.cs">
+      <Link>Description\SecurityUserDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceCorrelationDescription.cs">
+      <Link>Description\ServiceCorrelationDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ScalingPolicyDescription.cs">
+      <Link>Description\ScalingPolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ScalingMechanismKind.cs">
+      <Link>Description\ScalingMechanismKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ScalingMechanismDescription.cs">
+      <Link>Description\ScalingMechanismDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\PartitionInstanceCountScalingMechanism.cs">
+      <Link>Description\ParitionInstanceCountScaleMechanism.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\AddRemoveIncrementalNamedPartitionScalingMechanism.cs">
+      <Link>Description\AddRemoveIncrementalNamedPartitionScalingMechanism.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ScalingTriggerKind.cs">
+      <Link>Description\ScalingTriggerKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ScalingTriggerDescription.cs">
+      <Link>Description\ScalingTriggerDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\AveragePartitionLoadScalingTrigger.cs">
+      <Link>Description\AveragePartitionLoadScalingTrigger.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\AverageServiceLoadScalingTrigger.cs">
+      <Link>Description\AverageServiceLoadScalingTrigger.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceCorrelationScheme.cs">
+      <Link>Description\ServiceCorrelationScheme.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceDescription.cs">
+      <Link>Description\ServiceDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceNameQueryDescription.cs">
+      <Link>Description\ServiceNameQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceDescriptionKind.cs">
+      <Link>Description\ServiceDescriptionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceGroupDescription.cs">
+      <Link>Description\ServiceGroupDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceGroupMemberDescription.cs">
+      <Link>Description\ServiceGroupMemberDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceGroupTypeDescription.cs">
+      <Link>Description\ServiceGroupTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceGroupTypeMemberDescription.cs">
+      <Link>Description\ServiceGroupTypeMemberDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceGroupUpdateDescription.cs">
+      <Link>Description\ServiceGroupUpdateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceHealthQueryDescription.cs">
+      <Link>Description\ServiceHealthQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceLoadMetricDescription.cs">
+      <Link>Description\ServiceLoadMetricDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceLoadMetricWeight.cs">
+      <Link>Description\ServiceLoadMetricWeight.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceNotificationFilterDescription.cs">
+      <Link>Description\ServiceNotificationFilterDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServicePartitionDescription.cs">
+      <Link>Description\ServicePartitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServicePlacementDomainPolicyDescription.cs">
+      <Link>Description\ServicePlacementDomainPolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServicePlacementPolicyDescription.cs">
+      <Link>Description\ServicePlacementPolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServicePlacementPolicyType.cs">
+      <Link>Description\ServicePlacementPolicyType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceQueryDescription.cs">
+      <Link>Description\ServiceQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceGroupMemberQueryDescription.cs">
+      <Link>Description\ServiceGroupMemberQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceTypeDescription.cs">
+      <Link>Description\ServiceTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceTypeQueryDescription.cs">
+      <Link>Description\ServiceTypeQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceGroupMemberTypeQueryDescription.cs">
+      <Link>Description\ServiceGroupMemberTypeQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServiceUpdateDescription.cs">
+      <Link>Description\ServiceUpdateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\SingletonServicePartitionDescription.cs">
+      <Link>Description\SingletonServicePartitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StartNodeTransitionDescription.cs">
+      <Link>Description\StartNodeTransitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StatefulServiceDescription.cs">
+      <Link>Description\StatefulServiceDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StatefulServiceLoadMetricDescription.cs">
+      <Link>Description\StatefulServiceLoadMetricDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StatefulServiceTypeDescription.cs">
+      <Link>Description\StatefulServiceTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StatefulServiceUpdateDescription.cs">
+      <Link>Description\StatefulServiceUpdateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StatelessServiceDescription.cs">
+      <Link>Description\StatelessServiceDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StatelessServiceLoadMetricDescription.cs">
+      <Link>Description\StatelessServiceLoadMetricDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StatelessServiceTypeDescription.cs">
+      <Link>Description\StatelessServiceTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StatelessServiceUpdateDescription.cs">
+      <Link>Description\StatelessServiceUpdateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\StartUpgradeDescription.cs">
+      <Link>Description\StartUpgradeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NodeTransitionDescription.cs">
+      <Link>Description\NodeTransitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NodeStartDescription.cs">
+      <Link>Description\NodeStartDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\NodeStopDescription.cs">
+      <Link>Description\NodeStopDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\TestCommandListDescription.cs">
+      <Link>Description\TestCommandListDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\UniformInt64PartitionDescription.cs">
+      <Link>Description\UniformInt64PartitionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\UpgradePolicyDescription.cs">
+      <Link>Description\UpgradePolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\UpgradeUpdateDescriptionBase.cs">
+      <Link>Description\UpgradeUpdateDescriptionBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartNodeDescriptionUsingNodeName.cs">
+      <Link>Common\RestartNodeDescriptionUsingNodeName.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartNodeDescription2.cs">
+      <Link>Common\RestartNodeDescription2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StartNodeDescription2.cs">
+      <Link>Common\StartNodeDescription2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StartNodeDescriptionUsingNodeName.cs">
+      <Link>Common\StartNodeDescriptionUsingNodeName.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StopNodeDescription2.cs">
+      <Link>Common\StopNodeDescription2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StopNodeDescriptionInternal.cs">
+      <Link>Common\StopNodeDescriptionInternal.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StopNodeDescriptionUsingNodeName.cs">
+      <Link>Common\StopNodeDescriptionUsingNodeName.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartDeployedCodePackageDescription2.cs">
+      <Link>Common\RestartDeployedCodePackageDescription2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartDeployedCodePackageDescriptionUsingNodeName.cs">
+      <Link>Common\RestartDeployedCodePackageDescriptionUsingNodeName.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\MovePrimaryDescription2.cs">
+      <Link>Common\MovePrimaryDescription2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\MovePrimaryDescriptionUsingNodeName.cs">
+      <Link>Common\MovePrimaryDescriptionUsingNodeName.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\MovePrimaryDescriptionKind.cs">
+      <Link>Common\MovePrimaryDescriptionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\MoveSecondaryDescription2.cs">
+      <Link>Common\MoveSecondaryDescription2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\MoveSecondaryDescriptionUsingNodeName.cs">
+      <Link>Common\MoveSecondaryDescriptionUsingNodeName.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\MoveSecondaryDescriptionKind.cs">
+      <Link>Common\MoveSecondaryDescriptionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricTestActionExecutor.cs">
+      <Link>Common\FabricTestActionExecutor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricTestAction.cs">
+      <Link>Common\FabricTestAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricTestContext.cs">
+      <Link>Common\FabricTestContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricCluster.cs">
+      <Link>Common\FabricCluster.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\NodeInfo.cs">
+      <Link>Common\NodeInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricTestActionHandler.cs">
+      <Link>Common\FabricTestActionHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\UnreliableTransportBehavior.cs">
+      <Link>Common\UnreliableTransportBehavior.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\Constants.cs">
+      <Link>Common\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\InvokeDataLossAction.cs">
+      <Link>Common\InvokeDataLossAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\InvokeQuorumLossAction.cs">
+      <Link>Common\InvokeQuorumLossAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartPartitionAction.cs">
+      <Link>Common\RestartPartitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartNodeAction.cs">
+      <Link>Common\RestartNodeAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\GetSelectedReplicaStateAction.cs">
+      <Link>Common\GetSelectedReplicaStateAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\GetSelectedPartitionStateAction.cs">
+      <Link>Common\GetSelectedPartitionStateAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StartNodeAction.cs">
+      <Link>Common\StartNodeAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\StartNodeResult.cs">
+      <Link>Result\StartNodeResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StopNodeAction.cs">
+      <Link>Common\StopNodeAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\StopNodeResult.cs">
+      <Link>Result\StopNodeResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\TestCommandResult.cs">
+      <Link>Result\TestCommandResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ApplicationEntityList.cs">
+      <Link>Chaos\RandomActionGenerator\ApplicationEntityList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ApplicationEntity.cs">
+      <Link>Chaos\RandomActionGenerator\ApplicationEntity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ActionTranslator.cs">
+      <Link>Chaos\RandomActionGenerator\ActionTranslator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ActionGeneratorBase.cs">
+      <Link>Chaos\RandomActionGenerator\ActionGeneratorBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ActionGeneratorParameters.cs">
+      <Link>Chaos\RandomActionGenerator\ActionGeneratorParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ClusterEntityFlags.cs">
+      <Link>Chaos\RandomActionGenerator\ClusterEntityFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\CodePackageEntity.cs">
+      <Link>Chaos\RandomActionGenerator\CodePackageEntity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\GetClusterStateSnapshotAction.cs">
+      <Link>Chaos\RandomActionGenerator\GetClusterStateSnapshotAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\IsClusterUpgradingAction.cs">
+      <Link>Chaos\RandomActionGenerator\IsClusterUpgradingAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\IsInfrastructureUpgradingAction.cs">
+      <Link>Chaos\RandomActionGenerator\IsInfrastructureUpgradingAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\Common\CoordinatorStateData.cs">
+      <Link>Chaos\Common\CoordinatorStateData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\Common\Exceptions\ChaosInconsistentClusterSnapshotException.cs">
+      <Link>Chaos\Common\Exceptions\ChaosInconsistentClusterSnapshotException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\MoveReplicaStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\MoveReplicaStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\NodeEntityList.cs">
+      <Link>Chaos\RandomActionGenerator\NodeEntityList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\NodeEntity.cs">
+      <Link>Chaos\RandomActionGenerator\NodeEntity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\NodeStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\NodeStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\NodeFaultInformationHelper.cs">
+      <Link>Chaos\RandomActionGenerator\NodeFaultInformationHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\NodeFaultActionGeneratorParameters.cs">
+      <Link>Chaos\RandomActionGenerator\NodeFaultActionGeneratorParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\NodeFaultActionGenerator.cs">
+      <Link>Chaos\RandomActionGenerator\NodeFaultActionGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\PartitionEntity.cs">
+      <Link>Chaos\RandomActionGenerator\PartitionEntity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\RandomExtensions.cs">
+      <Link>Chaos\RandomActionGenerator\RandomExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ReplicaEntity.cs">
+      <Link>Chaos\RandomActionGenerator\ReplicaEntity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ReplicaStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\ReplicaStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\RestartCodePackageStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\RestartCodePackageStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\RootActionGenerator.cs">
+      <Link>Chaos\RandomActionGenerator\RootActionGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ServiceFaultActionGeneratorParameters.cs">
+      <Link>Chaos\RandomActionGenerator\ServiceFaultActionGeneratorParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\StateTransitionActionType.cs">
+      <Link>Chaos\RandomActionGenerator\StateTransitionActionType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\StateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\StateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ServiceEntity.cs">
+      <Link>Chaos\RandomActionGenerator\ServiceEntity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\ServiceFaultActionGenerator.cs">
+      <Link>Chaos\RandomActionGenerator\ServiceFaultActionGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\StateSnapshotExtensions.cs">
+      <Link>Chaos\RandomActionGenerator\StateSnapshotExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\StateSnapshot.cs">
+      <Link>Chaos\RandomActionGenerator\StateSnapshot.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\SystemFaultActionGenerator.cs">
+      <Link>Chaos\RandomActionGenerator\SystemFaultActionGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\SystemFaultActionGeneratorParameters.cs">
+      <Link>Chaos\RandomActionGenerator\SystemFaultActionGeneratorParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\SystemStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\SystemStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\WorkloadActionGenerator.cs">
+      <Link>Chaos\RandomActionGenerator\WorkloadActionGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\WorkloadActionGeneratorParameters.cs">
+      <Link>Chaos\RandomActionGenerator\WorkloadActionGeneratorParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\WorkloadStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\WorkloadStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\WorkloadList.cs">
+      <Link>Chaos\RandomActionGenerator\WorkloadList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\WeightedDice.cs">
+      <Link>Chaos\RandomActionGenerator\WeightedDice.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\MovePrimaryReplicaStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\MovePrimaryReplicaStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\MoveSecondaryReplicaStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\MoveSecondaryReplicaStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\StartNodeStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\StartNodeStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\StopNodeStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\StopNodeStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\RestartNodeStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\RestartNodeStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\RestartReplicaStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\RestartReplicaStateTransitionAction.cs</Link>
+    </Compile>
+	<Compile Include="..\..\src\System\Fabric\Chaos\RandomActionGenerator\RemoveReplicaStateTransitionAction.cs">
+      <Link>Chaos\RandomActionGenerator\RemoveReplicaStateTransitionAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Scenario\FailoverTestScenario.cs">
+      <Link>Testability\Scenario\FailoverTestScenario.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Scenario\FailoverTestScenarioParameters.cs">
+      <Link>Testability\Scenario\FailoverTestScenarioParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Scenario\TestScenario.cs">
+      <Link>Testability\Scenario\TestScenario.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Scenario\TestScenarioParameters.cs">
+      <Link>Testability\Scenario\TestScenarioParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Scenario\ChaosTestScenario.cs">
+      <Link>Testability\Scenario\ChaosTestScenario.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Testability\Scenario\ChaosTestScenarioParameters.cs">
+      <Link>Testability\Scenario\ChaosTestScenarioParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartDeployedCodePackageAction.cs">
+      <Link>Common\RestartDeployedCodePackageAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RemoveReplicaOrInstanceAction.cs">
+      <Link>Common\RemoveReplicaOrInstanceAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartReplicaOrInstanceAction.cs">
+      <Link>Common\RestartReplicaOrInstanceAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\MovePrimaryAction.cs">
+      <Link>Common\MovePrimaryAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\MoveSecondaryAction.cs">
+      <Link>Common\MoveSecondaryAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\RestartDeployedCodePackageResult.cs">
+      <Link>Result\RestartDeployedCodePackageResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\RemoveReplicaOrInstanceResult.cs">
+      <Link>Result\RemoveReplicaOrInstanceResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\MovePrimaryResult.cs">
+      <Link>Result\MovePrimaryResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\MoveSecondaryResult.cs">
+      <Link>Result\MoveSecondaryResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricClientRetryErrors.cs">
+      <Link>Common\FabricClientRetryErrors.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\FabricClientRetryHelper.cs">
+      <Link>Common\FabricClientRetryHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\WinFabricServiceModelExtensions.cs">
+      <Link>Common\WinFabricServiceModelExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\TestabilityTrace.cs">
+      <Link>Common\TestabilityTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\UpgradeOrchestrationTrace.cs">
+      <Link>Common\UpgradeOrchestrationTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\ThrowIf.cs">
+      <Link>Common\ThrowIf.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\AsyncWaiter.cs">
+      <Link>Common\AsyncWaiter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\GatewayResourceManagerTrace.cs">
+      <Link>Common\GatewayResourceManagerTrace.cs</Link>
+    </Compile>
+    <!-- Faults -->
+    <Compile Include="..\..\src\System\Fabric\Common\RestartNodeDescriptionKind.cs">
+      <Link>Common\RestartNodeDescriptionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StartNodeDescriptionKind.cs">
+      <Link>Common\StartNodeDescriptionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StopNodeDescriptionKind.cs">
+      <Link>Common\StopNodeDescriptionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\RestartDeployedCodePackageDescriptionKind.cs">
+      <Link>Common\RestartDeployedCodePackageDescriptionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\CleanTestStateAction.cs">
+      <Link>Common\CleanTestStateAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\UpgradeTrace.cs">
+      <Link>Common\UpgradeTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\EntryPointStatus.cs">
+      <Link>EntryPointStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Epoch.cs">
+      <Link>Epoch.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.ApplicationManagementClient.cs">
+      <Link>FabricClient.ApplicationManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.ClusterManagementClient.cs">
+      <Link>FabricClient.ClusterManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.ComposeDeploymentClient.cs">
+      <Link>FabricClient.ComposeDeploymentClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.NetworkManagementClient.cs">
+      <Link>FabricClient.NetworkManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.cs">
+      <Link>FabricClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.HealthClient.cs">
+      <Link>FabricClient.HealthClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.ImageStoreClient.cs">
+      <Link>FabricClient.ImageStoreClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.InfrastructureServiceClient.cs">
+      <Link>FabricClient.InfrastructureServiceClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.PropertyManagementClient.cs">
+      <Link>FabricClient.PropertyManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.QueryClient.cs">
+      <Link>FabricClient.QueryClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.RepairManagementClient.cs">
+      <Link>FabricClient.RepairManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.ServiceGroupManagementClient.cs">
+      <Link>FabricClient.ServiceGroupManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.ServiceManagementClient.cs">
+      <Link>FabricClient.ServiceManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.TestManagementClient.cs">
+      <Link>FabricClient.TestManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.FaultManagementClient.cs">
+      <Link>FabricClient.FaultManagementClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClient.SecretStoreClient.cs">
+      <Link>FabricClient.SecretStoreClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricClientSettings.cs">
+      <Link>FabricClientSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricErrorCode.cs">
+      <Link>FabricErrorCode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricException.cs">
+      <Link>FabricException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\TransactionFaultedException.cs">
+      <Link>TransactionFaultedException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricInfrastructureServiceAgent.cs">
+      <Link>FabricInfrastructureServiceAgent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricFaultAnalysisServiceAgent.cs">
+      <Link>FabricFaultAnalysisServiceAgent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricGatewayResourceManagerAgent.cs">
+      <Link>FabricGatewayResourceManagerAgent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricReplicator.cs">
+      <Link>FabricReplicator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricTokenClaimResult.cs">
+      <Link>FabricTokenClaimResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricTokenServiceMetadataResult.cs">
+      <Link>FabricTokenServiceMetadataResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricTokenValidationServiceAgent.cs">
+      <Link>FabricTokenValidationServiceAgent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricUpgradeProgress.cs">
+      <Link>FabricUpgradeProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricUpgradeState.cs">
+      <Link>FabricUpgradeState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricOrchestrationUpgradeProgress.cs">
+      <Link>FabricOrchestrationUpgradeProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricUpgradeOrchestrationServiceState.cs">
+      <Link>FabricUpgradeOrchestrationServiceState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FaultType.cs">
+      <Link>FaultType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\GatewayInformation.cs">
+      <Link>GatewayInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\GetPropertyOperation.cs">
+      <Link>GetPropertyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealth.cs">
+      <Link>Health\ApplicationHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthPolicy.cs">
+      <Link>Health\ApplicationHealthPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthPolicyMap.cs">
+      <Link>Health\ApplicationHealthPolicyMap.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthStatisticsFilter.cs">
+      <Link>Health\ApplicationHealthStatisticsFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationTypeHealthPolicyMap.cs">
+      <Link>Health\ApplicationTypeHealthPolicyMap.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthReport.cs">
+      <Link>Health\ApplicationHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthState.cs">
+      <Link>Health\ApplicationHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthStateChunk.cs">
+      <Link>Health\ApplicationHealthStateChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthStateChunkList.cs">
+      <Link>Health\ApplicationHealthStateChunkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthStateList.cs">
+      <Link>Health\ApplicationHealthStateList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthStateFilter.cs">
+      <Link>Health\ApplicationHealthStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthStatesFilter.cs">
+      <Link>Health\ApplicationHealthStatesFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationHealthEvaluation.cs">
+      <Link>Health\ApplicationHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationsHealthEvaluation.cs">
+      <Link>Health\ApplicationsHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ApplicationTypeApplicationsHealthEvaluation.cs">
+      <Link>Health\ApplicationTypeApplicationsHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ClusterHealth.cs">
+      <Link>Health\ClusterHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ClusterHealthChunk.cs">
+      <Link>Health\ClusterHealthChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ClusterHealthPolicy.cs">
+      <Link>Health\ClusterHealthPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ClusterHealthReport.cs">
+      <Link>Health\ClusterHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ClusterHealthStatisticsFilter.cs">
+      <Link>Health\ClusterHealthStatisticsFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ClusterUpgradeHealthPolicy.cs">
+      <Link>Health\ClusterUpgradeHealthPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeltaNodesCheckHealthEvaluation.cs">
+      <Link>Health\DeltaNodesCheckHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealth.cs">
+      <Link>Health\DeployedApplicationHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthReport.cs">
+      <Link>Health\DeployedApplicationHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthState.cs">
+      <Link>Health\DeployedApplicationHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthStateChunk.cs">
+      <Link>Health\DeployedApplicationHealthStateChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthStateChunkList.cs">
+      <Link>Health\DeployedApplicationHealthStateChunkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthStateList.cs">
+      <Link>Health\DeployedApplicationHealthStateList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthStateFilter.cs">
+      <Link>Health\DeployedApplicationHealthStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthStatesFilter.cs">
+      <Link>Health\DeployedApplicationHealthStatesFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthStatisticsFilter.cs">
+      <Link>Health\DeployedApplicationHealthStatisticsFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationHealthEvaluation.cs">
+      <Link>Health\DeployedApplicationHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedApplicationsHealthEvaluation.cs">
+      <Link>Health\DeployedApplicationsHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealth.cs">
+      <Link>Health\DeployedServicePackageHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealthReport.cs">
+      <Link>Health\DeployedServicePackageHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealthState.cs">
+      <Link>Health\DeployedServicePackageHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealthStateChunk.cs">
+      <Link>Health\DeployedServicePackageHealthStateChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealthStateChunkList.cs">
+      <Link>Health\DeployedServicePackageHealthStateChunkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealthStateList.cs">
+      <Link>Health\DeployedServicePackageHealthStateList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealthStateFilter.cs">
+      <Link>Health\DeployedServicePackageHealthStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealthStatesFilter.cs">
+      <Link>Health\DeployedServicePackageHealthStatesFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackageHealthEvaluation.cs">
+      <Link>Health\DeployedServicePackageHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\DeployedServicePackagesHealthEvaluation.cs">
+      <Link>Health\DeployedServicePackagesHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\EntityHealth.cs">
+      <Link>Health\EntityHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\EntityHealthState.cs">
+      <Link>Health\EntityHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\EventHealthEvaluation.cs">
+      <Link>Health\EventHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\EntityKind.cs">
+      <Link>Health\EntityKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\EntityKindHealthStateCount.cs">
+      <Link>Health\EntityKindHealthStateCount.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthEvaluation.cs">
+      <Link>Health\HealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthEvaluationKind.cs">
+      <Link>Health\HealthEvaluationKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthEvent.cs">
+      <Link>Health\HealthEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthEventsFilter.cs">
+      <Link>Health\HealthEventsFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthInformation.cs">
+      <Link>Health\HealthInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthReport.cs">
+      <Link>Health\HealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthReportSendOptions.cs">
+      <Link>Health\HealthReportSendOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthReportKind.cs">
+      <Link>Health\HealthReportKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthState.cs">
+      <Link>Health\HealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthStateChunkList.cs">
+      <Link>Health\HealthStateChunkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthStateCount.cs">
+      <Link>Health\HealthStateCount.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthStateFilter.cs">
+      <Link>Health\HealthStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\HealthStatistics.cs">
+      <Link>Health\HealthStatistics.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealth.cs">
+      <Link>Health\NodeHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealthReport.cs">
+      <Link>Health\NodeHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealthState.cs">
+      <Link>Health\NodeHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealthStateChunk.cs">
+      <Link>Health\NodeHealthStateChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealthStateChunkList.cs">
+      <Link>Health\NodeHealthStateChunkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealthStateList.cs">
+      <Link>Health\NodeHealthStateList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealthStateFilter.cs">
+      <Link>Health\NodeHealthStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealthStatesFilter.cs">
+      <Link>Health\NodeHealthStatesFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodeHealthEvaluation.cs">
+      <Link>Health\NodeHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\NodesHealthEvaluation.cs">
+      <Link>Health\NodesHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealth.cs">
+      <Link>Health\PartitionHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthReport.cs">
+      <Link>Health\PartitionHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthState.cs">
+      <Link>Health\PartitionHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthStateChunk.cs">
+      <Link>Health\PartitionHealthStateChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthStateChunkList.cs">
+      <Link>Health\PartitionHealthStateChunkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthStateList.cs">
+      <Link>Health\PartitionHealthStateList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthStateFilter.cs">
+      <Link>Health\PartitionHealthStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthStatesFilter.cs">
+      <Link>Health\PartitionHealthStatesFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthStatisticsFilter.cs">
+      <Link>Health\PartitionHealthStatisticsFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionsHealthEvaluation.cs">
+      <Link>Health\PartitionsHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\PartitionHealthEvaluation.cs">
+      <Link>Health\PartitionHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicaHealth.cs">
+      <Link>Health\ReplicaHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicaHealthState.cs">
+      <Link>Health\ReplicaHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicaHealthStateChunk.cs">
+      <Link>Health\ReplicaHealthStateChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicaHealthStateList.cs">
+      <Link>Health\ReplicaHealthStateList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicaHealthStateChunkList.cs">
+      <Link>Health\ReplicaHealthStateChunkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicaHealthStateFilter.cs">
+      <Link>Health\ReplicaHealthStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicaHealthStatesFilter.cs">
+      <Link>Health\ReplicaHealthStatesFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicaHealthEvaluation.cs">
+      <Link>Health\ReplicaHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ReplicasHealthEvaluation.cs">
+      <Link>Health\ReplicasHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealth.cs">
+      <Link>Health\ServiceHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthReport.cs">
+      <Link>Health\ServiceHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthState.cs">
+      <Link>Health\ServiceHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthStateChunk.cs">
+      <Link>Health\ServiceHealthStateChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthStateChunkList.cs">
+      <Link>Health\ServiceHealthStateChunkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthStateList.cs">
+      <Link>Health\ServiceHealthStateList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthStateFilter.cs">
+      <Link>Health\ServiceHealthStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthStatesFilter.cs">
+      <Link>Health\ServiceHealthStatesFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthStatisticsFilter.cs">
+      <Link>Health\ServiceHealthStatisticsFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceHealthEvaluation.cs">
+      <Link>Health\ServiceHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServicesHealthEvaluation.cs">
+      <Link>Health\ServicesHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\ServiceTypeHealthPolicy.cs">
+      <Link>Health\ServiceTypeHealthPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\StatefulServiceReplicaHealth.cs">
+      <Link>Health\StatefulServiceReplicaHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\StatefulServiceReplicaHealthReport.cs">
+      <Link>Health\StatefulServiceReplicaHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\StatefulServiceReplicaHealthState.cs">
+      <Link>Health\StatefulServiceReplicaHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\StatelessServiceInstanceHealth.cs">
+      <Link>Health\StatelessServiceInstanceHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\StatelessServiceInstanceHealthReport.cs">
+      <Link>Health\StatelessServiceInstanceHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\StatelessServiceInstanceHealthState.cs">
+      <Link>Health\StatelessServiceInstanceHealthState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\SystemApplicationHealthEvaluation.cs">
+      <Link>Health\SystemApplicationHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\UpgradeDomainDeltaNodesCheckHealthEvaluation.cs">
+      <Link>Health\UpgradeDomainDeltaNodesCheckHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\UpgradeDomainDeployedApplicationsHealthEvaluation.cs">
+      <Link>Health\UpgradeDomainDeployedApplicationsHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\health\UpgradeDomainNodesHealthEvaluation.cs">
+      <Link>Health\UpgradeDomainNodesHealthEvaluation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\AssemblyResolver.cs">
+      <Link>Hosting\AssemblyResolver.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ICodePackageActivationContext.cs">
+      <Link>Hosting\ICodePackageActivationContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerIsolationMode.cs">
+      <Link>Hosting\Container\ContainerIsolationMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerNetworkType.cs">
+      <Link>Hosting\Container\ContainerNetworkType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ICodePackageActivationContext2.cs">
+      <Link>Hosting\ICodePackageActivationContext2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ICodePackageActivationContext3.cs">
+      <Link>Hosting\ICodePackageActivationContext3.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\CodePackageActivationContext.cs">
+      <Link>Hosting\CodePackageActivationContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Configuration\ConfigurationStrings.cs">
+      <Link>Hosting\Configuration\ConfigurationStrings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\DefaultServiceFactory.cs">
+      <Link>Hosting\DefaultServiceFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\FabricHostEntryPoint.cs">
+      <Link>Hosting\FabricHostEntryPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\FabricRuntime.cs">
+      <Link>Hosting\FabricRuntime.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\FabricWorkerEntryPoint.cs">
+      <Link>Hosting\FabricWorkerEntryPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\IFabricHostEntryPoint.cs">
+      <Link>Hosting\IFabricHostEntryPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\IHostEntryPointManager.cs">
+      <Link>Hosting\IHostEntryPointManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\IStatefulServiceFactory.cs">
+      <Link>Hosting\IStatefulServiceFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\IStatelessServiceFactory.cs">
+      <Link>Hosting\IStatelessServiceFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\PackageSharingPolicyScope.cs">
+      <Link>Hosting\PackageSharingPolicyScope.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\PackageSharingPolicy.cs">
+      <Link>Hosting\PackageSharingPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\PackageSharingPolicyList.cs">
+      <Link>Hosting\PackageSharingPolicyList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ServiceGroupFactory.cs">
+      <Link>Hosting\ServiceGroupFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ServiceContext.cs">
+      <Link>Hosting\ServiceContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerActivationArgs.cs">
+      <Link>Hosting\Container\ContainerActivationArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerNetworkConfigDescription.cs">
+      <Link>Hosting\Container\ContainerNetworkConfigDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerUpdateRouteArgs.cs">
+      <Link>Hosting\Container\ContainerUpdateRouteArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerDeactivationArgs.cs">
+      <Link>Hosting\Container\ContainerDeactivationArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerDescription.cs">
+      <Link>Hosting\Container\ContainerDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerDriverOptionDescription.cs">
+      <Link>Hosting\Container\ContainerDriverOptionDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerHealthConfigDescription.cs">
+      <Link>Hosting\Container\ContainerHealthConfigDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerEventDescription.cs">
+      <Link>Hosting\Container\ContainerEventDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerEventNotification.cs">
+      <Link>Hosting\Container\ContainerEventNotification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerApiExecutionArgs.cs">
+      <Link>Hosting\Container\ContainerApiExecutionArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerImageDescription.cs">
+      <Link>Hosting\Container\ContainerImageDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerApiExecutionResponse.cs">
+      <Link>Hosting\Container\ContainerApiExecutionResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerLogConfigDescription.cs">
+      <Link>Hosting\Container\ContainerLogConfigDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerVolumeDescription.cs">
+      <Link>Hosting\Container\ContainerVolumeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerLabelDescription.cs">
+      <Link>Hosting\Container\ContainerLabelDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ProcessDebugParameters.cs">
+      <Link>Hosting\ProcessDebugParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ProcessDescription.cs">
+      <Link>Hosting\ProcessDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\HostingSettings.cs">
+      <Link>Hosting\HostingSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\RepositoryCredentialDescription.cs">
+      <Link>Hosting\Container\RepositoryCredentialDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\IContainerActivatorService.cs">
+      <Link>Hosting\Container\IContainerActivatorService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\ContainerActivatorServiceBroker.cs">
+      <Link>Hosting\Container\ContainerActivatorServiceBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\FabricContainerActivatorServiceAgent.cs">
+      <Link>Hosting\Container\FabricContainerActivatorServiceAgent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ResourceGovernancePolicyDescription.cs">
+      <Link>Hosting\ResourceGovernancePolicyDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\ServicePackageResourceGovernanceDescription.cs">
+      <Link>Hosting\ServicePackageResourceGovernanceDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ServicePackageActivationMode.cs">
+      <Link>Description\ServicePackageActivationMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\StatefulServiceContext.cs">
+      <Link>Hosting\StatefulServiceContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\StatelessServiceContext.cs">
+      <Link>Hosting\StatelessServiceContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Hosting\Container\FabricContainerApiExecutionResult.cs">
+      <Link>Hosting\Container\FabricContainerApiExecutionResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ChecksumUtility.cs">
+      <Link>ImageStore\ChecksumUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\Constants.cs">
+      <Link>ImageStore\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ExceptionHandler.cs">
+      <Link>ImageStore\ExceptionHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\FabricImageStoreIOException.cs">
+      <Link>ImageStore\FabricImageStoreIOException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\FileImageStore.cs">
+      <Link>ImageStore\FileImageStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\FileLock.cs">
+      <Link>ImageStore\FileLock.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\FileReaderLock.cs">
+      <Link>ImageStore\FileReaderLock.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\FileWriterLock.cs">
+      <Link>ImageStore\FileWriterLock.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\FolderCopy.cs">
+      <Link>ImageStore\FolderCopy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\IImageStore.cs">
+      <Link>ImageStore\IImageStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreAccessDescription.cs">
+      <Link>ImageStore\ImageStoreAccessDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreConfig.cs">
+      <Link>ImageStore\ImageStoreConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreContent.cs">
+      <Link>ImageStore\ImageStoreContent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreFactory.cs">
+      <Link>ImageStore\ImageStoreFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreFileInfo.cs">
+      <Link>ImageStore\ImageStoreFileInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreVersionInfo.cs">
+      <Link>ImageStore\ImageStoreInfoBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreFolderInfo.cs">
+      <Link>ImageStore\ImageStoreFolderInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStorePagedContent.cs">
+      <Link>ImageStore\ImageStorePagedContent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStorePagedRelativePath.cs">
+      <Link>ImageStore\ImageStorePagedRelativePath.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreProviderType.cs">
+      <Link>ImageStore\ImageStoreProviderType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\ImageStoreUtility.cs">
+      <Link>ImageStore\ImageStoreUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\NativeImageStoreClient.cs">
+      <Link>ImageStore\NativeImageStoreClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\NativeImageStoreProgressEventHandlerBroker.cs">
+      <Link>ImageStore\NativeImageStoreProgressEventHandlerBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ImageStore\XStoreProxy.cs">
+      <Link>ImageStore\XStoreProxy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IAtomicGroupStateProvider.cs">
+      <Link>IAtomicGroupStateProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IAtomicGroupStateReplicator.cs">
+      <Link>IAtomicGroupStateReplicator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IInfrastructureService.cs">
+      <Link>IInfrastructureService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IImageStoreProgressHandler.cs">
+      <Link>IImageStoreProgressHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IFaultAnalysisService.cs">
+      <Link>IFaultAnalysisService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IGatewayResourceManager.cs">
+      <Link>IGatewayResourceManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IUpgradeOrchestrationService.cs">
+      <Link>IUpgradeOrchestrationService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\InfrastructureServiceBroker.cs">
+      <Link>InfrastructureServiceBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FaultAnalysisServiceBroker.cs">
+      <Link>FaultAnalysisServiceBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\GatewayResourceManagerBroker.cs">
+      <Link>FaultAnalysisServiceBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UpgradeOrchestrationServiceBroker.cs">
+      <Link>UpgradeOrchestrationServiceBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Int64RangePartitionInfo.cs">
+      <Link>Int64RangePartitionInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\InternalFabricReplicator.cs">
+      <Link>InternalFabricReplicator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\AsyncCallOutAdapter2.cs">
+      <Link>Interop\AsyncCallOutAdapter2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\AsyncTaskCallInAdapter.cs">
+      <Link>Interop\AsyncTaskCallInAdapter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\EnumerationStatus.cs">
+      <Link>Interop\EnumerationStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\InteropExceptionMap.cs">
+      <Link>Interop\InteropExceptionMap.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\InteropExceptionTracePolicy.cs">
+      <Link>Interop\InteropExceptionTracePolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\InteropHelpers.cs">
+      <Link>Interop\InteropHelpers.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\IPinNode.cs">
+      <Link>Interop\IPinNode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeClient.cs">
+      <Link>Interop\NativeClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeClientInternal.cs">
+      <Link>Interop\NativeClientInternal.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeCommon.cs">
+      <Link>Interop\NativeCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeImageStore.cs">
+      <Link>Interop\NativeImageStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeInfrastructureService.cs">
+      <Link>Interop\NativeInfrastructureService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeFaultAnalysisService.cs">
+      <Link>Interop\NativeFaultAnalysisService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeGatewayResourceManager.cs">
+      <Link>Interop\NativeGatewayResourceManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeGatewayResourceManagerTypes.cs">
+      <Link>Interop\NativeGatewayResourceManagerTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeUpgradeOrchestrationService.cs">
+      <Link>Interop\NativeUpgradeOrchestrationService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeRuntime.cs">
+      <Link>Interop\NativeRuntime.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeTokenValidationService.cs">
+      <Link>Interop\NativeTokenValidationService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeContainerActivatorService.cs">
+      <Link>Interop\NativeContainerActivatorService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeTypes.cs">
+      <Link>Interop\NativeTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\OperationDataFactoryWrapper.cs">
+      <Link>Interop\OperationDataFactoryWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\PinArray.cs">
+      <Link>Interop\PinArray.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\PinBlittable.cs">
+      <Link>Interop\PinBlittable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\SecureStringPinNode.cs">
+      <Link>Interop\SecureStringPinNode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\PinCollection.cs">
+      <Link>Interop\PinCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\SafePinHandle.cs">
+      <Link>Interop\SafePinHandle.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\SharedNativeObject.cs">
+      <Link>Interop\SharedNativeObject.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\StringCollectionResult.cs">
+      <Link>Interop\StringCollectionResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\StringResult.cs">
+      <Link>Interop\StringResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\StringListResult.cs">
+      <Link>Interop\StringListResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\Utility.cs">
+      <Link>Interop\Utility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Interop\InteropApi.cs">
+      <Link>Interop\InteropApi.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IOperation.cs">
+      <Link>IOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IOperationData.cs">
+      <Link>IOperationData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IOperationDataStream.cs">
+      <Link>IOperationDataStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IOperationStream.cs">
+      <Link>IOperationStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IOperationStream2.cs">
+      <Link>IOperationStream2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IReplicator.cs">
+      <Link>IReplicator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IReplicatorCatchupSpecificQuorum.cs">
+      <Link>IReplicatorCatchupSpecificQuorum.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IServiceGroupPartition.cs">
+      <Link>IServiceGroupPartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IServicePartition.cs">
+      <Link>IServicePartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IStatefulServicePartition.cs">
+      <Link>IStatefulServicePartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IStatefulServiceReplica.cs">
+      <Link>IStatefulServiceReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IStatelessServiceInstance.cs">
+      <Link>IStatelessServiceInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IStatelessServicePartition.cs">
+      <Link>IStatelessServicePartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IStateProvider.cs">
+      <Link>IStateProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IStateReplicator.cs">
+      <Link>IStateReplicator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\IStateReplicator2.cs">
+      <Link>IStateReplicator2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ITokenValidationService.cs">
+      <Link>ITokenValidationService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreEnumerator.cs">
+      <Link>KeyValueStoreEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreItem.cs">
+      <Link>KeyValueStoreItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreItemEnumerator.cs">
+      <Link>KeyValueStoreItemEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreItemMetadata.cs">
+      <Link>KeyValueStoreItemMetadata.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreItemMetadataEnumerator.cs">
+      <Link>KeyValueStoreItemMetadataEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreNotification.cs">
+      <Link>KeyValueStoreNotification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreNotificationEnumerator.cs">
+      <Link>KeyValueStoreNotificationEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreReplica.cs">
+      <Link>KeyValueStoreReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreReplicaSettings.cs">
+      <Link>KeyValueStoreReplicaSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreTransactionSettings.cs">
+      <Link>KeyValueStoreTransactionSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\LoadMetric.cs">
+      <Link>LoadMetric.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\MoveCost.cs">
+      <Link>MoveCost.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\LocalEseStoreSettings.cs">
+      <Link>LocalEseStoreSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\LocalStoreKind.cs">
+      <Link>LocalStoreKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\LocalStoreSettings.cs">
+      <Link>LocalStoreSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NamedPartitionInformation.cs">
+      <Link>NamedPartitionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NamedProperty.cs">
+      <Link>NamedProperty.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NamedPropertyMetadata.cs">
+      <Link>NamedPropertyMetadata.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NameEnumerationResult.cs">
+      <Link>NameEnumerationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NetworkType.cs">
+      <Link>NetworkType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NetworkStatus.cs">
+      <Link>NetworkStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NetworkStatusFilter.cs">
+      <Link>NetworkStatusFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeContext.cs">
+      <Link>NodeContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeDeactivationIntent.cs">
+      <Link>NodeDeactivationIntent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeDeactivationStatus.cs">
+      <Link>NodeDeactivationStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeDeactivationTaskType.cs">
+      <Link>NodeDeactivationTaskType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeId.cs">
+      <Link>NodeId.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeTransitionType.cs">
+      <Link>NodeTransitionType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\OperationData.cs">
+      <Link>OperationData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\OperationStream.cs">
+      <Link>OperationStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\OperationType.cs">
+      <Link>OperationType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PartitionAccessStatus.cs">
+      <Link>PartitionAccessStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PartitionBase.cs">
+      <Link>PartitionBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PropertyBatchOperation.cs">
+      <Link>PropertyBatchOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PropertyBatchOperationKind.cs">
+      <Link>PropertyBatchOperationKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PropertyBatchResult.cs">
+      <Link>PropertyBatchResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PropertyEnumerationResult.cs">
+      <Link>PropertyEnumerationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PropertyTypeId.cs">
+      <Link>PropertyTypeId.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PutCustomPropertyOperation.cs">
+      <Link>PutCustomPropertyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PutPropertyOperation.cs">
+      <Link>PutPropertyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\TestCommandStatus.cs">
+      <Link>Query\TestCommandStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\TestCommandStateFilter.cs">
+      <Link>Query\TestCommandStateFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\TestCommandTypeFilter.cs">
+      <Link>Query\TestCommandTypeFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Query\ApplicationDefinitionKind.cs">
+      <Link>Query\ApplicationDefinitionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Query\ApplicationTypeDefinitionKind.cs">
+      <Link>Query\ApplicationTypeDefinitionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationList.cs">
+      <Link>Query\ApplicationList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationResultItem.cs">
+      <Link>Query\ApplicationResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ClusterVersion.cs">
+      <Link>Query\ClusterVersion.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationStatus.cs">
+      <Link>Query\ApplicationStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationTypeList.cs">
+      <Link>Query\ApplicationTypeList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationTypeResultItem.cs">
+      <Link>Query\ApplicationTypeResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationTypeStatus.cs">
+      <Link>Query\ApplicationTypeStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ClusterLoadInformation.cs">
+      <Link>Query\ClusterLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\LocalNetworkInformation.cs">
+      <Link>Query\LocalNetworkInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NodeLoadInformation.cs">
+      <Link>Query\NodeLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\PartitionLoadInformation.cs">
+      <Link>Query\PartitionLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ReplicaLoadInformation.cs">
+      <Link>Query\ReplicaLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\UnplacedReplicaInformation.cs">
+      <Link>Query\UnplacedReplicaInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationLoadInformation.cs">
+      <Link>Query\ApplicationLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\TestCommandQueryResult.cs">
+      <Link>Query\TestCommandQueryResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\CodePackageEntryPoint.cs">
+      <Link>Query\CodePackageEntryPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\CodePackageEntryPointStatistics.cs">
+      <Link>Query\CodePackageEntryPointStatistics.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedApplicationList.cs">
+      <Link>Query\DeployedApplicationList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedApplicationResultItem.cs">
+      <Link>Query\DeployedApplicationResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedCodePackageList.cs">
+      <Link>Query\DeployedCodePackageList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedCodePackageResultItem.cs">
+      <Link>Query\DeployedCodePackageResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedNetworkCodePackageList.cs">
+      <Link>Query\DeployedNetworkCodePackageList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedNetworkCodePackageResultItem.cs">
+      <Link>Query\DeployedNetworkCodePackageResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedNetworkList.cs">
+      <Link>Query\DeployedNetworkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedNetworkResultItem.cs">
+      <Link>Query\DeployedNetworkResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedServiceManifestList.cs">
+      <Link>Query\DeployedServiceManifestList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedServiceManifestResultItem.cs">
+      <Link>Query\DeployedServiceManifestResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedServiceReplicaDetailResultItem.cs">
+      <Link>Query\DeployedServiceReplicaDetailResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedServiceReplicaList.cs">
+      <Link>Query\DeployedServiceReplicaList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedServiceReplicaResultItem.cs">
+      <Link>Query\DeployedServiceReplicaResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedServiceTypeList.cs">
+      <Link>Query\DeployedServiceTypeList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedServiceTypeResultItem.cs">
+      <Link>Query\DeployedServiceTypeResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedStatefulServiceReplicaDetailResultItem.cs">
+      <Link>Query\DeployedStatefulServiceReplicaDetailResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedStatefulServiceReplicaResultItem.cs">
+      <Link>Query\DeployedStatefulServiceReplicaResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedStatelessServiceInstanceDetailResultItem.cs">
+      <Link>Query\DeployedStatelessServiceInstanceDetailResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\DeployedStatelessServiceInstanceResultItem.cs">
+      <Link>Query\DeployedStatelessServiceInstanceResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ComposeDeploymentStatusListWrapper.cs">
+      <Link>Query\ComposeDeploymentStatusListWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ComposeDeploymentStatusResultItemWrapper.cs">
+      <Link>Query\ComposeDeploymentStatusResultItemWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ComposeDeploymentStatusWrapper.cs">
+      <Link>Query\ComposeDeploymentStatusWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ProvisionedFabricCodeVersion.cs">
+      <Link>Query\ProvisionedFabricCodeVersion.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ProvisionedFabricCodeVersionList.cs">
+      <Link>Query\ProvisionedFabricCodeVersionList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ProvisionedFabricConfigVersion.cs">
+      <Link>Query\ProvisionedFabricConfigVersion.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ProvisionedFabricConfigVersionList.cs">
+      <Link>Query\ProvisionedFabricConfigVersionList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\InfrastructureTaskQueryResult.cs">
+      <Link>Query\InfrastructureTaskQueryResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\InfrastructureTaskResultItem.cs">
+      <Link>Query\InfrastructureTaskResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\LoadMetricReport.cs">
+      <Link>Query\LoadMetricReport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\LoadMetricInformation.cs">
+      <Link>Query\LoadMetricInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NetworkApplicationResultItem.cs">
+      <Link>Query\NetworkApplicationResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NetworkNodeResultItem.cs">
+      <Link>Query\NetworkNodeResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationNetworkResultItem.cs">
+      <Link>Query\ApplicationNetworkResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NetworkInformation.cs">
+      <Link>Query\NetworkInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NodeLoadMetricInformation.cs">
+      <Link>Query\NodeLoadMetricInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationLoadMetricInformation.cs">
+      <Link>Query\ApplicationLoadMetricInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NetworkApplicationList.cs">
+      <Link>Query\NetworkApplicationList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NetworkNodeList.cs">
+      <Link>Query\NetworkNodeList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ApplicationNetworkList.cs">
+      <Link>Query\ApplicationNetworkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NetworkList.cs">
+      <Link>Query\NetworkList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NodeList.cs">
+      <Link>Query\NodeList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NodeDeactivationTaskId.cs">
+      <Link>Query\NodeDeactivationTaskId.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NodeDeactivationTask.cs">
+      <Link>Query\NodeDeactivationTask.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NodeDeactivationResult.cs">
+      <Link>Query\NodeDeactivationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NodeResultItem.cs">
+      <Link>Query\NodeResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\NodeStatus.cs">
+      <Link>Query\NodeStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ReplicatorOPerationName.cs">
+      <Link>Query\ReplicatorOperationName.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\RemoteReplicatorStatus.cs">
+      <Link>Query\RemoteReplicatorStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\RemoteReplicatorAcknowledgementStatus.cs">
+      <Link>Query\RemoteReplicatorAcknowledgementStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\RemoteReplicatorAcknowledgementDetail.cs">
+      <Link>Query\RemoteReplicatorAcknowledgementDetail.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\PrimaryReplicatorStatus.cs">
+      <Link>Query\PrimaryReplicatorStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\SecondaryReplicatorStatus.cs">
+      <Link>Query\SecondaryReplicatorStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ReplicatorQueueStatus.cs">
+      <Link>Query\ReplicatorQueueStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ReplicatorStatus.cs">
+      <Link>Query\ReplicatorStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceList.cs">
+      <Link>Query\ServiceList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceGroupMemberMemberList.cs">
+      <Link>Query\ServiceGroupMemberMemberList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceGroupMemberList.cs">
+      <Link>Query\ServiceGroupMemberList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceOperationName.cs">
+      <Link>Query\ServiceOperationName.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServicePartitionList.cs">
+      <Link>Query\ServicePartitionList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServicePartitionResultItem.cs">
+      <Link>Query\ServicePartitionResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServicePartitionStatus.cs">
+      <Link>Query\ServicePartitionStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceReplicaList.cs">
+      <Link>Query\ServiceReplicaList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceReplicaResultItem.cs">
+      <Link>Query\ServiceReplicaResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceReplicaStatus.cs">
+      <Link>Query\ServiceReplicaStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceResultItem.cs">
+      <Link>Query\ServiceResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceGroupMemberResultItem.cs">
+      <Link>Query\ServiceGroupMemberResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceGroupMemberMemberResultItem.cs">
+      <Link>Query\ServiceGroupMemberMemberResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ImageStoreFileVersion.cs">
+      <Link>Query\ImageStoreFileVersion.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ImageStoreFileInfo.cs">
+      <Link>Query\ImageStoreFileInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ImageStoreFolderInfo.cs">
+      <Link>Query\ImageStoreFolderInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ImageStoreContentResult.cs">
+      <Link>Query\ImageStoreContentResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ImageStorePagedContentResult.cs">
+      <Link>Query\ImageStorePagedContentResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Query\KeyValueStoreMigrationPhase.cs">
+      <Link>KeyValueStoreMigrationPhase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Query\KeyValueStoreMigrationState.cs">
+      <Link>KeyValueStoreMigrationState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Query\KeyValueStoreMigrationStatus.cs">
+      <Link>KeyValueStoreMigrationStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Query\KeyValueStoreProviderKind.cs">
+      <Link>KeyValueStoreProviderKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\KeyValueStoreReplicaStatus.cs">
+      <Link>KeyValueStoreReplicStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\UploadChunkRange.cs">
+      <Link>Query\UploadChunkRange.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\UploadSessionInfo.cs">
+      <Link>Query\UploadSessionInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\UploadSession.cs">
+      <Link>Query\UploadSession.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceStatus.cs">
+      <Link>Query\ServiceStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceTypeList.cs">
+      <Link>Query\ServiceTypeList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceGroupMemberTypeList.cs">
+      <Link>Query\ServiceGroupMemberTypeList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceTypeResultItem.cs">
+      <Link>Query\ServiceTypeResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\ServiceGroupMemberTypeResultItem.cs">
+      <Link>Query\ServiceGroupMemberTypeResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\StatefulServicePartitionResultItem.cs">
+      <Link>Query\StatefulServicePartitionResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\StatefulServiceReplicaResultItem.cs">
+      <Link>Query\StatefulServiceReplicaResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\StatefulServiceResultItem.cs">
+      <Link>Query\StatefulServiceResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\StatelessServiceInstanceResultItem.cs">
+      <Link>Query\StatelessServiceInstanceResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\StatelessServicePartitionResultItem.cs">
+      <Link>Query\StatelessServicePartitionResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\StatelessServiceResultItem.cs">
+      <Link>Query\StatelessServiceResultItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\TestCommandStatusList.cs">
+      <Link>Query\TestCommandStatusList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReadOnlyOperationData.cs">
+      <Link>ReadOnlyOperationData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\ClusterRepairScopeIdentifier.cs">
+      <Link>Repair\ClusterRepairScopeIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\ClusterRepairTask.cs">
+      <Link>Repair\ClusterRepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\NodeImpact.cs">
+      <Link>Repair\NodeImpact.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\NodeImpactLevel.cs">
+      <Link>Repair\NodeImpactLevel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\NodeRepairImpactDescription.cs">
+      <Link>Repair\NodeRepairImpactDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\NodeRepairTargetDescription.cs">
+      <Link>Repair\NodeRepairTargetDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairImpactDescription.cs">
+      <Link>Repair\RepairImpactDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairImpactKind.cs">
+      <Link>Repair\RepairImpactKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairScopeIdentifier.cs">
+      <Link>Repair\RepairScopeIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairScopeIdentifierKind.cs">
+      <Link>Repair\RepairScopeIdentifierKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTargetDescription.cs">
+      <Link>Repair\RepairTargetDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTargetKind.cs">
+      <Link>Repair\RepairTargetKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTask.cs">
+      <Link>Repair\RepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTaskFlags.cs">
+      <Link>Repair\RepairTaskFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTaskList.cs">
+      <Link>Repair\RepairTaskList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTaskQueryDescription.cs">
+      <Link>Repair\RepairTaskQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTaskHealthPolicyUpdateDescription.cs">
+      <Link>Repair\RepairTaskHealthPolicyUpdateDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTaskResult.cs">
+      <Link>Repair\RepairTaskResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTaskState.cs">
+      <Link>Repair\RepairTaskState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\RepairTaskHealthCheckState.cs">
+      <Link>Repair\RepairTaskHealthCheckState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\SystemNodeRepairAction.cs">
+      <Link>Repair\SystemNodeRepairAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Repair\SystemRepairActionHelper.cs">
+      <Link>Repair\SystemRepairActionHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReconfigurationInformation.cs">
+      <Link>ReconfigurationInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReconfigurationPhase.cs">
+      <Link>ReconfigurationPhase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReconfigurationType.cs">
+      <Link>ReconfigurationType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicaInformation.cs">
+      <Link>ReplicaInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicaOpenMode.cs">
+      <Link>ReplicaOpenMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicaRole.cs">
+      <Link>ReplicaRole.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicaSetQuorumMode.cs">
+      <Link>ReplicaSetQuorumMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicaStatus.cs">
+      <Link>ReplicaStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicatorBroker.cs">
+      <Link>ReplicatorBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicatorBroker2.cs">
+      <Link>ReplicatorBroker2.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicatorSettings.cs">
+      <Link>ReplicatorSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ResolvedServiceEndPoint.cs">
+      <Link>ResolvedServiceEndpoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ResolvedServicePartition.cs">
+      <Link>ResolvedServicePartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\RollingUpgradeMode.cs">
+      <Link>RollingUpgradeMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\AccessMask.cs">
+      <Link>Security\AccessMask.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\Ace.cs">
+      <Link>Security\Ace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\AceType.cs">
+      <Link>Security\AceType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\Acl.cs">
+      <Link>Security\Acl.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\AllowedAce.cs">
+      <Link>Security\AllowedAce.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\ApplicationResourceIdentifier.cs">
+      <Link>Security\ApplicationResourceIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\ApplicationTypeResourceIdentifier.cs">
+      <Link>Security\ApplicationTypeResourceIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\AzureActiveDirectoryMetadata.cs">
+      <Link>Security\AzureActiveDirectoryMetadata.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\ClaimPrincipalIdentifier.cs">
+      <Link>Security\ClaimPrincipalIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\FabricImageStorePathResourceIdentifier.cs">
+      <Link>Security\FabricImageStorePathResourceIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\NameResourceIdentifier.cs">
+      <Link>Security\NameResourceIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\PrincipalIdentifier.cs">
+      <Link>Security\PrincipalIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\PrincipalIdentifierKind.cs">
+      <Link>Security\PrincipalIdentifierKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\ResourceIdentifier.cs">
+      <Link>Security\ResourceIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\ResourceIdentifierKind.cs">
+      <Link>Security\ResourceIdentifierKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\RolePrincipalIdentifier.cs">
+      <Link>Security\RolePrincipalIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\ServiceResourceIdentifier.cs">
+      <Link>Security\ServiceResourceIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\WindowsPrincipalIdentifier.cs">
+      <Link>Security\WindowsPrincipalIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\X509PrincipalIdentifier.cs">
+      <Link>Security\X509PrincipalIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Security\EncryptionUtility.cs">
+      <Link>Security\EncryptionUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServiceEndpointsVersion.cs">
+      <Link>ServiceEndpointsVersion.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServiceEndpointRole.cs">
+      <Link>ServiceEndpointRole.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServiceFactoryBroker.cs">
+      <Link>ServiceFactoryBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServiceGroupStatelessPartition.cs">
+      <Link>ServiceGroupStatelessPartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServiceInitializationParameters.cs">
+      <Link>ServiceInitializationParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServiceNotification.cs">
+      <Link>ServiceNotification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServicePartitionInformation.cs">
+      <Link>ServicePartitionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServicePartitionKind.cs">
+      <Link>ServicePartitionKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServicePartitionResolutionChange.cs">
+      <Link>ServicePartitionResolutionChange.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ServicePartitionResolutionChangeHandler.cs">
+      <Link>ServicePartitionResolutionChangeHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SingletonPartitionInformation.cs">
+      <Link>SingletonPartitionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StatefulServiceInitializationParameters.cs">
+      <Link>StatefulServiceInitializationParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StatefulServicePartition.cs">
+      <Link>StatefulServicePartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StatefulServiceReplicaBroker.cs">
+      <Link>StatefulServiceReplicaBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StatelessServiceBroker.cs">
+      <Link>StatelessServiceBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StatelessServiceInitializationParameters.cs">
+      <Link>StatelessServiceInitializationParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StatelessServicePartition.cs">
+      <Link>StatelessServicePartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StateProviderBroker.cs">
+      <Link>StateProviderBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StateReplicator.cs">
+      <Link>StateReplicator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\OrchestrationUpgradeResult.cs">
+      <Link>Result\OrchestrationUpgradeResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\InvokeDataLossResult.cs">
+      <Link>Result\InvokeDataLossResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\InvokeQuorumLossResult.cs">
+      <Link>Result\InvokeQuorumLossResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\NodeCommandResult.cs">
+      <Link>Result\NodeCommandResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\NodeResult.cs">
+      <Link>Result\NodeResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\ReplicaResult.cs">
+      <Link>Result\ReplicaResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\RestartNodeResult.cs">
+      <Link>Result\RestartNodeResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\RestartPartitionResult.cs">
+      <Link>Result\RestartPartitionResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\RestartReplicaOrInstanceResult.cs">
+      <Link>Result\RestartReplicaOrInstanceResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\PartitionDataLossResult.cs">
+      <Link>Result\PartitionDataLossResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\PartitionQuorumLossResult.cs">
+      <Link>Result\PartitionQuorumLossResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\PartitionRestartResult.cs">
+      <Link>Result\PartitionRestartResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Common\StringHelper.cs">
+      <Link>Common\StringHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\CompletionMode.cs">
+      <Link>CompletionMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\DataLossMode.cs">
+      <Link>DataLossMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\QuorumLossMode.cs">
+      <Link>QuorumLossMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PartitionSelector.cs">
+      <Link>PartitionSelector.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ReplicaSelector.cs">
+      <Link>ReplicaSelector.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\RestartPartitionMode.cs">
+      <Link>RestartPartitionMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SelectedPartition.cs">
+      <Link>SelectedPartition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SelectedReplica.cs">
+      <Link>SelectedReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\TokenServiceMetadata.cs">
+      <Link>TokenServiceMetadata.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\TokenValidationServiceBroker.cs">
+      <Link>TokenValidationServiceBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Transaction.cs">
+      <Link>Transaction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\TransactionBase.cs">
+      <Link>TransactionBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\TransactionIsolationLevel.cs">
+      <Link>TransactionIsolationLevel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UpgradeDomainState.cs">
+      <Link>UpgradeDomainState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UpgradeDomainStatus.cs">
+      <Link>UpgradeDomainStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UpgradeFailureAction.cs">
+      <Link>UpgradeFailureAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\CodePackage.cs">
+      <Link>CodePackage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\ConfigurationPackage.cs">
+      <Link>ConfigurationPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\CopyFlag.cs">
+      <Link>CopyFlag.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\DataPackage.cs">
+      <Link>DataPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UpgradeDomainProgress.cs">
+      <Link>UpgradeDomainProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeUpgradeProgress.cs">
+      <Link>NodeUpgradeProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PartitionUpgradeSafetyCheck.cs">
+      <Link>PartitionUpgradeSafetyCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UpgradeSafetyCheck.cs">
+      <Link>UpgradeSafetyCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UpgradeSafetyCheckKind.cs">
+      <Link>UpgradeSafetyCheckKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\NodeUpgradePhase.cs">
+      <Link>NodeUpgradePhase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SeedNodeUpgradeSafetyCheck.cs">
+      <Link>SeedNodeUpgradeSafetyCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UnknownUpgradeSafetyCheck.cs">
+      <Link>UnknownUpgradeSafetyCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StoreBackupOption.cs">
+      <Link>StoreBackupOption.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\StoreBackupInfo.cs">
+      <Link>StoreBackupInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\query\PagedList.cs">
+      <Link>Query\PagedList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SafetyCheckKind.cs">
+      <Link>SafetyCheckKind.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SafetyCheck.cs">
+      <Link>SafetyCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\PartitionSafetyCheck.cs">
+      <Link>PartitionSafetyCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SeedNodeSafetyCheck.cs">
+      <Link>SeedNodeSafetyCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\UnknownSafetyCheck.cs">
+      <Link>UnknownSafetyCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\FabricPackageType.cs">
+      <Link>FabricPackageType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\XMLHelper.cs">
+      <Link>XMLHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\InvokeDataLossProgressResult.cs">
+      <Link>\Result\InvokeDataLossProgressResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\InvokeQuorumLossProgressResult.cs">
+      <Link>\Result\InvokeQuorumLossProgressResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\RestartPartitionProgressResult.cs">
+      <Link>\Result\InvokeQuorumLossProgressResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Result\NodeTransitionProgressResult.cs">
+      <Link>\Result\NodeTransitionProgressResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Utility\SecurityCredentialExtension.cs">
+      <Link>Utility\SecurityCredentialExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Utility\NativeClaimsCredentialConverter.cs">
+      <Link>Utility\NativeClaimCredentialConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Utility\NativeNoneCredentialConverter.cs">
+      <Link>Utility\NativeNoneCredentialConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Utility\NativeWindowsCredentialConverter.cs">
+      <Link>Utility\NativeWindowsCredentialConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Utility\NativeX509CredentialConverter.cs">
+      <Link>Utility\NativeX509CredentialConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Utility\ClusterEndpointSecuritySettingsChangeNotifier.cs">
+      <Link>Utility\ClusterEndpointSecuritySettingsChangeNotifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Utility\EnableEndpointV2Utility.cs">
+      <Link>Utility\EnableEndpointV2Utility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\PagedApplicationTypeQueryDescription.cs">
+      <Link>Description\PagedApplicationTypeQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\PagedQueryDescriptionBase.cs">
+      <Link>Description\PagedQueryDescriptionBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\PagedDeployedApplicationQueryDescription.cs">
+      <Link>Description\PagedDeployedApplicationQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Description\ContainerEntryPointDescription.cs">
+      <Link>Description\ContainerEntryPointDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Query\ApplicationTypePagedList.cs">
+      <Link>Query\ApplicationTypePagedList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Query\DeployedApplicationPagedList.cs">
+      <Link>Query\DeployedApplicationPagedList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SecretStore\Secret.cs">
+      <Link>SecretStore\Secret.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\SecretStore\SecretReference.cs">
+      <Link>SecretStore\SecretReference.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Content Include="EntryPointManager.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Entrypoint.app.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\" SkipUnchangedFiles="true" />
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\" SkipUnchangedFiles="true" />
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\IS.Code.Current\" SkipUnchangedFiles="true" />
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current\" SkipUnchangedFiles="true" />
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTestInfra\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+  </Target>
+  <Import Project="$(PkgMicrosoft_Diagnostics_Tracing_EventRegister)\build\Microsoft.Diagnostics.Tracing.EventRegister.targets" />
+</Project>
