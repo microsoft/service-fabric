@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-You will need to setup Docker as instructed here for (mac)[https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-get-started-mac] or see below for the Linux instructions.
+You will need to setup Docker as instructed here for [mac](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-get-started-mac) or see below for the Linux instructions.
 
 ### Linux Setup
 
@@ -16,7 +16,7 @@ sudo systemctl start docker
 ```
 ---
 
-1. Edit the Daemon configuration (normally /etc/docker/daemon.json)
+1. Edit the Daemon configuration (normally `/etc/docker/daemon.json`)
 
 ```json
 {
@@ -24,7 +24,7 @@ sudo systemctl start docker
   "fixed-cidr-v6": "fd00::/64"
 }
 ```
-2. Expose a tcp listener for your Docker daemon. For Ubuntu edit /etc/systemd/system/docker.service.d/docker.conf
+2. Expose a tcp listener for your Docker daemon. For Ubuntu edit `/etc/systemd/system/docker.service.d/docker.conf`
 
 ```
 [Service]
@@ -40,9 +40,9 @@ sudo systemctl restart docker
 ## Running the test
 
 Build Service Fabric
-
+```
   $ ./runbuild.sh
-
+```
 Run the test
 ```
   $ cd out/build.prod/ClusterDeployerTest/
@@ -50,4 +50,4 @@ Run the test
 ```
 ## Details
 
-This test first builds a Docker image (service-cluster-run-ubuntu) locally, this image contains the necessary packages to run Service Fabric. The test then runs Docker, mounting the FabricDrop folder in your output directory. Then a (sample application)[https://github.com/Azure-Samples/service-fabric-dotnet-core-getting-started] is downloaded and built inside the container. The application is installed, and if the http endpoint can be hit then the test passes.
+This test first builds a Docker image (service-cluster-run-ubuntu) locally, this image contains the necessary packages to run Service Fabric. The test then runs Docker, mounting the FabricDrop folder in your output directory. Then a [sample application](https://github.com/Azure-Samples/service-fabric-dotnet-core-getting-started) is downloaded and built inside the container. The application is installed, and if the http endpoint can be hit then the test passes.
