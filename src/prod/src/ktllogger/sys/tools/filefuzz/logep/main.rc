@@ -1,0 +1,10 @@
+#include <windows.h>
+#include <ntverp.h>
+
+#define VER_FILETYPE    VFT_APP
+#define VER_FILESUBTYPE VFT2_UNKNOWN
+#define VER_FILEDESCRIPTION_STR     "Log EP"
+#define VER_INTERNALNAME_STR        "logep\0"
+#define VER_ORIGINALFILENAME_STR    "logep.EXE"
+
+#include "common.ver"

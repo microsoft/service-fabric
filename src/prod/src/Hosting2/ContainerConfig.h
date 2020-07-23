@@ -158,6 +158,7 @@ namespace Hosting2
         static Common::WStringLiteral const NetworkingConfigParameter;
         static Common::WStringLiteral const HostnameParameter;
         static Common::GlobalWString const FabricPackageFileNameEnvironment;
+        static Common::GlobalWString const RuntimeSslConnectionCertFilePath;
         static Common::WStringLiteral const LogPathParameter;
         static Common::WStringLiteral const TtyParameter;
         static Common::WStringLiteral const OpenStdinParameter;

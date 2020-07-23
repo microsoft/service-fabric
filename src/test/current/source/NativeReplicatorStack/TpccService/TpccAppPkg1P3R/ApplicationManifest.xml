@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest
+    ApplicationTypeName="TpccAppType"
+    ApplicationTypeVersion="1.0"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Description>TPCC Application</Description>
+    <Parameters>
+        <Parameter Name="DiagnosticsConnectionString" DefaultValue="" />
+        <Parameter Name="DiagnosticsConnectionStringIsEncrypted" DefaultValue="false" />
+        <Parameter Name="CrashDumpContainerName" DefaultValue="" />
+    </Parameters>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="Service" ServiceManifestVersion="1.0"/>
+    </ServiceManifestImport>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="VolatileService" ServiceManifestVersion="1.0"/>
+    </ServiceManifestImport>
+    <Diagnostics>
+      <CrashDumpSource IsEnabled="true">
+        <Destinations>
+          <LocalStore IsEnabled="true" RelativeFolderPath="CrashDumps"/>
+          <AzureBlob IsEnabled="true"
+                     ConnectionString="[DiagnosticsConnectionString]"
+                     ConnectionStringIsEncrypted="[DiagnosticsConnectionStringIsEncrypted]"
+                     ContainerName="[CrashDumpContainerName]"
+                     UploadIntervalInMinutes="1" />
+        </Destinations>
+      </CrashDumpSource>
+    </Diagnostics>
+</ApplicationManifest>

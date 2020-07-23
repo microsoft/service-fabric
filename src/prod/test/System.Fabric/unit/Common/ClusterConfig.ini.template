@@ -1,0 +1,37 @@
+﻿[NamingService]
+  PartitionCount = 1
+  TargetReplicaSetSize = 1
+  MinReplicaSetSize = 1
+
+[Hosting]
+  EnableExitProcessCall = true
+  ActivationConfigurationDirectory = [[ACTIVATION_CONFIG_DIR]]
+
+[Trace/Console]
+  Level = 3
+
+[Trace/Etw]
+  Level = 5
+
+[Trace/File]
+    Level = 4
+    Path = [[WORKING_DIR]]\..\..\Logs\Node[[NODE_ID]]\FabricTest.trace
+    Option = e,p,m
+
+[ClusterManager]
+  TargetReplicaSetSize = 1
+  MinReplicaSetSize = 1
+  ReplicatorAddress = 0
+
+[FailoverManager]
+  TargetReplicaSetSize = 3
+  MinReplicaSetSize = 1
+
+[Management]
+   ImageStoreConnectionString = [[IMAGE_STORE_CONNECTION_STRING]]
+
+[Votes]
+  [[VOTERS]]
+
+[Replication]
+  ReplicatorAddress = 0

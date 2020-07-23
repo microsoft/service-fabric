@@ -541,6 +541,7 @@ void BalanceCheckerCreator::CreateNodeEntries()
     int nodeCount = static_cast<int>(nodes_.size());
     for (size_t i = 0; i < nodeCount; i++)
     {
+        bool isNodeValid = false;
         LoadEntry capacityRatio(globalLBDomainEntry.MetricCount, 1);
         LoadEntry bufferedCapacity(globalLBDomainEntry.MetricCount, -1LL);
         LoadEntry totalCapacity(globalLBDomainEntry.MetricCount, -1LL);
@@ -564,6 +565,11 @@ void BalanceCheckerCreator::CreateNodeEntries()
             if (itTotalCapacity != totalCapacities_[i].end())
             {
                 totalCapacity.Set(j, itTotalCapacity->second);
+            }
+            if (globalLBDomainEntry.Metrics[j].IsValidNode(i))
+            {
+                // Node is valid if it is not blocklisted for any of the metrics.
+                isNodeValid = true;
             }
         }
 
@@ -598,6 +604,17 @@ void BalanceCheckerCreator::CreateNodeEntries()
                 udIt->second.Add(static_cast<int>(i));
             }
         }
+        else
+        {
+            isNodeValid = false;
+        }
+
+        wstring nodeTypeName = L"";
+        auto const& typeNamePropertyIt = nodeDescription.NodeProperties.find(*Constants::ImplicitNodeType);
+        if (typeNamePropertyIt != nodeDescription.NodeProperties.end())
+        {
+            nodeTypeName = typeNamePropertyIt->second;
+        }
 
         nodeEntries_.push_back(NodeEntry(
             static_cast<int>(i),
@@ -611,7 +628,9 @@ void BalanceCheckerCreator::CreateNodeEntries()
             upgradeDomainIndices_.empty() ? TreeNodeIndex() : move(upgradeDomainIndices_[i]),
             nodeDescription.IsDeactivated,
             nodeDescription.IsUp,
-            move(nodeImages)));
+            move(nodeImages),
+            isNodeValid,
+            move(nodeTypeName)));
 
         if (!nodeDescription.IsUp)
         {

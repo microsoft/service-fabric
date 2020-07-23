@@ -49,6 +49,10 @@ GlobalWString Constants::FaultsHandlerPath           = make_global<wstring>(L"/F
 GlobalWString Constants::NamesHandlerPath            = make_global<wstring>(L"/Names/");
 GlobalWString Constants::BackupRestoreHandlerPath    = make_global<wstring>(L"/BackupRestore/");
 GlobalWString Constants::ApplicationsResourceHandlerPath    = make_global<wstring>(L"/Resources/Applications/");
+GlobalWString Constants::SecretsResourceHandlerPath  = make_global<wstring>(L"/Resources/Secrets/");
+GlobalWString Constants::GatewaysHandlerPath         = make_global<wstring>(L"/Resources/Gateways/");
+
+GlobalWString Constants::NetworksHandlerPath         = make_global<wstring>(L"/Resources/Networks/");
 
 GlobalWString Constants::ContentTypeHeader           = make_global<wstring>(L"Content-Type");
 GlobalWString Constants::ContentLengthHeader         = make_global<wstring>(L"Content-Length");
@@ -64,6 +68,7 @@ GlobalWString Constants::ServerRedirectResponse      = make_global<wstring>(L"Mo
 GlobalWString Constants::ServiceFabricHttpClientRequestIdHeader = make_global<wstring>(L"X-ServiceFabricRequestId");
 GlobalWString Constants::ContentTypeOptionsHeader    = make_global<wstring>(L"X-Content-Type-Options");
 GlobalWString Constants::ContentTypeNoSniffValue     = make_global<wstring>(L"nosniff");
+GlobalWString Constants::HSTSHeader                  = make_global<wstring>(L"Strict-Transport-Security");
 
 GlobalWString Constants::JsonContentType             = make_global<wstring>(L"application/json; charset=utf-8");
 GlobalWString Constants::HtmlContentType             = make_global<wstring>(L"text/html; charset=utf-8");
@@ -99,6 +104,12 @@ GlobalWString Constants::IncludeValuesString         = make_global<wstring>(L"In
 GlobalWString Constants::PropertyNameString          = make_global<wstring>(L"PropertyName");
 GlobalWString Constants::InstanceIdString            = make_global<wstring>(L"InstanceId");
 GlobalWString Constants::VolumeNameString            = make_global<wstring>(L"VolumeName");
+GlobalWString Constants::SecretNameString            = make_global<wstring>(L"SecretName");
+GlobalWString Constants::SecretVersionString         = make_global<wstring>(L"SecretVersion");
+GlobalWString Constants::IncludeValueString          = make_global<wstring>(L"IncludeValue");
+GlobalWString Constants::NetworkNameString           = make_global<wstring>(L"NetworkName");
+GlobalWString Constants::NetworkStatusFilterString   = make_global<wstring>(L"NetworkStatusFilter");
+GlobalWString Constants::GatewayNameString           = make_global<wstring>(L"GatewayName");
 
 // This actually represents the node name, not the node id
 GlobalWString Constants::NodeIdString                = make_global<wstring>(L"NodeId");
@@ -167,6 +178,7 @@ GlobalWString Constants::RollbackUpgrade             = make_global<wstring>(L"Ro
 GlobalWString Constants::GetUpgradeProgress          = make_global<wstring>(L"GetUpgradeProgress");
 GlobalWString Constants::MoveToNextUpgradeDomain     = make_global<wstring>(L"MoveToNextUpgradeDomain");
 GlobalWString Constants::GetClusterManifest          = make_global<wstring>(L"GetClusterManifest");
+GlobalWString Constants::GetClusterVersion           = make_global<wstring>(L"GetClusterVersion");
 GlobalWString Constants::GetApplicationManifest      = make_global<wstring>(L"GetApplicationManifest");
 GlobalWString Constants::GetServicePackage           = make_global<wstring>(L"GetServicePackages");
 GlobalWString Constants::GetServiceManifest          = make_global<wstring>(L"GetServiceManifest");
@@ -182,6 +194,10 @@ GlobalWString Constants::GetSystemServices           = make_global<wstring>(L"Ge
 GlobalWString Constants::GetPartitions               = make_global<wstring>(L"GetPartitions");
 GlobalWString Constants::GetReplicas                 = make_global<wstring>(L"GetReplicas");
 GlobalWString Constants::GetApplications             = make_global<wstring>(L"GetApplications");
+GlobalWString Constants::Applications                = make_global<wstring>(L"Applications");
+GlobalWString Constants::GetNodes                    = make_global<wstring>(L"GetNodes");
+GlobalWString Constants::Nodes                       = make_global<wstring>(L"Nodes");
+GlobalWString Constants::GetNetworks                 = make_global<wstring>(L"GetNetworks");
 GlobalWString Constants::GetCodePackages             = make_global<wstring>(L"GetCodePackages");
 GlobalWString Constants::GetHealth                   = make_global<wstring>(L"GetHealth");
 GlobalWString Constants::GetLoadInformation          = make_global<wstring>(L"GetLoadInformation");
@@ -297,12 +313,18 @@ GlobalWString Constants::ApplicationTypesEntityKeyPath = make_global<wstring>(L"
 GlobalWString Constants::ServiceTypesEntitySetPath   = make_global<wstring>(COMBINE(Constants::ApplicationTypesEntityKeyPath, Constants::GetServiceTypes));
 GlobalWString Constants::ServiceTypesEntityKeyPath   = make_global<wstring>(*Constants::ServiceTypesEntitySetPath + L"/{ServiceTypeName}/");
 
+GlobalWString Constants::SecretsResourceValueListAction           = make_global<wstring>(L"list_value");
+GlobalWString Constants::SecretsResourceEntitySetPath             = make_global<wstring>(L"Resources/Secrets/");
+GlobalWString Constants::SecretsResourceEntityKeyPath             = make_global<wstring>(*Constants::SecretsResourceEntitySetPath + L"{" + *Constants::SecretNameString + L"}/");
+GlobalWString Constants::SecretsResourceVersionEntitySetPath      = make_global<wstring>(*Constants::SecretsResourceEntityKeyPath + L"values/");
+GlobalWString Constants::SecretsResourceVersionEntityKeyPath      = make_global<wstring>(*Constants::SecretsResourceVersionEntitySetPath + L"{" + *Constants::SecretVersionString + L"}/");
+GlobalWString Constants::SecretsResourceVersionEntityKeyValuePath = make_global<wstring>(*Constants::SecretsResourceVersionEntityKeyPath + *Constants::SecretsResourceValueListAction);
+
 GlobalWString Constants::ApplicationsEntitySetPath   = make_global<wstring>(L"Applications/");
 GlobalWString Constants::ApplicationsEntityKeyPath   = make_global<wstring>(L"Applications/{ApplicationId}/");
 GlobalWString Constants::ComposeDeploymentsEntitySetPath       = make_global<wstring>(L"ComposeDeployments/");
 GlobalWString Constants::ComposeDeploymentsEntityKeyPath      = make_global<wstring>(L"ComposeDeployments/{DeploymentName}/");
 GlobalWString Constants::ContainerEntityKeyPath = make_global<wstring>(L"Containers/{ContainerName}/");
-
 GlobalWString Constants::VolumesEntitySetPath = make_global<wstring>(L"Resources/Volumes/");
 GlobalWString Constants::VolumesEntityKeyPath = make_global<wstring>(L"Resources/Volumes/{VolumeName}/");
 GlobalWString Constants::ApplicationsResourceEntitySetPath = make_global<wstring>(L"Resources/Applications/");
@@ -323,6 +345,9 @@ GlobalWString Constants::ServicePartitionEntityKeyPathViaApplication = make_glob
 GlobalWString Constants::ServiceReplicaEntitySetPathViaApplication = make_global<wstring>(*Constants::ServicePartitionEntitySetPathViaApplication + L"/{PartitionId}" + *Constants::MetadataSegment + *Constants::GetReplicas);
 GlobalWString Constants::ServiceReplicaEntityKeyPathViaApplication = make_global<wstring>(*Constants::ServiceReplicaEntitySetPathViaApplication + L"/{ReplicaId}");
 
+GlobalWString Constants::GatewaysResourceEntitySetPath = make_global<wstring>(L"Resources/Gateways/");
+GlobalWString Constants::GatewaysResourceEntityKeyPath = make_global<wstring>(L"Resources/Gateways/{GatewayName}/");
+
 GlobalWString Constants::ServicesEntitySetPath    = make_global<wstring>(L"Services/");
 GlobalWString Constants::ServiceGroupsEntitySetPath    = make_global<wstring>(L"ServiceGroups/");
 GlobalWString Constants::ServicesEntityKeyPath    = make_global<wstring>(*Constants::ServicesEntitySetPath + L"/{ServiceId}/");
@@ -340,6 +365,19 @@ GlobalWString Constants::ServiceReplicaEntityKeyPathViaPartition = make_global<w
 GlobalWString Constants::SystemEntitySetPath          = make_global<wstring>(L"");
 GlobalWString Constants::NodesEntitySetPath          = make_global<wstring>(L"Nodes/");
 GlobalWString Constants::NodesEntityKeyPath         = make_global<wstring>(L"Nodes/{NodeId}/");
+
+GlobalWString Constants::NetworksEntitySetPath                      = make_global<wstring>(L"Resources/Networks");
+GlobalWString Constants::NetworksEntityKeyPath                      = make_global<wstring>(L"Resources/Networks/{NetworkName}");
+GlobalWString Constants::ApplicationsEntitySetPathViaNetwork        = make_global<wstring>(*Constants::NetworksEntityKeyPath + L"/ApplicationRefs");
+GlobalWString Constants::ApplicationsEntityKeyPathViaNetwork        = make_global<wstring>(*Constants::ApplicationsEntitySetPathViaNetwork + L"/{ApplicationId}");
+GlobalWString Constants::NodesEntitySetPathViaNetwork               = make_global<wstring>(*Constants::NetworksEntityKeyPath + L"/DeployedNodes");
+GlobalWString Constants::NodesEntityKeyPathViaNetwork               = make_global<wstring>(*Constants::NodesEntitySetPathViaNetwork + L"/{NodeId}");
+GlobalWString Constants::NetworksEntitySetPathViaApplication        = make_global<wstring>(COMBINE(Constants::ApplicationsEntityKeyPath, Constants::GetNetworks));
+GlobalWString Constants::NetworksOnNodeEntitySetPath                = make_global<wstring>(COMBINE(Constants::NodesEntityKeyPath, Constants::GetNetworks));
+GlobalWString Constants::NetworksOnNodeEntityKeyPath                = make_global<wstring>(*Constants::NetworksOnNodeEntitySetPath + L"/{NetworkName}");
+GlobalWString Constants::CodePackagesEntitySetPathViaNetworkViaNode = make_global<wstring>(COMBINE(Constants::NetworksOnNodeEntityKeyPath, Constants::GetCodePackages));
+GlobalWString Constants::CodePackagesEntityKeyPathViaNetworkViaNode = make_global<wstring>(*Constants::CodePackagesEntitySetPathViaNetworkViaNode + L"/{CodePackageName}");
+
 
 GlobalWString Constants::TestCommandsSetPath          = make_global<wstring>(L"TestCommands/");
 GlobalWString Constants::TestCommandsEntityKeyPath         = make_global<wstring>(L"TestCommands/{OperationId}/");
@@ -414,6 +452,7 @@ USHORT Constants::StatusOk                           = 200;
 USHORT Constants::StatusCreated                      = 201;
 USHORT Constants::StatusAccepted                     = 202;
 USHORT Constants::StatusNoContent                    = 204;
+USHORT Constants::StatusBadRequest                   = 400;
 USHORT Constants::StatusAuthenticate                 = 401;
 USHORT Constants::StatusUnauthorized                 = 403;
 USHORT Constants::StatusNotFound                     = 404;
@@ -425,6 +464,7 @@ USHORT Constants::StatusServiceUnavailable           = 503;
 GlobalWString Constants::StatusDescriptionOk         = make_global<wstring>(L"Ok");
 GlobalWString Constants::StatusDescriptionCreated    = make_global<wstring>(L"Created");
 GlobalWString Constants::StatusDescriptionNoContent  = make_global<wstring>(L"No Content");
+GlobalWString Constants::StatusDescriptionBadRequest = make_global<wstring>(L"Bad Request");
 GlobalWString Constants::StatusDescriptionAccepted   = make_global<wstring>(L"Accepted");
 GlobalWString Constants::StatusDescriptionClientCertificateRequired = make_global<wstring>(L"Client certificate required");
 GlobalWString Constants::StatusDescriptionClientCertificateInvalid = make_global<wstring>(L"Client certificate untrusted or invalid");
@@ -498,6 +538,24 @@ GlobalWString Constants::TestCommandTypeDataLoss = make_global<wstring>(L"0x0001
 GlobalWString Constants::TestCommandTypeQuorumLoss = make_global<wstring>(L"0x0002");
 GlobalWString Constants::TestCommandTypeRestartPartition = make_global<wstring>(L"0x0004");
 
+// /Networks?NetworkStatusFilter={networkStatusFilter}
+GlobalWString Constants::NetworkStatusFilterDefaultString = make_global<wstring>(L"Default");
+GlobalWString Constants::NetworkStatusFilterAllString = make_global<wstring>(L"All");
+GlobalWString Constants::NetworkStatusFilterReadyString = make_global<wstring>(L"Ready");
+GlobalWString Constants::NetworkStatusFilterCreatingString = make_global<wstring>(L"Creating");
+GlobalWString Constants::NetworkStatusFilterDeletingString = make_global<wstring>(L"Deleting");
+GlobalWString Constants::NetworkStatusFilterUpdatingString = make_global<wstring>(L"Updating");
+GlobalWString Constants::NetworkStatusFilterFailedString = make_global<wstring>(L"Failed");
+
+GlobalWString Constants::NetworkStatusFilterDefault = make_global<wstring>(L"0x0000");
+GlobalWString Constants::NetworkStatusFilterAll = make_global<wstring>(L"0xFFFF");
+GlobalWString Constants::NetworkStatusFilterReady = make_global<wstring>(L"0x0001");
+GlobalWString Constants::NetworkStatusFilterCreating = make_global<wstring>(L"0x0002");
+GlobalWString Constants::NetworkStatusFilterDeleting = make_global<wstring>(L"0x0004");
+GlobalWString Constants::NetworkStatusFilterUpdating = make_global<wstring>(L"0x0008");
+GlobalWString Constants::NetworkStatusFilterFailed = make_global<wstring>(L"0x0010");
+
+
 GlobalWString Constants::PartialDataLoss = make_global<wstring>(L"PartialDataLoss");
 GlobalWString Constants::FullDataLoss = make_global<wstring>(L"FullDataLoss");
 
@@ -517,6 +575,5 @@ GlobalWString Constants::Force = make_global<wstring>(L"Force");
 GlobalWString Constants::Immediate = make_global<wstring>(L"Immediate");
 
 GlobalWString Constants::EventsStoreHandlerPath = make_global<wstring>(L"/EventsStore/");
-GlobalWString Constants::EventsStoreServiceName = make_global<wstring>(L"System/EventsStoreService");
+GlobalWString Constants::EventsStoreServiceName = make_global<wstring>(L"System/EventStoreService");
 GlobalWString Constants::EventsStorePrefix = make_global<wstring>(L"EventsStore");
-GlobalWString Constants::EventsReaderOutputDir = make_global<wstring>(L"EventsReaderTmpOutput");

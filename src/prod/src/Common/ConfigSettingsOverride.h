@@ -8,13 +8,11 @@
 namespace Common
 {
     // <ConfigOverrides ...><Settings>
+    struct ConfigOverrideDescription;
     struct ConfigSettingsOverride
     {
     public:
-        typedef std::map<std::wstring, ConfigSectionOverride, IsLessCaseInsensitiveComparer<std::wstring>> SectionMapType;
-
         ConfigSettingsOverride();
-        ConfigSettingsOverride(SectionMapType && sections);
         ConfigSettingsOverride(ConfigSettingsOverride const & other);
         ConfigSettingsOverride(ConfigSettingsOverride && other);
 
@@ -28,6 +26,13 @@ namespace Common
 
         void clear();
     public:
-        SectionMapType Sections;
+        std::map<std::wstring, ConfigSectionOverride, IsLessCaseInsensitiveComparer<std::wstring>> Sections;
+
+    private:
+        friend struct ConfigOverrideDescription;
+
+        void ReadFromXml(Common::XmlReaderUPtr const &);
+		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const & xmlWriter);
+        bool TryAddSection(ConfigSectionOverride && section);
     };
 }

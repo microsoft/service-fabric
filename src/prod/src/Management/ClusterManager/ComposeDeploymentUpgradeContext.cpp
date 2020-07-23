@@ -187,7 +187,11 @@ ErrorCode ComposeDeploymentUpgradeContext::UpdateUpgradeStatus(Store::StoreTrans
 
 ErrorCode ComposeDeploymentUpgradeContext::TryInterrupt(StoreTransaction const &storeTx)
 {
-    if (currentStatus_ == ComposeDeploymentUpgradeState::Enum::ProvisioningTarget)
+    if (isInterrupted_)
+    {
+        return ErrorCodeValue::SingleInstanceApplicationUpgradeInProgress;
+    }
+    else if (currentStatus_ == ComposeDeploymentUpgradeState::Enum::ProvisioningTarget)
     {
         // can be interrupted.
         isInterrupted_ = true;
@@ -209,13 +213,11 @@ ErrorCode ComposeDeploymentUpgradeContext::TryInterrupt(StoreTransaction const &
             if (error.IsSuccess()) 
             { 
                 isInterrupted_ = true;
-                storeTx.Update(*this); 
+                return storeTx.Update(*this); 
             }
-
-            return error;
         }
     }
-    else
+    else 
     {
         return ErrorCodeValue::ApplicationAlreadyInTargetVersion;
     }

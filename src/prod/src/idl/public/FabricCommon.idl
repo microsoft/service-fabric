@@ -1,0 +1,132 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricTypes.idl";
+
+// ----------------------------------------------------------------------------
+// Forward Declaration of interfaces
+
+interface IFabricAsyncOperationCallback;
+interface IFabricAsyncOperationContext;
+interface IFabricStringResult;
+interface IFabricStringListResult;
+interface IFabricGetReplicatorStatusResult;
+
+// ----------------------------------------------------------------------------
+// Library
+
+[
+    uuid(ccd250b2-7c94-47ac-a497-5d5228cddccd),
+    helpstring("Microsoft Azure Service Fabric Common Interface Library"),
+    version(1.0),
+]
+library FabricCommonLib
+{
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List the interfaces to be imported in the type library
+
+    interface IFabricAsyncOperationCallback;
+    interface IFabricAsyncOperationContext;
+    interface IFabricStringResult;
+    interface IFabricStringListResult;
+    interface IFabricGetReplicatorStatusResult;
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(13e48069-ba81-46aa-a790-b10f64f1e37e),
+        dllname("FabricCommon.dll")
+    ]
+    module FabricCommonModule {
+        [entry("FabricGetLastErrorMessage")] HRESULT FabricGetLastErrorMessage(
+            [out, retval] IFabricStringResult ** message);
+
+        [entry("FabricEncryptText")] HRESULT FabricEncryptText(
+            [in] LPCWSTR text,
+            [in] LPCWSTR certThumbprint,
+            [in] LPCWSTR certStoreName,
+            [in] FABRIC_X509_STORE_LOCATION certStoreLocation,
+            [in] LPCSTR algorithmOid,
+            [out, retval] IFabricStringResult ** encryptedValue);
+
+        [entry("FabricEncryptText2")] HRESULT FabricEncryptText2(
+            [in] LPCWSTR text,
+            [in] LPCWSTR certFilePath,
+            [in] LPCSTR algorithmOid,
+            [out, retval] IFabricStringResult ** encryptedValue);
+
+        [entry("FabricDecryptText")] HRESULT FabricDecryptText(
+            [in] LPCWSTR encryptedText,
+            [in] FABRIC_X509_STORE_LOCATION certStoreLocation,
+            [out, retval] IFabricStringResult ** decryptedText);
+
+        [entry("FabricEncryptValue")] HRESULT FabricEncryptValue(
+            [in] LPCWSTR certThumbprint,
+            [in] LPCWSTR certStoreName,
+            [in] LPCWSTR text,
+            [out, retval] IFabricStringResult ** encryptedValue);
+
+        [entry("FabricDecryptValue")] HRESULT FabricDecryptValue(
+            [in] LPCWSTR encryptedValue,
+            [out, retval] IFabricStringResult ** decryptedValue);
+    }
+
+#pragma pack (pop)
+
+}
+
+// ----------------------------------------------------------------------------
+// Interface Definitions
+
+[object, local, uuid(86f08d7e-14dd-4575-8489-b1d5d679029c)]
+interface IFabricAsyncOperationCallback : IUnknown
+{
+    [] void Invoke(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(841720bf-c9e8-4e6f-9c3f-6b7f4ac73bcd)]
+interface IFabricAsyncOperationContext : IUnknown
+{
+    [] BOOLEAN IsCompleted();
+
+    [] BOOLEAN CompletedSynchronously();
+
+    [] HRESULT get_Callback(
+        [out, retval] IFabricAsyncOperationCallback ** callback);
+
+    [] HRESULT Cancel();
+}
+
+[object, local, uuid(4ae69614-7d0f-4cd4-b836-23017000d132)]
+interface IFabricStringResult : IUnknown
+{
+    [] LPCWSTR get_String();
+}
+
+[object, local, uuid(afab1c53-757b-4b0e-8b7e-237aeee6bfe9)]
+interface IFabricStringListResult : IUnknown
+{
+    [] HRESULT GetStrings(
+        [out] ULONG * itemCount,
+        [out, retval] const LPCWSTR ** bufferedItems);
+}
+
+[object, local, uuid(30E10C61-A710-4F99-A623-BB1403265186)]
+interface IFabricGetReplicatorStatusResult : IUnknown
+{
+    [] const FABRIC_REPLICATOR_STATUS_QUERY_RESULT * get_ReplicatorStatus();
+}

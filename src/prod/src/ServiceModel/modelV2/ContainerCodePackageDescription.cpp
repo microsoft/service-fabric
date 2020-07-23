@@ -34,6 +34,13 @@ bool ContainerCodePackageDescription::operator==(ContainerCodePackageDescription
 
 bool ContainerCodePackageDescription::CanUpgrade(ContainerCodePackageDescription const & other) const
 {
+    //if reliable collections or block store is used, allow upgrading the application
+    if (reliableCollectionsRefs_.size() > 0 ||
+        volumes_.size() > 0)
+    {
+        return true;
+    }
+
     // The following fields are allowed for upgrading
     // image_
     // setting_

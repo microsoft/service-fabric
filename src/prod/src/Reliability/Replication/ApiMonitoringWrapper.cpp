@@ -78,7 +78,7 @@ void ApiMonitoringWrapper::Open(TimeSpan const & timeSpan)
     monitor_ = MonitoringComponent::Create(parameters);
 
     // Curently we add NodeName and NodeInstance information for failover APIs. These information can be added for Replicator APIs in the future.
-    monitor_->Open(MonitoringComponentMetadata(L""/*NodeName*/, L""));
+    monitor_->Open(MonitoringComponentMetadata(L""/*NodeName*/, Federation::NodeInstance()));
     isActive_ = true;
 }
 

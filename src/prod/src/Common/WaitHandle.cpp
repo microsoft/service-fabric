@@ -108,7 +108,7 @@ ErrorCode WaitHandle<ManualReset>::Wait(uint timeout)
         if (retval == ETIMEDOUT)
         {
             if (signaled_ || closed_) break;
-
+    
             return ErrorCodeValue::Timeout;
         }
     }

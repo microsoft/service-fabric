@@ -24,19 +24,33 @@ set_target_properties(${lib_ReliableCollectionRuntime} PROPERTIES
 
 # These options are used to force every object to be included even if it's unused.
 
-target_link_libraries(
-  ${lib_ReliableCollectionRuntime}
+target_link_libraries( ${lib_ReliableCollectionRuntime}
   ${lib_Common}
-  ${lib_FabricCommon}
+  ${Ktlfull}
+  ${lib_Pal}
+  ${lib_FabricCommonStatic}
+  ${lib_Federation}
+  ${lib_Transport}
+  ${lib_ImageModel}
+  ${lib_ServiceModel}
+  ${lib_Common}
+  ${lib_Serialization}
   ${lib_InternalFabricUUID}
   ${lib_FabricUUID}
-  ${lib_FabricResources}
+  ${lib_FabricResourcesStatic}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
+  lttng-ust
+  ssh2
+  ssl
+  crypto
   minizip
   z
+  xml2
+  uuid
   rt
+  dl
   pthread
 )
 

@@ -51,8 +51,14 @@ namespace Hosting2
         __declspec(property(get=get_ApplicationServiceId)) std::wstring const & ApplicationServiceId;
         std::wstring const & get_ApplicationServiceId() const { return appServiceId_; }
 
+        __declspec(property(get = get_ActivationContext)) IProcessActivationContextSPtr const & ActivationContext;
+        IProcessActivationContextSPtr const & get_ActivationContext() const { return activationContext_; }
+
         __declspec(property(get=get_ParentId)) std::wstring const & ParentId;
         std::wstring const & get_ParentId() const { return parentId_; }
+
+        __declspec(property(get = get_ContainerId)) std::wstring const & ContainerId;
+        std::wstring const & get_ContainerId() const { return containerId_; }
 
         __declspec(property(get = get_ContainerDescription)) ContainerDescription const & ContainerDescriptionObj;
         ContainerDescription const & get_ContainerDescription() const { return containerDescription_; }
@@ -102,6 +108,8 @@ namespace Hosting2
 
         bool IsSecurityUserLocalSystem();
 
+        void SetTerminatedExternally(BOOL terminatedExternally);
+
         bool Test_VerifyLimitsEnforced(std::vector<double> & cpuLimitCP, std::vector<uint64> & memoryLimitCP);
         bool Test_VerifyContainerGroupSettings();
 
@@ -111,7 +119,8 @@ namespace Hosting2
 
     private:
         ProcessActivatorUPtr const & GetProcessActivator() const;
-        
+
+        void CleanupContainerNetworks();
 
     private:        
         ProcessActivationManagerHolder const activatorHolder_;
@@ -122,6 +131,8 @@ namespace Hosting2
         std::wstring fabricBinFolder_;
         ContainerDescription containerDescription_;
         BOOL isContainerHost_;
+        Common::atomic_bool terminatedExternally_;
+        std::wstring containerId_;
         IProcessActivationContextSPtr activationContext_;
         Common::RwLock rwlock_;
 

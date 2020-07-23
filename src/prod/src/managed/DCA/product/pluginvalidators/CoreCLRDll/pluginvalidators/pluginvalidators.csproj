@@ -35,19 +35,25 @@
       ..\..\FileShareFolderUploaderValidator.cs;
       ..\..\FileShareSettingsValidator.cs;
       ..\..\FolderProducerValidator.cs;
-      ..\..\LttProducerValidator.cs;
       ..\..\MdsEtwEventUploaderValidator.cs;
       ..\..\MdsFileProducerValidator.cs;
       ..\..\PerfCounterConfigReaderValidator.cs;
       ..\..\SettingsValidator.cs;
+      ..\..\SyslogConsumerValidator.cs;
       ..\..\..\plugins\folderproducer\FolderProducerConstants.cs;
       ..\..\..\plugins\folderproducer\FolderProducerType.cs"
 	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsLinux)' == 'true' ">
+    <Compile Include="
+            ..\..\LttProducerValidator.cs"
+        Exclude="bin\*obj\**;**\*.xproj;packages\**" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\plugins\azure\common\CoreCLRDll\AzureUploaderCommon\AzureUploaderCommon.csproj" />
     <ProjectReference Include="..\..\..\plugins\lttproducer\CoreCLRDll\LttProducer\LttProducer.csproj" />
+    <ProjectReference Include="..\..\..\plugins\syslog\CoreCLRDll\SyslogConsumer.csproj" />
     <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
     <ProjectReference Include="..\..\..\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
     <ProjectReference Include="..\..\..\system.fabric.dca.validator\CoreCLRDll\System.Fabric.Dca.Validator\System.Fabric.Dca.Validator.csproj" />

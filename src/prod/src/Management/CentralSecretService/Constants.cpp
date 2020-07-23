@@ -20,3 +20,4 @@ GlobalWString Constants::DatabaseFilename = make_global<wstring>(L"CSS.edb");
 GlobalWString Constants::SharedLogFilename = make_global<wstring>(L"cssshared.log");
 
 GlobalWString Constants::StoreType::Secrets = make_global<wstring>(L"Secrets");
+GlobalWString Constants::StoreType::SecretsMetadata = make_global<wstring>(L"SecretsMetadata");

@@ -10,11 +10,12 @@ using namespace Data::TStore;
 using namespace TxnReplicator;
 using namespace TStoreTests;
 
-MockTransactionalReplicator::MockTransactionalReplicator()
+MockTransactionalReplicator::MockTransactionalReplicator(__in bool hasPersistedState)
     : KAsyncServiceBase()
-    , KWeakRefType<MockTransactionalReplicator>(),
-    delayAddOperationAndThrow_(false),
-    timeout_(5000)
+    , KWeakRefType<MockTransactionalReplicator>()
+    , delayAddOperationAndThrow_(false)
+    , timeout_(5000)
+    , hasPersistedState_(hasPersistedState)
 {
     NTSTATUS status = Data::Utilities::ReaderWriterAsyncLock::Create(GetThisAllocator(), GetThisAllocationTag(), readerWriterLockSPtr_);
     this->SetConstructorStatus(status);
@@ -50,10 +51,11 @@ MockTransactionalReplicator::~MockTransactionalReplicator()
 
 NTSTATUS MockTransactionalReplicator::Create(
    __in KAllocator& allocator,
+   __in bool hasPersistedState,
    __out MockTransactionalReplicator::SPtr& result)
 {
    NTSTATUS status;
-   SPtr output = _new(TEST_TAG, allocator) MockTransactionalReplicator();
+   SPtr output = _new(TEST_TAG, allocator) MockTransactionalReplicator(hasPersistedState);
 
    if (!output)
    {

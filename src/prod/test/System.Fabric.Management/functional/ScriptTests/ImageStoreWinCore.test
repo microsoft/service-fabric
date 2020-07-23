@@ -1,0 +1,36 @@
+#################################################################
+# FabActBasicDeployment test script.
+# Summary of Test:
+#    1. Create a Cluster.
+#    2. Deploy ImageStoreApp application.
+#    3. Call workload.
+#################################################################
+
+setcfg Config.Management.ImageStoreConnectionString fabric:ImageStore
+
+# 1. Create local 5 node cluster.
+load FabActFiveNodelCluster.test
+
+# 2. Deploy ImageStore application.
+uploadapp ImageStoreService apppackages\CoreClr\win10-x64\ImageStoreTestServicePkg
+provisionapp ImageStoreService
+var appName fabric:/ImageStoreService
+createapp <var.appName> ImageStoreService
+
+verify
+
+# 3. Make client calls to actor via TRS.
+client.newclient cl1 System.Fabric.Management.ClientWorkload.ImageStoreClientWorkload,Management.ClientWorkload parameters=ImageStoreServicePort:8737
+client.starttask cl1 t1 UploadAppWorkload
+client.waittask taskIds=t1 timeout=400
+
+# confirm app is uploaded.
+fss.listcontent DummyApp true
+
+client.starttask cl1 t2 DeleteAppWorkload
+client.waittask timeout=200
+
+# confirm app is deleted.
+fss.listcontent DummyApp false
+
+quit

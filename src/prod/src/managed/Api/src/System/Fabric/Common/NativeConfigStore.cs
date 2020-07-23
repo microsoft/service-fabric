@@ -118,7 +118,6 @@ namespace System.Fabric.Common
         public ICollection<string> GetKeys(string sectionName, string partialKeyName)
         {
             Requires.Argument("sectionName", sectionName).NotNullOrEmpty();
-            Requires.Argument("partialKeyName", partialKeyName).NotNullOrEmpty();
 
             return Utility.WrapNativeSyncInvokeInMTA(() => this.GetKeysHelper(sectionName, partialKeyName), "ConfigStore.GetKeys");
         }

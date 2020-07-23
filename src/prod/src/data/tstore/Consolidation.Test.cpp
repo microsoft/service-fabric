@@ -276,6 +276,82 @@ namespace TStoreTests
           co_await VerifyKeyExistsInStoresAsync(key2, -1, value);
            co_return;
        }
+
+        Awaitable<void> EnumerateConsolidatedState_Test()
+        {
+            Store->EnableBackgroundConsolidation = false;
+            Store->ConsolidationManagerSPtr->NumberOfDeltasToBeConsolidated = 3;
+
+            LONG64 firstLSN = -1;
+            
+            int value = 17;
+
+            {
+                auto key1 = 1;
+                auto key2 = 10;
+
+                {
+                    auto txn = CreateWriteTransaction();
+                    co_await Store->AddAsync(*txn->StoreTransactionSPtr, key1, value, DefaultTimeout, CancellationToken::None);
+                    co_await Store->AddAsync(*txn->StoreTransactionSPtr, key2, value, DefaultTimeout, CancellationToken::None);
+                    firstLSN = co_await txn->CommitAsync();
+                }
+
+                co_await CheckpointAsync();
+            }
+
+            int key = 5; // Repeatedly update the same key
+
+            // Add a key
+            {
+                {
+                    auto txn = CreateWriteTransaction();
+                    co_await Store->AddAsync(*txn->StoreTransactionSPtr, key, 0, DefaultTimeout, CancellationToken::None);
+                    co_await txn->CommitAsync();
+                }
+
+                co_await CheckpointAsync();
+            }
+
+            // Update it 3 more times
+            for (int i = 1; i < 4; i++)
+            {
+                {
+                    auto txn = CreateWriteTransaction();
+                    bool updated = co_await Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, i, DefaultTimeout, CancellationToken::None);
+                    CODING_ERROR_ASSERT(updated == true);
+                    co_await txn->CommitAsync();
+                }
+
+                co_await CheckpointAsync();
+            }
+
+            // After consolidation: 1 consolidated state enumerator and 2 differential state enumerators
+
+            auto enumerator = Store->ConsolidationManagerSPtr->GetAllKeysAndValuesEnumerator();
+
+            CODING_ERROR_ASSERT(enumerator->MoveNext());
+            CODING_ERROR_ASSERT(enumerator->Current().Key == 1);
+            CODING_ERROR_ASSERT(enumerator->Current().Value->GetVersionSequenceNumber() == firstLSN);
+
+            // Key 5 will show up in consolidated state and both differential states
+            LONG64 previousLSN = LONG64_MAX;
+            for (ULONG32 i = 0; i < 3; i++)
+            {
+                CODING_ERROR_ASSERT(enumerator->MoveNext());
+                CODING_ERROR_ASSERT(enumerator->Current().Key == 5);
+
+                LONG64 currentLSN = enumerator->Current().Value->GetVersionSequenceNumber();
+                CODING_ERROR_ASSERT(currentLSN < previousLSN);
+                previousLSN = currentLSN;
+            }
+
+            CODING_ERROR_ASSERT(enumerator->MoveNext());
+            CODING_ERROR_ASSERT(enumerator->Current().Key == 10);
+            CODING_ERROR_ASSERT(enumerator->Current().Value->GetVersionSequenceNumber() == firstLSN);
+
+            CODING_ERROR_ASSERT(enumerator->MoveNext() == false);
+        }
     #pragma endregion
    };
 
@@ -305,6 +381,11 @@ namespace TStoreTests
    BOOST_AUTO_TEST_CASE(Add_Checkpoint_Commit)
    {
        SyncAwait(Add_Checkpoint_Commit_Test());
+   }
+
+   BOOST_AUTO_TEST_CASE(Enumerate_ConsolidatedState)
+   {
+       SyncAwait(EnumerateConsolidatedState_Test());
    }
 
    BOOST_AUTO_TEST_SUITE_END()

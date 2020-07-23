@@ -903,6 +903,24 @@ AsyncOperationSPtr ServiceCache::BeginDeleteApplication(
     int64 plbDuration;
     PLBDeleteApplication(newAppInfo->ApplicationName, plbDuration);
 
+    if (Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
+    {
+        // Disassociate the network from the app in case of failure
+        auto appInfo = lockedAppInfo.Entry->Get();
+        for( auto networkName : appInfo->Networks)
+        {        
+            ManualResetEvent completedEvent(false);
+
+            fm_.NIS.BeginNetworkDissociation(
+                networkName,
+                newAppInfo->ApplicationName.ToString(),
+                [&completedEvent](AsyncOperationSPtr const&) { completedEvent.Set(); },
+                state);
+
+            completedEvent.WaitOne();
+        }
+    }
+
     auto newApplicationInfoPtr = newAppInfo.get();
 
     return fmStore_.BeginUpdateData(
@@ -1256,12 +1274,44 @@ AsyncOperationSPtr ServiceCache::BeginCreateApplication(
     ApplicationCapacityDescription const & capacityDescription,
     ServiceModel::ServicePackageResourceGovernanceMap const& rgDescription,
     ServiceModel::CodePackageContainersImagesMap const& cpContainersImages,
+    StringCollection networks,
     AsyncCallback const & callback,
     AsyncOperationSPtr const & state)
 {
+     ErrorCode error(ErrorCodeValue::Success);
+
+    if (Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
+    {
+        // Associate the application to requested networks.
+        for( auto networkName : networks) 
+        {
+            ManualResetEvent completedEvent(false);
+            fm_.NIS.BeginNetworkAssociation(
+                networkName,
+                applicationName.ToString(),
+                [this, &completedEvent, &error](AsyncOperationSPtr const & contextSPtr) mutable -> void
+                {
+                    error = fm_.NIS.EndNetworkAssociation(contextSPtr);
+                    completedEvent.Set();
+                },
+                state);
+
+            completedEvent.WaitOne();
+            if (!error.IsSuccess())
+            {
+                break;
+            }
+        }
+    }
+
+    if (!error.IsSuccess())
+    {
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(error, callback, state);
+    }
+
     LockedApplicationInfo lockedAppInfo;
     bool isNewApplication;
-    auto error = CreateOrGetLockedApplication(
+    error = CreateOrGetLockedApplication(
         applicationId,
         applicationName,
         instanceId,
@@ -1272,7 +1322,7 @@ AsyncOperationSPtr ServiceCache::BeginCreateApplication(
         lockedAppInfo,
         isNewApplication);
 
-    if (!isNewApplication)
+    if (!error.IsSuccess() || !isNewApplication)
     {
         return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::ApplicationAlreadyExists, callback, state);
     }
@@ -1292,6 +1342,7 @@ AsyncOperationSPtr ServiceCache::BeginCreateApplication(
         return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(error, callback, state);
     }
 
+    appInfo->Networks = networks;
     pair<LockedApplicationInfo, int64> context(move(lockedAppInfo), move(plbDuration));
 
     return fm_.Store.BeginUpdateData(
@@ -1325,6 +1376,23 @@ ErrorCode ServiceCache::EndCreateApplication(AsyncOperationSPtr const& operation
             // In case of failure, delete application from PLB (forced)
             PLBDeleteApplication(appInfo->ApplicationName, revertPlbDuration, true);
             plbDuration += revertPlbDuration;
+
+            if (Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
+            {
+                // Disassociate the network from the app in case of failure
+                for( auto networkName : appInfo->Networks)
+                {        
+                    ManualResetEvent completedEvent(false);
+
+                    fm_.NIS.BeginNetworkDissociation(
+                        networkName,
+                        appInfo->ApplicationName.ToString(),
+                        [&completedEvent](AsyncOperationSPtr const&) { completedEvent.Set(); },
+                        fm_.CreateAsyncOperationRoot());
+
+                    completedEvent.WaitOne();
+                }
+            }
 
             RemoveApplicationCommitJobItemUPtr commitJobItem = make_unique<RemoveApplicationCommitJobItem>(move(lockedAppInfo), commitDuration, plbDuration);
             fm_.CommitQueue.Enqueue(move(commitJobItem));
@@ -1887,6 +1955,38 @@ void ServiceCache::UpdateUpgradeProgressAsync(
 
         if (isUpgradeComplete)
         {
+            if (Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
+            {
+                // Disassociate the networks that are not part of the app anymore.
+                auto associatedNetworks = fm_.NIS.GetApplicationNetworkList(lockedAppInfo->ApplicationName.ToString());
+                for (const auto & net1 : associatedNetworks)
+                {
+                    bool found = false;
+                    for (const auto & net2 : newUpgrade->Description.Specification.Networks)
+                    {
+                        if (StringUtility::Compare(net1.NetworkName, net2) == 0) 
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        ManualResetEvent completedEvent(false);
+
+                        fm_.NIS.BeginNetworkDissociation(
+                            net1.NetworkName,
+                            lockedAppInfo->ApplicationName.ToString(),
+                            [&completedEvent](AsyncOperationSPtr const&) { completedEvent.Set(); },
+                            fm_.CreateAsyncOperationRoot());
+
+                        completedEvent.WaitOne();
+                    }
+                }
+            }
+
+            lockedAppInfo.Entry->Get()->Networks = newUpgrade->Description.Specification.Networks;
+
             CompleteUpgradeAsync(lockedAppInfo);
         }
         else if (isCurrentDomainComplete || isUpdated)

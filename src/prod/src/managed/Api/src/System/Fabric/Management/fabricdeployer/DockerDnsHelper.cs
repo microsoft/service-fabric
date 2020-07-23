@@ -38,9 +38,8 @@ namespace System.Fabric.FabricDeployer
         /// DNS for Service Fabric.
         /// </summary>
 
-#if DotNetCoreClrLinux
+#if DotNetCoreClr
         private const string DockerDnsNetworkAdapterName = "docker";
-        private const string FabricEtcConfigPath = "/etc/servicefabric/";
 #else
         private const string DockerDnsNetworkAdapterName = "HNS Internal NIC";
         private const string SFNetworkAdapterName = "DNSFORSF";
@@ -844,12 +843,12 @@ namespace System.Fabric.FabricDeployer
 
         internal static void PersistNetworkDetailForContainerStart(IDictionary<string, string> persistData)
         {
-#if !DotNetCoreClrLinux
+#if !DotNetCoreClr
             Utility.AddRegistryKeyValues(Registry.LocalMachine, FabricConstants.FabricRegistryKeyPath, persistData);
 #else
             foreach (var kv in persistData)
             {
-                string path = Path.Combine(FabricEtcConfigPath, kv.Key);
+                string path = Path.Combine(Constants.FabricEtcConfigPath, kv.Key);
                 try
                 {
                     File.WriteAllText(path, kv.Value);
@@ -871,12 +870,12 @@ namespace System.Fabric.FabricDeployer
         {
             try
             {
-#if !DotNetCoreClrLinux
+#if !DotNetCoreClr
                 Utility.RemoveRegistryKeyValues(Registry.LocalMachine, FabricConstants.FabricRegistryKeyPath, valueNames);
 #else
                 foreach (var name in valueNames)
                 {
-                    string path = Path.Combine(FabricEtcConfigPath, name);
+                    string path = Path.Combine(Constants.FabricEtcConfigPath, name);
                     File.Delete(path);
                 }
 #endif
@@ -889,7 +888,7 @@ namespace System.Fabric.FabricDeployer
             }
         }
 
-#if !DotNetCoreClrLinux
+#if !DotNetCoreClr
         /// <summary>
         /// Gets a new IP address to be reassigned to <see cref="SFNetworkAdapterName"/>.
         /// The new IP address is 1 more than Docker's DNS IP address.

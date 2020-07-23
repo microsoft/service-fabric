@@ -1,0 +1,21 @@
+#include "fabricverp.h"
+
+#define VER_FILETYPE                VFT_DRV
+#define VER_FILESUBTYPE             VFT2_DRV_SYSTEM
+#define VER_FILEDESCRIPTION_STR     "Lease Layer Device Driver"
+#define VER_INTERNALNAME_STR        "LeasLayr.sys"
+#define VER_ORIGINALFILENAME_STR    "LeasLayr.sys"
+
+#define IDS_SERVICE_DISPLAY_NAME                    ( 101 )
+#define IDS_SERVICE_DESCRIPTION                     ( 102 )
+
+STRINGTABLE
+BEGIN
+	IDS_SERVICE_DISPLAY_NAME		"Windows Fabric Lease Layer"
+	IDS_SERVICE_DESCRIPTION			"Windows Fabric Reliable Failure Detection"
+END
+
+
+#include "common.ver"
+#include "Microsoft-ServiceFabric-LeaseEvents.rc"
+

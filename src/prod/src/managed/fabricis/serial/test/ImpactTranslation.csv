@@ -1,0 +1,374 @@
+#######################################################
+# Test data for ImpactTranslatorTest.ScriptedTest
+#######################################################
+#
+# !clear: Clears all configuration
+# !set <Key>=<Value>: Sets a configuration setting
+#
+# All other lines run a test case.  The format is:
+#
+#     ComputeImpact,DiskImpact,NetworkImpact,OSImpact,EstimatedImpactDurationInSeconds,ExpectedResult
+#
+# This constructs an IImpactDetail object from the first 5 fields, runs it through ImpactTranslator.TranslateImpactDetailToNodeTask()
+# and verifies that the result returned matches ExpectedResult.
+#
+
+#
+# Brute force w/ default config and zero estimated duration
+#
+None,None,None,None,0,Invalid
+None,None,None,Freeze,0,Restart
+None,None,None,Reset,0,Restart
+None,None,None,Unknown,0,Relocate
+None,None,Freeze,None,0,Restart
+None,None,Freeze,Freeze,0,Restart
+None,None,Freeze,Reset,0,Restart
+None,None,Freeze,Unknown,0,Relocate
+None,None,Reset,None,0,Restart
+None,None,Reset,Freeze,0,Restart
+None,None,Reset,Reset,0,Restart
+None,None,Reset,Unknown,0,Relocate
+None,None,Unknown,None,0,Relocate
+None,None,Unknown,Freeze,0,Relocate
+None,None,Unknown,Reset,0,Relocate
+None,None,Unknown,Unknown,0,Relocate
+None,Freeze,None,None,0,Restart
+None,Freeze,None,Freeze,0,Restart
+None,Freeze,None,Reset,0,Restart
+None,Freeze,None,Unknown,0,Relocate
+None,Freeze,Freeze,None,0,Restart
+None,Freeze,Freeze,Freeze,0,Restart
+None,Freeze,Freeze,Reset,0,Restart
+None,Freeze,Freeze,Unknown,0,Relocate
+None,Freeze,Reset,None,0,Restart
+None,Freeze,Reset,Freeze,0,Restart
+None,Freeze,Reset,Reset,0,Restart
+None,Freeze,Reset,Unknown,0,Relocate
+None,Freeze,Unknown,None,0,Relocate
+None,Freeze,Unknown,Freeze,0,Relocate
+None,Freeze,Unknown,Reset,0,Relocate
+None,Freeze,Unknown,Unknown,0,Relocate
+None,Reset,None,None,0,Relocate
+None,Reset,None,Freeze,0,Relocate
+None,Reset,None,Reset,0,Relocate
+None,Reset,None,Unknown,0,Relocate
+None,Reset,Freeze,None,0,Relocate
+None,Reset,Freeze,Freeze,0,Relocate
+None,Reset,Freeze,Reset,0,Relocate
+None,Reset,Freeze,Unknown,0,Relocate
+None,Reset,Reset,None,0,Relocate
+None,Reset,Reset,Freeze,0,Relocate
+None,Reset,Reset,Reset,0,Relocate
+None,Reset,Reset,Unknown,0,Relocate
+None,Reset,Unknown,None,0,Relocate
+None,Reset,Unknown,Freeze,0,Relocate
+None,Reset,Unknown,Reset,0,Relocate
+None,Reset,Unknown,Unknown,0,Relocate
+None,Unknown,None,None,0,Relocate
+None,Unknown,None,Freeze,0,Relocate
+None,Unknown,None,Reset,0,Relocate
+None,Unknown,None,Unknown,0,Relocate
+None,Unknown,Freeze,None,0,Relocate
+None,Unknown,Freeze,Freeze,0,Relocate
+None,Unknown,Freeze,Reset,0,Relocate
+None,Unknown,Freeze,Unknown,0,Relocate
+None,Unknown,Reset,None,0,Relocate
+None,Unknown,Reset,Freeze,0,Relocate
+None,Unknown,Reset,Reset,0,Relocate
+None,Unknown,Reset,Unknown,0,Relocate
+None,Unknown,Unknown,None,0,Relocate
+None,Unknown,Unknown,Freeze,0,Relocate
+None,Unknown,Unknown,Reset,0,Relocate
+None,Unknown,Unknown,Unknown,0,Relocate
+Freeze,None,None,None,0,Restart
+Freeze,None,None,Freeze,0,Restart
+Freeze,None,None,Reset,0,Restart
+Freeze,None,None,Unknown,0,Relocate
+Freeze,None,Freeze,None,0,Restart
+Freeze,None,Freeze,Freeze,0,Restart
+Freeze,None,Freeze,Reset,0,Restart
+Freeze,None,Freeze,Unknown,0,Relocate
+Freeze,None,Reset,None,0,Restart
+Freeze,None,Reset,Freeze,0,Restart
+Freeze,None,Reset,Reset,0,Restart
+Freeze,None,Reset,Unknown,0,Relocate
+Freeze,None,Unknown,None,0,Relocate
+Freeze,None,Unknown,Freeze,0,Relocate
+Freeze,None,Unknown,Reset,0,Relocate
+Freeze,None,Unknown,Unknown,0,Relocate
+Freeze,Freeze,None,None,0,Restart
+Freeze,Freeze,None,Freeze,0,Restart
+Freeze,Freeze,None,Reset,0,Restart
+Freeze,Freeze,None,Unknown,0,Relocate
+Freeze,Freeze,Freeze,None,0,Restart
+Freeze,Freeze,Freeze,Freeze,0,Restart
+Freeze,Freeze,Freeze,Reset,0,Restart
+Freeze,Freeze,Freeze,Unknown,0,Relocate
+Freeze,Freeze,Reset,None,0,Restart
+Freeze,Freeze,Reset,Freeze,0,Restart
+Freeze,Freeze,Reset,Reset,0,Restart
+Freeze,Freeze,Reset,Unknown,0,Relocate
+Freeze,Freeze,Unknown,None,0,Relocate
+Freeze,Freeze,Unknown,Freeze,0,Relocate
+Freeze,Freeze,Unknown,Reset,0,Relocate
+Freeze,Freeze,Unknown,Unknown,0,Relocate
+Freeze,Reset,None,None,0,Relocate
+Freeze,Reset,None,Freeze,0,Relocate
+Freeze,Reset,None,Reset,0,Relocate
+Freeze,Reset,None,Unknown,0,Relocate
+Freeze,Reset,Freeze,None,0,Relocate
+Freeze,Reset,Freeze,Freeze,0,Relocate
+Freeze,Reset,Freeze,Reset,0,Relocate
+Freeze,Reset,Freeze,Unknown,0,Relocate
+Freeze,Reset,Reset,None,0,Relocate
+Freeze,Reset,Reset,Freeze,0,Relocate
+Freeze,Reset,Reset,Reset,0,Relocate
+Freeze,Reset,Reset,Unknown,0,Relocate
+Freeze,Reset,Unknown,None,0,Relocate
+Freeze,Reset,Unknown,Freeze,0,Relocate
+Freeze,Reset,Unknown,Reset,0,Relocate
+Freeze,Reset,Unknown,Unknown,0,Relocate
+Freeze,Unknown,None,None,0,Relocate
+Freeze,Unknown,None,Freeze,0,Relocate
+Freeze,Unknown,None,Reset,0,Relocate
+Freeze,Unknown,None,Unknown,0,Relocate
+Freeze,Unknown,Freeze,None,0,Relocate
+Freeze,Unknown,Freeze,Freeze,0,Relocate
+Freeze,Unknown,Freeze,Reset,0,Relocate
+Freeze,Unknown,Freeze,Unknown,0,Relocate
+Freeze,Unknown,Reset,None,0,Relocate
+Freeze,Unknown,Reset,Freeze,0,Relocate
+Freeze,Unknown,Reset,Reset,0,Relocate
+Freeze,Unknown,Reset,Unknown,0,Relocate
+Freeze,Unknown,Unknown,None,0,Relocate
+Freeze,Unknown,Unknown,Freeze,0,Relocate
+Freeze,Unknown,Unknown,Reset,0,Relocate
+Freeze,Unknown,Unknown,Unknown,0,Relocate
+Reset,None,None,None,0,Restart
+Reset,None,None,Freeze,0,Restart
+Reset,None,None,Reset,0,Restart
+Reset,None,None,Unknown,0,Relocate
+Reset,None,Freeze,None,0,Restart
+Reset,None,Freeze,Freeze,0,Restart
+Reset,None,Freeze,Reset,0,Restart
+Reset,None,Freeze,Unknown,0,Relocate
+Reset,None,Reset,None,0,Restart
+Reset,None,Reset,Freeze,0,Restart
+Reset,None,Reset,Reset,0,Restart
+Reset,None,Reset,Unknown,0,Relocate
+Reset,None,Unknown,None,0,Relocate
+Reset,None,Unknown,Freeze,0,Relocate
+Reset,None,Unknown,Reset,0,Relocate
+Reset,None,Unknown,Unknown,0,Relocate
+Reset,Freeze,None,None,0,Restart
+Reset,Freeze,None,Freeze,0,Restart
+Reset,Freeze,None,Reset,0,Restart
+Reset,Freeze,None,Unknown,0,Relocate
+Reset,Freeze,Freeze,None,0,Restart
+Reset,Freeze,Freeze,Freeze,0,Restart
+Reset,Freeze,Freeze,Reset,0,Restart
+Reset,Freeze,Freeze,Unknown,0,Relocate
+Reset,Freeze,Reset,None,0,Restart
+Reset,Freeze,Reset,Freeze,0,Restart
+Reset,Freeze,Reset,Reset,0,Restart
+Reset,Freeze,Reset,Unknown,0,Relocate
+Reset,Freeze,Unknown,None,0,Relocate
+Reset,Freeze,Unknown,Freeze,0,Relocate
+Reset,Freeze,Unknown,Reset,0,Relocate
+Reset,Freeze,Unknown,Unknown,0,Relocate
+Reset,Reset,None,None,0,Relocate
+Reset,Reset,None,Freeze,0,Relocate
+Reset,Reset,None,Reset,0,Relocate
+Reset,Reset,None,Unknown,0,Relocate
+Reset,Reset,Freeze,None,0,Relocate
+Reset,Reset,Freeze,Freeze,0,Relocate
+Reset,Reset,Freeze,Reset,0,Relocate
+Reset,Reset,Freeze,Unknown,0,Relocate
+Reset,Reset,Reset,None,0,Relocate
+Reset,Reset,Reset,Freeze,0,Relocate
+Reset,Reset,Reset,Reset,0,Relocate
+Reset,Reset,Reset,Unknown,0,Relocate
+Reset,Reset,Unknown,None,0,Relocate
+Reset,Reset,Unknown,Freeze,0,Relocate
+Reset,Reset,Unknown,Reset,0,Relocate
+Reset,Reset,Unknown,Unknown,0,Relocate
+Reset,Unknown,None,None,0,Relocate
+Reset,Unknown,None,Freeze,0,Relocate
+Reset,Unknown,None,Reset,0,Relocate
+Reset,Unknown,None,Unknown,0,Relocate
+Reset,Unknown,Freeze,None,0,Relocate
+Reset,Unknown,Freeze,Freeze,0,Relocate
+Reset,Unknown,Freeze,Reset,0,Relocate
+Reset,Unknown,Freeze,Unknown,0,Relocate
+Reset,Unknown,Reset,None,0,Relocate
+Reset,Unknown,Reset,Freeze,0,Relocate
+Reset,Unknown,Reset,Reset,0,Relocate
+Reset,Unknown,Reset,Unknown,0,Relocate
+Reset,Unknown,Unknown,None,0,Relocate
+Reset,Unknown,Unknown,Freeze,0,Relocate
+Reset,Unknown,Unknown,Reset,0,Relocate
+Reset,Unknown,Unknown,Unknown,0,Relocate
+Unknown,None,None,None,0,Relocate
+Unknown,None,None,Freeze,0,Relocate
+Unknown,None,None,Reset,0,Relocate
+Unknown,None,None,Unknown,0,Relocate
+Unknown,None,Freeze,None,0,Relocate
+Unknown,None,Freeze,Freeze,0,Relocate
+Unknown,None,Freeze,Reset,0,Relocate
+Unknown,None,Freeze,Unknown,0,Relocate
+Unknown,None,Reset,None,0,Relocate
+Unknown,None,Reset,Freeze,0,Relocate
+Unknown,None,Reset,Reset,0,Relocate
+Unknown,None,Reset,Unknown,0,Relocate
+Unknown,None,Unknown,None,0,Relocate
+Unknown,None,Unknown,Freeze,0,Relocate
+Unknown,None,Unknown,Reset,0,Relocate
+Unknown,None,Unknown,Unknown,0,Relocate
+Unknown,Freeze,None,None,0,Relocate
+Unknown,Freeze,None,Freeze,0,Relocate
+Unknown,Freeze,None,Reset,0,Relocate
+Unknown,Freeze,None,Unknown,0,Relocate
+Unknown,Freeze,Freeze,None,0,Relocate
+Unknown,Freeze,Freeze,Freeze,0,Relocate
+Unknown,Freeze,Freeze,Reset,0,Relocate
+Unknown,Freeze,Freeze,Unknown,0,Relocate
+Unknown,Freeze,Reset,None,0,Relocate
+Unknown,Freeze,Reset,Freeze,0,Relocate
+Unknown,Freeze,Reset,Reset,0,Relocate
+Unknown,Freeze,Reset,Unknown,0,Relocate
+Unknown,Freeze,Unknown,None,0,Relocate
+Unknown,Freeze,Unknown,Freeze,0,Relocate
+Unknown,Freeze,Unknown,Reset,0,Relocate
+Unknown,Freeze,Unknown,Unknown,0,Relocate
+Unknown,Reset,None,None,0,Relocate
+Unknown,Reset,None,Freeze,0,Relocate
+Unknown,Reset,None,Reset,0,Relocate
+Unknown,Reset,None,Unknown,0,Relocate
+Unknown,Reset,Freeze,None,0,Relocate
+Unknown,Reset,Freeze,Freeze,0,Relocate
+Unknown,Reset,Freeze,Reset,0,Relocate
+Unknown,Reset,Freeze,Unknown,0,Relocate
+Unknown,Reset,Reset,None,0,Relocate
+Unknown,Reset,Reset,Freeze,0,Relocate
+Unknown,Reset,Reset,Reset,0,Relocate
+Unknown,Reset,Reset,Unknown,0,Relocate
+Unknown,Reset,Unknown,None,0,Relocate
+Unknown,Reset,Unknown,Freeze,0,Relocate
+Unknown,Reset,Unknown,Reset,0,Relocate
+Unknown,Reset,Unknown,Unknown,0,Relocate
+Unknown,Unknown,None,None,0,Relocate
+Unknown,Unknown,None,Freeze,0,Relocate
+Unknown,Unknown,None,Reset,0,Relocate
+Unknown,Unknown,None,Unknown,0,Relocate
+Unknown,Unknown,Freeze,None,0,Relocate
+Unknown,Unknown,Freeze,Freeze,0,Relocate
+Unknown,Unknown,Freeze,Reset,0,Relocate
+Unknown,Unknown,Freeze,Unknown,0,Relocate
+Unknown,Unknown,Reset,None,0,Relocate
+Unknown,Unknown,Reset,Freeze,0,Relocate
+Unknown,Unknown,Reset,Reset,0,Relocate
+Unknown,Unknown,Reset,Unknown,0,Relocate
+Unknown,Unknown,Unknown,None,0,Relocate
+Unknown,Unknown,Unknown,Freeze,0,Relocate
+Unknown,Unknown,Unknown,Reset,0,Relocate
+Unknown,Unknown,Unknown,Unknown,0,Relocate
+
+#
+# Test Compute Freeze durations + config
+#
+!clear
+Freeze,None,None,None,-1,Restart
+Freeze,None,None,None,0,Restart
+Freeze,None,None,None,10,Restart
+!set WindowsAzure.SerialJobImpact.RestartDurationThreshold=10
+Freeze,None,None,None,-1,Restart
+Freeze,None,None,None,0,Invalid
+Freeze,None,None,None,9,Invalid
+Freeze,None,None,None,10,Restart
+Freeze,None,None,None,30,Restart
+Freeze,None,None,None,7199,Restart
+Freeze,None,None,None,7200,Relocate
+Freeze,None,None,None,9223372036854775807,Relocate
+!set WindowsAzure.SerialJobImpact.UnknownDurationFreezeMapping=Freeze
+Freeze,None,None,None,-1,Invalid
+Freeze,None,None,None,9,Invalid
+Freeze,None,None,None,10,Restart
+
+#
+# DataDestructiveDurationThreshold
+#
+!clear
+!set WindowsAzure.SerialJobImpact.RestartDurationThreshold=10
+!set WindowsAzure.SerialJobImpact.DataDestructiveDurationThreshold=20
+Freeze,None,None,None,0,Invalid
+Freeze,None,None,None,10,Restart
+Freeze,None,None,None,20,Relocate
+!set WindowsAzure.SerialJobImpact.DataDestructiveDurationThreshold=10
+Freeze,None,None,None,10,Relocate
+
+#
+# ResourceMap config
+#
+!clear
+!set WindowsAzure.SerialJobImpact.RestartDurationThreshold=10
+Freeze,None,None,None,0,Invalid
+!set WindowsAzure.SerialJobImpact.ResourceMap.Compute.Freeze=Restart
+Freeze,None,None,None,0,Restart
+!set WindowsAzure.SerialJobImpact.ResourceMap.Compute.Freeze=DataDestructive
+Freeze,None,None,None,0,Relocate
+!clear
+!set WindowsAzure.SerialJobImpact.RestartDurationThreshold=10
+None,Freeze,None,None,0,Invalid
+!set WindowsAzure.SerialJobImpact.ResourceMap.Disk.Freeze=Restart
+None,Freeze,None,None,0,Restart
+!set WindowsAzure.SerialJobImpact.ResourceMap.Disk.Freeze=DataDestructive
+None,Freeze,None,None,0,Relocate
+!clear
+!set WindowsAzure.SerialJobImpact.RestartDurationThreshold=10
+None,None,Freeze,None,0,Invalid
+!set WindowsAzure.SerialJobImpact.ResourceMap.Network.Freeze=Restart
+None,None,Freeze,None,0,Restart
+!set WindowsAzure.SerialJobImpact.ResourceMap.Network.Freeze=DataDestructive
+None,None,Freeze,None,0,Relocate
+!clear
+!set WindowsAzure.SerialJobImpact.RestartDurationThreshold=10
+None,None,None,Freeze,0,Invalid
+!set WindowsAzure.SerialJobImpact.ResourceMap.OS.Freeze=Restart
+None,None,None,Freeze,0,Restart
+!set WindowsAzure.SerialJobImpact.ResourceMap.OS.Freeze=DataDestructive
+None,None,None,Freeze,0,Relocate
+
+#
+# Downgrading Disk Reset impact
+#
+!clear
+!set WindowsAzure.SerialJobImpact.RestartDurationThreshold=10
+None,Reset,None,None,0,Relocate
+!set WindowsAzure.SerialJobImpact.ResourceMap.Disk.Reset=Restart
+None,Reset,None,None,0,Restart
+!set WindowsAzure.SerialJobImpact.ResourceMap.Disk.Reset=Freeze
+None,Reset,None,None,0,Invalid
+None,Reset,None,None,10,Restart
+!set WindowsAzure.SerialJobImpact.ResourceMap.Disk.Reset=NoImpact
+None,Reset,None,None,0,Invalid
+None,Reset,None,None,1000000,Invalid
+
+#
+# Impactless with various durations
+#
+!clear
+None,None,None,None,0,Invalid
+None,None,None,None,-1,Invalid
+None,None,None,None,10,Invalid
+None,None,None,None,9223372036854775807,Invalid
+
+#
+# Unhandled
+#
+!clear
+!set WindowsAzure.SerialJobImpact.ResourceMap.Compute.Unknown=Unhandled
+Unknown,None,None,None,0,!
+
+# Default values from SDK
+!clear
+Reset,Freeze,Reset,Reset,-1,Restart

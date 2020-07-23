@@ -12,15 +12,16 @@ namespace Api
     { 0x8f1ed49f, 0x8bbc, 0x445f,{ 0xa7, 0xe, 0xab, 0x39, 0xd6, 0x30, 0xc, 0x16 } };
 
     class ComContainerActivatorServiceAgent :
-        public IFabricContainerActivatorServiceAgent,
+        public IFabricContainerActivatorServiceAgent2,
         private Common::ComUnknownBase,
         public Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>
     {
         DENY_COPY(ComContainerActivatorServiceAgent)
 
         BEGIN_COM_INTERFACE_LIST(ComContainerActivatorServiceAgent)
-            COM_INTERFACE_ITEM(IID_IUnknown, IFabricContainerActivatorServiceAgent)
+            COM_INTERFACE_ITEM(IID_IUnknown, IFabricContainerActivatorServiceAgent2)
             COM_INTERFACE_ITEM(IID_IFabricContainerActivatorServiceAgent, IFabricContainerActivatorServiceAgent)
+            COM_INTERFACE_ITEM(IID_IFabricContainerActivatorServiceAgent2, IFabricContainerActivatorServiceAgent2)
             COM_INTERFACE_ITEM(CLSID_ComContainerActivatorServiceAgent, ComContainerActivatorServiceAgent)
         END_COM_INTERFACE_LIST()
 
@@ -33,15 +34,19 @@ namespace Api
         // 
         // IFabricContainerActivationManagerAgent methods
         // 
-
         HRESULT STDMETHODCALLTYPE ProcessContainerEvents(
             /* [in] */ FABRIC_CONTAINER_EVENT_NOTIFICATION *notifiction);
 
         HRESULT STDMETHODCALLTYPE RegisterContainerActivatorService(
             /* [in] */ IFabricContainerActivatorService * activatorService);
 
+        // 
+        // IFabricContainerActivationManagerAgent2 methods
+        // 
+        HRESULT STDMETHODCALLTYPE RegisterContainerActivatorService(
+            /* [in] */ IFabricContainerActivatorService2 * activatorService);
+
     private:
         IContainerActivatorServiceAgentPtr impl_;
     };
 }
-

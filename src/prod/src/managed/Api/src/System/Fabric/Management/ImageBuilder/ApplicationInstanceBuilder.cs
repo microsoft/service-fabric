@@ -551,6 +551,20 @@ namespace System.Fabric.Management.ImageBuilder
                 servicePackage.DigestedResources = new ServicePackageTypeDigestedResources();
                 GetDigestedEndpoints(serviceManifestImport, matchingServiceManifestType, applicationManifestType, servicePackage, defaultUserRef);
 
+                // Build NetworkPolicies
+                if (serviceManifestImport.Policies != null)
+                {
+                    NetworkPoliciesType networkPolicies = (NetworkPoliciesType)serviceManifestImport.Policies.FirstOrDefault(
+                        policy => policy.GetType().Equals(typeof(NetworkPoliciesType)));
+
+                    if (networkPolicies != null)
+                    {
+                        servicePackage.NetworkPolicies = networkPolicies.Items;
+
+                        this.ApplyParameters(servicePackage.NetworkPolicies);
+                    }
+                }
+
                 // Copy Diagnostics settings
                 if (matchingServiceManifestType.Diagnostics != null)
                 {
@@ -685,8 +699,9 @@ namespace System.Fabric.Management.ImageBuilder
                         {
                             settingsType = this.ImageStoreWrapper.GetFromStore<SettingsType>(settingsFile, timeoutHelper.GetRemainingTime());
                         }
-                        
+                        else
                         {
+                            //Look for Compressed config file
                             string archiveFile = storeLayoutSpecification.GetSubPackageArchiveFile(configPackageDirectory);
 
                             if (this.ImageStoreWrapper.DoesContentExists(archiveFile, timeoutHelper.GetRemainingTime()))
@@ -702,26 +717,22 @@ namespace System.Fabric.Management.ImageBuilder
                                 directoryToExtract = tempFile + '_' + configPackageName;
                                 ImageBuilderUtility.ExtractArchive(tempFile, directoryToExtract);
 
-                                string settingsFilePath = FabricDirectory.GetFiles(directoryToExtract, "*.xml", SearchOption.AllDirectories).FirstOrDefault(
-                                    fileName => fileName.Contains("Settings.xml"));
-                                //string settingsFilePath = Directory.GetFiles(directoryToExtract).FirstOrDefault(
-                                //    fileName => ImageBuilderUtility.Equals(fileName, "Settings.xml"));
+                                string settingsFilePath = FabricDirectory.GetFiles(directoryToExtract, "Settings.xml", SearchOption.TopDirectoryOnly).FirstOrDefault();
 
                                 if (String.IsNullOrEmpty(settingsFilePath))
                                 {
                                     throw new FileNotFoundException(StringResources.Error_FileNotFound, settingsFilePath);
                                 }
 
-                                settingsType = this.ImageStoreWrapper.GetFromStore<SettingsType>(settingsFilePath, timeoutHelper.GetRemainingTime());
+                                settingsType = ImageBuilderUtility.ReadXml<SettingsType>(settingsFilePath);
                             }
                         } 
                     }
                     finally
                     {
-                        if (!String.IsNullOrEmpty(tempFile))
+                        if (!String.IsNullOrEmpty(tempFile) && FabricFile.Exists(tempFile))
                         {
                             FabricFile.Delete(tempFile);
-                            //ImageBuilderUtility.DeleteTempLocation(tempFolder);
                         }
                         if (!String.IsNullOrEmpty(directoryToExtract))
                         {
@@ -1265,15 +1276,8 @@ namespace System.Fabric.Management.ImageBuilder
                         repositoryCredentials.AccountName = this.ApplyParameters(repositoryCredentials.AccountName);
                         repositoryCredentials.Password = this.ApplyParameters(repositoryCredentials.Password);
                         repositoryCredentials.Email = this.ApplyParameters(repositoryCredentials.Email);
+                        ValidateRepositoryCredentialPasswordType(repositoryCredentials);
 
-                        if (string.IsNullOrEmpty(repositoryCredentials.Password) && repositoryCredentials.PasswordEncrypted)
-                        {
-                            // Accountname is PII so here as pass in a blank string, the exception that is thrown will have the actual AccountName.
-                            ImageBuilder.TraceSource.WriteError(TraceType, StringResources.ImageBuilderError_RepositoryCredentialsBlankPasswordWithEncryption, "");
-
-                            throw new FabricImageBuilderValidationException(
-                                string.Format(System.Globalization.CultureInfo.InvariantCulture, StringResources.ImageBuilderError_RepositoryCredentialsBlankPasswordWithEncryption, repositoryCredentials.AccountName));
-                        }
                     }
                     else if (policyType.Equals(typeof(ContainerLoggingDriverType)))
                     {
@@ -1287,6 +1291,7 @@ namespace System.Fabric.Management.ImageBuilder
                                 driverOpt.Value = this.ApplyParameters(driverOpt.Value);
                                 driverOpt.IsEncrypted = this.ApplyParameters(driverOpt.IsEncrypted);
                                 CheckIsValidBoolean(driverOpt.IsEncrypted);
+                                // driver options for the container log do not require or reference secrets.
                             }
                         }
                     }
@@ -1303,7 +1308,9 @@ namespace System.Fabric.Management.ImageBuilder
                                 driverOpt.Name = this.ApplyParameters(driverOpt.Name);
                                 driverOpt.Value = this.ApplyParameters(driverOpt.Value);
                                 driverOpt.IsEncrypted = this.ApplyParameters(driverOpt.IsEncrypted);
-                                CheckIsValidBoolean(driverOpt.IsEncrypted);
+                                driverOpt.Type = this.ApplyParameters(driverOpt.Type);
+                                // verify whether this driver option is a secret or references one
+                                ValidateVolumeDriverOptionProtectionType(driverOpt);
                             }
                         }
                     }
@@ -1426,6 +1433,123 @@ namespace System.Fabric.Management.ImageBuilder
                         CheckIsValidBoolean(containerPolicies.AutoRemove);
                     }
                 }
+            }
+        }
+
+        private void ValidateRepositoryCredentialPasswordType(RepositoryCredentialsType repositoryCredentials)
+        {
+            bool isTypePlainTextOrEmpty = true;
+            bool isTypeEncrypted = false;
+            bool isTypeEmpty = true;
+            if (!String.IsNullOrEmpty(repositoryCredentials.Type))
+            {
+                isTypeEmpty = false;
+
+                repositoryCredentials.Type = this.ApplyParameters(repositoryCredentials.Type);
+                VerifySourceLocation("RepositoryCredentials", "ContainerHostPolicies", repositoryCredentials.Type);
+
+                EnvironmentVariableTypeType repositoryCredenetailPasswordType;
+                if (!Enum.TryParse<EnvironmentVariableTypeType>(repositoryCredentials.Type, out repositoryCredenetailPasswordType))
+                {
+                    ImageBuilderUtility.TraceAndThrowValidationError(
+                        TraceType,
+                        StringResources.ImageBuilderError_ConfigOverrideTypeMismatch,
+                        "RepositoryCredentials",
+                        "Type",
+                        "ContainerHostPolicies",
+                        repositoryCredentials.Type,
+                        "PlainText/Encrypted/SecretsStoreRef");
+                }
+
+                if (!(EnvironmentVariableTypeType.PlainText == repositoryCredenetailPasswordType))
+                {
+                    isTypePlainTextOrEmpty = false;
+                }
+                if (EnvironmentVariableTypeType.Encrypted == repositoryCredenetailPasswordType)
+                {
+                    isTypeEncrypted = true;
+                }
+            }
+
+            // If you have specified the Type and it's not empty/PlainText and then you cannot have an empty password.
+            if (string.IsNullOrEmpty(repositoryCredentials.Password) && (repositoryCredentials.PasswordEncrypted || !isTypePlainTextOrEmpty))
+            {
+                // Accountname is PII so here as pass in a blank string, the exception that is thrown will have the actual AccountName.
+                ImageBuilder.TraceSource.WriteError(TraceType, StringResources.ImageBuilderError_RepositoryCredentialsBlankPassword, repositoryCredentials.AccountName);
+
+                throw new FabricImageBuilderValidationException(
+                    string.Format(System.Globalization.CultureInfo.InvariantCulture, StringResources.ImageBuilderError_RepositoryCredentialsBlankPassword, repositoryCredentials.AccountName));
+            }
+
+            // If PasswordEncrypted is set to true then you cannot have Type set to SecretsStoreRef/PlainText
+            if (repositoryCredentials.PasswordEncrypted && !isTypeEmpty && !isTypeEncrypted)
+            {
+
+                ImageBuilder.TraceSource.WriteError(TraceType, StringResources.ImageBuilderError_InvalidRepositoryCredentialsType, repositoryCredentials.AccountName);
+
+                throw new FabricImageBuilderValidationException(
+                    string.Format(System.Globalization.CultureInfo.InvariantCulture, StringResources.ImageBuilderError_InvalidRepositoryCredentialsType, repositoryCredentials.AccountName));
+            }
+        }
+
+        /// <summary>
+        /// Verifies whether the flags and type of this driver option are a valid combination.
+        /// </summary>
+        /// <param name="driverOption"></param>
+        private void ValidateVolumeDriverOptionProtectionType(DriverOptionType driverOption)
+        {
+            bool isEncrypted = CheckIsValidBoolean(driverOption.IsEncrypted);
+
+            // TODO [dragosav]: look into renaming the EnvVarTypeType to something more generic, 
+            // as the values are not specific to environment variables.
+            EnvironmentVariableTypeType driverOptionType;
+            if (!Enum.TryParse<EnvironmentVariableTypeType>(driverOption.Type, out driverOptionType))
+            {
+                ImageBuilderUtility.TraceAndThrowValidationError(
+                    TraceType,
+                    StringResources.ImageBuilderError_ConfigOverrideTypeMismatch,
+                    "VolumeDriverOptions",
+                    "Type",
+                    "ContainerHostPolicies",
+                    driverOption.Type,
+                    "PlainText/Encrypted/SecretsStoreRef");
+            }
+
+            // since we're phasing out IsEncrypted, and the Type is just being introduced, we can't
+            // enforce a strict consistency of the type and 'encrypted' flag, only that this isn't an
+            // "encrypted secret reference"; that is, any combination of type = {'plaintext', 'encrypted'},
+            // and IsEncrypted = {true, false} is valid; isEncrypted and type == 'secretsStoreRef' is not. 
+            bool isSecretReference = (driverOptionType == EnvironmentVariableTypeType.SecretsStoreRef);
+
+            if (isEncrypted && isSecretReference)
+            {
+                ImageBuilder.TraceSource.WriteError(
+                    TraceType,
+                    "Driver option '{0}' cannot be both encrypted and declared as a secret reference.",
+                    driverOption.Name);
+
+                throw new FabricImageBuilderValidationException(
+                    string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        StringResources.ImageBuilderError_InvalidValue,
+                        driverOption.Name,
+                        driverOption.Type));
+            }
+
+            if ((isEncrypted || isSecretReference)
+                && String.IsNullOrWhiteSpace(driverOption.Value))
+            {
+                ImageBuilder.TraceSource.WriteError(
+                    TraceType,
+                    "Driver option '{0}' is either encrypted or declared as a secret reference, and may not be empty.",
+                    driverOption.Name);
+
+                throw new FabricImageBuilderValidationException(
+                    string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        StringResources.ImageBuilderError_InvalidValue,
+                        driverOption.Name,
+                        driverOption.Type));
             }
         }
 
@@ -1914,6 +2038,19 @@ namespace System.Fabric.Management.ImageBuilder
             resourceGovernancePolicy.KernelMemoryInMB = this.ApplyParameters(resourceGovernancePolicy.KernelMemoryInMB);
             resourceGovernancePolicy.ShmSizeInMB = this.ApplyParameters(resourceGovernancePolicy.ShmSizeInMB);
 
+        }
+
+        private void ApplyParameters(ContainerNetworkPolicyType[] containerNetworkPolicies)
+        {
+            if (containerNetworkPolicies == null)
+            {
+                return;
+            }
+
+            foreach (var containerNetworkPolicy in containerNetworkPolicies)
+            {
+                 containerNetworkPolicy.NetworkRef = this.ApplyParameters(containerNetworkPolicy.NetworkRef);
+            }
         }
 
         private string ApplyParameters(string value)

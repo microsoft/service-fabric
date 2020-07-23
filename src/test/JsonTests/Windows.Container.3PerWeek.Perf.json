@@ -5,7 +5,7 @@
     {
       "Name": "E2E Container Perf OnePerNode IIS RP (D3)",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "arya,harahma",      
+      "Owners": "caiwang,harahma",      
       "ResourcesRequired": "Server:14;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -19,7 +19,7 @@
     {
       "Name": "E2E Container Perf OnePerNode OWIN RP (D3)",
       "Type": "V2_ScriptTest_Container_Perf",
-      "Owners": "arya,harahma",      
+      "Owners": "caiwang,harahma",      
       "ResourcesRequired": "Server:14;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -35,7 +35,7 @@
     {
       "Name": "E2E GuestExe Perf OnePerNode OWIN RP (D3)",
       "Type": "V2_ScriptTest_Container_Perf",
-      "Owners": "arya,harahma",      
+      "Owners": "caiwang,harahma",      
       "ResourcesRequired": "Server:14;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -51,7 +51,7 @@
     {
       "Name": "E2E Container Perf NoDynam IIS (D3)",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "arya,harahma",      
+      "Owners": "caiwang,harahma",      
       "ResourcesRequired": "Server:14;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -65,7 +65,7 @@
     {
       "Name": "E2E Container Perf LoDynam IIS (D3)",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "arya,harahma",      
+      "Owners": "caiwang,harahma",      
       "ResourcesRequired": "Server:14;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -79,7 +79,7 @@
     {
       "Name": "E2E Container Perf MedDynam IIS (D3)",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "arya,harahma",      
+      "Owners": "caiwang,harahma",      
       "ResourcesRequired": "Server:14;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -93,7 +93,7 @@
     {
       "Name": "E2E Container Perf HiDynam IIS (D3)",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "arya,harahma",      
+      "Owners": "caiwang,harahma",      
       "ResourcesRequired": "Server:14;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",

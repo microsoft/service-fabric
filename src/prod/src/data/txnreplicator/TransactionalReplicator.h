@@ -36,6 +36,7 @@ namespace TxnReplicator
             __in Data::Log::LogManager & logManager,
             __in IDataLossHandler & dataLossHandler,
             __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient,
+            __in bool hasPersistedState,
             __in KAllocator& allocator);
 
         __declspec(property(get = get_Config)) TRInternalSettingsSPtr const & Config;
@@ -91,6 +92,8 @@ namespace TxnReplicator
         void Abort();
 
         bool get_IsReadable() const noexcept override;
+
+        bool get_HasPersistedState() const noexcept override;
 
         Data::Utilities::IStatefulPartition::SPtr get_StatefulPartition() const override;
 
@@ -286,7 +289,8 @@ namespace TxnReplicator
             __in TxnReplicator::SLInternalSettingsSPtr && ktlLoggerSharedLogConfig,
             __in Data::Log::LogManager & logManager,
             __in IDataLossHandler & dataLossHandler,
-            __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient);
+            __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient,
+            __in bool hasPersistedState);
 
         ktl::Task OnServiceOpenAsync() noexcept;
         ktl::Task OnServiceCloseAsync() noexcept;

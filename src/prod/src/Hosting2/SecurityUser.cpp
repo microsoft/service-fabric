@@ -76,12 +76,12 @@ SecurityUserSPtr SecurityUser::CreateSecurityUser(
     }
     else if(accountType == SecurityPrincipalAccountType::ManagedServiceAccount)
     {
-        securityUser = make_shared<ServiceAccount>(applicationId, name, accountName, password, isPasswordEncrypted, accountType, parentApplicationGroups, parentSystemGroups);
+        securityUser = make_shared<ServiceAccount>(applicationId, name, accountName, password, isPasswordEncrypted, loadProfile, accountType, parentApplicationGroups, parentSystemGroups);
     }
     else if(accountType == SecurityPrincipalAccountType::LocalService ||
         accountType == SecurityPrincipalAccountType::NetworkService)
     {
-        securityUser = make_shared<BuiltinServiceAccount>(applicationId, name, accountName, password, isPasswordEncrypted, accountType, parentApplicationGroups, parentSystemGroups);
+        securityUser = make_shared<BuiltinServiceAccount>(applicationId, name, accountName, password, isPasswordEncrypted, loadProfile, accountType, parentApplicationGroups, parentSystemGroups);
     }
     else
     {

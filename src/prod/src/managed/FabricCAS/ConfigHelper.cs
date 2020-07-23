@@ -18,8 +18,8 @@ namespace Hosting.ContainerActivatorService
         internal static readonly string TraceType = "ConfigHelper";
 
         internal static readonly string FabricPackageFileNameEnvironment = "FabricPackageFileName";
-        internal static readonly string ContainerNetworkingModeEnvironmentVariable = "Fabric_NetworkingMode";
         internal static readonly string ContainerNameEnvironmentVariable = "Fabric_ContainerName";
+        internal static readonly string RuntimeSslConnectionCertFilePath = "Fabric_RuntimeSslConnectionCertFilePath";
         internal static readonly string RootNamingUriString = "fabric:";
 
         internal const double DockerVersionThreshold = 17.06;
@@ -390,16 +390,6 @@ namespace Hosting.ContainerActivatorService
 
             var fabricContainerLogRoot = Path.Combine(Utility.FabricLogRoot, "Containers");
             var fabricContainerRoot = Path.Combine(fabricContainerLogRoot, containerDesc.ContainerName);
-            FabricDirectory.CreateDirectory(fabricContainerRoot);
-
-            var fabricContainerTraceRoot = Path.Combine(fabricContainerRoot, "Traces");
-            FabricDirectory.CreateDirectory(fabricContainerTraceRoot);
-
-            var fabricContainerQueryTraceRoot = Path.Combine(fabricContainerRoot, "QueryTraces");
-            FabricDirectory.CreateDirectory(fabricContainerQueryTraceRoot);
-
-            var fabricContainerOperationalTraceRoot = Path.Combine(fabricContainerRoot, "OperationalTraces");
-            FabricDirectory.CreateDirectory(fabricContainerOperationalTraceRoot);
 
             // Set path to UT file
             // TODO: Bug#9728016 - Disable the bind until windows supports mounting file onto container
@@ -474,8 +464,9 @@ namespace Hosting.ContainerActivatorService
             string packageFilePath,
             string fabricContainerRoot)
         {
-            containerConfig.Env.Add(string.Format("FabricCodePath={0}", Utility.FabricCodePath));
+            containerConfig.Env.Add(string.Format("FabricCodePath={0}", Path.GetFullPath(Utility.FabricCodePath)));
             containerConfig.Env.Add(string.Format("FabricLogRoot={0}", fabricContainerRoot));
+            containerConfig.Env.Add(string.Format("FabricDataRoot={0}", Path.GetFullPath(Utility.FabricDataRoot)));
 
             containerConfig.HostConfig.Binds.Add(
                 string.Format("{0}:{1}", processDesc.AppDirectory, processDesc.AppDirectory));
@@ -498,7 +489,14 @@ namespace Hosting.ContainerActivatorService
             if (!string.IsNullOrWhiteSpace(fabricContainerRoot))
             {
                 containerConfig.HostConfig.Binds.Add(
-                    string.Format("{0}:{1}:ro", fabricContainerRoot, fabricContainerRoot));
+                    string.Format("{0}:{1}", fabricContainerRoot, fabricContainerRoot));
+            }
+
+            if (processDesc.EnvVars.ContainsKey(RuntimeSslConnectionCertFilePath))
+            {
+                var certDir = Path.GetDirectoryName(processDesc.EnvVars[RuntimeSslConnectionCertFilePath]);
+                containerConfig.HostConfig.Binds.Add(
+                    string.Format("{0}:{1}:ro", certDir, certDir));
             }
 
             // Mount the UT settings file
@@ -574,9 +572,8 @@ namespace Hosting.ContainerActivatorService
             ContainerConfig containerConfig,
             ContainerDescription containerDesc)
         {
-            var networkType = string.IsNullOrEmpty(containerDesc.AssignedIp) ? "Other" : "Open";
-            containerConfig.Env.Add(string.Format("{0}={1}", ContainerNetworkingModeEnvironmentVariable, networkType));
-            containerConfig.HostConfig.NetworkMode = HostingConfig.Config.ContainerDefaultNetwork;
+            containerConfig.HostConfig.NetworkMode =  HostingConfig.Config.ContainerDefaultNetwork;
+
 #if DotNetCoreClrLinux
             if (containerDesc.PortBindings.Count != 0)
             {
@@ -595,51 +592,68 @@ namespace Hosting.ContainerActivatorService
 
             bool sharingNetworkNamespace = false;
 
-            if (!string.IsNullOrEmpty(namespaceId) && !string.IsNullOrEmpty(containerDesc.AssignedIp))
+            // network namespace can be shared for open network config and
+            // for isolated network config.
+            if (!string.IsNullOrEmpty(namespaceId))
             {
-                sharingNetworkNamespace = true;
-
-                containerConfig.HostConfig.NetworkMode = namespaceId;
-                containerConfig.HostConfig.PublishAllPorts = false;
+                // Open and/or Isolated
+                if (((containerDesc.ContainerNetworkConfig.NetworkType & ContainerNetworkType.Open) == ContainerNetworkType.Open && 
+                    !string.IsNullOrEmpty(containerDesc.ContainerNetworkConfig.OpenNetworkAssignedIp)) ||
+                    ((containerDesc.ContainerNetworkConfig.NetworkType & ContainerNetworkType.Isolated) == ContainerNetworkType.Isolated &&
+                    containerDesc.ContainerNetworkConfig.OverlayNetworkResources.Count > 0))
+                {
+                    containerConfig.HostConfig.NetworkMode = namespaceId;
+                    containerConfig.HostConfig.PublishAllPorts = false;
+                    sharingNetworkNamespace = true;
+                }
             }
             else if (containerDesc.PortBindings.Count > 0)
             {
                 foreach (var portBinding in containerDesc.PortBindings)
                 {
                     containerConfig.HostConfig.PortBindings.Add(
-                        portBinding.Key,
-                        new List<PortBinding>
-                        {
+                       portBinding.Key,
+                       new List<PortBinding>
+                       {
                             new PortBinding()
                             {
                                 HostPort = portBinding.Value
                             }
-                        });
+                       });
 
                     containerConfig.ExposedPorts.Add(portBinding.Key, new EmptyStruct());
                 }
 
                 containerConfig.HostConfig.PublishAllPorts = false;
             }
-            else if (!string.IsNullOrEmpty(containerDesc.AssignedIp))
+            else if ((containerDesc.ContainerNetworkConfig.NetworkType & ContainerNetworkType.Open) == ContainerNetworkType.Open && 
+                !string.IsNullOrEmpty(containerDesc.ContainerNetworkConfig.OpenNetworkAssignedIp))
             {
                 var endPointSettings = new EndpointSettings()
                 {
                     IPAMConfig = new EndpointIPAMConfig()
                     {
-                        IPv4Address = containerDesc.AssignedIp
+                        IPv4Address = containerDesc.ContainerNetworkConfig.OpenNetworkAssignedIp
                     }
                 };
+
+                containerConfig.HostConfig.NetworkMode = HostingConfig.Config.LocalNatIpProviderEnabled
+                    ? HostingConfig.Config.LocalNatIpProviderNetworkName
+                    : "servicefabric_network";
 
                 containerConfig.NetworkingConfig = new NetworkingConfig
                 {
                     EndpointsConfig = new Dictionary<string, EndpointSettings>()
                     {
-                        { "servicefabric_network", endPointSettings}
+                        { containerConfig.HostConfig.NetworkMode, endPointSettings}
                     }
                 };
-
-                containerConfig.HostConfig.NetworkMode = "servicefabric_network";
+               
+                containerConfig.HostConfig.PublishAllPorts = false;
+            }
+            else if ((containerDesc.ContainerNetworkConfig.NetworkType & ContainerNetworkType.Isolated) == ContainerNetworkType.Isolated && 
+                containerDesc.ContainerNetworkConfig.OverlayNetworkResources.Count > 0)
+            {
                 containerConfig.HostConfig.PublishAllPorts = false;
             }
             else

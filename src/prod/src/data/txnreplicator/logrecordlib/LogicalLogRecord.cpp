@@ -69,6 +69,11 @@ void LogicalLogRecord::UpdateApproximateDiskSize()
     ApproximateSizeOnDisk = ApproximateSizeOnDisk + DiskSpaceUsed;
 }
 
+std::wstring LogicalLogRecord::ToString() const
+{
+    return __super::ToString();
+}
+
 OperationData::CSPtr LogicalLogRecord::SerializeLogicalData()
 {
     OperationData::SPtr operationData = OperationData::Create(GetThisAllocator());

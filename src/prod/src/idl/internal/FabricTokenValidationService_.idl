@@ -1,0 +1,122 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+    cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+    cpp_quote("// ------------------------------------------------------------")
+    cpp_quote("#if ( _MSC_VER >= 1020 )")
+    cpp_quote("#pragma once")
+    cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricCommon_.idl";
+import "FabricTypes_.idl";
+import "FabricRuntime.idl";
+
+//
+// Forward Declarations
+//
+
+interface IFabricTokenValidationService;
+interface IFabricTokenValidationServiceAgent;
+interface IFabricTokenClaimResult;
+interface IFabricTokenServiceMetadataResult;
+
+[
+    uuid(43ba0ca0-0c91-4422-8e1b-b6b62d6e7931),
+    version(1.0),
+]
+library FabricTokenValidationServiceLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricTokenValidationService;
+    interface IFabricTokenValidationServiceAgent;
+    interface IFabricTokenClaimResult;
+    interface IFabricTokenServiceMetadataResult;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(44cbab57-79c5-4961-8206-d561270d1cf1),
+        noncreatable
+    ]
+    coclass FabricTokenValidationServiceAgent
+    {
+        [default] interface IFabricTokenValidationServiceAgent;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(4959d5bd-0b07-4046-8ac3-033fa922a364),
+        dllname("FabricTokenValidationService.dll")
+    ]
+    module FabricTokenValidationService
+    {
+        [entry("CreateFabricTokenValidationServiceAgent")] HRESULT CreateFabricTokenValidationServiceAgent(
+            [in] REFIID riid,
+            [out, retval] void ** fabricTokenValidationServiceAgent);
+
+        [entry("GetDefaultAzureActiveDirectoryConfigurations")] HRESULT GetDefaultAzureActiveDirectoryConfigurations(
+            [out, retval] IFabricStringMapResult ** result);
+    }
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(a70f8024-32f8-48ab-84cf-2119a25513a9)]
+interface IFabricTokenValidationService : IUnknown
+{
+    [] HRESULT BeginValidateToken(
+        [in] LPCWSTR authToken,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndValidateToken(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] void ** claimResult);
+
+    [] HRESULT GetTokenServiceMetadata(
+        [out, retval] IFabricTokenServiceMetadataResult ** result);
+
+}
+
+[object, local, uuid(45898312-084e-4792-b234-52efb8d79cd8)]
+interface IFabricTokenValidationServiceAgent : IUnknown
+{
+    [] HRESULT RegisterTokenValidationService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID,
+        [in] IFabricTokenValidationService *,
+        [out, retval] IFabricStringResult ** serviceAddress);
+
+    [] HRESULT UnregisterTokenValidationService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID);
+}
+
+[object, local, uuid(931ff709-4604-4e6a-bc10-a38056cbf3b4)]
+interface IFabricTokenClaimResult : IUnknown
+{
+    [] const FABRIC_TOKEN_CLAIM_RESULT_LIST * get_Result();
+}
+
+[object, local, uuid(316ea660-56ec-4459-a4ad-8170787c5c48)]
+interface IFabricTokenServiceMetadataResult : IUnknown
+{
+    [] const FABRIC_TOKEN_SERVICE_METADATA * get_Result();
+}

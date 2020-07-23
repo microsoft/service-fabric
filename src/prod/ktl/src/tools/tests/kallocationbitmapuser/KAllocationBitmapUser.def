@@ -1,0 +1,9 @@
+; KAllocationBitmapUser.def : Declares the module parameters for the DLL.
+
+LIBRARY      "KAllocationBitmapUser"
+
+EXPORTS
+; Explicit exports can go here
+QueryNumberOfTests      PRIVATE
+QueryTests              PRIVATE
+RunTest                 PRIVATE

@@ -883,7 +883,16 @@ Awaitable<NTSTATUS> PhysicalLogWriter::TruncateLogHeadAsync(__in ULONG64 headRec
             "{0}:Invalid head position during truncate log head",
             TraceId);
 
-        status = co_await logicalLog->TruncateHead((LONG64)headRecordPosition);
+        Awaitable<NTSTATUS> truncateTask;
+
+        // This is okay to do, because KTL and In-Memory log are synchronous
+        // and FileLogicalLog takes its own async locks
+        K_LOCK_BLOCK(flushLock_)
+        {
+            truncateTask = Ktl::Move(logicalLog->TruncateHead((LONG64)headRecordPosition));
+        }
+
+        co_await truncateTask;
     }
 
     co_return status;

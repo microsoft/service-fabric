@@ -638,13 +638,13 @@ namespace Naming
             CreateServiceGroupDescription(first, true, count, 2 * count);
             CreateServiceGroupDescription(second, true, count, 2 * count);
 
-            VERIFY_IS_TRUE(TRUE == CServiceGroupDescription::Equals(first, first, TRUE));
-            VERIFY_IS_TRUE(TRUE == CServiceGroupDescription::Equals(second, second, TRUE));
+            VERIFY_IS_TRUE(CServiceGroupDescription::Equals(first, first, TRUE).IsSuccess());
+            VERIFY_IS_TRUE(CServiceGroupDescription::Equals(second, second, TRUE).IsSuccess());
 
-            VERIFY_IS_TRUE(TRUE == CServiceGroupDescription::Equals(first, second, TRUE));
-            VERIFY_IS_TRUE(TRUE == CServiceGroupDescription::Equals(second, first, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, FALSE));
+            VERIFY_IS_TRUE(CServiceGroupDescription::Equals(first, second, TRUE).IsSuccess());
+            VERIFY_IS_TRUE(CServiceGroupDescription::Equals(second, first, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, FALSE).IsSuccess());
 
             vector<byte> serializedFirst;
             vector<byte> serializedSecond;
@@ -652,13 +652,13 @@ namespace Naming
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&first, serializedFirst).IsSuccess());
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&second, serializedSecond).IsSuccess());
 
-            VERIFY_IS_TRUE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedFirst, TRUE));
-            VERIFY_IS_TRUE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedSecond, TRUE));
+            VERIFY_IS_TRUE(CServiceGroupDescription::Equals(serializedFirst, serializedFirst, TRUE).IsSuccess());
+            VERIFY_IS_TRUE(CServiceGroupDescription::Equals(serializedSecond, serializedSecond, TRUE).IsSuccess());
 
-            VERIFY_IS_TRUE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE));
-            VERIFY_IS_TRUE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE));
+            VERIFY_IS_TRUE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE).IsSuccess());
+            VERIFY_IS_TRUE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE).IsSuccess());
 
             ServiceDescription description = CreateServiceDescription(L"fabric:/application/group", 1);
 
@@ -688,10 +688,10 @@ namespace Naming
 
             second.ServiceGroupMemberData.erase(begin(second.ServiceGroupMemberData));
 
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, FALSE));
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, FALSE).IsSuccess());
 
             vector<byte> serializedFirst;
             vector<byte> serializedSecond;
@@ -699,10 +699,10 @@ namespace Naming
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&first, serializedFirst).IsSuccess());
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&second, serializedSecond).IsSuccess());
 
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE));
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE).IsSuccess());
 
             ServiceDescription description = CreateServiceDescription(L"fabric:/application/group", 1);
 
@@ -732,10 +732,10 @@ namespace Naming
 
             second.ServiceGroupMemberData[0].ServiceName = L"other";
 
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, FALSE));
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, FALSE).IsSuccess());
 
             vector<byte> serializedFirst;
             vector<byte> serializedSecond;
@@ -743,10 +743,10 @@ namespace Naming
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&first, serializedFirst).IsSuccess());
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&second, serializedSecond).IsSuccess());
 
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE));
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE).IsSuccess());
 
             ServiceDescription description = CreateServiceDescription(L"fabric:/application/group", 1);
 
@@ -776,10 +776,10 @@ namespace Naming
 
             second.ServiceGroupMemberData[0].Metrics.erase(begin(second.ServiceGroupMemberData[0].Metrics));
 
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, FALSE));
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, FALSE).IsSuccess());
 
             vector<byte> serializedFirst;
             vector<byte> serializedSecond;
@@ -787,10 +787,10 @@ namespace Naming
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&first, serializedFirst).IsSuccess());
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&second, serializedSecond).IsSuccess());
 
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE));
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE).IsSuccess());
 
             ServiceDescription description = CreateServiceDescription(L"fabric:/application/group", 1);
 
@@ -820,10 +820,10 @@ namespace Naming
 
             second.ServiceGroupMemberData[0].Metrics[0].Name = L"other";
 
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(first, second, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(second, first, FALSE));
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(first, second, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(second, first, FALSE).IsSuccess());
 
             vector<byte> serializedFirst;
             vector<byte> serializedSecond;
@@ -831,10 +831,10 @@ namespace Naming
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&first, serializedFirst).IsSuccess());
             VERIFY_IS_TRUE(FabricSerializer::Serialize(&second, serializedSecond).IsSuccess());
 
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE));
-            VERIFY_IS_FALSE(TRUE == CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE));
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, TRUE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedFirst, serializedSecond, FALSE).IsSuccess());
+            VERIFY_IS_FALSE(CServiceGroupDescription::Equals(serializedSecond, serializedFirst, FALSE).IsSuccess());
 
             ServiceDescription description = CreateServiceDescription(L"fabric:/application/group", 1);
 

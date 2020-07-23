@@ -8,18 +8,11 @@
 namespace Common
 {
     // <Settings><Section ..><Parameter .../>
+    struct ConfigSection;
     struct ConfigParameter
     {
     public:
         ConfigParameter();
-        
-        ConfigParameter(
-            std::wstring && name,
-            std::wstring && value,
-            bool mustOverride,
-            bool isEncrypted,
-            std::wstring && type);
-
         ConfigParameter(ConfigParameter const & other);
         ConfigParameter(ConfigParameter && other);
 
@@ -42,5 +35,8 @@ namespace Common
         std::wstring Type;
 
     private:
+        friend struct ConfigSection;
+
+        void ReadFromXml(Common::XmlReaderUPtr const &);
     };
 }

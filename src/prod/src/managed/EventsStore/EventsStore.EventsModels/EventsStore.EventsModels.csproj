@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{0BE632E6-D884-4360-B32E-90CC48694BAF}</ProjectGuid>
+    <RootNamespace>EventsStore.EventsModels</RootNamespace>
+    <AssemblyName>EventsStore.EventsModels</AssemblyName>
+    <OutputType>Library</OutputType>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\Common\ClusterAnalysis.Common.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\TraceAccessLayer\ClusterAnalysis.TraceAccessLayer.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj" />
+    <Reference Include="System.Security" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Application\ApplicationHealthReportCreatedEvent.cs" />
+    <Compile Include="Application\ApplicationHealthReportExpiredEvent.cs" />
+    <Compile Include="Application\ChaosRestartCodePackageFaultScheduledEvent.cs" />
+    <Compile Include="Application\ContainerDeactivatedEvent.cs" />
+    <Compile Include="Application\DeployedApplicationHealthReportCreatedEvent.cs" />
+    <Compile Include="Application\DeployedApplicationHealthReportExpiredEvent.cs" />
+    <Compile Include="Application\DeployedServiceHealthReportCreatedEvent.cs" />
+    <Compile Include="Application\DeployedServiceHealthReportExpiredEvent.cs" />
+    <Compile Include="Application\ProcessDeactivatedEvent.cs" />
+    <Compile Include="Cluster\ChaosStartedEvent.cs" />
+    <Compile Include="Cluster\ChaosStoppedEvent.cs" />
+    <Compile Include="Cluster\ClusterHealthReportCreatedEvent.cs" />
+    <Compile Include="Cluster\ClusterHealthReportExpiredEvent.cs" />
+    <Compile Include="FabricEvent.cs" />
+    <Compile Include="AnalysisEventMetadata.cs" />
+    <Compile Include="Container\ContainerEvent.cs" />
+    <Compile Include="Application\ApplicationCreatedEvent.cs" />
+    <Compile Include="Application\ApplicationDeletedEvent.cs" />
+    <Compile Include="Application\ApplicationEventAdapter.cs" />
+    <Compile Include="Application\ApplicationEvent.cs" />
+    <Compile Include="Application\ApplicationUpgradeCompleteEvent.cs" />
+    <Compile Include="Application\ApplicationUpgradeDomainCompleteEvent.cs" />
+    <Compile Include="Application\ApplicationUpgradeRollbackCompleteEvent.cs" />
+    <Compile Include="Application\ApplicationUpgradeRollbackStartEvent.cs" />
+    <Compile Include="Application\ApplicationUpgradeStartEvent.cs" />
+    <Compile Include="Cluster\ClusterEvent.cs" />
+    <Compile Include="Cluster\ClusterEventAdapter.cs" />
+    <Compile Include="Cluster\ClusterUpgradeCompleteEvent.cs" />
+    <Compile Include="Cluster\ClusterUpgradeDomainCompleteEvent.cs" />
+    <Compile Include="Cluster\ClusterUpgradeRollbackCompleteEvent.cs" />
+    <Compile Include="Cluster\ClusterUpgradeRollbackStartEvent.cs" />
+    <Compile Include="Cluster\ClusterUpgradeStartEvent.cs" />
+    <Compile Include="Node\ChaosRestartNodeFaultScheduledEvent.cs" />
+    <Compile Include="Node\NodeAbortedEvent.cs" />
+    <Compile Include="Node\NodeAddedEvent.cs" />
+    <Compile Include="Node\NodeClosedEvent.cs" />
+    <Compile Include="Node\NodeDeactivateCompleteEvent.cs" />
+    <Compile Include="Node\NodeDeactivateStartEvent.cs" />
+    <Compile Include="Node\NodeDownEvent.cs" />
+    <Compile Include="Node\NodeEvent.cs" />
+    <Compile Include="Node\NodeEventAdapter.cs" />
+    <Compile Include="Node\NodeHealthReportCreatedEvent.cs" />
+    <Compile Include="Node\NodeHealthReportExpiredEvent.cs" />
+    <Compile Include="Node\NodeOpenedSuccessEvent.cs" />
+    <Compile Include="Node\NodeOpenFailedEvent.cs" />
+    <Compile Include="Node\NodeRemovedEvent.cs" />
+    <Compile Include="Node\NodeUpEvent.cs" />
+    <Compile Include="Partition\ChaosMovePrimaryFaultScheduledEvent.cs" />
+    <Compile Include="Partition\ChaosMoveSecondaryFaultScheduledEvent.cs" />
+    <Compile Include="Partition\PartitionAnalysisEvent.cs" />
+    <Compile Include="Partition\PartitionEventAdapter.cs" />
+    <Compile Include="Partition\PartitionHealthReportCreatedEvent.cs" />
+    <Compile Include="Partition\PartitionHealthReportExpiredEvent.cs" />
+    <Compile Include="Partition\PartitionReconfigurationCompletedEvent.cs" />
+    <Compile Include="Partition\PartitionPrimaryMoveAnalysisEvent.cs" />
+    <Compile Include="Replica\ChaosRemoveReplicaFaultScheduledEvent.cs" />
+    <Compile Include="Replica\ChaosRestartReplicaFaultScheduledEvent.cs" />
+    <Compile Include="Replica\ReplicaEventAdapter.cs" />
+    <Compile Include="Replica\StatefulReplicaHealthReportCreatedEvent.cs" />
+    <Compile Include="Replica\StatefulReplicaHealthReportExpiredEvent.cs" />
+    <Compile Include="Replica\StatelessReplicaHealthReportCreatedEvent.cs" />
+    <Compile Include="Replica\StatelessReplicaHealthReportExpiredEvent.cs" />
+    <Compile Include="Service\ServiceCreatedEvent.cs" />
+    <Compile Include="Service\ServiceDeletedEvent.cs" />
+    <Compile Include="Service\ServiceEvent.cs" />
+    <Compile Include="Service\ServiceEventAdapter.cs" />
+    <Compile Include="Partition\PartitionEvent.cs" />
+    <Compile Include="Replica\ReplicaEvent.cs" />
+    <Compile Include="Service\ServiceHealthReportCreatedEvent.cs" />
+    <Compile Include="Service\ServiceHealthReportExpiredEvent.cs" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\FabricGateway" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

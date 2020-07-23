@@ -1,4 +1,0 @@
-SingleMachine-CIT.json
-  TAGS:Naming
-SingleMachine-Functional.json
-  TAGS:Naming

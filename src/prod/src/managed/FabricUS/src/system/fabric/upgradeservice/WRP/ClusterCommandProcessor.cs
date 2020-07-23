@@ -24,8 +24,7 @@ namespace System.Fabric.UpgradeService
         private readonly NodeStatusManager nodeStatusManager;
         private readonly IFabricClientWrapper fabricClientWrapper;
         private readonly CommandParameterGenerator commandParameterGenerator;
-        private readonly JsonSerializer serializer;        
-        private readonly IEnumerable<string> primaryNodeTypes;
+        private readonly JsonSerializer serializer;                
 
         public ClusterCommandProcessor(
             IConfigStore configStore,
@@ -33,8 +32,7 @@ namespace System.Fabric.UpgradeService
             IFabricClientWrapper fabricClientWrapper,
             CommandParameterGenerator commandParameterGenerator,            
             NodeStatusManager nodeStatusManager,
-            JsonSerializer jsonSerializer,
-            IEnumerable<string> primaryNodeTypes)
+            JsonSerializer jsonSerializer)
         {
             configStore.ThrowIfNull(nameof(configStore));
             configSectionName.ThrowIfNullOrWhiteSpace(nameof(configSectionName));
@@ -48,8 +46,7 @@ namespace System.Fabric.UpgradeService
             this.fabricClientWrapper = fabricClientWrapper;
             this.commandParameterGenerator = commandParameterGenerator;            
             this.nodeStatusManager = nodeStatusManager;
-            this.serializer = jsonSerializer;            
-            this.primaryNodeTypes = primaryNodeTypes;              
+            this.serializer = jsonSerializer;          
         }
 
         public override ResourceType Type { get; } = ResourceType.Cluster;
@@ -102,8 +99,8 @@ namespace System.Fabric.UpgradeService
                 ClusterOperation.DisableNodes);
 
             var updateSystemServiceSizeTask = ClusterTask(
-                () => this.fabricClientWrapper.UpdateSystemServicesReplicaSizeAsync(
-                    description.SystemServiceReplicaSetSizeToSet,
+                () => this.fabricClientWrapper.UpdateSystemServicesDescriptionAsync(
+                    description.SystemServiceDescriptionsToSet,
                     Constants.MaxOperationTimeout,
                     context.CancellationToken),
                 ClusterOperation.UpdateSystemServicesReplicaSetSize);
@@ -160,25 +157,23 @@ namespace System.Fabric.UpgradeService
             var nodeListQueryTask = this.fabricClientWrapper.GetNodeListAsync(Constants.MaxOperationTimeout, context.CancellationToken);
 
             // Only query for system services when WRP needs to adjust the replica set size
-            Task<Dictionary<string, ReplicaSetSize>> systemServiceSizeQueryTask = null;
+            Task<Dictionary<string, ServiceRuntimeDescription>> systemServiceSizeQueryTask = null;
             if (description != null &&
-                description.SystemServiceReplicaSetSizeToSet != null &&
-                description.SystemServiceReplicaSetSizeToSet.Any())
+                description.SystemServiceDescriptionsToSet != null &&
+                description.SystemServiceDescriptionsToSet.Any())
             {
                 systemServiceSizeQueryTask =
-                    this.fabricClientWrapper.GetSystemServiceReplicaSetSize(Constants.MaxOperationTimeout, context.CancellationToken);
+                    this.fabricClientWrapper.GetSystemServiceRuntimeDescriptionsAsync(Constants.MaxOperationTimeout, context.CancellationToken);
             }
-
-            
 
             await Task.WhenAll(
                 nodeListQueryTask,
                 upgradeProgressTask,                
-                systemServiceSizeQueryTask ?? Task.FromResult<Dictionary<string, ReplicaSetSize>>(null));
+                systemServiceSizeQueryTask ?? Task.FromResult<Dictionary<string, ServiceRuntimeDescription>>(null));
 
             FabricUpgradeProgress currentUpgradeProgress = GetResultFromTask(upgradeProgressTask);            
-            NodeList nodeList = FilterPrimaryNodeTypesStatus(GetResultFromTask(nodeListQueryTask));
-            Dictionary<string, ReplicaSetSize> systemServicesReplicaSize = GetResultFromTask(systemServiceSizeQueryTask);
+            NodeList nodeList = FilterPrimaryNodeTypesStatus(GetResultFromTask(nodeListQueryTask), description?.PrimaryNodeTypes);
+            Dictionary<string, ServiceRuntimeDescription> systemServicesRuntimeDescriptions = GetResultFromTask(systemServiceSizeQueryTask);
             
             List<PaasNodeStatusInfo> nodesDisabled = null;
             List<PaasNodeStatusInfo> nodesEnabled = null;
@@ -253,7 +248,7 @@ namespace System.Fabric.UpgradeService
                 DisabledNodes = nodesDisabled,
                 EnabledNodes = nodesEnabled,
                 NodesStatus = nodesStatus,
-                SystemServiceReplicaSetSize = systemServicesReplicaSize,             
+                SystemServiceDescriptions = systemServicesRuntimeDescriptions,             
             };
 
             if (currentUpgradeProgress != null)
@@ -273,6 +268,11 @@ namespace System.Fabric.UpgradeService
             PaasClusterUpgradeDescription upgradeDesc,
             CancellationToken token)
         {
+            if (upgradeDesc == null)
+            {
+                return;
+            }
+
             var upgradeProgressTask = this.fabricClientWrapper.GetFabricUpgradeProgressAsync(Constants.MaxOperationTimeout, token);
             var clusterHealthQueryTask = this.fabricClientWrapper.GetClusterHealthAsync(Constants.MaxOperationTimeout, token);
             
@@ -544,14 +544,14 @@ namespace System.Fabric.UpgradeService
             return (task != null && task.Status == TaskStatus.RanToCompletion) ? task.Result : default(TResult);
         }
 
-        private NodeList FilterPrimaryNodeTypesStatus(NodeList nodes)
+        private NodeList FilterPrimaryNodeTypesStatus(NodeList nodes, List<string> primaryNodeTypes)
         {
             if (nodes == null || !nodes.Any())
             {
                 return nodes;
             }
 
-            if (this.primaryNodeTypes == null && !this.primaryNodeTypes.Any())
+            if (primaryNodeTypes == null || !primaryNodeTypes.Any())
             {
                 return nodes;
             }

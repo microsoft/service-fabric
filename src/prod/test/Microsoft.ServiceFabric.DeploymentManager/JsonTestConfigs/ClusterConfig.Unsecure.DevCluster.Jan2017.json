@@ -1,0 +1,111 @@
+{
+    "name": "SampleCluster",
+    "clusterConfigurationVersion": "1.0.0",
+    "apiVersion": "01-2017",
+    "nodes": [
+      {
+        "nodeName": "vm0",
+        "iPAddress": "localhost",
+        "nodeTypeRef": "NodeType0",
+        "faultDomain": "fd:/dc1/r0",
+        "upgradeDomain": "UD0"
+      },
+      {
+        "nodeName": "vm1",
+        "iPAddress": "localhost",
+        "nodeTypeRef": "NodeType1",
+        "faultDomain": "fd:/dc2/r0",
+        "upgradeDomain": "UD1"
+      },
+      {
+        "nodeName": "vm2",
+        "iPAddress": "localhost",
+        "nodeTypeRef": "NodeType2",
+        "faultDomain": "fd:/dc3/r0",
+        "upgradeDomain": "UD2"
+      }
+    ],
+
+    "properties": {
+        "reliabilityLevel": "Bronze",
+        "diagnosticsStore": 
+        {
+            "metadata":  "Please replace the diagnostics file share with an actual file share accessible from all cluster machines.",
+            "dataDeletionAgeInDays": "7",
+            "storeType": "FileShare",
+            "connectionstring": "c:\\ProgramData\\SF\\DiagnosticsStore"
+        },
+        "nodeTypes": [
+          {
+            "name": "NodeType0",
+            "clientConnectionEndpointPort": "19000",
+            "clusterConnectionEndpointPort": "19001",
+            "leaseDriverEndpointPort": "19002",
+            "serviceConnectionEndpointPort": "19003",
+            "httpGatewayEndpointPort": "19080",
+            "reverseProxyEndpointPort": "19081",
+            "applicationPorts": {
+                "startPort": "20001",
+                "endPort": "20031"
+            },
+            "ephemeralPorts": {
+                "startPort": "20032",
+                "endPort": "20287"
+            },
+            "isPrimary": true
+          },
+          {
+            "name": "NodeType1",
+            "clientConnectionEndpointPort": "19004",
+            "clusterConnectionEndpointPort": "19005",
+            "leaseDriverEndpointPort": "19006",
+            "serviceConnectionEndpointPort": "19007",
+            "httpGatewayEndpointPort": "19082",
+            "reverseProxyEndpointPort": "19083",
+            "applicationPorts": {
+                "startPort": "20288",
+                "endPort": "20318"
+            },
+            "ephemeralPorts": {
+                "startPort": "20319",
+                "endPort": "20574"
+            },
+            "isPrimary": true
+          },
+          {
+            "name": "NodeType2",
+            "clientConnectionEndpointPort": "19008",
+            "clusterConnectionEndpointPort": "19009",
+            "leaseDriverEndpointPort": "19010",
+            "serviceConnectionEndpointPort": "19011",
+            "httpGatewayEndpointPort": "19084",
+            "reverseProxyEndpointPort": "19085",
+            "applicationPorts": {
+                "startPort": "20575",
+                "endPort": "20605"
+            },
+            "ephemeralPorts": {
+                "startPort": "20606",
+                "endPort": "20861"
+            },
+            "isPrimary": false
+        }
+      ],
+      "fabricSettings": [
+        {
+          "name": "Setup",
+          "parameters": [
+            {
+                "name": "FabricDataRoot",
+                "value": "C:\\ProgramData\\SF"
+            },
+            {
+                "name": "FabricLogRoot",
+                "value": "C:\\ProgramData\\SF\\Log"
+            }
+          ]
+        }
+      ]
+    }
+}
+

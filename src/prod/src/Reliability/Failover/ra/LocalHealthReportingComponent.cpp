@@ -39,10 +39,8 @@ LocalHealthReportingComponent::LocalHealthReportingComponent(
 
 void LocalHealthReportingComponent::Open(ReconfigurationAgentProxyId const & , Federation::NodeInstance const & nodeInstance, wstring const & nodeName)
 {
-    nodeInstance_ = nodeInstance;
-
-    auto metaData = MonitoringComponentMetadata(nodeName, nodeInstance.ToString());
-    monitoringComponent_->Open(metaData);    
+    auto metaData = MonitoringComponentMetadata(nodeName, nodeInstance);
+    monitoringComponent_->Open(metaData);
 }
 
 void LocalHealthReportingComponent::Close()
@@ -135,7 +133,7 @@ void LocalHealthReportingComponent::OnHealthEvent(
 
     for (auto const & it : events)
     {
-        reports.push_back(CreateHealthReport(code, it, ttl, metaData.NodeName, nodeInstance_, status));
+        reports.push_back(CreateHealthReport(code, it, ttl, metaData.NodeName, metaData.NodeInstance, status));
     }
 
     ReportHealth(move(reports), nullptr);

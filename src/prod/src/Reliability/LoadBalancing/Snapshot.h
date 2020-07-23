@@ -29,10 +29,6 @@ namespace Reliability
 
             ServiceDomain::DomainData const* GetRGDomainData() const;
             void SetRGDomain(std::wstring const& rgDomain) { rgDomainId_ = rgDomain; }
-
-            // Used for populating the snapshot with all partitions and replicas for a given domain
-            void GetFullSnapshot(std::wstring domainId);
-
         private:
             Common::DateTime createdTimeUtc_;
             std::map<std::wstring, ServiceDomain::DomainData> serviceDomainSnapshot_;

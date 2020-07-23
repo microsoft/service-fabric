@@ -87,6 +87,11 @@ namespace FabricTest
         bool UpdateRepairHealthPolicy(StringCollection const & params);
         bool GetRepair(StringCollection const & params);
 
+        bool CreateNetwork(Common::StringCollection const & params);
+        bool DeleteNetwork(Common::StringCollection const & params);
+        bool GetNetwork(Common::StringCollection const & params);
+        bool ShowNetworks(Common::StringCollection const & params);
+
         bool DeployServicePackages(Common::StringCollection const & params);
 
         void DeployServicePackageToNode(
@@ -426,6 +431,12 @@ namespace FabricTest
         void ReportFault(std::wstring const & nodeName, FABRIC_PARTITION_ID partitionId, FABRIC_REPLICA_ID replicaId, FABRIC_FAULT_TYPE faultType, bool isForce, HRESULT expectedError);
         void MovePrimaryReplicaFromClient(std::wstring const & nodeName, FABRIC_PARTITION_ID partitionId, bool ignoreConstraints, HRESULT expectedError);
         void MoveSecondaryReplicaFromClient(std::wstring const & currentNodeName, std::wstring const & newNodeName, FABRIC_PARTITION_ID partitionId, bool ignoreConstraints, HRESULT expectedError);
+
+        ComPointer<IFabricNetworkManagementClient> CreateNetworkClient();
+        ComPointer<IFabricGetNetworkListResult> GetNetworkList(
+            __in std::wstring const & operationName,
+            __in ComPointer<IFabricNetworkManagementClient> const & networkClient,
+            __in FABRIC_NETWORK_QUERY_DESCRIPTION const & queryDescription) const;
 
         static bool CheckExpectedErrorMessage(
             std::wstring const & operationName,

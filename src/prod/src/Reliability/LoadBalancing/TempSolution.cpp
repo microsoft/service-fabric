@@ -18,6 +18,7 @@ TempSolution::TempSolution(CandidateSolution const& baseSolution)
     nodePlacements_(&(baseSolution.NodePlacements)),
     nodeMovingInPlacements_(&(baseSolution.NodeMovingInPlacements)),
     partitionPlacements_(&(baseSolution.PartitionPlacements)),
+    inBuildCountsPerNode_(&(baseSolution.InBuildCountsPerNode)),
     applicationPlacements_(&(baseSolution.ApplicationPlacements)),
     applicationNodeCounts_(&(baseSolution.ApplicationNodeCounts)),
     applicationTotalLoad_(&(baseSolution.ApplicationTotalLoads)),
@@ -44,6 +45,7 @@ TempSolution::TempSolution(TempSolution && other)
     nodePlacements_(move(other.nodePlacements_)),
     nodeMovingInPlacements_(move(other.nodeMovingInPlacements_)),
     partitionPlacements_(move(other.partitionPlacements_)),
+    inBuildCountsPerNode_(move(other.inBuildCountsPerNode_)),
     applicationPlacements_(move(other.applicationPlacements_)),
     applicationNodeCounts_(move(other.applicationNodeCounts_)),
     applicationTotalLoad_(move(other.applicationTotalLoad_)),
@@ -72,6 +74,7 @@ TempSolution& TempSolution::operator=(TempSolution && other)
         nodePlacements_ = move(other.nodePlacements_);
         nodeMovingInPlacements_ = move(other.nodeMovingInPlacements_);
         partitionPlacements_ = move(other.partitionPlacements_);
+        inBuildCountsPerNode_ = move(other.inBuildCountsPerNode_);
         applicationPlacements_ = move(other.applicationPlacements_);
         applicationNodeCounts_ = move(other.applicationNodeCounts_);
         applicationTotalLoad_ = move(other.applicationTotalLoad_);
@@ -165,12 +168,25 @@ void TempSolution::ForEachNode(ApplicationEntry const* app, bool changedOnly, st
     }
 }
 
-void TempSolution::ForEachNode(bool changedOnly, std::function<bool(NodeEntry const *)> processor) const
+void TempSolution::ForEachNode(bool changedOnly,
+    std::function<bool(NodeEntry const *)> processor,
+    bool requireCapacity,
+    bool requireThrottling) const
 {
     if (changedOnly)
     {
         nodePlacements_.ForEachKey([&](NodeEntry const* n)
         {
+            if (requireCapacity && !n->HasCapacity)
+            {
+                // Skip nodes without capacity if capacity is required
+                return true;
+            }
+            if (requireThrottling && !n->IsThrottled)
+            {
+                // Skip nodes without throttling, if throttling is required
+                return true;
+            }
             return processor(n);
         });
     }
@@ -512,6 +528,7 @@ void TempSolution::Clear()
     nodePlacements_.Clear();
     nodeMovingInPlacements_.Clear();
     partitionPlacements_.Clear();
+    inBuildCountsPerNode_.Clear();
     servicePackagePlacements_.Clear();
     applicationPlacements_.Clear();
     applicationNodeCounts_.Clear();
@@ -720,6 +737,11 @@ void TempSolution::AddMovement(size_t index, Movement && movement)
         servicePackagePlacements_.ChangeMovement(oldMove, movement, nodeChanges_, nodeMovingInChanges_);
         applicationPlacements_.ChangeMovement(oldMove, movement);
         applicationTotalLoad_.ChangeMovement(oldMove, movement);
+
+        if (baseSolution_.OriginalPlacement->IsThrottlingConstraintNeeded)
+        {
+            inBuildCountsPerNode_.ChangeMovement(oldMove, movement);
+        }
 
         // ApplicationReservedLoads will make the change in node loads and in node counts.
         applicationReservedLoads_.ChangeMovement(oldMove, movement, applicationNodeLoads_, applicationNodeCounts_);

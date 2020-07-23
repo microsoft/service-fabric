@@ -110,6 +110,8 @@ namespace Common
             return rhs == currentValue;
         }
 
+        static std::wstring AppendDirectoryToPathEnvVarValue(std::wstring const &currentPathValue, std::wstring const &newDirectory);
+
         EnvironmentVariable & operator = (const std::wstring & newValue);
 
         __declspec( property( get=size )) int Count;

@@ -121,6 +121,8 @@ namespace Hosting2
 
         virtual void TerminateExternally();
 
+        virtual bool GetLinuxContainerIsolation();
+
     protected:
         ApplicationHostProxy(
             HostingSubsystemHolder const & hostingHolder,

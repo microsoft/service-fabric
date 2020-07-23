@@ -6,6 +6,28 @@
 
 votes 10 20 30
 
+# --> FM, CM and Naming are constrainted to nodes 10, 20, 30 and 40.
+# --> Their target replica set size is 3.
+# The above values have been carefully chosen based on the requirements
+# of this test. Please consider the following points before changing these
+# values.
+#  (1) In Scenario 14, we take down nodes 90, 80 and 70. By constraining
+#      FM, CM and Naming to nodes 10, 20, 30 and 40 we ensure that they do not
+#      lose any replicas when the nodes are taken down. This is how we ensure
+#      that FM, CM and Naming don't go into quorum loss in Scenario 14.
+#
+#  (2) In Scenario 5, node 10 gets deactivated with intent remove-data.
+#      For deactivation with intent remove-data, the replicas on the node
+#      will have to be replaced with new replicas on other nodes. Since FM,
+#      CM and Naming replicas are constrainted to nodes 10, 20, 30 and 40, the
+#      deactivation of node 10 with intent remove-data leaves only nodes 20,
+#      30 and 40 to host these services. This is why we set the target replica
+#      set size of these services to 3, so that nodes 20, 30 and 40 are enough
+#      to host them. Otherwise, deactivation could get blocked due to FM, CM
+#      or Naming.
+set FMPlacementConstraints system==true
+set CMPlacementConstraints system==true
+set NamingPlacementConstraints system==true
 fmservice 3 2
 cmservice 3 2
 namingservice 1 3 2
@@ -16,13 +38,13 @@ set ExpectedClusterSize 3
 set UserReplicaRestartWaitDuration 99999
 set NamingOperationTimeout 10
 
-+10
-+20
-+30
++10 nodeprops=system:true
++20 nodeprops=system:true
++30 nodeprops=system:true
 verify
 
-+40
-+50
++40 nodeprops=system:true
++50 nodeprops=system:false
 verify
 
 ################################################################################
@@ -144,7 +166,7 @@ verify
 # Scenario 4: Safety check should not consider partitions that have no data
 ################################################################################
 
-+60
++60 nodeprops=system:false
 verify
 
 addbehavior b1 * * AddPrimaryReply
@@ -251,7 +273,7 @@ DeactivateNode 60 RemoveData
 !waitforstate FM.Node.DeactivationIntent.60 RemoveData
 !waitforstate FM.Node.DeactivationStatus.60 DeactivationSafetyCheckInProgress
 
-+60
++60 nodeprops=system:false
 verify
 
 ActivateNode 60
@@ -317,7 +339,7 @@ DeactivateNode 60 RemoveData
 !waitforstate FM.Node.DeactivationStatus.60 DeactivationSafetyCheckInProgress
 
 !pause 10
-!waitforstate FM.Replica.Role.fabric:/persisted9.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted9.60 Idle
 !waitforstate FM.Node.DeactivationStatus.60 DeactivationComplete
 
 ActivateNode 60
@@ -352,7 +374,7 @@ DeactivateNode 60 RemoveData
 
 ActivateNode 60
 
-+30
++30 nodeprops=system:true
 
 deleteservice fabric:/persisted10
 verify
@@ -439,6 +461,67 @@ ActivateNode 60
 deleteservice fabric:/persisted13
 verify
 
--*
+
+################################################################################
+# Scenario 14: Remove Data should wait for an up replica to disappear from the node
+# In case RemoveNodeOrDataUpReplicaTimeout expires it is fine to proceed further in case no other safety checks prevent it
+# In this scenario the partition is already in quorum loss. We are testing that we protect against data loss by ensuring
+# that we do not drop a write quorum of replicas from the current configuration.
+################################################################################
+
+deleteservice fabric:/persisted1
+deleteservice fabric:/persisted2
+deleteservice fabric:/persisted3
+deleteservice fabric:/persisted4
+deleteservice fabric:/persisted5
+
+set RemoveNodeOrDataUpReplicaTimeout 15
+
++70 nodeprops=system:false
++80 nodeprops=system:false
++90 nodeprops=system:false
++100 nodeprops=system:false
+verify
+
+createservice fabric:/persisted14 TestPersistedStoreServiceType y 1 6 persist minreplicasetsize=6 constraint=(system==false)
+verify
+
+-90
+-80
+-70
+!waitforstate FM.Replica.IsUp.fabric:/persisted14.90 false
+!waitforstate FM.Replica.IsUp.fabric:/persisted14.80 false
+!waitforstate FM.Replica.IsUp.fabric:/persisted14.70 false
+!waitforstate FM.FT.QuorumLost.fabric:/persisted14 true
+
+# Drop one replica directly by reporting fault permanent
+reportfault 100 fabric:/persisted14 permanent
+!waitforstate FM.Replica.State.fabric:/persisted14.100 Dropped
+
+# Drop second replica by deactivating the node with intent RemoveData
+DeactivateNode 90 RemoveData
+!waitforstate FM.Node.DeactivationIntent.90 RemoveData
+!waitforstate FM.Node.DeactivationStatus.90 DeactivationComplete
+
+# Try to drop third replica by deactivating the node with intent RemoveData.
+# The deactivation should block infinitely due to safety check because we want
+# to avoid dropping a write quorum of replicas.
+DeactivateNode 80 RemoveData
+# Wait for longer than RemoveNodeOrDataUpReplicaTimeout to make sure safety
+# check still blocks.
+!pause 30
+!waitforstate FM.Node.DeactivationIntent.80 RemoveData
+!waitforstate FM.Node.DeactivationStatus.80 DeactivationSafetyCheckInProgress
+
+ActivateNode 90
+ActivateNode 80
+
++70 nodeprops=system:false
++80 nodeprops=system:false
++90 nodeprops=system:false
+verify
+
+deleteservice fabric:/persisted14
+verify
 
 !q

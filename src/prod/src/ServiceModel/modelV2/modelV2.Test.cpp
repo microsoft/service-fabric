@@ -7,6 +7,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include "Common/boost-taef.h"
+#include <vector>
 
 namespace ServiceModelTests
 {
@@ -21,11 +22,14 @@ namespace ServiceModelTests
 
     class Application
         : public Common::IFabricJsonSerializable
+        , public Serialization::FabricSerializable
     {
     public:
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
             SERIALIZABLE_PROPERTY(L"application", applicationDescription)
         END_JSON_SERIALIZABLE_PROPERTIES()
+
+        FABRIC_FIELDS_01(applicationDescription);
 
         ApplicationDescription applicationDescription;
     };
@@ -104,6 +108,16 @@ namespace ServiceModelTests
             {
                 VERIFY_IS_TRUE_FMT(error.IsSuccess(), error.Message);
             }
+
+            // Serialize and then deserialize to stream
+            vector<byte> buffer;
+            VERIFY_IS_TRUE(FabricSerializer::Serialize(&application, buffer).IsSuccess());
+
+            Application deserialized;
+            auto error2 = FabricSerializer::Serialize(&application, buffer);
+            VERIFY_IS_TRUE(error2.IsSuccess());
+            error2 = FabricSerializer::Deserialize(deserialized, buffer);
+            VERIFY_IS_TRUE(error2.IsSuccess());
         }
     }
 

@@ -22,7 +22,7 @@ namespace Hosting2
             __in HostingSubsystem & hosting);
         virtual ~ApplicationHostManager();
 
-       Common::ErrorCode IsRegistered(std::wstring const & hostId, __out bool & isRegistered);
+        Common::ErrorCode IsRegistered(std::wstring const & hostId, __out bool & isRegistered);
 
        __declspec (property(get=Test_get_ApplicationHostRegistrationTable)) ApplicationHostRegistrationTableUPtr const & Test_ApplicationHostRegistrationTable;
         ApplicationHostRegistrationTableUPtr const & Test_get_ApplicationHostRegistrationTable() const { return registrationTable_; }
@@ -100,6 +100,8 @@ namespace Hosting2
 
         Common::ErrorCode EndApplicationHostCodePackageOperation(
             Common::AsyncOperationSPtr const & operation);
+
+        Common::ErrorCode FindApplicationHost(std::wstring const & codePackageInstanceId, __out ApplicationHostProxySPtr & hostProxy);
 
     protected:
          virtual Common::AsyncOperationSPtr OnBeginOpen(

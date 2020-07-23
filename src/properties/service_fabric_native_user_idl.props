@@ -1,0 +1,25 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_user_common_pre.props" />
+  <PropertyGroup>
+    <ConfigurationType>None</ConfigurationType>
+    <TargetVersion>Windows7</TargetVersion>
+  </PropertyGroup>
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_user_common_post.props" />
+  <ItemDefinitionGroup>
+    <Midl>
+      <StructMemberAlignment>8</StructMemberAlignment>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        STRSAFE_LIB;
+        KTL_USER_MODE=1;
+        KTL_MIXED_STL_ATL;
+      </PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
+        $(SrcRoot)\prod\src\idl\public;
+        $(SrcRoot)\prod\src\idl\public\$(O);
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /ms_ext /no_settings_comment /lcid 1033 /amd64 </AdditionalOptions>
+    </Midl>
+  </ItemDefinitionGroup>
+</Project>

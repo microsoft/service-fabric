@@ -31,6 +31,8 @@ wstring const FabricTestCommands::DefineInfrastructureServiceCommand = L"infrase
 wstring const FabricTestCommands::RemoveInfrastructureServiceCommand = L"removeinfraservice";
 wstring const FabricTestCommands::DefineRepairManagerServiceCommand = L"rmservice";
 wstring const FabricTestCommands::DefineDnsServiceCommand = L"dnsservice";
+wstring const FabricTestCommands::DefineNIMServiceCommand = L"networkinventorymanager";
+wstring const FabricTestCommands::DefineEnableUnsupportedPreviewFeaturesCommand = L"enableunsupportedpreviewfeatures";
 wstring const FabricTestCommands::DefineMockImageBuilderCommand = L"mockimagebuilder";
 
 wstring const FabricTestCommands::ListCommand = L"list";
@@ -150,6 +152,12 @@ wstring const FabricTestCommands::VerifyDeployedCodePackageCountCommand = L"veri
 wstring const FabricTestCommands::CreateComposeCommand = L"createcompose";
 wstring const FabricTestCommands::DeleteComposeCommand = L"deletecompose";
 wstring const FabricTestCommands::UpgradeComposeCommand = L"upgradecompose";
+wstring const FabricTestCommands::RollbackComposeCommand = L"rollbackcompose";
+
+wstring const FabricTestCommands::CreateNetworkCommand = L"createnetwork";
+wstring const FabricTestCommands::DeleteNetworkCommand = L"deletenetwork";
+wstring const FabricTestCommands::GetNetworkCommand = L"getnetwork";
+wstring const FabricTestCommands::ShowNetworksCommand = L"shownetworks";
 
 wstring const FabricTestCommands::PrepareUpgradeFabricCommand = L"prepareupgradefabric";
 wstring const FabricTestCommands::ProvisionFabricCommand = L"provisionfabric";

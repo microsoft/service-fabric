@@ -100,6 +100,10 @@ namespace Common
         INTERNAL_CONFIG_ENTRY(std::wstring, L"FabricNode", CentralSecretServiceReplicatorAddress, L"localhost:0", ConfigEntryUpgradePolicy::Static);
         // The address that UpgradeService uses to replicate to its other replica.
         INTERNAL_CONFIG_ENTRY(std::wstring, L"FabricNode", UpgradeServiceReplicatorAddress, L"localhost:0", ConfigEntryUpgradePolicy::Static);        
+        // The address that EventStoreService uses to replicate to its other replica.
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"FabricNode", EventStoreServiceReplicatorAddress, L"localhost:0", ConfigEntryUpgradePolicy::Static);
+        // The address that GatewayResourceManager uses to replicate to its other replica.
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"FabricNode", GatewayResourceManagerReplicatorAddress, L"localhost:0", ConfigEntryUpgradePolicy::Static);
 
         // Path used by the Fabric Service to read or write information for local operation.
         // This is the base directory for all other directories specified at the node, unless

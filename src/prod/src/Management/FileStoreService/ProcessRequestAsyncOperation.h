@@ -60,6 +60,8 @@ namespace Management
 
             bool IsCreateUploadSessionOperation() const { return operationKind_ == OperationKind::CreateUploadSession; }
 
+            bool IsDeleteUploadSessionOperation() const { return operationKind_ == OperationKind::DeleteUploadSession; }
+
         protected:
             __declspec(property(get=get_RequestManager)) RequestManager & RequestManagerObj;
             RequestManager & get_RequestManager() const { return this->requestManager_; }

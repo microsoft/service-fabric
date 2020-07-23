@@ -1067,18 +1067,48 @@ HRESULT Data::Interop::LoadReplicatorSettingsFromConfigPackage(
                 return hr;
             }
 
-            wstring hostName = codePackageActivationContext6CPtr->get_ServicePublishAddress();
+            // We should use get_ServiceListenAddress to get hostname for replicator instead of get_ServicePublishAddress.
+            // get_ServicePublishAddress will return host machine FQDN in case of NAT, using this as host name, would fail with Containerized apps, because
+            // Transport has check for FQDNs, where it verifies that name being used is local to the container.
+            // See RDBug 13677805 for more details. http://vstfrd:8080/Azure/RD/_workitems?id=13677805&_a=edit&fullScreen=false
+            wstring serviceListenAddress = codePackageActivationContext6CPtr->get_ServiceListenAddress();
 
             Common::ReferencePointer<FABRIC_REPLICATOR_SETTINGS> heapFabricReplicatorSettings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS>();
+            Common::ReferencePointer<FABRIC_REPLICATOR_SETTINGS_EX1> heapFabricReplicatorSettingsEx1 = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX1>();
+            Common::ReferencePointer<FABRIC_REPLICATOR_SETTINGS_EX2> heapFabricReplicatorSettingsEx2 = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX2>();
+            Common::ReferencePointer<FABRIC_REPLICATOR_SETTINGS_EX3> heapFabricReplicatorSettingsEx3 = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX3>();
+            Common::ReferencePointer<FABRIC_REPLICATOR_SETTINGS_EX4> heapFabricReplicatorSettingsEx4 = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX4>();
+            heapFabricReplicatorSettings->Reserved = heapFabricReplicatorSettingsEx1.GetRawPointer();
+            heapFabricReplicatorSettingsEx1->Reserved = heapFabricReplicatorSettingsEx2.GetRawPointer();
+            heapFabricReplicatorSettingsEx2->Reserved = heapFabricReplicatorSettingsEx3.GetRawPointer();
+            heapFabricReplicatorSettingsEx3->Reserved = heapFabricReplicatorSettingsEx4.GetRawPointer();
+            
+            wstring listenHostAndPort;
+            StringWriter(listenHostAndPort).Write("{0}:{1}", serviceListenAddress, replicatorPort);
 
-            wstring hostAndPort;
-            StringWriter(hostAndPort).Write("{0}:{1}", hostName, replicatorPort);
+            LPCWSTR replicatorListenAddress = heap.AddString(listenHostAndPort);
+            heapFabricReplicatorSettingsEx4->ReplicatorListenAddress = replicatorListenAddress;
+            heapFabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_LISTEN_ADDRESS;
 
-            LPCWSTR replicatorAddress = heap.AddString(hostAndPort);
-            heapFabricReplicatorSettings->ReplicatorAddress = replicatorAddress;
-            heapFabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_ADDRESS;
-
+            wstring servicePublishAddress = codePackageActivationContext6CPtr->get_ServicePublishAddress();
+            wstring publishHostAndPort;
+            StringWriter(publishHostAndPort).Write("{0}:{1}", servicePublishAddress, replicatorPort);
+            LPCWSTR replicatorPublishAddress = heap.AddString(publishHostAndPort);            
+            heapFabricReplicatorSettingsEx4->ReplicatorPublishAddress = replicatorPublishAddress;
+            heapFabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PUBLISH_ADDRESS;
             *fabricReplicatorSettings = heapFabricReplicatorSettings.GetRawPointer();
+
+            wstring replicatorAddressTrace;
+            replicatorAddressTrace.append(wformatString(
+                "Using ReplicatorListenAddress {0} and ReplicatorPublishAddress {1}",
+                replicatorListenAddress,
+                replicatorPublishAddress
+            ));
+
+            RCREventSource::Events->Info(
+                prId.TracePartitionId,
+                prId.ReplicaId,
+                replicatorAddressTrace);
 
             return S_OK;
         }

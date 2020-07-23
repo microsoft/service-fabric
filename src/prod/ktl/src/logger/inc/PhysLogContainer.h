@@ -16,7 +16,7 @@ public:
         __out_opt ULONGLONG* const FreeSpace = nullptr) = 0;
 
     virtual ULONGLONG QueryReservedSpace() = 0;
-	
+    
     virtual ULONGLONG QueryCurrentReservation() = 0;
 
     virtual ULONG QueryMaxAllowedStreams() = 0;
@@ -26,7 +26,14 @@ public:
     virtual ULONG QueryMaxUserRecordSize() = 0;
 
     virtual ULONG QueryUserRecordSystemMetadataOverhead() = 0;
-	
+
+    virtual VOID
+    QueryLsnRangeInformation(
+        __out LONGLONG& LowestLsn,
+        __out LONGLONG& HighestLsn,
+        __out RvdLogStreamId& LowestLsnStreamId
+        ) = 0 ;
+    
     virtual VOID
     QueryCacheSize(__out_opt LONGLONG* const ReadCacheSizeLimit, __out_opt LONGLONG* const ReadCacheUsage) = 0;
 
@@ -175,4 +182,4 @@ public:
 
     virtual NTSTATUS
     SetShutdownEvent(__in_opt KAsyncEvent* const EventToSignal) = 0;
-	
+    

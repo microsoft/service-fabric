@@ -5,7 +5,7 @@
 
 #include "stdafx.h"
 #if defined(PLATFORM_UNIX)
-#include "retail/native/FabricCommon/dll/TraceWrapper.Linux.h"
+#include "retail/native/FabricCommon/TraceWrapper.Linux.h"
 #endif
 
 using namespace std;

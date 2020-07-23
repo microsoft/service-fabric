@@ -1,0 +1,58 @@
+//-----------------------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+//-----------------------------------------------------------------------------
+
+cpp_quote("//--------------------------------------------------------------------------")
+cpp_quote("//  Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("//--------------------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+
+// ----------------------------------------------------------------------------
+// Forward Declaration of interfaces
+
+interface ISimpleAdder;
+
+[
+    uuid(21937fed-07ba-4ac2-905c-ca0273e11ffc),
+    version(1.0),
+]
+library Service_Lib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // Enumerations
+
+    // ------------------------------------------------------------------------
+    // Structures
+
+    // ----------------------------------------------------------------------------
+    // List all interfaces to be included in the type library
+    
+    interface ISimpleAdder;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+#pragma pack (pop)
+
+}
+
+// ----------------------------------------------------------------------------
+// Interface Definitions
+
+[object, local, uuid(ba2a466c-d69c-40af-80a2-742eacf0755a)]
+interface ISimpleAdder : IUnknown
+{
+    [] HRESULT Add(
+        [in] LONG first,
+        [in] LONG second,
+        [out, retval] LONG * result);
+}
+

@@ -233,10 +233,13 @@ namespace System.Fabric.Management.ImageBuilder
 
             IEnumerable<ServicePackageContainerPolicyType> spContainerPolicy = policies.OfType<ServicePackageContainerPolicyType>();
 
+            IEnumerable<NetworkPoliciesType> networkPolicies = policies.OfType<NetworkPoliciesType>();
+
             //
             // The ordering of the policies here must match the order of reading in 
             // ServiceModel\ServicepackageDescription -> ReadXml()
             //
+
             return orderedRunAsPolicy.Union<object>(orderedSecurityAccessPolicies).
                 Union<object>(orderedPackageSharingPolicies).
                 Union<object>(orderedEndpointBindingPolicies).
@@ -245,7 +248,8 @@ namespace System.Fabric.Management.ImageBuilder
                 Union<object>(spResourceGovernancePolicies).
                 Union<object>(orderedconfigPackagePolicies).
                 Union<object>(spContainerPolicy).
-                Union<object>(spSfRuntimeAccessPolicies).ToArray();
+                Union<object>(spSfRuntimeAccessPolicies).
+                Union<object>(networkPolicies).ToArray();
         }
 
         private static ConfigOverrideType[] SortConfigOverrides(ConfigOverrideType[] configOverrides)

@@ -10,12 +10,12 @@ namespace System.Fabric.FabricDeployer
     using Newtonsoft.Json;
     using System.ComponentModel;
     using System.Diagnostics;
-    using System.Fabric.Management.Common;
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
     using System.ServiceProcess;
     using System.Text;
+    using System.Fabric.Management.Common;
     using System.Threading;
     using Xml.Serialization;
     using Xml;
@@ -44,8 +44,6 @@ namespace System.Fabric.FabricDeployer
 
         internal ContainerNetworkDeploymentOperation()
         {
-            //var hostingSettings = HostingSettings.LoadHostingSettings();
-
 #if DotNetCoreClrLinux
             var containerServiceAddress = "unix:///var/run/docker.sock";
 #else
@@ -64,17 +62,17 @@ namespace System.Fabric.FabricDeployer
         }
 
         /// <summary>
-        /// Stops the docker service. This is done so that we can bring up docker on localhost:2375 since this is the endpoint
-        /// that Fabric Hosting is using for setting up containers.
-        /// If docker container service is already running on port 2375, return true.
+        /// Stops the docker service. This is done so that we can bring up docker on the provided container service arguments
+        /// since this is the endpoint that Fabric Hosting is using for setting up containers.
+        /// If docker container service is already running on the right container service arguments, return true.
         /// </summary>
         /// <param name="stopped"></param>
         /// <returns></returns>
-        protected internal bool StopContainerService(bool containerServiceRunningOnCustomPort, out bool stopped)
+        protected internal bool StopContainerService(bool containerServiceRunning, out bool stopped)
         {
             stopped = false;
 
-            if (containerServiceRunningOnCustomPort)
+            if (containerServiceRunning)
             {
                 return true;
             }
@@ -115,13 +113,13 @@ namespace System.Fabric.FabricDeployer
         }
 
         /// <summary>
-        /// Stops the docker process. This is done so that we can bring up docker on localhost:2375 since this is the endpoint
-        /// that Fabric Hosting is using for setting up containers.
-        /// If docker container service is already running on port 2375, return true.
+        /// Stops the docker process. This is done so that we can bring up docker on the provided container service arguments
+        /// since this is the endpoint that Fabric Hosting is using for setting up containers.
+        /// If docker container service is already running on the right container service arguments, return true.
         /// </summary>
-        protected internal bool StopContainerProcess(bool containerServiceRunningOnCustomPort)
+        protected internal bool StopContainerProcess(string fabricDataRoot, bool containerServiceRunning)
         {
-            if (containerServiceRunningOnCustomPort)
+            if (containerServiceRunning)
             {
                 return true;
             }
@@ -135,40 +133,38 @@ namespace System.Fabric.FabricDeployer
                 bool running = false;
                 int processId = -1;
                 IsProcessRunning(FlatNetworkConstants.ContainerProviderProcessName, out running, out processId);
-                if (running)
+                if (!running)
                 {
-                    var command = string.Format("sudo kill {0}", processId);
-                    int returnvalue = NativeHelper.system(command);
-                    if (returnvalue != 0)
+                    DeployerTrace.WriteInfo("Skipping stop docker container process since it is not running.");
+                    return true;
+                }
+
+                var command = string.Format("sudo kill {0}", processId);
+                int returnvalue = NativeHelper.system(command);
+                if (returnvalue != 0)
+                {
+                    DeployerTrace.WriteInfo("Failed to execute command {0} return value {1}", command, returnvalue);
+                    return success;
+                }
+
+                DeployerTrace.WriteInfo("Successfully executed command \"{0}\".", command);
+
+                // Allow the system to catch up with docker service not running
+                for (int i = 0; i < Constants.ApiRetryAttempts; i++)
+                {
+                    bool processRunning = false;
+                    int pid = -1;
+                    IsProcessRunning(FlatNetworkConstants.ContainerProviderProcessName, out processRunning, out pid);
+                    if (!processRunning)
                     {
-                        DeployerTrace.WriteInfo("Failed to execute command {0} return value {1}", command, returnvalue);
+                        DeployerTrace.WriteInfo("Successfully stopped container process.");
+                        success = true;
+                        break;
                     }
                     else
                     {
-                        DeployerTrace.WriteInfo("Successfully executed command \"{0}\".", command);
-                        // Allow the system to catch up with docker service not running
-                        for (int i=0; i<3; i++)
-                        {
-                           bool processRunning = false;
-                           int pid = -1;
-                           IsProcessRunning(FlatNetworkConstants.ContainerProviderProcessName, out processRunning, out pid);
-                           if (!processRunning)
-                           {
-                              DeployerTrace.WriteInfo("Successfully stopped container process.");
-                              success = true;
-                              break;
-                           }
-                           else
-                           {
-                              Thread.Sleep(5000);
-                           }
-                        }
+                        Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
                     }
-                }
-                else
-                {
-                    DeployerTrace.WriteInfo("Skipping stop docker container process since it is not running.");
-                    success = true;
                 }
 
                 // Remove the pid file if it exists.
@@ -176,9 +172,12 @@ namespace System.Fabric.FabricDeployer
                 {
                     // reset value to take pid file deletion result into account
                     success = false;
+        
+                    // docker process pid file directory
+                    var dockerPidFileDirPath = Path.Combine(fabricDataRoot, FlatNetworkConstants.DockerProcessIdFileDirectory);
 
-                    var command = string.Format("sudo rm -f {0}", FlatNetworkConstants.DockerPidFilePath);
-                    int returnvalue = NativeHelper.system(command);
+                    command = string.Format("sudo rm -rf {0}/*", dockerPidFileDirPath);
+                    returnvalue = NativeHelper.system(command);
                     if (returnvalue != 0)
                     {
                         DeployerTrace.WriteInfo("Failed to execute command {0} return value {1}", command, returnvalue);
@@ -199,14 +198,14 @@ namespace System.Fabric.FabricDeployer
         }
 
         /// <summary>
-        /// Starts the docker container process on localhost:2375.
+        /// Starts the docker container process using the provided container service arguments.
         /// This is the endpoint used to create the docker network.
-        /// If docker container service is already running on port 2375, return true.
+        /// If docker container service is already running on the right container service arguments, return true.
         /// </summary>
         /// <returns></returns>
-        protected internal bool StartContainerProcess(bool containerServiceRunningOnCustomPort)
+        protected internal bool StartContainerProcess(string containerServiceArguments, string fabricDataRoot, bool containerServiceRunning)
         {
-            if (containerServiceRunningOnCustomPort)
+            if (containerServiceRunning)
             {
                 return true;
             }
@@ -215,46 +214,51 @@ namespace System.Fabric.FabricDeployer
 
             DeployerTrace.WriteInfo("Clean up docker process, if running.");
 
-            if (StopContainerProcess(containerServiceRunningOnCustomPort))
-            {
-                DeployerTrace.WriteInfo("Starting docker process.");
-
-                try
-                {
-                    var command = "sudo dockerd -H localhost:2375 -H unix:///var/run/docker.sock --pidfile /var/run/docker.pid&";
-                    int returnvalue = NativeHelper.system(command);
-                    if (returnvalue != 0)
-                    {
-                        DeployerTrace.WriteInfo("Failed to execute command {0} return value {1}.", command, returnvalue);
-                    }
-                    else
-                    {
-                        DeployerTrace.WriteInfo("Successfully executed command \"{0}\".", command);
-                        // Allow the system to catch up after starting up docker service
-                        for (int i=0; i<3; i++)
-                        {
-                           bool containerServiceReady = IsContainerServiceListeningOnCustomPort();
-                           if (containerServiceReady)
-                           {
-                              DeployerTrace.WriteInfo("Successfully started container process.");
-                              success = true;
-                              break;
-                           }
-                           else
-                           {
-                              Thread.Sleep(5000);
-                           }
-                        }
-                     }
-                 }
-                 catch (Exception ex)
-                 {
-                     DeployerTrace.WriteError("Failed to start container process exception {0}", ex);
-                 }
-            }
-            else
+            if (!StopContainerProcess(fabricDataRoot, containerServiceRunning))
             {
                 DeployerTrace.WriteInfo("Failed to clean up docker process.");
+                return success;
+            }
+
+            DeployerTrace.WriteInfo("Starting docker process.");
+
+            try
+            {
+                var dockerPidFileDirectory = Path.Combine(fabricDataRoot, FlatNetworkConstants.DockerProcessIdFileDirectory);
+                if (!Directory.Exists(dockerPidFileDirectory))
+                {
+                    Directory.CreateDirectory(dockerPidFileDirectory);
+                }
+
+                var dockerPidFilePath = Path.Combine(dockerPidFileDirectory, string.Format("{0}_{1}", DateTime.Now.Ticks, FlatNetworkConstants.DockerProcessFile));
+
+                var command = string.Format("sudo dockerd {0} --pidfile {1}&", containerServiceArguments, dockerPidFilePath);
+                int returnvalue = NativeHelper.system(command);
+                if (returnvalue != 0)
+                {
+                    DeployerTrace.WriteInfo("Failed to execute command {0} return value {1}.", command, returnvalue);
+                    return success;  
+                }
+
+                DeployerTrace.WriteInfo("Successfully executed command \"{0}\".", command);
+
+                // Allow the system to catch up after starting up docker service
+                for (int i = 0; i < Constants.ApiRetryAttempts; i++)
+                {
+                    Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
+
+                    bool containerServiceReady = IsContainerServiceRunning();
+                    if (containerServiceReady)
+                    {
+                        DeployerTrace.WriteInfo("Successfully started container process.");
+                        success = true;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DeployerTrace.WriteError("Failed to start container process exception {0}", ex);
             }
 
             return success;
@@ -263,12 +267,12 @@ namespace System.Fabric.FabricDeployer
         /// <summary>
         /// Starts the default docker service if stopped by the deployer.
         /// This is simply restoring state on the machine after docker network has been set up.
-        /// If docker container service is already running on port 2375, return true.
+        /// If docker container service is already running on the right container service arguments, return true.
         /// </summary>
         /// <returns></returns>
-        protected internal bool StartContainerService(bool containerServiceRunningOnCustomPort, bool containerServiceStopped)
+        protected internal bool StartContainerService(bool containerServiceRunning, bool containerServiceStopped)
         {
-            if (containerServiceRunningOnCustomPort)
+            if (containerServiceRunning)
             {
                 return true;
             }
@@ -305,28 +309,6 @@ namespace System.Fabric.FabricDeployer
             }
 
             return success;
-        }
-
-        /// <summary>
-        /// Determines if the container service launched on port 2375 is ready.
-        /// </summary>
-        protected internal bool IsContainerServiceListeningOnCustomPort()
-        {
-            DeployerTrace.WriteInfo("Pinging container service.");
-
-            try
-            {
-                this.dockerClient.SystemOperation.PingAsync(TimeSpan.FromSeconds(30)).GetAwaiter().GetResult();
-
-                DeployerTrace.WriteInfo("Container service is ready.");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                DeployerTrace.WriteError("Failed to ping container service exception {0}.", ex);
-            }
-
-            return false;
         }
 
         protected bool IsPackageInstalled(string packageName)
@@ -598,7 +580,8 @@ namespace System.Fabric.FabricDeployer
         {
             string subnet = string.Empty;
             string gateway = string.Empty;
-            if (Utility.RetrieveGatewayAndSubnet(true, out subnet, out gateway))
+            string macAddress = string.Empty;
+            if (Utility.RetrieveNMAgentInterfaceInfo(true, out subnet, out gateway, out macAddress))
             {
                 return (RemoveIptableRule(subnet, ConnectivityDirection.Inbound) && RemoveIptableRule(subnet, ConnectivityDirection.Outbound));
             }
@@ -726,12 +709,12 @@ namespace System.Fabric.FabricDeployer
         /// <summary>
         /// Starts the default Docker NT service if stopped by the deployer.
         /// This is simply restoring state on the machine after docker network has been set up.
-        /// If docker container service is already running on port 2375, return true.
+        /// If docker container service is already running on the right container service arguments, return true.
         /// </summary>
         /// <returns></returns>
-        protected internal bool StartContainerNTService(bool containerServiceRunningOnCustomPort, bool containerNTServiceStopped)
+        protected internal bool StartContainerNTService(bool containerServiceRunning, bool containerNTServiceStopped)
         {
-            if (containerServiceRunningOnCustomPort)
+            if (containerServiceRunning)
             {
                 return true;
             }
@@ -744,7 +727,7 @@ namespace System.Fabric.FabricDeployer
             {
                 if (containerNTServiceStopped)
                 {
-                    var service = ServiceController.GetServices().SingleOrDefault(s => s.ServiceName == FlatNetworkConstants.ContainerServiceName);
+                    var service = ServiceController.GetServices().SingleOrDefault(s => string.Equals(s.ServiceName, FlatNetworkConstants.ContainerServiceName, StringComparison.OrdinalIgnoreCase));
 
                     if (service != null)
                     {
@@ -785,17 +768,17 @@ namespace System.Fabric.FabricDeployer
         }
 
         /// <summary>
-        /// Stops the Docker NT service.This is done so that we can bring up docker on localhost:2375 since this is the endpoint
-        /// that Fabric Hosting is using for setting up containers.
-        /// If docker container service is already running on port 2375, return true.
+        /// Stops the Docker NT service.This is done so that we can bring up docker on the provided container service arguments
+        /// since this is the endpoint that Fabric Hosting is using for setting up containers.
+        /// If docker container service is already running on the right container service arguments, return true.
         /// </summary>
         /// <param name="stopped"></param>
         /// <returns></returns>
-        protected internal bool StopContainerNTService(bool containerServiceRunningOnCustomPort, out bool stopped)
+        protected internal bool StopContainerNTService(bool containerServiceRunning, out bool stopped)
         {
             stopped = false;
 
-            if (containerServiceRunningOnCustomPort)
+            if (containerServiceRunning)
             {
                 return true;
             }
@@ -806,7 +789,7 @@ namespace System.Fabric.FabricDeployer
 
             try
             {
-                var service = ServiceController.GetServices().SingleOrDefault(s => s.ServiceName == FlatNetworkConstants.ContainerServiceName);
+                var service = ServiceController.GetServices().SingleOrDefault(s => string.Equals(s.ServiceName, FlatNetworkConstants.ContainerServiceName, StringComparison.OrdinalIgnoreCase));
 
                 if (service != null)
                 {
@@ -850,41 +833,49 @@ namespace System.Fabric.FabricDeployer
         }
 
         /// <summary>
-        /// Starts the docker container service on localhost:2375.
+        /// Starts the docker container service using the provided container service arguments.
         /// This is the endpoint used to create the docker network.
-        /// If docker container service is already running on port 2375, return true.
+        /// If the docker container service is already running using the right container service arguments, return true.
         /// </summary>
         /// <returns></returns>
-        protected internal bool StartContainerProviderService(bool containerServiceRunningOnCustomPort)
+        protected internal bool StartContainerProviderService(string containerServiceArguments, string fabricDataRoot, bool containerServiceRunning)
         {
             bool success = false;
 
-            if (containerServiceRunningOnCustomPort)
+            if (containerServiceRunning)
             {
                 return true;
             }
 
-            if (StopContainerProviderService(containerServiceRunningOnCustomPort))
+            if (StopContainerProviderService(fabricDataRoot, containerServiceRunning))
             {
                 DeployerTrace.WriteInfo("Starting service {0}.", FlatNetworkConstants.ContainerProviderProcessName);
 
                 var programFilesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), FlatNetworkConstants.ContainerServiceName);
 
-                if (Utility.ExecuteCommand(FlatNetworkConstants.ContainerProviderProcessName, FlatNetworkConstants.ContainerProviderServiceSetupCommandArgs, programFilesPath, false, null))
+                var dockerPidFileDirectory = Path.Combine(fabricDataRoot, FlatNetworkConstants.DockerProcessIdFileDirectory);
+                if (!Directory.Exists(dockerPidFileDirectory))
+                {
+                    Directory.CreateDirectory(dockerPidFileDirectory);
+                }
+
+                var dockerPidFilePath = Path.Combine(dockerPidFileDirectory, string.Format("{0}_{1}", DateTime.Now.Ticks, FlatNetworkConstants.DockerProcessFile));
+
+                containerServiceArguments = string.Format("{0} --pidfile={1}", containerServiceArguments, dockerPidFilePath);
+
+                if (Utility.ExecuteCommand(FlatNetworkConstants.ContainerProviderProcessName, containerServiceArguments, programFilesPath, false, null))
                 {
                     // Allow the system to catch up after starting up docker service
                     for (int i = 0; i < Constants.ApiRetryAttempts; i++)
                     {
+                        Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
+
                         bool containerServiceReady = IsContainerServiceRunning();
                         if (containerServiceReady)
                         {
                             DeployerTrace.WriteInfo("Successfully started container process.");
                             success = true;
                             break;
-                        }
-                        else
-                        {
-                            Thread.Sleep(Constants.ApiRetryIntervalMilliSeconds);
                         }
                     }
                 }
@@ -898,14 +889,13 @@ namespace System.Fabric.FabricDeployer
         }
 
         /// <summary>
-        /// Stops the dockerd service. This is done so that we can bring it
-        /// up on localhost:2375. We do not assume that it is already running on localhost:2375.
-        /// If docker container service is already running on port 2375, return true.
+        /// Stops the dockerd service. This is done so that we can bring it up on the provided container service arguments. 
+        /// If docker container service is already running on the right container service arguments, return true.
         /// </summary>
         /// <returns></returns>
-        protected internal bool StopContainerProviderService(bool containerServiceRunningOnCustomPort)
+        protected internal bool StopContainerProviderService(string fabricDataRoot, bool containerServiceRunning)
         {
-            if (containerServiceRunningOnCustomPort)
+            if (containerServiceRunning)
             {
                 return true;
             }
@@ -916,29 +906,29 @@ namespace System.Fabric.FabricDeployer
 
             try
             {
-                var processes = Process.GetProcessesByName(FlatNetworkConstants.ContainerProviderProcessName);
-                if (processes.Length > 0)
+                if (Utility.StopProcess(FlatNetworkConstants.ContainerProviderProcessName))
                 {
-                    DeployerTrace.WriteInfo("Killing {0}:{1} process.", processes[0].ProcessName, processes[0].Id);
-                    processes[0].Kill();
+                    var dockerPidFileDirectory = Path.Combine(fabricDataRoot, FlatNetworkConstants.DockerProcessIdFileDirectory);
+                    var dockerPidFiles = Directory.Exists(dockerPidFileDirectory) ? Directory.GetFiles(dockerPidFileDirectory) : new string[0];
+                    if (dockerPidFiles.Count() > 0)
+                    {
+                        DeployerTrace.WriteInfo("Deleting docker pid files.");
+                        foreach (var dockerPidFile in dockerPidFiles)
+                        {
+                            File.Delete(dockerPidFile);
+                        }
+                    }
+                    else
+                    {
+                        DeployerTrace.WriteInfo("Docker pid files do not exist in directory {0}.", dockerPidFileDirectory);
+                    }
+
+                    success = true;
                 }
                 else
                 {
-                    DeployerTrace.WriteWarning("Process {0} not found.", FlatNetworkConstants.ContainerProviderProcessName);
+                    DeployerTrace.WriteError("Failed to stop container provider service {0}.", FlatNetworkConstants.ContainerProviderProcessName);
                 }
-
-                var dockerPidFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), FlatNetworkConstants.DockerPidFileRelativePath);
-                if (File.Exists(dockerPidFile))
-                {
-                    DeployerTrace.WriteInfo("Deleting docker pid file.");
-                    File.Delete(dockerPidFile);
-                }
-                else
-                {
-                    DeployerTrace.WriteInfo("Docker pid file {0} does not exist.", dockerPidFile);
-                }
-
-                success = true;
             }
             catch (Exception ex)
             {
@@ -995,11 +985,6 @@ namespace System.Fabric.FabricDeployer
                 else
                 {
                     DeployerTrace.WriteError("Failed to get the IPv4 forward table size information.");
-                }
-
-                for (int i = 0; i < ipForwardTable.Table.Length; ++i)
-                {
-                    PrintRoutingTableRow(i, ipForwardTable.Table[i]);
                 }
 
                 success = true;
@@ -1090,6 +1075,12 @@ namespace System.Fabric.FabricDeployer
                     {
                         match = true;
                     }
+                }
+
+                // if there is no match in the new table for the old row, then print out the old row
+                if (!match)
+                {
+                    PrintRoutingTableRow(i, oldIpForwardTable.Table[i]);
                 }
             }
 
@@ -1248,7 +1239,7 @@ namespace System.Fabric.FabricDeployer
             }
             catch (Exception ex)
             {
-                DeployerTrace.WriteInfo("Failed to check if container service is running on custom port exception {0}", ex);
+                DeployerTrace.WriteInfo("Failed to check if container service is running, exception {0}", ex);
             }
 
             return isRunning;
@@ -1311,8 +1302,8 @@ namespace System.Fabric.FabricDeployer
         {
             bool success = false;
 
-            TimeSpan retryInterval = TimeSpan.FromSeconds(5);
-            int retryCount = 3;
+            TimeSpan retryInterval = TimeSpan.FromMilliseconds(Constants.ApiRetryIntervalMilliSeconds);
+            int retryCount = Constants.ApiRetryAttempts;
             Type[] exceptionTypes = { typeof(Exception) };
 
             try

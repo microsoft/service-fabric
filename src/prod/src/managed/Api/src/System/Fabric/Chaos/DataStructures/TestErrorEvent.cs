@@ -90,13 +90,15 @@ namespace System.Fabric.Chaos.DataStructures
         {
             string reasonToSendBack = null;
 
-            if (ChaosUtility.DisableOptimizationForValidationFailedEvent)
+            if (ChaosUtility.DisableOptimizationForValidationFailedEvent) // not compressed
             {
                 reasonToSendBack = ChaosUtility.Decompress(this.reason);
                 if (reasonToSendBack.Length > ChaosConstants.StringLengthLimit)
                 {
                     reasonToSendBack = reasonToSendBack.Substring(0, ChaosConstants.StringLengthLimit);
                 }
+
+                reasonToSendBack = ChaosUtility.MakeLengthNotMultipleOfFour(reasonToSendBack);
             }
             else
             {

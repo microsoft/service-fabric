@@ -220,6 +220,7 @@ void FailoverManagerServiceFactory::OnServiceChangeRole(FABRIC_REPLICA_ROLE newR
             move(localFederationSPtr),
             reliabilitySubsystem_.HealthClient,
             serviceManagementClient,
+            reliabilitySubsystem_.ClientFactory,
             reliabilitySubsystem_.NodeConfig,
             move(fmStore),
             servicePartition,

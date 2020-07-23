@@ -7,7 +7,6 @@ add_definitions(-DNO_INLINE_EVENTDESCCREATE)
 
 add_executable(${exe_Lease.Test}
   ../../../test/BoostUnitTest/btest.cpp
-  ../../../test/BoostUnitTest/FabricGlobalsInitializationFixture.Test.cpp
 
   # test code
   ../LeaseLayerTestCommon.cpp

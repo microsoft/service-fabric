@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SrcRoot)\prod\Setup\SdkRuntimeCompatibilityCheck\PopulateSdkRuntimeCompatibilityJson.Targets "/>
+  <Import Project="$(CONFROOT)\FabricVersions.Targets "/>
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Microsoft.ServiceFabric.InstallFabricRuntime.Test</AssemblyName>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <RootNamespace>Microsoft.ServiceFabric.InstallFabricRuntime.Test</RootNamespace>
+    <ProjectGuid>{120D21A5-107B-441B-8503-C664CC838607}</ProjectGuid>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>TRACE;SYSTEM_FABRIC</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="SdkRuntimeCompatibilityCheck.Test.cs" />
+    <Compile Include="HandleResolver.Test.cs" />
+    <Compile Include="$(SrcRoot)\prod\Setup\InstallFabricRuntime\HandleResolver.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+    <ProjectReference Include="$(SRCROOT)\BuildSteps\ServiceFabricSDK\CustomAction\CompatibilityCheckCA\SdkRuntimeCompatibilityCheck.csproj">
+      <Project>{FF07AEA3-7A4E-4B95-B282-DEF5BD3C073B}</Project>
+      <Name>CompatibilityCheckCA</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="JsonTests\CompatibilityCheckModel_empty.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonTests\CompatibilityCheckModel_correct.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonTests\CompatibilityCheckModel_corruptedjson.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonTests\CompatibilityCheckModel_incomplete.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonTests\CompatibilityCheckModel_wrongversion.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonTests\CompatibilityCheckModel_corruptedversion.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="InstallFabricRuntime.Test.LoadDll.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+
+  <Target Name="BeforeBuild" DependsOnTargets="PopulateSdkRuntimeCompatibilityJson">
+  </Target>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" />
+    <Copy SourceFiles="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\SdkRuntimeCompatibilityCheck.dll" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\HandleResolver\" />
+  </Target>
+</Project>

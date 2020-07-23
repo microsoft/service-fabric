@@ -43,7 +43,7 @@
           BeforeTargets="BeforeBuild"
 		  Inputs="$(MSBuildProjectFullPath)"
 		  Outputs="$(CoreClrPrjLockFile);$(ProjectAssetsFile)">
-    <Exec Command="$(DotnetCliExe) restore $(MSBuildProjectFullPath) /p:SRCROOT=$(SRCROOT) /p:NuGetPackageRoot=$(NuGetPackageRoot) /p:EnvironmentConfig=$(EnvironmentConfig) /p:BUILD_VERSION=$(BUILD_VERSION) --no-dependencies --packages $(DotnetPackagesDir) --configfile $(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\NuGet.Config" />
+    <Exec Command="$(DotnetCliExe) restore $(MSBuildProjectFullPath) /p:SRCROOT=$(SRCROOT) /p:NuGetPackageRoot=$(NuGetPackageRoot) /p:EnvironmentConfig=$(EnvironmentConfig) /p:BUILD_VERSION=$(BUILD_VERSION) /p:SF_DOTNET_TYPE=$(SF_DOTNET_TYPE) --no-dependencies --packages $(DotnetPackagesDir) --configfile $(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\NuGet.Config" />
 
 	<MakeDir Directories="$(DotnetPackagesDir)" />
     <Touch Files="$(CoreClrPrjLockFile)"

@@ -79,6 +79,7 @@ namespace TransactionalReplicatorTests
                 logManager,
                 *dataLossHandler,
                 move(healthClient),
+                true,
                 allocator);
 
             CODING_ERROR_ASSERT(txnReplicatorSPtr);

@@ -3,13 +3,21 @@ set( LINUX_SOURCES
     ../CentralSecretServiceConfig.cpp
     ../ClientRequestAsyncOperation.cpp
     ../GetSecretsAsyncOperation.cpp
+    ../GetSecretVersionsAsyncOperation.cpp
     ../SetSecretsAsyncOperation.cpp
     ../RemoveSecretsAsyncOperation.cpp
     ../CentralSecretServiceReplica.cpp
     ../CentralSecretServiceFactory.cpp
+    ../SecretMetadataDataItem.cpp
     ../SecretDataItem.cpp
     ../Crypto.cpp
     ../SecretManager.cpp
+    ../SecretManager.AutoRetryAsyncOperation.cpp
+    ../SecretManager.SecretsAsyncOperation.cpp
+    ../SecretManager.GetSecretsAsyncOperation.cpp
+    ../SecretManager.SetSecretsAsyncOperation.cpp
+    ../SecretManager.RemoveSecretsAsyncOperation.cpp
+    ../SecretManager.GetSecretVersionsAsyncOperation.cpp
 )
 
 include_directories("..")

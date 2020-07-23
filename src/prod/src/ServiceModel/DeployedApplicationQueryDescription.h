@@ -31,9 +31,9 @@ namespace ServiceModel
         bool get_IncludeHealthState() const { return includeHealthState_; }
         void set_IncludeHealthState(bool includeHealthState) { includeHealthState_ = includeHealthState; }
 
-        __declspec(property(get = get_QueryPagingDescriptionUPtr, put = set_QueryPagingDescriptionUPtr)) std::unique_ptr<QueryPagingDescription> const & QueryPagingDescriptionUPtr;
-        std::unique_ptr<QueryPagingDescription> const & get_QueryPagingDescriptionUPtr() const { return queryPagingDescriptionUPtr_; }
-        void set_QueryPagingDescriptionUPtr(std::unique_ptr<QueryPagingDescription> && queryPagingDescription) { queryPagingDescriptionUPtr_ = std::move(queryPagingDescription); }
+        __declspec(property(get = get_QueryPagingDescription, put = set_QueryPagingDescription)) QueryPagingDescriptionUPtr const & PagingDescription;
+        QueryPagingDescriptionUPtr const & get_QueryPagingDescription() const { return queryPagingDescription_; }
+        void set_QueryPagingDescription(QueryPagingDescriptionUPtr && queryPagingDescription) { queryPagingDescription_ = std::move(queryPagingDescription); }
 
         Common::ErrorCode FromPublicApi(FABRIC_PAGED_DEPLOYED_APPLICATION_QUERY_DESCRIPTION const & deployedApplicationQueryDescription);
 
@@ -42,7 +42,7 @@ namespace ServiceModel
 
         bool IsExclusiveFilterHelper(bool const isValid, bool & hasFilterSet);
 
-        void MovePagingDescription(__out unique_ptr<QueryPagingDescription> & pagingDescription) { pagingDescription = std::move(queryPagingDescriptionUPtr_); }
+        void TakePagingDescription(__out QueryPagingDescriptionUPtr & pagingDescription) { pagingDescription = std::move(queryPagingDescription_); }
 
         std::wstring GetApplicationNameString() const;
 
@@ -50,7 +50,7 @@ namespace ServiceModel
         std::wstring nodeName_;
         Common::NamingUri applicationName_;
         bool includeHealthState_;
-        std::unique_ptr<QueryPagingDescription> queryPagingDescriptionUPtr_;
+        QueryPagingDescriptionUPtr queryPagingDescription_;
     };
 }
 

@@ -249,6 +249,9 @@ namespace Reliability
             //Determines if we want to use score calculation in Constraint Check Fixing
             INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", UseScoreInConstraintCheck, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
+            //Turns on and off logic which prefers moving to already upgraded UDs
+            PUBLIC_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", PreferUpgradedUDs, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+
             //Increasing parameter will lead to more random moves, lowering leads to more heuristic moves
             INTERNAL_CONFIG_ENTRY(double, L"PlacementAndLoadBalancing", ClusterSpecificTemperatureCoefficient, 100.0, Common::ConfigEntryUpgradePolicy::Dynamic);
 
@@ -385,6 +388,11 @@ namespace Reliability
             //Setting this parameter to true will prevent those kind of overcommits and on-demand defrag (aka placementWithMove) will be disabled.
             PUBLIC_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", PreventTransientOvercommit, false, Common::ConfigEntryUpgradePolicy::Dynamic);
 
+            // In case when PreventTransientOvercommit is true, this config determines if PLB can use the load that is occupied by disappearing replicas.
+            // If the config is set to false, then PLB will detect the load of such replicas and will not allow Simulated Annealing to use it.
+            // Regardless of this config, PLB will not make transient overcommit during the single run.
+            INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", CountDisappearingLoadForSimulatedAnnealing, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+
             //Determine whether the in-build throttling is enabled
             PUBLIC_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", InBuildThrottlingEnabled, false, Common::ConfigEntryUpgradePolicy::Dynamic);
 
@@ -402,6 +410,67 @@ namespace Reliability
 
             //The maximal number of swap-primary replicas allowed globally
             PUBLIC_CONFIG_ENTRY(int, L"PlacementAndLoadBalancing", SwapPrimaryThrottlingGlobalMaxValue, 0, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // Map of node type name to maximum number of total parallel builds on each node of that type.
+            // If this number is greater than zero, and throttling is enabled, then this is the hard limit for the number of 
+            // InBuild replicas that Cluster Resource Manager (CRM) can create on the node. Prior to making moves, CRM will consider
+            // the number of existing InBuild replicas on the node, and if that number is below the limit then CRM will be able to make
+            // new moves into the node respecting the limit. It is possible that the number of InBuild replicas exceeds this limit for reasons 
+            // other than moves initiated by CRM. For example, if several replicas on the node restart they may go into InBuild state
+            // and number of buils on the node may be exceeded.
+            // Throttling is enabled if:
+            //  - ThrottlingConstraintPriority is set to value >= 0.
+            //  - Throttling of the current phase in CRM is enabled by setting corresponding switch to true:
+            //      - ThrottlePlacementPhase for placement or placement with move phases.
+            //      - ThrottleConstraintCheckPhase for constraint check.
+            //      - ThrottleBalancingPhase for LoadBalancing or QuickLoadBalancing.
+            INTERNAL_CONFIG_GROUP(KeyIntegerValueMap, L"MaximumInBuildReplicasPerNode", MaximumInBuildReplicasPerNode, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // Map of node type name to maximum number of total parallel builds on the node during balancing phase.
+            // If this number is greater than zero, and throttling is enabled, then Balancing phase is not allowed to move replicas to the node
+            // if that would cause the total number of InBuild replicas (existing + new builds) to go over this limit.
+            // If both this value and MaximumInBuildReplicasPerNode are specified, then the lower of the two is used for balancing phase.
+            // Throttling of balancing phase is enabled if:
+            //  - ThrottlingConstraintPriority is set to value >= 0.
+            //  - ThrottleBalancingPhase is set to true.
+            INTERNAL_CONFIG_GROUP(KeyIntegerValueMap, L"MaximumInBuildReplicasPerNodeBalancingThrottle", MaximumInBuildReplicasPerNodeBalancingThrottle, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // Map of node type name to maximum number of total parallel builds on the node during constraint check phase.
+            // If this number is greater than zero, and throttling is enabled, then Constraint Check phase is not allowed to move replicas to the node
+            // if that would cause the total number of InBuild replicas (existing + new builds) to go over this limit.
+            // If both this value and MaximumInBuildReplicasPerNode are specified, then the lower of the two is used for Constraint Check phase.
+            // Throttling of constraint check phase is enabled if:
+            //  - ThrottlingConstraintPriority is set to value >= 0.
+            //  - ThrottleConstraintCheckPhase is set to true.
+            INTERNAL_CONFIG_GROUP(KeyIntegerValueMap, L"MaximumInBuildReplicasPerNodeConstraintCheckThrottle", MaximumInBuildReplicasPerNodeConstraintCheckThrottle, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // Map of node type name to maximum number of total parallel builds on the node during Placement phase.
+            // If this number is greater than zero, and throttling is enabled, then Placement phase is not allowed to move or add replicas to the node
+            // if that would cause the total number of InBuild replicas (existing + new builds) to go over this limit.
+            // If both this value and MaximumInBuildReplicasPerNode are specified, then the lower of the two is used for placement phase.
+            // Throttling of placement phase is enabled if:
+            //  - ThrottlingConstraintPriority is set to value >= 0.
+            //  - ThrottlePlacementPhase is set to true.
+            INTERNAL_CONFIG_GROUP(KeyIntegerValueMap, L"MaximumInBuildReplicasPerNodePlacementThrottle", MaximumInBuildReplicasPerNodePlacementThrottle, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // Priority of the throttling constraint. If it is greater then zero, then throttling will be used in all phases.
+            // There are separate switches for each phase in ClusterResourceManager that can be used to disable throttling:
+            //  - ThrottlePlacementPhase to disable throttling during placement.
+            //  - ThrottleBalancingPhase to disable throttling during balancing.
+            //  - ThrottleConstraintCheckPhase to disable throttling during constraint check.
+            INTERNAL_CONFIG_ENTRY(int, L"PlacementAndLoadBalancing", ThrottlingConstraintPriority, 0, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // If true, ThrottlingConstraint is enabled in placement phase, and placement of new replicas is throttled.
+            INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", ThrottlePlacementPhase, false, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // If true, ThrottlingConstraint is enabled during balancing phase, and movement of replicas is throttled.
+            INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", ThrottleBalancingPhase, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // If true, ThrottlingConstraint is enabled during constraint check runs, and fixing violations is throttled.
+            INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", ThrottleConstraintCheckPhase, false, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // In tests, PLB will assert if number of InBuild replicas per node exceeds this value. Negative is ignored.
+            TEST_CONFIG_ENTRY(int, L"PlacementAndLoadBalancing", PerNodeThrottlingCheck, -1, Common::ConfigEntryUpgradePolicy::Dynamic);
 
             //Determines whether to trace simulated annealing statistics
             TEST_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", TraceSimulatedAnnealingStatistics, false, Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -599,6 +668,10 @@ namespace Reliability
             // Metric weight for resource governance metric - CpuCores and MemoryInMB
             INTERNAL_CONFIG_ENTRY(double, L"PlacementAndLoadBalancing", CpuCoresMetricWeight, 1.0, Common::ConfigEntryUpgradePolicy::Dynamic);
             INTERNAL_CONFIG_ENTRY(double, L"PlacementAndLoadBalancing", MemoryInMBMetricWeight, 1.0, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // Include load for None replicas for exclusive services
+            // This is needed so that there is no PLB-LRM mismatch during upgrades and balancing
+            INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", IncludeResourceGovernanceNoneReplicaLoad, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
             //This parameter controls whether we should have swap preferred solutions during CC fixes
             INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", EnablePreferredSwapSolutionInConstraintCheck, true, Common::ConfigEntryUpgradePolicy::Dynamic);

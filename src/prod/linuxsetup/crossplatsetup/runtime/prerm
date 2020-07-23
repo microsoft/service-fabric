@@ -21,6 +21,9 @@ GetDistroInstaller()
     fi
 }
 
+export FabricHostServicePath=$(cat /etc/servicefabric/FabricHostServicePath)
+export UpdaterServicePath=$(cat /etc/servicefabric/UpdaterServicePath)
+
 GetDistroInstaller DISTROINSTALLER
 
 IsRemove="false"
@@ -50,7 +53,7 @@ if [ "$IsRemove" == "true" ]; then
     systemctl disable servicefabric
 
     echo Remove servicefabric.service file from systemd
-    rm -f /etc/systemd/system/servicefabric.service
+    rm -f ${FabricHostServicePath}
 
     echo Stopping service fabric updater service
     systemctl stop servicefabricupdater
@@ -59,10 +62,11 @@ if [ "$IsRemove" == "true" ]; then
     systemctl disable servicefabricupdater
 
     echo Remove servicefabricupdater.service file from systemd
-    rm -f /etc/systemd/system/servicefabricupdater.service
+    rm -f ${UpdaterServicePath}
 fi
 
 #remove cgroups associated with fabric when doing either removal or upgrade
 /opt/microsoft/servicefabric/bin/cleancgroup.sh
 
+/opt/microsoft/servicefabric/bin/Fabric/Fabric.Code/BlockStore/driver/blockstore.sh -u
 exit 0

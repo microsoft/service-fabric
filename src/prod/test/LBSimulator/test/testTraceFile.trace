@@ -1,0 +1,612 @@
+ETWTimestamp	EventType	Id	Text
+2016-11-26 00:23:36.5420000	PLBConstruct		PLB constucted with nodeCount:40, serviceTypeCount:27, serviceCount:34, failoverUnitCount:40, loadMetricCount:13
+
+2016-11-26 00:23:36.5420000	UpdateNode@5e0086712e706adb3e0108928582e5f4	Updating node with 5e0086712e706adb3e0108928582e5f4:131245868736560211 ((FaultDomain:fd:/0 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.0 NodeType:MN UpgradeDomain:0)) (0) 0 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5e1078c48feb70af02c23062e9a71308	Updating node with 5e1078c48feb70af02c23062e9a71308:131231177135007343 ((FaultDomain:fd:/3 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.8 NodeType:MN UpgradeDomain:8)) (3) 8 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5e2048d31ed939067ece1c8156aadd32	Updating node with 5e2048d31ed939067ece1c8156aadd32:131245916060009921 ((FaultDomain:fd:/4 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.4 NodeType:MN UpgradeDomain:4)) (4) 4 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5e40ef42fed269018e8dc59652dcfdd2	Updating node with 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 ((FaultDomain:fd:/2 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.2 NodeType:MN UpgradeDomain:2)) (2) 2 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5e50c465a837b317947516ca58a1783a	Updating node with 5e50c465a837b317947516ca58a1783a:131232985253442046 ((FaultDomain:fd:/0 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.10 NodeType:MN UpgradeDomain:10)) (0) 10 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5e60c3622c77889c55693a46161adf82	Updating node with 5e60c3622c77889c55693a46161adf82:131227045050963308 ((FaultDomain:fd:/1 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.6 NodeType:MN UpgradeDomain:6)) (1) 6 true Restart DeactivationSafetyCheckComplete () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5e8096e8fcc4484911ac393ada74e912	Updating node with 5e8096e8fcc4484911ac393ada74e912:131245880731833247 ((FaultDomain:fd:/1 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.1 NodeType:MN UpgradeDomain:1)) (1) 1 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5e9041818c1f3182a940d563f0b8a537	Updating node with 5e9041818c1f3182a940d563f0b8a537:131232995272254780 ((FaultDomain:fd:/4 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.9 NodeType:MN UpgradeDomain:9)) (4) 9 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5ea0446aef08f3cc3f2df5c8eb6b3b19	Updating node with 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 ((FaultDomain:fd:/0 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.5 NodeType:MN UpgradeDomain:5)) (0) 5 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5ec08689689761ba2bba03dca0563297	Updating node with 5ec08689689761ba2bba03dca0563297:131245904630023000 ((FaultDomain:fd:/3 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.3 NodeType:MN UpgradeDomain:3)) (3) 3 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@5ee0c591bcf778b717771403dfab5a83	Updating node with 5ee0c591bcf778b717771403dfab5a83:131231214677305717 ((FaultDomain:fd:/2 IsControlNodeType:1 IsMasterNodeType:1 NodeName:MN.7 NodeType:MN UpgradeDomain:7)) (2) 7 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@7e0022b776b8a6e96d12ff31e8eed76b	Updating node with 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 ((FaultDomain:fd:/0 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.0 NodeType:GW UpgradeDomain:0)) (0) 0 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@7e0890646b3bf7c8e94215daca6510e1	Updating node with 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 ((FaultDomain:fd:/1 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.16 NodeType:GW UpgradeDomain:16)) (1) 16 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@7e1083db5b52bb267fbe5056deeb51b5	Updating node with 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 ((FaultDomain:fd:/3 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.8 NodeType:GW UpgradeDomain:8)) (3) 8 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@7e20f1bd8ad0ac92349333daa5c27d14	Updating node with 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 ((FaultDomain:fd:/4 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.4 NodeType:GW UpgradeDomain:4)) (4) 4 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@7e30d88824b6f74baa1764bd2c934578	Updating node with 7e30d88824b6f74baa1764bd2c934578:131232952019413178 ((FaultDomain:fd:/2 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.12 NodeType:GW UpgradeDomain:12)) (2) 12 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@7e4031fc8b4859ea79b1ba43859e758f	Updating node with 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 ((FaultDomain:fd:/2 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.2 NodeType:GW UpgradeDomain:2)) (2) 2 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5420000	UpdateNode@7e50c4895b3a81bd000cd985c2b38e6a	Updating node with 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 ((FaultDomain:fd:/0 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.10 NodeType:GW UpgradeDomain:10)) (0) 10 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7e605718e346718befdb10b22d578118	Updating node with 7e605718e346718befdb10b22d578118:131226903277200169 ((FaultDomain:fd:/1 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.6 NodeType:GW UpgradeDomain:6)) (1) 6 true Restart DeactivationSafetyCheckComplete () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7e70e2d6e29b0aaaa740a56262d5c687	Updating node with 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 ((FaultDomain:fd:/4 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.14 NodeType:GW UpgradeDomain:14)) (4) 14 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7e8060e1c014de918e212f1f98b6f3a3	Updating node with 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 ((FaultDomain:fd:/1 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.1 NodeType:GW UpgradeDomain:1)) (1) 1 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7e88f32d92022053e1afe24981cb9d5e	Updating node with 7e88f32d92022053e1afe24981cb9d5e:131231288634195081 ((FaultDomain:fd:/2 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.17 NodeType:GW UpgradeDomain:17)) (2) 17 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7e90ee3788f4eab37ac1da533fb682cd	Updating node with 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 ((FaultDomain:fd:/4 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.9 NodeType:GW UpgradeDomain:9)) (4) 9 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7ea0ad96d9f087df3250a0ace9a18f4b	Updating node with 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 ((FaultDomain:fd:/0 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.5 NodeType:GW UpgradeDomain:5)) (0) 5 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7eb029f8a1fba8636dbe8977bc120916	Updating node with 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 ((FaultDomain:fd:/3 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.13 NodeType:GW UpgradeDomain:13)) (3) 13 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7ec0047102b005ad9c46336c303e18c1	Updating node with 7ec0047102b005ad9c46336c303e18c1:131245904444905783 ((FaultDomain:fd:/3 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.3 NodeType:GW UpgradeDomain:3)) (3) 3 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7ed009abffed1563ba7d6c56fad4c796	Updating node with 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 ((FaultDomain:fd:/1 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.11 NodeType:GW UpgradeDomain:11)) (1) 11 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7ee0d0ec460d8690dae52d84246edce1	Updating node with 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 ((FaultDomain:fd:/2 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.7 NodeType:GW UpgradeDomain:7)) (2) 7 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@7ef0b4c0a1c069faba96b862daae5b9a	Updating node with 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 ((FaultDomain:fd:/0 IsControlNodeType:1 IsGatewayNodeType:1 NodeName:GW.15 NodeType:GW UpgradeDomain:15)) (0) 15 true None None () (InstanceDiskSpaceUsed:1331200 ManagementService.Code.FiniteStateMachineContexts:1 MaxCpuUsage:1400000)
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f600276a91530797741614302c5180a4	Updating node with f600276a91530797741614302c5180a4:131245868215894277 ((FaultDomain:fd:/0 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.0 NodeType:WF UpgradeDomain:0)) (0) 0 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f6101871fbf387320777a9eb9b323320	Updating node with f6101871fbf387320777a9eb9b323320:131231177052656545 ((FaultDomain:fd:/3 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.8 NodeType:WF UpgradeDomain:8)) (3) 8 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f6209146d4caa92a6aeb1e6d60bedb6b	Updating node with f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 ((FaultDomain:fd:/4 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.4 NodeType:WF UpgradeDomain:4)) (4) 4 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f640fc54333b59e0528f4479e18c79c4	Updating node with f640fc54333b59e0528f4479e18c79c4:131245892571357018 ((FaultDomain:fd:/2 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.2 NodeType:WF UpgradeDomain:2)) (2) 2 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f650d1ffdb9be0981f8e1762d72dfaa4	Updating node with f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 ((FaultDomain:fd:/0 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.10 NodeType:WF UpgradeDomain:10)) (0) 10 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f6602c6428af4322354f452c849ae517	Updating node with f6602c6428af4322354f452c849ae517:131232926393151530 ((FaultDomain:fd:/1 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.6 NodeType:WF UpgradeDomain:6)) (1) 6 true Restart DeactivationSafetyCheckInProgress () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f680960dcdefc3acddb4f32dad0bcc9f	Updating node with f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 ((FaultDomain:fd:/1 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.1 NodeType:WF UpgradeDomain:1)) (1) 1 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f6901e0a61858b83f3e63d26c233b952	Updating node with f6901e0a61858b83f3e63d26c233b952:131231313202864614 ((FaultDomain:fd:/4 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.9 NodeType:WF UpgradeDomain:9)) (4) 9 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f6a032184c2780f343ccf0954373acaa	Updating node with f6a032184c2780f343ccf0954373acaa:131245927273766933 ((FaultDomain:fd:/0 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.5 NodeType:WF UpgradeDomain:5)) (0) 5 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f6c0c87135424d8765f7d1efec7684bb	Updating node with f6c0c87135424d8765f7d1efec7684bb:131245904497582960 ((FaultDomain:fd:/3 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.3 NodeType:WF UpgradeDomain:3)) (3) 3 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateNode@f6e02c75286ddcc90fc8d81844124f34	Updating node with f6e02c75286ddcc90fc8d81844124f34:131232918539149977 ((FaultDomain:fd:/2 IsControlNodeType:1 IsFabricNodeType:1 NodeName:WF.7 NodeType:WF UpgradeDomain:7)) (2) 7 true None None () ()
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/Alias	Updating application with fabric:/Alias id:1 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/Control	Updating application with fabric:/Control id:2 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/Gateway	Updating application with fabric:/Gateway id:3 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/InstanceManager	Updating application with fabric:/InstanceManager id:4 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/ManagementService	Updating application with fabric:/ManagementService id:5 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/MonitoringServiceControl	Updating application with fabric:/MonitoringServiceControl id:6 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/NodeAgentControl	Updating application with fabric:/NodeAgentControl id:7 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/NodeMdsAgentControl	Updating application with fabric:/NodeMdsAgentControl id:8 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/OSAuditPolicyManagerControl	Updating application with fabric:/OSAuditPolicyManagerControl id:9 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/RepairPolicyEngineControl	Updating application with fabric:/RepairPolicyEngineControl id:10 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/WatchdogsControl	Updating application with fabric:/WatchdogsControl id:11 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/Worker.ISO.Control/ca6c92c1ba12	Updating application with fabric:/Worker.ISO.Control/ca6c92c1ba12 id:12 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/Worker.ISO.Control/fea7e9b64e2a	Updating application with fabric:/Worker.ISO.Control/fea7e9b64e2a id:13 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateApplication	fabric:/Worker.ISO.Control/db2015eff747	Updating application with fabric:/Worker.ISO.Control/db2015eff747 id:14 capacities:() minimumNodes:0 scaleoutCount:0 upgradeInProgress: false, upgradeCompletedUDs:
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Alias_App2:Alias:XDBAlias	Updating service type with Alias_App2:Alias:XDBAlias blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Alias_App2:Alias:XDBAliasProcess	Updating service type with Alias_App2:Alias:XDBAliasProcess blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	ClusterManagerServiceType	Updating service type with ClusterManagerServiceType blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Control_App0:Host:XDBHostProcess	Updating service type with Control_App0:Host:XDBHostProcess blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Control_App0:MDSAgentLauncher:MDSAgentLauncher	Updating service type with Control_App0:MDSAgentLauncher:MDSAgentLauncher blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Control_App0:RgManager:RgManagerProcess	Updating service type with Control_App0:RgManager:RgManagerProcess blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Control_App0:SQL:SQL.Standalone	Updating service type with Control_App0:SQL:SQL.Standalone blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Gateway_App3:Gateway:Gateway	Updating service type with Gateway_App3:Gateway:Gateway blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	InstanceManager_App1:InstanceManager:XDBInstanceManager	Updating service type with InstanceManager_App1:InstanceManager:XDBInstanceManager blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	ManagementService_App6:ManagementService:ManagementService	Updating service type with ManagementService_App6:ManagementService:ManagementService blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	MonitoringServiceControl_App7:MonitoringServicePackage:FabricMonitoringServiceType	Updating service type with MonitoringServiceControl_App7:MonitoringServicePackage:FabricMonitoringServiceType blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	NamingStoreService	Updating service type with NamingStoreService blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	NodeAgentControl_App8:NodeAgent:NodeAgent	Updating service type with NodeAgentControl_App8:NodeAgent:NodeAgent blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	NodeMdsAgentControl_App9:MDSAgentLauncher:MDSAgentLauncher	Updating service type with NodeMdsAgentControl_App9:MDSAgentLauncher:MDSAgentLauncher blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	NodeMdsAgentControl_App9:MDSAgentLauncherWithHPRS:MDSAgentLauncherWithHPRS	Updating service type with NodeMdsAgentControl_App9:MDSAgentLauncherWithHPRS:MDSAgentLauncherWithHPRS blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	OSAuditPolicyManagerControl_App10:OSAuditPolicyManager:OSAuditPolicyManager	Updating service type with OSAuditPolicyManagerControl_App10:OSAuditPolicyManager:OSAuditPolicyManager blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	RepairPolicyEngineControl_App11:RepairPolicyEngineService:RepairPolicyEngineService	Updating service type with RepairPolicyEngineControl_App11:RepairPolicyEngineService:RepairPolicyEngineService blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	WatchdogsControl_App12:RingWatchdogs:RingWatchdogs	Updating service type with WatchdogsControl_App12:RingWatchdogs:RingWatchdogs blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	WatchdogsControl_App12:Watchdogs:Watchdogs	Updating service type with WatchdogsControl_App12:Watchdogs:Watchdogs blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Worker.ISO.Control_App13:SQL:SQL.Standalone	Updating service type with Worker.ISO.Control_App13:SQL:SQL.Standalone blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Worker.ISO.Control_App4:SQL:SQL.LogicalServer.LS	Updating service type with Worker.ISO.Control_App4:SQL:SQL.LogicalServer.LS blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Worker.ISO.Control_App4:SQL:SQL.StandaloneDb.LS	Updating service type with Worker.ISO.Control_App4:SQL:SQL.StandaloneDb.LS blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Worker.ISO.Control_App5:SQL:SQL.LogicalServer.LS	Updating service type with Worker.ISO.Control_App5:SQL:SQL.LogicalServer.LS blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	Worker.ISO.Control_App5:SQL:SQL.StandaloneDb.LS	Updating service type with Worker.ISO.Control_App5:SQL:SQL.StandaloneDb.LS blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	__FabricSystem_App4294967295:IS:InfrastructureServiceType	Updating service type with __FabricSystem_App4294967295:IS:InfrastructureServiceType blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	__FabricSystem_App4294967295:RM:RepairManagerServiceType	Updating service type with __FabricSystem_App4294967295:RM:RepairManagerServiceType blockList:()
+	
+
+2016-11-26 00:23:36.5430000	UpdateServiceType	__FabricSystem_App4294967295:TVS:TokenValidationServiceType	Updating service type with __FabricSystem_App4294967295:TVS:TokenValidationServiceType blockList:()
+	
+
+2016-11-26 00:23:36.5430000	AddServiceDomain	be4abb46-d1c7-49f1-80d8-37a028acd399___ClusterManagerServicePrimaryCount__	Add service domain be4abb46-d1c7-49f1-80d8-37a028acd399___ClusterManagerServicePrimaryCount__
+
+2016-11-26 00:23:36.5430000	AddServiceToServiceDomain	be4abb46-d1c7-49f1-80d8-37a028acd399___ClusterManagerServicePrimaryCount__	Add service ClusterManagerServiceName to service domain be4abb46-d1c7-49f1-80d8-37a028acd399___ClusterManagerServicePrimaryCount__
+
+2016-11-26 00:23:36.5430000	UpdateService@ClusterManagerServiceName	Updating service with ClusterManagerServiceName type:ClusterManagerServiceType application: stateful:true placementConstraints:IsFabricNodeType==1 affinity: alignedAffinity:true metrics:(__ClusterManagerServicePrimaryCount__/1/1/0 __ClusterManagerServiceReplicaCount__/0.3/1/1) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:7
+	
+
+2016-11-26 00:23:36.5430000	AddServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5430000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service DSTSTokenValidationService to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5430000	UpdateService@DSTSTokenValidationService	Updating service with DSTSTokenValidationService type:__FabricSystem_App4294967295:TVS:TokenValidationServiceType application:fabric:/System stateful:false placementConstraints: affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:1 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceDomain	11321eda-f26c-4c0a-9a95-0fa969af929c___InfrastructureServicePrimaryCount__	Add service domain 11321eda-f26c-4c0a-9a95-0fa969af929c___InfrastructureServicePrimaryCount__
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	11321eda-f26c-4c0a-9a95-0fa969af929c___InfrastructureServicePrimaryCount__	Add service InfrastructureService to service domain 11321eda-f26c-4c0a-9a95-0fa969af929c___InfrastructureServicePrimaryCount__
+
+2016-11-26 00:23:36.5440000	UpdateService@InfrastructureService	Updating service with InfrastructureService type:__FabricSystem_App4294967295:IS:InfrastructureServiceType application:fabric:/System stateful:true placementConstraints:IsFabricNodeType==1 affinity: alignedAffinity:true metrics:(__InfrastructureServicePrimaryCount__/1/1/0 __InfrastructureServiceReplicaCount__/0.3/1/1) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:3
+	
+
+2016-11-26 00:23:36.5440000	AddServiceDomain	26c58c2e-d4ba-48a7-a7f1-81ea902fa41d___NamingServicePrimaryCount__	Add service domain 26c58c2e-d4ba-48a7-a7f1-81ea902fa41d___NamingServicePrimaryCount__
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	26c58c2e-d4ba-48a7-a7f1-81ea902fa41d___NamingServicePrimaryCount__	Add service NamingService to service domain 26c58c2e-d4ba-48a7-a7f1-81ea902fa41d___NamingServicePrimaryCount__
+
+2016-11-26 00:23:36.5440000	UpdateService@NamingService	Updating service with NamingService type:NamingStoreService application: stateful:true placementConstraints:IsFabricNodeType==1 affinity: alignedAffinity:true metrics:(__NamingServicePrimaryCount__/1/1/0 __NamingServiceReplicaCount__/0.3/1/1) defaultMoveCost:1 everyNode:false partitionCount:7 targetReplicaSetSize:7
+	
+
+2016-11-26 00:23:36.5440000	AddServiceDomain	bc36f7f7-9679-4eb0-b66e-4678a31347ce___RepairManagerServicePrimaryCount__	Add service domain bc36f7f7-9679-4eb0-b66e-4678a31347ce___RepairManagerServicePrimaryCount__
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	bc36f7f7-9679-4eb0-b66e-4678a31347ce___RepairManagerServicePrimaryCount__	Add service RepairManagerService to service domain bc36f7f7-9679-4eb0-b66e-4678a31347ce___RepairManagerServicePrimaryCount__
+
+2016-11-26 00:23:36.5440000	UpdateService@RepairManagerService	Updating service with RepairManagerService type:__FabricSystem_App4294967295:RM:RepairManagerServiceType application:fabric:/System stateful:true placementConstraints:IsFabricNodeType==1 affinity: alignedAffinity:true metrics:(__RepairManagerServicePrimaryCount__/1/1/0 __RepairManagerServiceReplicaCount__/0.3/1/1) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:7
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/Alias/AliasGateway to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Alias/AliasGateway	Updating service with fabric:/Alias/AliasGateway type:Alias_App2:Alias:XDBAliasProcess application:fabric:/Alias stateful:false placementConstraints:IsGatewayNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/Alias/XDBAlias/SqlAliasCache to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Alias/XDBAlias/SqlAliasCache	Updating service with fabric:/Alias/XDBAlias/SqlAliasCache type:Alias_App2:Alias:XDBAlias application:fabric:/Alias stateful:false placementConstraints:IsGatewayNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:3
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/Alias/XDBAlias/ca6c92c1ba12 to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Alias/XDBAlias/ca6c92c1ba12	Updating service with fabric:/Alias/XDBAlias/ca6c92c1ba12 type:Alias_App2:Alias:XDBAlias application:fabric:/Alias stateful:false placementConstraints:IsGatewayNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:3
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/Alias/XDBAlias/cms-useuc1-a to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Alias/XDBAlias/cms-useuc1-a	Updating service with fabric:/Alias/XDBAlias/cms-useuc1-a type:Alias_App2:Alias:XDBAlias application:fabric:/Alias stateful:false placementConstraints:IsGatewayNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:3
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/Alias/XDBAlias/ja-a2a56cef2 to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Alias/XDBAlias/ja-a2a56cef2	Updating service with fabric:/Alias/XDBAlias/ja-a2a56cef2 type:Alias_App2:Alias:XDBAlias application:fabric:/Alias stateful:false placementConstraints:IsGatewayNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:3
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/Control/MDSAgentLauncher to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Control/MDSAgentLauncher	Updating service with fabric:/Control/MDSAgentLauncher type:Control_App0:MDSAgentLauncher:MDSAgentLauncher application:fabric:/Control stateful:false placementConstraints:IsControlNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5440000	MetricDoesNotHaveThreshold		Reported metric DatabaseDiskSpaceUsed of service fabric:/Control/RgManagerProcessesOnControl does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5440000	AddServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/Control/RgManagerProcessesOnControl to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Control/RgManagerProcessesOnControl	Updating service with fabric:/Control/RgManagerProcessesOnControl type:Control_App0:RgManager:RgManagerProcess application:fabric:/Control stateful:false placementConstraints:IsControlNodeType==1 affinity: alignedAffinity:true metrics:(InstanceDiskSpaceUsed/0.3/0/0 DatabaseDiskSpaceUsed/0.3/0/0 MaxCpuUsage/0.3/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/Control/XDBHostProcessesOnMN to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Control/XDBHostProcessesOnMN	Updating service with fabric:/Control/XDBHostProcessesOnMN type:Control_App0:Host:XDBHostProcess application:fabric:/Control stateful:false placementConstraints:IsMasterNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/Control/cms-useuc1-a/SQL.Master/cms-useuc1-a to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Control/cms-useuc1-a/SQL.Master/cms-useuc1-a	Updating service with fabric:/Control/cms-useuc1-a/SQL.Master/cms-useuc1-a type:Control_App0:SQL:SQL.Standalone application:fabric:/Control stateful:true placementConstraints:IsMasterNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:3
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/Gateway/Gateway to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/Gateway/Gateway	Updating service with fabric:/Gateway/Gateway type:Gateway_App3:Gateway:Gateway application:fabric:/Gateway stateful:false placementConstraints:IsGatewayNodeType==1 affinity: alignedAffinity:true metrics:(InstanceDiskSpaceUsed/0.3/0/0 MaxCpuUsage/0.3/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/InstanceManager/InstanceManager to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/InstanceManager/InstanceManager	Updating service with fabric:/InstanceManager/InstanceManager type:InstanceManager_App1:InstanceManager:XDBInstanceManager application:fabric:/InstanceManager stateful:true placementConstraints:IsMasterNodeType==1 affinity: alignedAffinity:true metrics:(InstanceDiskSpaceUsed/0.3/0/0 MaxCpuUsage/0.3/0/0) defaultMoveCost:0 everyNode:false partitionCount:1 targetReplicaSetSize:1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/ManagementService/ManagementService to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/ManagementService/ManagementService	Updating service with fabric:/ManagementService/ManagementService type:ManagementService_App6:ManagementService:ManagementService application:fabric:/ManagementService stateful:true placementConstraints:IsGatewayNodeType==1 affinity: alignedAffinity:true metrics:(InstanceDiskSpaceUsed/0.3/0/0 MaxCpuUsage/0.3/0/0) defaultMoveCost:0 everyNode:false partitionCount:1 targetReplicaSetSize:1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/ManagementService/ManagementService_1 to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/ManagementService/ManagementService_1	Updating service with fabric:/ManagementService/ManagementService_1 type:ManagementService_App6:ManagementService:ManagementService application:fabric:/ManagementService stateful:true placementConstraints:IsGatewayNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(ManagementService.Code.FiniteStateMachineContexts/0.3/1/0 MaxCpuUsage/0.3/0/0 InstanceDiskSpaceUsed/0.3/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/ManagementService/ManagementService_2 to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/ManagementService/ManagementService_2	Updating service with fabric:/ManagementService/ManagementService_2 type:ManagementService_App6:ManagementService:ManagementService application:fabric:/ManagementService stateful:true placementConstraints:IsGatewayNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(ManagementService.Code.FiniteStateMachineContexts/0.3/1/0 MaxCpuUsage/0.3/0/0 InstanceDiskSpaceUsed/0.3/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/ManagementService/ManagementService_3 to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/ManagementService/ManagementService_3	Updating service with fabric:/ManagementService/ManagementService_3 type:ManagementService_App6:ManagementService:ManagementService application:fabric:/ManagementService stateful:true placementConstraints:IsGatewayNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(ManagementService.Code.FiniteStateMachineContexts/0.3/1/0 MaxCpuUsage/0.3/0/0 InstanceDiskSpaceUsed/0.3/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/ManagementService/ManagementService_4 to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/ManagementService/ManagementService_4	Updating service with fabric:/ManagementService/ManagementService_4 type:ManagementService_App6:ManagementService:ManagementService application:fabric:/ManagementService stateful:true placementConstraints:IsGatewayNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(ManagementService.Code.FiniteStateMachineContexts/0.3/1/0 MaxCpuUsage/0.3/0/0 InstanceDiskSpaceUsed/0.3/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:1
+	
+
+2016-11-26 00:23:36.5440000	MergeServiceDomain	4786c590-8960-498d-9222-289c06d74aee	Merge service domain be4abb46-d1c7-49f1-80d8-37a028acd399 with service domain 4786c590-8960-498d-9222-289c06d74aee
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/MonitoringServiceControl/MonitoringServicePackage to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/MonitoringServiceControl/MonitoringServicePackage	Updating service with fabric:/MonitoringServiceControl/MonitoringServicePackage type:MonitoringServiceControl_App7:MonitoringServicePackage:FabricMonitoringServiceType application:fabric:/MonitoringServiceControl stateful:true placementConstraints:IsFabricNodeType==1 affinity:ClusterManagerServiceName alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:false partitionCount:1 targetReplicaSetSize:7
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/NodeAgentControl/NodeAgent to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/NodeAgentControl/NodeAgent	Updating service with fabric:/NodeAgentControl/NodeAgent type:NodeAgentControl_App8:NodeAgent:NodeAgent application:fabric:/NodeAgentControl stateful:false placementConstraints:IsControlNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5440000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/NodeMdsAgentControl/MDSAgentLauncher to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5440000	UpdateService@fabric:/NodeMdsAgentControl/MDSAgentLauncher	Updating service with fabric:/NodeMdsAgentControl/MDSAgentLauncher type:NodeMdsAgentControl_App9:MDSAgentLauncher:MDSAgentLauncher application:fabric:/NodeMdsAgentControl stateful:false placementConstraints:IsControlNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/NodeMdsAgentControl/MDSAgentLauncherWithHPRS to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/NodeMdsAgentControl/MDSAgentLauncherWithHPRS	Updating service with fabric:/NodeMdsAgentControl/MDSAgentLauncherWithHPRS type:NodeMdsAgentControl_App9:MDSAgentLauncherWithHPRS:MDSAgentLauncherWithHPRS application:fabric:/NodeMdsAgentControl stateful:false placementConstraints:IsControlNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/OSAuditPolicyManagerControl/OSAuditPolicyManager to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/OSAuditPolicyManagerControl/OSAuditPolicyManager	Updating service with fabric:/OSAuditPolicyManagerControl/OSAuditPolicyManager type:OSAuditPolicyManagerControl_App10:OSAuditPolicyManager:OSAuditPolicyManager application:fabric:/OSAuditPolicyManagerControl stateful:false placementConstraints:IsControlNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/RepairPolicyEngineControl/RepairPolicyEngineService to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/RepairPolicyEngineControl/RepairPolicyEngineService	Updating service with fabric:/RepairPolicyEngineControl/RepairPolicyEngineService type:RepairPolicyEngineControl_App11:RepairPolicyEngineService:RepairPolicyEngineService application:fabric:/RepairPolicyEngineControl stateful:true placementConstraints:IsFabricNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:false partitionCount:1 targetReplicaSetSize:4
+	
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/WatchdogsControl/RingWatchdogs to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/WatchdogsControl/RingWatchdogs	Updating service with fabric:/WatchdogsControl/RingWatchdogs type:WatchdogsControl_App12:RingWatchdogs:RingWatchdogs application:fabric:/WatchdogsControl stateful:false placementConstraints:IsFabricNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:false partitionCount:1 targetReplicaSetSize:3
+	
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	4786c590-8960-498d-9222-289c06d74aee_PrimaryCount	Add service fabric:/WatchdogsControl/Watchdogs to service domain 4786c590-8960-498d-9222-289c06d74aee_PrimaryCount
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/WatchdogsControl/Watchdogs	Updating service with fabric:/WatchdogsControl/Watchdogs type:WatchdogsControl_App12:Watchdogs:Watchdogs application:fabric:/WatchdogsControl stateful:false placementConstraints:IsControlNodeType==1 affinity: alignedAffinity:true metrics:(PrimaryCount/1/0/0 ReplicaCount/0.3/0/0 Count/0.1/0/0) defaultMoveCost:0 everyNode:true partitionCount:1 targetReplicaSetSize:-1
+	
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric CapacityUnit of service fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric ReservationUnit of service fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric GenericMetric1 of service fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric GenericMetric2 of service fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric VipMCU of service fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12 to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12	Updating service with fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12 type:Worker.ISO.Control_App13:SQL:SQL.Standalone application:fabric:/Worker.ISO.Control/ca6c92c1ba12 stateful:true placementConstraints:IsMasterNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(CapacityUnit/0.3/0/0 ReservationUnit/0.3/0/0 GenericMetric1/0.3/0/0 GenericMetric2/0.3/0/0 InstanceDiskSpaceUsed/0.3/0/0 MaxCpuUsage/0.3/200000/200000 VipMCU/0.3/200000/200000) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:3
+	
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric DatabaseDiskSpaceUsed of service fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/SqlAliasDatabase does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/SqlAliasDatabase to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/SqlAliasDatabase	Updating service with fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/SqlAliasDatabase type:Worker.ISO.Control_App5:SQL:SQL.StandaloneDb.LS application:fabric:/Worker.ISO.Control/db2015eff747 stateful:true placementConstraints:IsMasterNodeType==1 && (FDPolicy ~ Nonpacking ) affinity:fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 alignedAffinity:false metrics:(DatabaseDiskSpaceUsed/0.3/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:4
+	
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric CapacityUnit of service fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric ReservationUnit of service fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric GenericMetric1 of service fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric GenericMetric2 of service fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric VipMCU of service fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747	Updating service with fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 type:Worker.ISO.Control_App5:SQL:SQL.LogicalServer.LS application:fabric:/Worker.ISO.Control/db2015eff747 stateful:true placementConstraints:IsMasterNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(CapacityUnit/0.3/0/0 ReservationUnit/0.3/0/0 GenericMetric1/0.3/0/0 GenericMetric2/0.3/0/0 InstanceDiskSpaceUsed/0.3/0/0 MaxCpuUsage/0.3/400000/400000 VipMCU/0.3/400000/400000) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:4
+	
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric DatabaseDiskSpaceUsed of service fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/SqlAliasDatabase does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/SqlAliasDatabase to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/SqlAliasDatabase	Updating service with fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/SqlAliasDatabase type:Worker.ISO.Control_App4:SQL:SQL.StandaloneDb.LS application:fabric:/Worker.ISO.Control/fea7e9b64e2a stateful:true placementConstraints:IsMasterNodeType==1 && (FDPolicy ~ Nonpacking ) affinity:fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a alignedAffinity:false metrics:(DatabaseDiskSpaceUsed/0.3/0/0) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:4
+	
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric CapacityUnit of service fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric ReservationUnit of service fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric GenericMetric1 of service fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric GenericMetric2 of service fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	MetricDoesNotHaveThreshold		Reported metric VipMCU of service fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a does not have activity or balancing threshold
+
+2016-11-26 00:23:36.5450000	AddServiceToServiceDomain	5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed	Add service fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a to service domain 5ff9de95-a93d-4692-a9a8-603c45b0e42d_InstanceDiskSpaceUsed
+
+2016-11-26 00:23:36.5450000	UpdateService@fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a	Updating service with fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a type:Worker.ISO.Control_App4:SQL:SQL.LogicalServer.LS application:fabric:/Worker.ISO.Control/fea7e9b64e2a stateful:true placementConstraints:IsMasterNodeType==1 && (FDPolicy ~ Nonpacking ) affinity: alignedAffinity:true metrics:(CapacityUnit/0.3/0/0 ReservationUnit/0.3/0/0 GenericMetric1/0.3/0/0 GenericMetric2/0.3/0/0 InstanceDiskSpaceUsed/0.3/0/0 MaxCpuUsage/0.3/400000/400000 VipMCU/0.3/400000/400000) defaultMoveCost:1 everyNode:false partitionCount:1 targetReplicaSetSize:4
+	
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000001000	Updating failover unit with 00000000-0000-0000-0000-000000001000 service:NamingService flags:SP plbFlags:- version:1192 replicaDiff:0 replicas:(f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Primary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000001001	Updating failover unit with 00000000-0000-0000-0000-000000001001 service:NamingService flags:SP plbFlags:- version:1288 replicaDiff:0 replicas:(f6a032184c2780f343ccf0954373acaa:131245927273766933 StandBy SB InTransition FuNotInTransition f600276a91530797741614302c5180a4:131245868215894277 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000001002	Updating failover unit with 00000000-0000-0000-0000-000000001002 service:NamingService flags:SP plbFlags:- version:1329 replicaDiff:0 replicas:(f6a032184c2780f343ccf0954373acaa:131245927273766933 StandBy SB InTransition FuNotInTransition f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f600276a91530797741614302c5180a4:131245868215894277 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000001003	Updating failover unit with 00000000-0000-0000-0000-000000001003 service:NamingService flags:SP plbFlags:- version:1237 replicaDiff:0 replicas:(f640fc54333b59e0528f4479e18c79c4:131245892571357018 StandBy SB InTransition FuNotInTransition f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Primary f600276a91530797741614302c5180a4:131245868215894277 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 StandBy SB InTransition FuNotInTransition f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000001004	Updating failover unit with 00000000-0000-0000-0000-000000001004 service:NamingService flags:SP plbFlags:- version:1226 replicaDiff:0 replicas:(f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Primary f6a032184c2780f343ccf0954373acaa:131245927273766933 StandBy SB InTransition FuNotInTransition f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000001005	Updating failover unit with 00000000-0000-0000-0000-000000001005 service:NamingService flags:SP plbFlags:- version:1253 replicaDiff:0 replicas:(f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000001006	Updating failover unit with 00000000-0000-0000-0000-000000001006 service:NamingService flags:SP plbFlags:- version:1277 replicaDiff:0 replicas:(f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Primary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 StandBy SB InTransition FuNotInTransition f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000002000	Updating failover unit with 00000000-0000-0000-0000-000000002000 service:ClusterManagerServiceName flags:SPW plbFlags:TCRP version:1298 replicaDiff:0 replicas:(f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary E f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary E f600276a91530797741614302c5180a4:131245868215894277 Secondary E f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 StandBy SB InTransition FuNotInTransition f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Primary P InTransition f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary E f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary E)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@00000000-0000-0000-0000-000000004000	Updating failover unit with 00000000-0000-0000-0000-000000004000 service:RepairManagerService flags:SP plbFlags:- version:1231 replicaDiff:0 replicas:(f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 StandBy SB InTransition FuNotInTransition f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Primary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@0e62a93b-bf04-4e3e-a350-b7bafa19991b	Updating failover unit with 0e62a93b-bf04-4e3e-a350-b7bafa19991b service:fabric:/RepairPolicyEngineControl/RepairPolicyEngineService flags:SP plbFlags:- version:918 replicaDiff:0 replicas:(f640fc54333b59e0528f4479e18c79c4:131245892571357018 Primary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@29a1b1e2-f997-4c68-b469-440ad9fe5481	Updating failover unit with 29a1b1e2-f997-4c68-b469-440ad9fe5481 service:InfrastructureService flags:S plbFlags:- version:926 replicaDiff:0 replicas:(f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Primary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8490000	UpdateFailoverUnit@40fbdcca-e3b6-425a-99a3-4758b7f36265	Updating failover unit with 40fbdcca-e3b6-425a-99a3-4758b7f36265 service:fabric:/OSAuditPolicyManagerControl/OSAuditPolicyManager flags:- plbFlags:- version:5760 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@4f0df8aa-976c-4b3c-b521-f900bb8b1ef2	Updating failover unit with 4f0df8aa-976c-4b3c-b521-f900bb8b1ef2 service:fabric:/Gateway/Gateway flags:- plbFlags:- version:3406 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@4f4964c1-e27d-4c84-9093-55d638dfb121	Updating failover unit with 4f4964c1-e27d-4c84-9093-55d638dfb121 service:fabric:/MonitoringServiceControl/MonitoringServicePackage flags:SW plbFlags:TCRP version:1949 replicaDiff:0 replicas:(f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary E f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary E f6602c6428af4322354f452c849ae517:131232926393151530 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary E f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Primary P InTransition f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary E f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary E)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@58abd616-2079-4562-92ad-488d9207a565	Updating failover unit with 58abd616-2079-4562-92ad-488d9207a565 service:fabric:/Alias/AliasGateway flags:- plbFlags:- version:3198 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@7ecee095-f21c-4394-af55-87624fe24c35	Updating failover unit with 7ecee095-f21c-4394-af55-87624fe24c35 service:fabric:/ManagementService/ManagementService_3 flags:S plbFlags:- version:211 replicaDiff:0 replicas:(7e605718e346718befdb10b22d578118:131226903277200169 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@91656f31-ba2d-43c8-ad57-20a05a27a417	Updating failover unit with 91656f31-ba2d-43c8-ad57-20a05a27a417 service:fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/SqlAliasDatabase flags:SP plbFlags:- version:810 replicaDiff:0 replicas:(5e1078c48feb70af02c23062e9a71308:131231177135007343 Primary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@9694eb3e-adbc-4dbb-9077-eb720aa49d54	Updating failover unit with 9694eb3e-adbc-4dbb-9077-eb720aa49d54 service:fabric:/Control/cms-useuc1-a/SQL.Master/cms-useuc1-a flags:S plbFlags:- version:1057 replicaDiff:0 replicas:(5e1078c48feb70af02c23062e9a71308:131231177135007343 Primary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@9986eb2e-0afa-4b67-8730-31318e455dab	Updating failover unit with 9986eb2e-0afa-4b67-8730-31318e455dab service:fabric:/NodeMdsAgentControl/MDSAgentLauncherWithHPRS flags:- plbFlags:- version:5558 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@99b9fc66-76da-4b20-bece-b8f70701e81f	Updating failover unit with 99b9fc66-76da-4b20-bece-b8f70701e81f service:DSTSTokenValidationService flags:- plbFlags:- version:5711 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@9af0703d-95cf-4967-b28d-c1d0886ed70a	Updating failover unit with 9af0703d-95cf-4967-b28d-c1d0886ed70a service:fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/SqlAliasDatabase flags:SP plbFlags:- version:812 replicaDiff:0 replicas:(5e0086712e706adb3e0108928582e5f4:131245868736560211 Primary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@9c278bc4-396f-4452-b617-3bd899880937	Updating failover unit with 9c278bc4-396f-4452-b617-3bd899880937 service:fabric:/InstanceManager/InstanceManager flags:S plbFlags:- version:2968 replicaDiff:0 replicas:(5e60c3622c77889c55693a46161adf82:131227045050963308 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@a4131088-fda9-4f54-afae-476631ee93a7	Updating failover unit with a4131088-fda9-4f54-afae-476631ee93a7 service:fabric:/ManagementService/ManagementService flags:S plbFlags:- version:4036 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8500000	UpdateFailoverUnit@a789a6b8-6668-4990-9af3-2a89383503dc	Updating failover unit with a789a6b8-6668-4990-9af3-2a89383503dc service:fabric:/ManagementService/ManagementService_2 flags:S plbFlags:- version:215 replicaDiff:0 replicas:(7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8510000	UpdateFailoverUnit@a90a4fa7-7683-4018-9bfb-3c908dfbc598	Updating failover unit with a90a4fa7-7683-4018-9bfb-3c908dfbc598 service:fabric:/NodeAgentControl/NodeAgent flags:- plbFlags:- version:5730 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8510000	UpdateFailoverUnit@aeb48a83-c2cc-4957-903e-b7b1f88012eb	Updating failover unit with aeb48a83-c2cc-4957-903e-b7b1f88012eb service:fabric:/Control/RgManagerProcessesOnControl flags:- plbFlags:- version:5916 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8510000	UpdateFailoverUnit@b0a4c9c4-3e8f-4335-bf9e-a98bc7a92e16	Updating failover unit with b0a4c9c4-3e8f-4335-bf9e-a98bc7a92e16 service:fabric:/Worker.ISO.Control/ca6c92c1ba12/SQL.RestoredCMS/ca6c92c1ba12 flags:S plbFlags:- version:606 replicaDiff:0 replicas:(5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Primary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8510000	UpdateFailoverUnit@b2067169-90a4-4094-b2f8-4e708e9a2a53	Updating failover unit with b2067169-90a4-4094-b2f8-4e708e9a2a53 service:fabric:/Worker.ISO.Control/fea7e9b64e2a/SQL.AliasDb/fea7e9b64e2a flags:SP plbFlags:- version:5829 replicaDiff:0 replicas:(5e0086712e706adb3e0108928582e5f4:131245868736560211 Primary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8510000	UpdateFailoverUnit@b60e89bd-a3b7-4c1a-8730-2d3d79af4504	Updating failover unit with b60e89bd-a3b7-4c1a-8730-2d3d79af4504 service:fabric:/Control/MDSAgentLauncher flags:- plbFlags:- version:5876 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8510000	UpdateFailoverUnit@b8f877e5-bbff-4fbe-b392-64001a4aabe5	Updating failover unit with b8f877e5-bbff-4fbe-b392-64001a4aabe5 service:fabric:/Worker.ISO.Control/db2015eff747/SQL.AliasDb/db2015eff747 flags:SP plbFlags:- version:2469 replicaDiff:0 replicas:(5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Primary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8510000	UpdateFailoverUnit@bb83d958-d775-48c8-8040-b367e0be8cf8	Updating failover unit with bb83d958-d775-48c8-8040-b367e0be8cf8 service:fabric:/WatchdogsControl/Watchdogs flags:- plbFlags:- version:5569 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8510000	UpdateFailoverUnit@c4c953f8-81ee-4803-96cc-34f8463fcee0	Updating failover unit with c4c953f8-81ee-4803-96cc-34f8463fcee0 service:fabric:/ManagementService/ManagementService_1 flags:S plbFlags:- version:204 replicaDiff:0 replicas:(7e30d88824b6f74baa1764bd2c934578:131232952019413178 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@c7f3951a-395f-4296-ac12-f17d7197de07	Updating failover unit with c7f3951a-395f-4296-ac12-f17d7197de07 service:fabric:/WatchdogsControl/RingWatchdogs flags:- plbFlags:- version:546 replicaDiff:0 replicas:(f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@c90b8f8d-3d3d-41d5-8e81-c562bc5d9205	Updating failover unit with c90b8f8d-3d3d-41d5-8e81-c562bc5d9205 service:fabric:/Alias/XDBAlias/cms-useuc1-a flags:- plbFlags:- version:505 replicaDiff:0 replicas:(7e605718e346718befdb10b22d578118:131226903277200169 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@ce8e6e59-eb57-4f14-93d2-68ce41eaa11d	Updating failover unit with ce8e6e59-eb57-4f14-93d2-68ce41eaa11d service:fabric:/Alias/XDBAlias/SqlAliasCache flags:- plbFlags:- version:553 replicaDiff:0 replicas:(7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@d9119f1d-80a3-45a0-8894-cbe127e9b5e8	Updating failover unit with d9119f1d-80a3-45a0-8894-cbe127e9b5e8 service:fabric:/Control/XDBHostProcessesOnMN flags:- plbFlags:- version:2091 replicaDiff:0 replicas:(5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@ea578cc3-b62a-4f8b-b428-2bed27a8c8a7	Updating failover unit with ea578cc3-b62a-4f8b-b428-2bed27a8c8a7 service:fabric:/Alias/XDBAlias/ja-a2a56cef2 flags:- plbFlags:- version:99 replicaDiff:0 replicas:(7e605718e346718befdb10b22d578118:131226903277200169 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@ea7ad99f-30c1-4c66-9442-0a55a6e66263	Updating failover unit with ea7ad99f-30c1-4c66-9442-0a55a6e66263 service:fabric:/NodeMdsAgentControl/MDSAgentLauncher flags:- plbFlags:- version:5577 replicaDiff:0 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@ecfb2e6f-1d3f-41ed-ad18-e2b6ed61a8ba	Updating failover unit with ecfb2e6f-1d3f-41ed-ad18-e2b6ed61a8ba service:fabric:/Alias/XDBAlias/ca6c92c1ba12 flags:- plbFlags:- version:337 replicaDiff:0 replicas:(7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@ffdc2d32-5426-43d3-8d94-c9510609e8d8	Updating failover unit with ffdc2d32-5426-43d3-8d94-c9510609e8d8 service:fabric:/ManagementService/ManagementService_4 flags:S plbFlags:- version:200 replicaDiff:0 replicas:(7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Primary)
+	 actualReplicaDiff:0 interruptBalancing:True
+
+2016-11-26 00:23:36.8520000	UpdateFailoverUnit@9986eb2e-0afa-4b67-8730-31318e455dab	Updating failover unit with 9986eb2e-0afa-4b67-8730-31318e455dab service:fabric:/NodeMdsAgentControl/MDSAgentLauncherWithHPRS flags:- plbFlags:- version:5558 replicaDiff:2147483647 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:2147483647 interruptBalancing:True
+
+2016-11-26 00:23:36.8530000	UpdateFailoverUnit@ea7ad99f-30c1-4c66-9442-0a55a6e66263	Updating failover unit with ea7ad99f-30c1-4c66-9442-0a55a6e66263 service:fabric:/NodeMdsAgentControl/MDSAgentLauncher flags:- plbFlags:- version:5577 replicaDiff:2147483647 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:2147483647 interruptBalancing:True
+
+2016-11-26 00:23:36.8530000	UpdateFailoverUnit@58abd616-2079-4562-92ad-488d9207a565	Updating failover unit with 58abd616-2079-4562-92ad-488d9207a565 service:fabric:/Alias/AliasGateway flags:- plbFlags:- version:3198 replicaDiff:2147483647 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary)
+	 actualReplicaDiff:2147483647 interruptBalancing:True
+
+2016-11-26 00:23:36.8530000	UpdateFailoverUnit@40fbdcca-e3b6-425a-99a3-4758b7f36265	Updating failover unit with 40fbdcca-e3b6-425a-99a3-4758b7f36265 service:fabric:/OSAuditPolicyManagerControl/OSAuditPolicyManager flags:- plbFlags:- version:5760 replicaDiff:2147483647 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:2147483647 interruptBalancing:True
+
+2016-11-26 00:23:36.8540000	UpdateFailoverUnit@b60e89bd-a3b7-4c1a-8730-2d3d79af4504	Updating failover unit with b60e89bd-a3b7-4c1a-8730-2d3d79af4504 service:fabric:/Control/MDSAgentLauncher flags:- plbFlags:- version:5876 replicaDiff:2147483647 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:2147483647 interruptBalancing:True
+
+2016-11-26 00:23:36.8540000	UpdateFailoverUnit@4f0df8aa-976c-4b3c-b521-f900bb8b1ef2	Updating failover unit with 4f0df8aa-976c-4b3c-b521-f900bb8b1ef2 service:fabric:/Gateway/Gateway flags:- plbFlags:- version:3406 replicaDiff:2147483647 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary)
+	 actualReplicaDiff:2147483647 interruptBalancing:True
+
+2016-11-26 00:23:36.8540000	UpdateFailoverUnit@bb83d958-d775-48c8-8040-b367e0be8cf8	Updating failover unit with bb83d958-d775-48c8-8040-b367e0be8cf8 service:fabric:/WatchdogsControl/Watchdogs flags:- plbFlags:- version:5569 replicaDiff:2147483647 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:2147483647 interruptBalancing:True
+
+2016-11-26 00:23:36.8540000	UpdateFailoverUnit@aeb48a83-c2cc-4957-903e-b7b1f88012eb	Updating failover unit with aeb48a83-c2cc-4957-903e-b7b1f88012eb service:fabric:/Control/RgManagerProcessesOnControl flags:- plbFlags:- version:5916 replicaDiff:2147483647 replicas:(7e88f32d92022053e1afe24981cb9d5e:131231288634195081 Secondary 7ef0b4c0a1c069faba96b862daae5b9a:131232926552441925 Secondary 7e0890646b3bf7c8e94215daca6510e1:131232918270994011 Secondary 5e0086712e706adb3e0108928582e5f4:131245868736560211 Secondary 7e0022b776b8a6e96d12ff31e8eed76b:131245868319111464 Secondary f600276a91530797741614302c5180a4:131245868215894277 Secondary 5e8096e8fcc4484911ac393ada74e912:131245880731833247 Secondary 7e8060e1c014de918e212f1f98b6f3a3:131245880293464984 Secondary f680960dcdefc3acddb4f32dad0bcc9f:131245880441259778 Secondary 5e40ef42fed269018e8dc59652dcfdd2:131245892705155714 Secondary 7e4031fc8b4859ea79b1ba43859e758f:131245892792384829 Secondary f640fc54333b59e0528f4479e18c79c4:131245892571357018 Secondary 5ec08689689761ba2bba03dca0563297:131245904630023000 Secondary 7ec0047102b005ad9c46336c303e18c1:131245904444905783 Secondary f6c0c87135424d8765f7d1efec7684bb:131245904497582960 Secondary 5e2048d31ed939067ece1c8156aadd32:131245916060009921 Secondary 7e20f1bd8ad0ac92349333daa5c27d14:131245916110409625 Secondary f6209146d4caa92a6aeb1e6d60bedb6b:131245915981550230 Secondary 5ea0446aef08f3cc3f2df5c8eb6b3b19:131245927520080136 Secondary 7ea0ad96d9f087df3250a0ace9a18f4b:131245927467663922 Secondary f6a032184c2780f343ccf0954373acaa:131245927273766933 Secondary 5e60c3622c77889c55693a46161adf82:131227045050963308 Secondary 7e605718e346718befdb10b22d578118:131226903277200169 Secondary f6602c6428af4322354f452c849ae517:131232926393151530 Secondary 7ee0d0ec460d8690dae52d84246edce1:131232968504888589 Secondary f6e02c75286ddcc90fc8d81844124f34:131232918539149977 Secondary 5e1078c48feb70af02c23062e9a71308:131231177135007343 Secondary 7e1083db5b52bb267fbe5056deeb51b5:131232943738688094 Secondary f6101871fbf387320777a9eb9b323320:131231177052656545 Secondary 5e9041818c1f3182a940d563f0b8a537:131232995272254780 Secondary 7e90ee3788f4eab37ac1da533fb682cd:131232985223844669 Secondary f6901e0a61858b83f3e63d26c233b952:131231313202864614 Secondary 5e50c465a837b317947516ca58a1783a:131232985253442046 Secondary 7e50c4895b3a81bd000cd985c2b38e6a:131232976463394344 Secondary f650d1ffdb9be0981f8e1762d72dfaa4:131227084175300654 Secondary 7ed009abffed1563ba7d6c56fad4c796:131232959828187774 Secondary 7e30d88824b6f74baa1764bd2c934578:131232952019413178 Secondary 7e70e2d6e29b0aaaa740a56262d5c687:131232934492651985 Secondary 7eb029f8a1fba8636dbe8977bc120916:131232943730183524 Secondary 5ee0c591bcf778b717771403dfab5a83:131231214677305717 Secondary)
+	 actualReplicaDiff:2147483647 interruptBalancing:True
+
+2016-11-26 00:23:37.5170000	PLBPrepareStart		PLB Prepare start, Processing Pending Update and taking snapshot.
+

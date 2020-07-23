@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="EventStoreServicePkg" Version="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>Cluster Analyzer Service</Description>
+  <ServiceTypes>
+    <StatefulServiceType ServiceTypeName="EventStoreServiceType" HasPersistedState="true"></StatefulServiceType>
+  </ServiceTypes>
+  <CodePackage Name="Code" Version="1.0">
+    <EntryPoint>
+      <ExeHost>
+        <Program>EventStore.Service.exe</Program>
+      </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="Config" Version="1.0" />
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="EventStoreReplicatorEndpoint"/>
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

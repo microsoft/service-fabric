@@ -721,6 +721,12 @@ LeaseTrace::WriteInfo("TerminateLeaseRemoteLeaseAgentNotFound", "Terminate lease
 LeaseTrace::WriteInfo("LeaseRelationshipIdentifierDelete", "Lease relationship identifier {0}/{1} is deleted with address {2}",b,c,d)
 #define EventWriteProcessStalePing(a,b,c,d,e,f,g,h,i,j)  \
 LeaseTrace::WriteInfo("ProcessStalePing", "Lease relationship ({0}/{1}, subject = {2}, monitor = {3}) in state ({4}-{5}) received stale ping with message type {6}, message ID {7} and lease instance {8}",b,c,d,e,f,g,h,i,j)
+#define EventWriteArbitrationNeutralRemoteLeaseAgentFound(a,b,c,d,e,f,g,h,i,j)  \
+LeaseTrace::WriteInfo("ArbitrationNeutralRemoteLeaseAgentFound", "Arbitration neutral remote lease agent ({0}/{1}, subject = {2}, monitor = {3}), state = {4} ({5}-{6}), IsActive = {7}, RemoteLeaseAgentInstance = {8}, found",b,c,d,e,f,g,h,i,j)
+#define EventWriteProcessArbitrationNeutralStaleMessage(a,b,c,d,e,f,g,h,i,j,k,l,m)  \
+LeaseTrace::WriteInfo("ProcessArbitrationNeutralStaleMessage", "Process arbitration neutral stale message ({0}/{1}, subject = {2}, monitor = {3}), state = {4} ({5}-{6}), IsActive = {7}, RemoteLeaseAgentInstance = {8}, MessageId = {9}, MessageType = {10}, LeaseInstance = {11}",b,c,d,e,f,g,h,i,j,k,l,m)
+#define EventWriteProcessNonArbitrationNeutralStaleMessage(a,b,c,d,e,f,g,h,i,j,k,l,m)  \
+LeaseTrace::WriteInfo("ProcessNonArbitrationNeutralStaleMessage", "Process non arbitration neutral stale message ({0}/{1}, subject = {2}, monitor = {3}), state = {4} ({5}-{6}), IsActive = {7}, RemoteLeaseAgentInstance = {8}, MessageId = {9}, MessageType = {10}, LeaseInstance = {11}",b,c,d,e,f,g,h,i,j,k,l,m)
 
 
 //rtl 

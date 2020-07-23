@@ -1500,6 +1500,21 @@ ErrorCode ApplicationHostManager::EndApplicationHostCodePackageOperation(
     return ApplicationHostCodePackageAsyncOperation::End(operation);
 }
 
+ErrorCode ApplicationHostManager::FindApplicationHost(std::wstring const & codePackageInstanceId, __out ApplicationHostProxySPtr & hostProxy)
+{
+    auto error = this->activationTable_->FindApplicationHostByCodePackageInstanceId(codePackageInstanceId, hostProxy);
+
+    WriteTrace(
+        error.ToLogLevel(),
+        TraceType,
+        Root.TraceId,
+        "FindApplicationHost for code package instance id {0}: ErrorCode={1}",
+        codePackageInstanceId,
+        error);
+
+    return error;
+}
+
 AsyncOperationSPtr ApplicationHostManager::OnBeginOpen(
     TimeSpan const timeout,
     AsyncCallback const & callback, 
@@ -1724,6 +1739,13 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
         requestBody.Timeout);
 
     wstring hostId(requestBody.Id);
+
+    // step 1: If the host is a container host then create a ContainerLogProcessMarkupFile so that DCA can monitor the container log directory.
+    if (requestBody.IsContainerHost)
+    {
+        ContainerHelper::GetContainerHelper().MarkContainerLogFolder(hostId, true /*forProcessing*/);
+    }
+
     ErrorCode error(ErrorCodeValue::Success);
     ApplicationHostRegistrationSPtr registration;
     ApplicationHostProxySPtr hostProxySPtr;
@@ -1731,7 +1753,7 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
     //Todo: If we remove support for NonActivatedApplicationHosts we can return error for regsitrations if hostId is not present.
     auto result = activationTable_->Find(hostId, hostProxySPtr);
 
-    // step 1: If pending Update then abort to update the versions.
+    // step 2: If pending Update then abort to update the versions.
     bool doesAppHostNeedsUpdate = false;
     {
         AcquireReadLock lock(updateContextlock_);
@@ -1742,7 +1764,7 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
         }
         else
         {
-            // step 2: create entry in the registration table
+            // step 3: create entry in the registration table
             registration = make_shared<ApplicationHostRegistration>(requestBody.Id, requestBody.Type);
             error = registrationTable_->Add(registration);
             WriteTrace(
@@ -1772,7 +1794,7 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
         return;
     }
 
-    // step 3: create a timer for the registration process to finish
+    // step 4: create a timer for the registration process to finish
     auto root = Root.CreateComponentRoot();
     TimeSpan timeout = requestBody.Timeout;
     TimerSPtr finishRegistrationTimer = Timer::Create(
@@ -1796,7 +1818,7 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
 
     if(requestBody.Type == ApplicationHostType::Enum::NonActivated)
     {
-        // step 4: establish monitoring with the application host
+        // step 5: establish monitoring with the application host
         HandleUPtr appHostProcessHandle;
         error = ProcessUtility::OpenProcess(
             SYNCHRONIZE, 
@@ -1837,7 +1859,7 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
             return;
         }
     }
-    // step 5: send success response
+    // step 6: send success response
     this->SendStartRegisterApplicationHostReply(requestBody, error, context);
     return;
 }

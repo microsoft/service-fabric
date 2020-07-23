@@ -417,8 +417,6 @@ namespace LeaseLayerApiTest
 
     bool TestLeaseLayerApi::SetupTest()
     {
-        Common::Sockets::Startup();
-
         bool bRet = true;
         EtcmResult er(passCount_, failCount_);   
         VERIFY_IS_TRUE(GetAddressesHelper(socketAddress1_, socketAddress2_,socketAddress6_1_,socketAddress6_2_, foundV4_, foundV6_));

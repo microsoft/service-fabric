@@ -49,5 +49,11 @@ namespace System.Fabric.Store
         /// Lock manager that created this lock.
         /// </summary>
         LockManager LockManager { get; }
+
+        /// <summary>
+        /// The oldest grantee of the resource at the time this lock was expired
+        /// If not expired, then this is -1
+        /// </summary>
+        long OldestGrantee { get; }
     }
 }

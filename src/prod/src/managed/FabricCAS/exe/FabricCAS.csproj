@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{B773B4C9-231C-46B5-A05C-CC3D03D62132}</ProjectGuid>
+    <RootNamespace>Hosting.ContainerActivatorService</RootNamespace>
+    <AssemblyName>FabricCAS</AssemblyName>
+    <AssemblyDescription>FabricCAS</AssemblyDescription>
+    <AssemblyTitle>FabricCAS</AssemblyTitle>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Program.cs">
+      <Link>Program.cs</Link>
+    </Compile>
+    <Compile Include="..\HostingTrace.cs">
+      <Link>HostingTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility.cs">
+      <Link>Utility.cs</Link>
+    </Compile>
+    <Compile Include="..\HostingConfig.cs">
+      <Link>HostingConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\TimeoutHelper.cs">
+      <Link>TimeoutHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\RWLock.cs">
+      <Link>RWLock.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerActivatorService.cs">
+      <Link>ContainerActivatorService.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerImageDownloader.cs">
+      <Link>ContainerImageDownloader.cs</Link>
+    </Compile>
+    <Compile Include="..\ActivateContainerOperation.cs">
+      <Link>ActivateContainerOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\ExecuteContainerUpdateRoutesOperation.cs">
+      <Link>ExecuteContainerUpdateRoutesOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\UpdateRoutesContainerOperation.cs">
+      <Link>UpdateRoutesContainerOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\DeactivateContainerOperation.cs">
+      <Link>DeactivateContainerOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerEventManager.cs">
+      <Link>ContainerEventManager.cs</Link>
+    </Compile>
+    <Compile Include="..\ConfigHelper.cs">
+      <Link>ConfigHelper.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.IO" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Threading.Tasks" />
+    <Reference Include="System.Net.Primitives" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Name>System.Fabric</Name>
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\system.fabric.strings\system.fabric.strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.ContainerServiceClient\dll\Microsoft.ServiceFabric.ContainerServiceClient.csproj">
+      <Name>Microsoft.ServiceFabric.ContainerServiceClient</Name>
+      <Project>{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}</Project>
+    </ProjectReference>
+    <Reference Include="$(PkgNewtonsoft_Json_6_0)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

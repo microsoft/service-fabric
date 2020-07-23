@@ -27,12 +27,7 @@ namespace System.Fabric.UpgradeService
 
         private readonly IDictionary<ResourceType, IResourceCommandProcessor> commandProcessors;
                 
-        private readonly KeyValueStoreReplica kvsStore;
-
-        /// <summary>
-        /// Flag to determine if node status in KVS was filter for primary node types.
-        /// </summary>
-        private bool filteredPrimaryNodesStatus;
+        private readonly KeyValueStoreReplica kvsStore;        
 
         private Task pollingTask;        
 
@@ -57,8 +52,6 @@ namespace System.Fabric.UpgradeService
             this.commandProcessors = resourceCommandProcessors;
             this.packageRetriever = packageRetriever;
             this.exceptionPolicy = healthPolicy;
-
-            filteredPrimaryNodesStatus = false;
         }
 
         public string ListeningAddress
@@ -99,14 +92,6 @@ namespace System.Fabric.UpgradeService
                         context.ContinuationToken));
 
             pollRequest.ClusterOperationStatus = result.Cast<ClusterOperationStatus>().FirstOrDefault();
-
-            // Temporary workaround to clean up in KVS the node status for non primary node types.
-            // TODO: Remove this logic once all clusters managed by SFRP are migrated to SF 6.2+
-            if (!this.filteredPrimaryNodesStatus)
-            {
-                await FilterPrimaryNodesStatusAsync(context.CancellationToken);
-                this.filteredPrimaryNodesStatus = true;
-            }
 
             while (!context.CancellationToken.IsCancellationRequested)
             {
@@ -177,18 +162,6 @@ namespace System.Fabric.UpgradeService
                 ApplicationOperationStatuses = appOps?.Result.Cast<ApplicationOperationStatus>().ToList(),
                 ServiceOperationStatuses = svcOps?.Result.Cast<ServiceOperationStatus>().ToList(),
             };
-        }
-
-        private Task FilterPrimaryNodesStatusAsync(CancellationToken token)
-        {            
-            var primaryNodeTypes = PaasCoordinator.GetPrimaryNodeTypes(this.configStore, this.configSectionName);
-            if (primaryNodeTypes == null || !primaryNodeTypes.Any())
-            {
-                return Task.FromResult(true);
-            }
-
-            var manager = new NodeStatusManager(this.kvsStore, this.configStore, this.configSectionName);
-            return manager.FilterNodeTypesAsync(primaryNodeTypes, Constants.KvsCommitTimeout, token);
         }
     }
 }

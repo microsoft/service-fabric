@@ -1,0 +1,33 @@
+{
+  "$type": "System.Fabric.InfrastructureService.Parallel.Test.JsonInputRepairTasks, FabricIS.parallel.Test",
+  "RepairTasks": [
+    {
+      "$type": "System.Fabric.InfrastructureService.Parallel.Test.MockRepairTask, FabricIS.parallel.Test",
+      "Scope": {
+        "$type": "System.Fabric.Repair.ClusterRepairScopeIdentifier, System.Fabric",
+        "Kind": "Cluster"
+      },
+      "TaskId": "Azure/TenantUpdate/3cbd5a8b-1fa9-42b0-a4b1-aba8f0ded836/-/1",
+      "Version": 0,
+      "State": "Approved",
+      "Flags": "None",
+      "Action": "System.Azure.Job.TenantUpdate",
+      "Target": {
+        "$type": "System.Fabric.Repair.NodeRepairTargetDescription, System.Fabric",
+        "Nodes": [ ],
+        "Kind": "Node"
+      },
+      "Executor": "fabric:/System/InfrastructureService",
+      "ExecutorData": "{\"JobId\":\"3cbd5a8b-1fa9-42b0-a4b1-aba8f0ded836\",\"StepId\":\"-\"}",
+      "Impact": {
+        "$type": "System.Fabric.Repair.NodeRepairImpactDescription, System.Fabric",
+        "ImpactedNodes": [],
+        "Kind": "Node"
+      },
+      "ResultStatus": "Invalid",
+      "ResultCode": 0,
+      "CreatedTimestamp": "2016-09-15T19:28:31.0000000Z",
+      "ClaimedTimestamp": "2016-09-15T19:29:31.0000000Z"
+    }
+  ]
+}

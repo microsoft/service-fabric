@@ -1,0 +1,176 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System_Fabric_Test_csproj", "System.Fabric.Test.csproj", "{6063627D-A418-4A45-986B-0A963583514D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_Microsoft_ServiceFabric_DeploymentManager_Microsoft_ServiceFabric_DeploymentManager_csproj", "..\..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager\Microsoft.ServiceFabric.DeploymentManager.csproj", "{738570C5-43DB-4C00-AB7B-6975ECA8A61E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prod", "..\..\..", "{E6EE35C3-56E8-43C9-8BF1-03AF74A7922D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "..\..\..\src", "{EF2D7C53-8810-4C99-B9A1-232FD900D104}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "managed", "..\..\..\src\managed", "{039AEE82-DB57-4171-A2EC-885DF5E931A8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "..\..\..\src\managed\Api", "{C800A610-980B-40EE-A391-80AE7E8E6127}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dlls", "..\..\..\src\managed\Api\Dlls", "{67DB0166-CC29-4445-8665-9C94B20DA36E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.DeploymentManager", "..\..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager", "{0CA21913-005B-4711-AFF0-83DF499EAF6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_Microsoft_ServiceFabric_ClusterManagementCommon_Microsoft_ServiceFabric_ClusterManagementCommon_csproj", "..\..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.ClusterManagementCommon\Microsoft.ServiceFabric.ClusterManagementCommon.csproj", "{F4598049-C09F-4A6C-A5C7-9D215EF355CA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.ClusterManagementCommon", "..\..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.ClusterManagementCommon", "{6C4F4767-4BBC-4864-9669-041C63E8DD8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_Microsoft_ServiceFabric_Internal_Strings_Microsoft_ServiceFabric_Internal_strings_csproj", "..\..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.strings.csproj", "{3869599B-43ED-46EE-B2AC-FBE66657B858}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Internal.Strings", "..\..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.Internal.Strings", "{0B787EA1-D9F1-4314-A158-BC445B9F6334}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_Microsoft_ServiceFabric_Internal_Microsoft_ServiceFabric_Internal_csproj", "..\..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj", "{EB728138-47AC-41CB-A2C7-53521B396AFD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Internal", "..\..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.Internal", "{AB5D296C-E06F-4AD3-8CAC-0C5E467A2F66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_System_Fabric_System_Fabric_csproj", "..\..\..\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj", "{65905332-C075-40A4-99DD-71800412191C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric", "..\..\..\src\managed\Api\Dlls\System.Fabric", "{B03AD1EC-0F23-46A2-8857-A691EDBD7507}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_System_Fabric_Strings_system_fabric_strings_csproj", "..\..\..\src\managed\Api\Dlls\System.Fabric.Strings\system.fabric.strings.csproj", "{FC4947D4-A39D-47EB-A3E2-445510FFC430}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Strings", "..\..\..\src\managed\Api\Dlls\System.Fabric.Strings", "{E1091603-6ED6-44C6-828F-517D638DA778}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_System_Fabric_Management_ServiceModel_System_Fabric_Management_ServiceModel_csproj", "..\..\..\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj", "{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Management.ServiceModel", "..\..\..\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel", "{40108C5C-C73D-4BB7-8361-07B90A04DBF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_System_Fabric_Management_ServiceModel_CsFileBuilder_System_Fabric_Management_ServiceModel_CsFileBuilder_csproj", "..\..\..\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel.CsFileBuilder\System.Fabric.Management.ServiceModel.CsFileBuilder.csproj", "{245CA2BD-5F90-4C0B-848E-3F7056C04F37}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Management.ServiceModel.CsFileBuilder", "..\..\..\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel.CsFileBuilder", "{F76B0DB9-9AA6-4C15-B918-2376877F3021}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_System_Fabric_Management_System_Fabric_Management_csproj", "..\..\..\src\managed\Api\Dlls\System.Fabric.Management\System.Fabric.Management.csproj", "{20A09191-7AC9-4851-BAF2-AD98D481CEB6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Management", "..\..\..\src\managed\Api\Dlls\System.Fabric.Management", "{4CCC853B-4127-47B6-8D97-A515918F1EE4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "______generated_generated_csproj", "..\..\generated\generated.csproj", "{E4088B2E-1379-4502-9ECA-4E08B891A04E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "..\..", "{D9E89747-D0A6-4C4B-8E15-A59F8B3FD095}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "generated", "..\..\generated", "{DCC487EF-2E59-4694-80B7-0E228A5C7773}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_DCA_product_pluginvalidators_dll_DcaStandardPluginValidator_csproj", "..\..\..\src\managed\DCA\product\pluginvalidators\dll\DcaStandardPluginValidator.csproj", "{B7F82509-3E0B-45EC-B1C6-BB565E3DD760}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DCA", "..\..\..\src\managed\DCA", "{BE28F2C8-C75A-4151-8ABD-E9FD649B425F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "product", "..\..\..\src\managed\DCA\product", "{B88591DB-7C55-460B-85B2-919DEE613861}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pluginvalidators", "..\..\..\src\managed\DCA\product\pluginvalidators", "{724D05CB-0110-42FD-AA4A-136634CBCD5E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dll", "..\..\..\src\managed\DCA\product\pluginvalidators\dll", "{31D8E7DA-5E64-41B7-887C-E0F91138DB76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_DCA_product_system_fabric_dca_dll_System_Fabric_Dca_csproj", "..\..\..\src\managed\DCA\product\system.fabric.dca\dll\System.Fabric.Dca.csproj", "{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "system.fabric.dca", "..\..\..\src\managed\DCA\product\system.fabric.dca", "{8CC93ED3-2DFE-4FB4-BDB7-2196B45F5025}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dll", "..\..\..\src\managed\DCA\product\system.fabric.dca\dll", "{83B28D8A-41C8-476C-BDED-B232236A0B5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_EtlReader_EtlReader_csproj", "..\..\..\src\managed\EtlReader\EtlReader.csproj", "{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EtlReader", "..\..\..\src\managed\EtlReader", "{324C0075-B8EC-4F34-BE72-CD28AFE67261}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_DCA_product_system_fabric_dca_validator_dll_System_Fabric_Dca_Validator_csproj", "..\..\..\src\managed\DCA\product\system.fabric.dca.validator\dll\System.Fabric.Dca.Validator.csproj", "{2ADB6D48-C720-4407-8955-4D7035C30EA6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "system.fabric.dca.validator", "..\..\..\src\managed\DCA\product\system.fabric.dca.validator", "{7AAE30B4-49E5-4B8F-A446-3758F9F193D6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dll", "..\..\..\src\managed\DCA\product\system.fabric.dca.validator\dll", "{6DE310FE-519A-4B45-8F0C-3854DA5E5997}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Microsoft_ServiceFabric_ContainerServiceClient_dll_Microsoft_ServiceFabric_ContainerServiceClient_csproj", "..\..\..\src\managed\Microsoft.ServiceFabric.ContainerServiceClient\dll\Microsoft.ServiceFabric.ContainerServiceClient.csproj", "{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.ContainerServiceClient", "..\..\..\src\managed\Microsoft.ServiceFabric.ContainerServiceClient", "{810DF178-B545-4937-80A5-AA7DDB59F2DF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dll", "..\..\..\src\managed\Microsoft.ServiceFabric.ContainerServiceClient\dll", "{0711A6F5-41A5-416C-8259-7FEF4015C3E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________src_managed_Api_Dlls_System_Fabric_JsonSerializerWrapper_System_Fabric_JsonSerializerWrapper_csproj", "..\..\..\src\managed\Api\Dlls\System.Fabric.JsonSerializerWrapper\System.Fabric.JsonSerializerWrapper.csproj", "{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.JsonSerializerWrapper", "..\..\..\src\managed\Api\Dlls\System.Fabric.JsonSerializerWrapper", "{5560C2E4-D2F7-44C2-A723-51906A79E4FC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		VSMSBuild|Any CPU = VSMSBuild|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6063627D-A418-4A45-986B-0A963583514D}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{6063627D-A418-4A45-986B-0A963583514D}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{738570C5-43DB-4C00-AB7B-6975ECA8A61E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{738570C5-43DB-4C00-AB7B-6975ECA8A61E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{F4598049-C09F-4A6C-A5C7-9D215EF355CA}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4598049-C09F-4A6C-A5C7-9D215EF355CA}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{3869599B-43ED-46EE-B2AC-FBE66657B858}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{3869599B-43ED-46EE-B2AC-FBE66657B858}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{EB728138-47AC-41CB-A2C7-53521B396AFD}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB728138-47AC-41CB-A2C7-53521B396AFD}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{65905332-C075-40A4-99DD-71800412191C}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{65905332-C075-40A4-99DD-71800412191C}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{FC4947D4-A39D-47EB-A3E2-445510FFC430}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC4947D4-A39D-47EB-A3E2-445510FFC430}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{245CA2BD-5F90-4C0B-848E-3F7056C04F37}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{245CA2BD-5F90-4C0B-848E-3F7056C04F37}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{20A09191-7AC9-4851-BAF2-AD98D481CEB6}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{20A09191-7AC9-4851-BAF2-AD98D481CEB6}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{E4088B2E-1379-4502-9ECA-4E08B891A04E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4088B2E-1379-4502-9ECA-4E08B891A04E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{B7F82509-3E0B-45EC-B1C6-BB565E3DD760}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7F82509-3E0B-45EC-B1C6-BB565E3DD760}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{2ADB6D48-C720-4407-8955-4D7035C30EA6}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{2ADB6D48-C720-4407-8955-4D7035C30EA6}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EF2D7C53-8810-4C99-B9A1-232FD900D104} = {E6EE35C3-56E8-43C9-8BF1-03AF74A7922D}
+		{039AEE82-DB57-4171-A2EC-885DF5E931A8} = {EF2D7C53-8810-4C99-B9A1-232FD900D104}
+		{C800A610-980B-40EE-A391-80AE7E8E6127} = {039AEE82-DB57-4171-A2EC-885DF5E931A8}
+		{67DB0166-CC29-4445-8665-9C94B20DA36E} = {C800A610-980B-40EE-A391-80AE7E8E6127}
+		{0CA21913-005B-4711-AFF0-83DF499EAF6E} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{738570C5-43DB-4C00-AB7B-6975ECA8A61E} = {0CA21913-005B-4711-AFF0-83DF499EAF6E}
+		{6C4F4767-4BBC-4864-9669-041C63E8DD8C} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{F4598049-C09F-4A6C-A5C7-9D215EF355CA} = {6C4F4767-4BBC-4864-9669-041C63E8DD8C}
+		{0B787EA1-D9F1-4314-A158-BC445B9F6334} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{3869599B-43ED-46EE-B2AC-FBE66657B858} = {0B787EA1-D9F1-4314-A158-BC445B9F6334}
+		{AB5D296C-E06F-4AD3-8CAC-0C5E467A2F66} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{EB728138-47AC-41CB-A2C7-53521B396AFD} = {AB5D296C-E06F-4AD3-8CAC-0C5E467A2F66}
+		{B03AD1EC-0F23-46A2-8857-A691EDBD7507} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{65905332-C075-40A4-99DD-71800412191C} = {B03AD1EC-0F23-46A2-8857-A691EDBD7507}
+		{E1091603-6ED6-44C6-828F-517D638DA778} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{FC4947D4-A39D-47EB-A3E2-445510FFC430} = {E1091603-6ED6-44C6-828F-517D638DA778}
+		{40108C5C-C73D-4BB7-8361-07B90A04DBF6} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{8962599F-C6B0-4C47-AE92-5BDAFE19F12E} = {40108C5C-C73D-4BB7-8361-07B90A04DBF6}
+		{F76B0DB9-9AA6-4C15-B918-2376877F3021} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{245CA2BD-5F90-4C0B-848E-3F7056C04F37} = {F76B0DB9-9AA6-4C15-B918-2376877F3021}
+		{4CCC853B-4127-47B6-8D97-A515918F1EE4} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{20A09191-7AC9-4851-BAF2-AD98D481CEB6} = {4CCC853B-4127-47B6-8D97-A515918F1EE4}
+		{DCC487EF-2E59-4694-80B7-0E228A5C7773} = {D9E89747-D0A6-4C4B-8E15-A59F8B3FD095}
+		{E4088B2E-1379-4502-9ECA-4E08B891A04E} = {DCC487EF-2E59-4694-80B7-0E228A5C7773}
+		{BE28F2C8-C75A-4151-8ABD-E9FD649B425F} = {039AEE82-DB57-4171-A2EC-885DF5E931A8}
+		{B88591DB-7C55-460B-85B2-919DEE613861} = {BE28F2C8-C75A-4151-8ABD-E9FD649B425F}
+		{724D05CB-0110-42FD-AA4A-136634CBCD5E} = {B88591DB-7C55-460B-85B2-919DEE613861}
+		{31D8E7DA-5E64-41B7-887C-E0F91138DB76} = {724D05CB-0110-42FD-AA4A-136634CBCD5E}
+		{B7F82509-3E0B-45EC-B1C6-BB565E3DD760} = {31D8E7DA-5E64-41B7-887C-E0F91138DB76}
+		{8CC93ED3-2DFE-4FB4-BDB7-2196B45F5025} = {B88591DB-7C55-460B-85B2-919DEE613861}
+		{83B28D8A-41C8-476C-BDED-B232236A0B5A} = {8CC93ED3-2DFE-4FB4-BDB7-2196B45F5025}
+		{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6} = {83B28D8A-41C8-476C-BDED-B232236A0B5A}
+		{324C0075-B8EC-4F34-BE72-CD28AFE67261} = {039AEE82-DB57-4171-A2EC-885DF5E931A8}
+		{54BBF6D7-BAF6-489E-972F-5EB83C793E1D} = {324C0075-B8EC-4F34-BE72-CD28AFE67261}
+		{7AAE30B4-49E5-4B8F-A446-3758F9F193D6} = {B88591DB-7C55-460B-85B2-919DEE613861}
+		{6DE310FE-519A-4B45-8F0C-3854DA5E5997} = {7AAE30B4-49E5-4B8F-A446-3758F9F193D6}
+		{2ADB6D48-C720-4407-8955-4D7035C30EA6} = {6DE310FE-519A-4B45-8F0C-3854DA5E5997}
+		{810DF178-B545-4937-80A5-AA7DDB59F2DF} = {039AEE82-DB57-4171-A2EC-885DF5E931A8}
+		{0711A6F5-41A5-416C-8259-7FEF4015C3E3} = {810DF178-B545-4937-80A5-AA7DDB59F2DF}
+		{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E} = {0711A6F5-41A5-416C-8259-7FEF4015C3E3}
+		{5560C2E4-D2F7-44C2-A723-51906A79E4FC} = {67DB0166-CC29-4445-8665-9C94B20DA36E}
+		{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E} = {5560C2E4-D2F7-44C2-A723-51906A79E4FC}
+	EndGlobalSection
+EndGlobal

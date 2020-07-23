@@ -166,6 +166,10 @@ namespace Reliability
         //Specifies the duration for which FM waits for an up replica to move out to a different node during remove node or remove data deactivation
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FailoverManager", RemoveNodeOrDataUpReplicaTimeout, Common::TimeSpan::MaxValue, Common::ConfigEntryUpgradePolicy::Dynamic);
 
+        //Specifies whether FM should send remove instance to RA for node/data removal during safety checks
+        //If set to true the stateless instance close will be initiated after safety checks are done
+        INTERNAL_CONFIG_ENTRY(bool, L"FailoverManager", RemoveNodeOrDataCloseStatelessInstanceAfterSafetyCheckComplete, false, Common::ConfigEntryUpgradePolicy::Dynamic);
+
         // Specified if FM should perform a stronger safety check for upgrades and node deactivations.
         INTERNAL_CONFIG_ENTRY(bool, L"FailoverManager", IsStrongSafetyCheckEnabled, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 

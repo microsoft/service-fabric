@@ -16,6 +16,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             this.ReplicaRestartWaitDurationSeconds = 30;
             this.QuorumLossWaitDurationSeconds = 30;
             this.ContainersRetentionCount = "1";
+            this.TargetReplicaCount = 0;
         }
 
         public bool RemoveServiceFabricRuntimeAccess;
@@ -27,6 +28,8 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
         public string IsolationLevel;
 
         public string ContainersRetentionCount;
+
+        public int TargetReplicaCount;
     }
 }
 

@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Fabric.Common.Tracing;
+using System.Globalization;
 
 namespace System.Fabric.BackupRestore
 {
@@ -61,6 +62,10 @@ namespace System.Fabric.BackupRestore
         private RecoveryPointMetadataProperties backupPropertiesForBackupNow;
         private bool? isBackupRestoreServiceConfigured;
         private bool isSystemService;
+        private const int initialRetryIntervalMs = 1000;
+        private const int maxRetryCount = 5;
+        private const int maxRetryIntervalMs = 5000;
+
 
         private Stopwatch telemetryStopWatch;
 
@@ -203,6 +208,9 @@ namespace System.Fabric.BackupRestore
             // Do nothing for system services or if Backup Restore service is not configured
             if (this.IsSystemService() || !this.IsBackupRestoreServiceConfigured()) return false;
 
+            this.telemetryStopWatch.Restart();
+            
+
             AppTrace.TraceSource.WriteInfo(
                         TraceType,
                         "{0} On data loss invoked.",
@@ -217,7 +225,6 @@ namespace System.Fabric.BackupRestore
 
             RestorePointDetails recoveryPointDetails = null;
             var continueLoop = true;
-
             do
             {
                 try
@@ -256,6 +263,12 @@ namespace System.Fabric.BackupRestore
 
             var destDir = String.Empty;
 
+#if !DotNetCoreClr
+            bool isAutoRestored = false;
+            int totalBackupCounts = 0;
+            bool isRestoreSuccessfull = false;
+#endif
+
             try
             {
                 destDir = this.GetRootBrsTempFolderPath(false);
@@ -273,8 +286,16 @@ namespace System.Fabric.BackupRestore
                         var fileName = Path.GetFileName(backup);
                         var destinationDir = Path.Combine(destDir, folderName);
                         var destinationZipFileName = Path.Combine(destDir, fileName);
-                        ZipFile.ExtractToDirectory(destinationZipFileName, destinationDir);
-                        File.Delete(destinationZipFileName);        // Delete the zip file
+                        BackupRestoreUtility.PerformIOWithRetries(() => {
+                            ZipFile.ExtractToDirectory(destinationZipFileName, destinationDir);
+                        }, initialRetryIntervalMs, maxRetryCount, maxRetryIntervalMs
+                            );
+                        
+                        // Delete the zip file
+                        BackupRestoreUtility.PerformIOWithRetries(() => {
+                            File.Delete(destinationZipFileName);
+                        }, initialRetryIntervalMs, maxRetryCount, maxRetryIntervalMs);
+
                     }
                 }
 
@@ -283,13 +304,24 @@ namespace System.Fabric.BackupRestore
                     "{0} Successfully downloaded all backups",
                     this.GetTraceId());
 
+#if !DotNetCoreClr
+                isAutoRestored = !recoveryPointDetails.UserInitiatedOperation;
+                totalBackupCounts = recoveryPointDetails.BackupLocations.Count;
+#endif
+
                 // All backups downloaded, invoke restore
-                await this.replica.RestoreAsync(destDir, recoveryPointDetails.UserInitiatedOperation, cancellationToken);
+                await BackupRestoreUtility.PerformIOWithRetriesAsync((destDirectory, token) => {
+                    return this.replica.RestoreAsync(destDirectory, recoveryPointDetails.UserInitiatedOperation, token);
+                }, destDir, cancellationToken, initialRetryIntervalMs, maxRetryCount, maxRetryIntervalMs);
 
                 AppTrace.TraceSource.WriteInfo(
                     TraceType,
                     "{0} Succefully restored partition",
                     this.GetTraceId());
+
+#if !DotNetCoreClr
+                isRestoreSuccessfull = true;
+#endif
 
                 // Post a health event
                 this.ReportRestoreSuccessHealth(recoveryPointDetails.UserInitiatedOperation);
@@ -344,6 +376,12 @@ namespace System.Fabric.BackupRestore
                         // Ignore any exception
                     }
                 }
+
+#if !DotNetCoreClr
+                FabricEvents.Events.BackupRestoreDetails(isAutoRestored ? 1:0 , isRestoreSuccessfull ? 1:0 , this.telemetryStopWatch.Elapsed.TotalSeconds, 
+                    totalBackupCounts,this.partition.PartitionInfo.Id.ToString());
+#endif
+
             }
 
             // Report back to BRS only if the request is user initiated
@@ -394,9 +432,13 @@ namespace System.Fabric.BackupRestore
             // TODO: Handle BRS not reachable
         }
 
-        #endregion
 
-        #region IBackupRestoreHandler Methods
+
+
+
+#endregion
+
+#region IBackupRestoreHandler Methods
 
         public async Task UpdateBackupSchedulingPolicyAsync(BackupPolicy policy, TimeSpan timeout, CancellationToken cancellationToken)
         {
@@ -539,28 +581,28 @@ namespace System.Fabric.BackupRestore
             return Task.FromResult(0);
         }
 
-        #endregion
+#endregion
 
-        #region Private methods
+#region Private methods
 
         private void PopulateConstants()
         {
             var configStore = NativeConfigStore.FabricGetConfigStore();
 
             var apiTimeoutString = configStore.ReadUnencryptedString(BackupRestoreContants.BrsConfigSectionName, BackupRestoreContants.ApiTimeoutKeyName);
-            this.apiTimeout = String.IsNullOrEmpty(apiTimeoutString) ? BackupRestoreContants.ApiTimeoutInSecondsDefault : TimeSpan.FromSeconds(int.Parse(apiTimeoutString));
+            this.apiTimeout = String.IsNullOrEmpty(apiTimeoutString) ? BackupRestoreContants.ApiTimeoutInSecondsDefault : TimeSpan.FromSeconds(int.Parse(apiTimeoutString, CultureInfo.InvariantCulture));
 
             var storeApiTimeoutString = configStore.ReadUnencryptedString(BackupRestoreContants.BrsConfigSectionName, BackupRestoreContants.StoreApiTimeoutKeyName);
-            this.storeApiTimeout = String.IsNullOrEmpty(storeApiTimeoutString) ? BackupRestoreContants.StoreApiTimeoutInSecondsDefault : TimeSpan.FromSeconds(int.Parse(storeApiTimeoutString));
+            this.storeApiTimeout = String.IsNullOrEmpty(storeApiTimeoutString) ? BackupRestoreContants.StoreApiTimeoutInSecondsDefault : TimeSpan.FromSeconds(int.Parse(storeApiTimeoutString, CultureInfo.InvariantCulture));
             
             var retryIntervalSeconds = configStore.ReadUnencryptedString(BackupRestoreContants.BrsConfigSectionName, BackupRestoreContants.ApiRetryIntervalKeyName);
-            InitialRetryInterval = String.IsNullOrEmpty(retryIntervalSeconds) ? BackupRestoreContants.ApiRetryIntervalInSecondsDefault : TimeSpan.FromSeconds(int.Parse(retryIntervalSeconds));
+            InitialRetryInterval = String.IsNullOrEmpty(retryIntervalSeconds) ? BackupRestoreContants.ApiRetryIntervalInSecondsDefault : TimeSpan.FromSeconds(int.Parse(retryIntervalSeconds, CultureInfo.InvariantCulture));
 
             var maxRetryIntervalSeconds = configStore.ReadUnencryptedString(BackupRestoreContants.BrsConfigSectionName, BackupRestoreContants.MaxApiRetryIntervalKeyName);
-            MaxRetryInterval = String.IsNullOrEmpty(maxRetryIntervalSeconds) ? BackupRestoreContants.MaxApiRetryIntervalInSecondsDefault : TimeSpan.FromSeconds(int.Parse(maxRetryIntervalSeconds));
+            MaxRetryInterval = String.IsNullOrEmpty(maxRetryIntervalSeconds) ? BackupRestoreContants.MaxApiRetryIntervalInSecondsDefault : TimeSpan.FromSeconds(int.Parse(maxRetryIntervalSeconds, CultureInfo.InvariantCulture));
 
             var maxRetryCountString = configStore.ReadUnencryptedString(BackupRestoreContants.BrsConfigSectionName, BackupRestoreContants.MaxApiRetryCountKeyName);
-            MaxRetryCount = String.IsNullOrEmpty(maxRetryCountString) ? BackupRestoreContants.MaxRetryCountDefault : int.Parse(maxRetryCountString);
+            MaxRetryCount = String.IsNullOrEmpty(maxRetryCountString) ? BackupRestoreContants.MaxRetryCountDefault : int.Parse(maxRetryCountString, CultureInfo.InvariantCulture);
 
             var zipBackupsString = configStore.ReadUnencryptedString(BackupRestoreContants.BrsConfigSectionName, BackupRestoreContants.EnableCompressionKeyName);
             this.zipBackups = String.IsNullOrEmpty(retryIntervalSeconds) || bool.Parse(zipBackupsString);
@@ -1072,7 +1114,7 @@ namespace System.Fabric.BackupRestore
             }
         }
 
-        #region Health Reporting Functions
+#region Health Reporting Functions
 
         private void ClearBackupHealth()
         {
@@ -1141,9 +1183,9 @@ namespace System.Fabric.BackupRestore
             this.partition.ReportPartitionHealth(healthInfo);
         }
 
-        #endregion
+#endregion
 
-        #region Backup Timer Operations
+#region Backup Timer Operations
 
         private void TimerCallback()
         {
@@ -1246,6 +1288,8 @@ namespace System.Fabric.BackupRestore
                 AppTrace.TraceSource.WriteInfo(TraceType, "{0} Creating recovery point metadata file {1}",
                     this.GetTraceId(), recoveryMetadataFile);
 
+                string serviceManifestVersion = this.initializationParameters.CodePackageActivationContext.GetServiceManifestVersion();
+
                 // Write the recovery point metadata file
                 var file = await RecoveryPointMetadataFile.CreateAsync(
                     recoveryMetadataFile,
@@ -1258,6 +1302,7 @@ namespace System.Fabric.BackupRestore
                     newBackupLocation,
                     parentBackupLocation,
                     this.partition.PartitionInfo,
+                    serviceManifestVersion,
                     cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -1503,11 +1548,11 @@ namespace System.Fabric.BackupRestore
             }
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Interop Helpers
+#region Interop Helpers
 
         private void CreateNativeAgent()
         {
@@ -1642,6 +1687,6 @@ namespace System.Fabric.BackupRestore
             this.nativeAgent.EndDownlaodBackup(context);
         }
 
-        #endregion
+#endregion
     }
 }

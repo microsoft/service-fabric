@@ -34,6 +34,8 @@ namespace System.Fabric.BackupRestore
 
         private const string PartitionKeyPropertyName = "PartitionKey";
 
+        private const string ServiceManifestVersionPropertyName = "ServiceManifestVersion";
+
         public DateTime BackupTime { get; set; }
 
         public string ParentBackupLocation { get; set; }
@@ -49,6 +51,8 @@ namespace System.Fabric.BackupRestore
         public Epoch EpochOfLastBackupRecord { get; set; }
 
         public long LsnOfLastBackupRecord { get; set; }
+
+        public string ServiceManifestVersion { get; set; }
 
         public ServicePartitionInformation PartitionInformation { get; set; }
 
@@ -104,6 +108,11 @@ namespace System.Fabric.BackupRestore
 
             // 'PartitionKey' - byte[]
             WritePartitionKey(writer);
+
+            // 'ServicePackageCodeVersion' - byte[]
+            writer.Write(ServiceManifestVersionPropertyName);
+            WriteStringValue(writer, ServiceManifestVersion);
+
         }
 
         private void WritePartitionKey(BinaryWriter writer)
@@ -220,6 +229,9 @@ namespace System.Fabric.BackupRestore
                     break;
                 case PartitionKeyPropertyName:
                     ReadPartitionKey(reader, valueSize);
+                    break;
+                case ServiceManifestVersionPropertyName:
+                    this.ServiceManifestVersion = Encoding.UTF8.GetString(reader.ReadBytes(valueSize));
                     break;
                 default:
                     base.ReadProperty(reader, property, valueSize);

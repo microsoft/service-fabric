@@ -1,0 +1,162 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricTypes_.idl";
+import "FabricRuntime.idl";
+
+//
+// Forward Declarations
+//
+
+interface IFabricInfrastructureService;
+interface IFabricInfrastructureServiceAgent;
+interface IFabricInfrastructureTaskQueryResult;
+
+[
+    uuid(e51e79a7-cce3-45b4-b8c1-5857344df224),
+    version(1.0),
+]
+library FabricInfrastructureServiceLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricInfrastructureService;
+    interface IFabricInfrastructureServiceAgent;
+    interface IFabricInfrastructureTaskQueryResult;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(8400d67e-7f19-45f3-bec2-b137da42106a),
+        noncreatable
+    ]
+    coclass FabricInfrastructureServiceAgent
+    {
+        [default] interface IFabricInfrastructureServiceAgent;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(4acc6afa-638c-40cc-aa29-a04c9aca602f),
+        dllname("FabricInfrastructureService.dll")
+    ]
+    module FabricInfrastructureService {
+        [entry("CreateFabricInfrastructureServiceAgent")] HRESULT CreateFabricInfrastructureServiceAgent(
+            [in] REFIID riid,
+            [out, retval] void ** fabricInfrastructureServiceAgent);
+    }
+
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(d948b384-fd16-48f3-a4ad-d6e68c6bf2bb)]
+interface IFabricInfrastructureService : IUnknown
+{
+    [] HRESULT BeginRunCommand(
+        [in] BOOLEAN isAdminCommand,
+        [in] LPCWSTR command,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRunCommand(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginReportStartTaskSuccess(
+        [in] LPCWSTR taskId,
+        [in] ULONGLONG instanceId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndReportStartTaskSuccess(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginReportFinishTaskSuccess(
+        [in] LPCWSTR taskId,
+        [in] ULONGLONG instanceId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndReportFinishTaskSuccess(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginReportTaskFailure(
+        [in] LPCWSTR taskId,
+        [in] ULONGLONG instanceId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndReportTaskFailure(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(2416a4e2-9313-42ce-93c9-b499764840ce)]
+interface IFabricInfrastructureServiceAgent : IUnknown
+{
+    [] HRESULT RegisterInfrastructureServiceFactory(
+        [in] IFabricStatefulServiceFactory * factory);
+
+    [] HRESULT RegisterInfrastructureService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID,
+        [in] IFabricInfrastructureService *,
+        [out, retval] IFabricStringResult ** serviceAddress);
+
+    [] HRESULT UnregisterInfrastructureService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID);
+
+    [] HRESULT BeginStartInfrastructureTask(
+        [in] FABRIC_INFRASTRUCTURE_TASK_DESCRIPTION * taskDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartInfrastructureTask(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginFinishInfrastructureTask(
+        [in] LPCWSTR taskId,
+        [in] ULONGLONG instanceId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndFinishInfrastructureTask(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginQueryInfrastructureTask(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndQueryInfrastructureTask(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricInfrastructureTaskQueryResult ** queryResult);
+}
+
+[object, local, uuid(209e28bb-4f8b-4f03-88c9-7b54f2cd29f9)]
+interface IFabricInfrastructureTaskQueryResult : IUnknown
+{
+    [] const FABRIC_INFRASTRUCTURE_TASK_QUERY_RESULT_LIST * get_Result();
+}

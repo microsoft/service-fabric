@@ -76,14 +76,20 @@ void DeactivateNodesContext::Process(FailoverManager const& fm, FailoverUnit con
         if (nodesToDeactivate_.find(replica->FederationNodeId) != nodesToDeactivate_.end() &&
             replica->NodeInfoObj->DeactivationInfo.ContainsBatch(batchId_))
         {
-            if (replica->IsUp)
+            // this we need to do in practise only for stateful replicas
+            // currently we will do it for stateless in case the config is not turned on
+            // TODO: In the future make the config on by default and change this to nodesWithUpStatefulReplicas_
+            if (failoverUnit.IsStateful || !FailoverConfig::GetConfig().RemoveNodeOrDataCloseStatelessInstanceAfterSafetyCheckComplete)
             {
-                if (nodesWithUpReplicas_.empty())
+                if (replica->IsUp)
                 {
-                    failoverUnitId_ = failoverUnit.Id;
-                }
+                    if (nodesWithUpReplicas_.empty())
+                    {
+                        failoverUnitId_ = failoverUnit.Id;
+                    }
 
-                nodesWithUpReplicas_.insert(replica->NodeInfoObj->NodeInstance.Id);
+                    nodesWithUpReplicas_.insert(replica->NodeInfoObj->NodeInstance.Id);
+                }
             }
 
             bool isRemoveNodeOrData = nodesToDeactivate_[replica->FederationNodeId] == NodeDeactivationIntent::RemoveData ||
@@ -93,15 +99,20 @@ void DeactivateNodesContext::Process(FailoverManager const& fm, FailoverUnit con
 
             if (isRemoveNodeOrData)
             {
-                //we should not proceed further in case it is not safe to remove this replica
-                //this is data loss check we we always need to do
-                shouldAddToPendingDueToRemove = (replica->IsUp || replica->IsOffline) && !failoverUnit.IsSafeToRemove(batchId_);
-                if (!shouldAddToPendingDueToRemove)
+                // for stateful these checks are always done
+                // for stateless we dont need them if the replicas are supposed to be closed after safety checks are complete
+                if (failoverUnit.IsStateful || !FailoverConfig::GetConfig().RemoveNodeOrDataCloseStatelessInstanceAfterSafetyCheckComplete)
                 {
-                    //in case it is safe to remove it we will wait for RemoveNodeOrDataUpReplicaTimeout for an up replica to move out to a different node
-                    //once that time is up we are ok with killing the replica
-                    //but we first need to ensure that other safety checks are respected
-                    shouldAddToPendingDueToRemove = replica->IsUp && IsRemoveNodeOrDataReplicaWaitNeeded(replica->NodeInfoObj);
+                    //we should not proceed further in case it is not safe to remove this replica
+                    //this is data loss check we always need to do
+                    shouldAddToPendingDueToRemove = (replica->IsUp || replica->IsOffline) && !failoverUnit.IsSafeToRemove(batchId_);
+                    if (!shouldAddToPendingDueToRemove)
+                    {
+                        //in case it is safe to remove it we will wait for RemoveNodeOrDataUpReplicaTimeout for an up replica to move out to a different node
+                        //once that time is up we are ok with killing the replica
+                        //but we first need to ensure that other safety checks are respected
+                        shouldAddToPendingDueToRemove = replica->IsUp && IsRemoveNodeOrDataReplicaWaitNeeded(replica->NodeInfoObj);
+                    }
                 }
             }
 

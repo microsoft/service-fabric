@@ -13,13 +13,6 @@ namespace Common
     {
     public:
         ConfigParameterOverride();
-        
-        ConfigParameterOverride(
-            std::wstring && name,
-            std::wstring && value,
-            bool isEncrypted,
-            std::wstring && type);
-        
         ConfigParameterOverride(ConfigParameterOverride const & other);
         ConfigParameterOverride(ConfigParameterOverride && other);
 
@@ -36,5 +29,11 @@ namespace Common
         std::wstring Value;
         bool IsEncrypted;
 		std::wstring Type;
+
+    private:
+        friend struct ConfigSectionOverride;
+
+        void ReadFromXml(Common::XmlReaderUPtr const &);
+		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
     };
 }

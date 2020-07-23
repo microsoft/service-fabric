@@ -121,3 +121,10 @@ bool TruncateTailLogRecord::Test_Equals(__in LogRecord const & other) const
 {
     return __super::Test_Equals(other);
 }
+
+std::wstring TruncateTailLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}

@@ -26,6 +26,9 @@ namespace Hosting2
         __declspec(property(get=get_ProcessId)) DWORD ProcessId;
         virtual DWORD get_ProcessId() const = 0;
 
+        __declspec(property(get = get_ContainerId)) wstring ContainerId;
+        virtual wstring get_ContainerId() const = 0;
+
         __declspec(property(get = get_DebuggerProcessId)) DWORD DebuggerProcessId;
         virtual DWORD get_DebuggerProcessId() const = 0;
 

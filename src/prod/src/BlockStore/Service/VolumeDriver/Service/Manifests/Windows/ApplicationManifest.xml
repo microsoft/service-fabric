@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest ApplicationTypeName="ServiceFabricVolumeDriverType"
+                     ApplicationTypeVersion="!FABRIC_VERSION!"
+                     xmlns="http://schemas.microsoft.com/2011/01/fabric"
+                     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     ManifestId="b27ce12f-ed9b-4e18-bfc7-309414daeed5">
+  <Parameters>
+    <Parameter Name="InstanceCount" DefaultValue="-1" />
+    <Parameter Name="ListenPort" DefaultValue="MustSpecifyViaApplicationParameters" />
+  </Parameters>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="ServiceFabricVolumeDriverPkg" ServiceManifestVersion="!FABRIC_VERSION!" />
+    <ConfigOverrides>
+      <ConfigOverride Name="Config">
+        <Settings>
+          <Section Name="ServiceFabricVolumeDriver">
+            <Parameter Name="OperatingSystem" Value="Windows" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
+    <ResourceOverrides>
+      <Endpoints>
+        <Endpoint Name="ServiceEndpoint" Port="[ListenPort]" />
+      </Endpoints>
+    </ResourceOverrides>
+    <Policies>
+        <RunAsPolicy CodePackageRef="Code" UserRef="RootUser" EntryPointType="Setup" /> <!-- Required to register the plugin -->
+        <RunAsPolicy CodePackageRef="Code" UserRef="RootUser" EntryPointType="Main" /> <!-- Required to provision the volume -->
+    </Policies>
+  </ServiceManifestImport>
+  <DefaultServices>
+    <Service Name="Service" ServicePackageActivationMode="ExclusiveProcess">
+      <StatelessService ServiceTypeName="ServiceFabricVolumeDriverServiceType" InstanceCount="[InstanceCount]">
+        <SingletonPartition />
+      </StatelessService>
+    </Service>
+  </DefaultServices>
+  <Principals>
+    <Users>
+      <User Name="RootUser" AccountType="LocalSystem">
+      </User>
+    </Users>
+  </Principals>
+</ApplicationManifest>

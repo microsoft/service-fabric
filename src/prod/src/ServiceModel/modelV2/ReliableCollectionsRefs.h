@@ -19,20 +19,23 @@ namespace ServiceModel
         public:
             BEGIN_JSON_SERIALIZABLE_PROPERTIES()
                 SERIALIZABLE_PROPERTY(ServiceModel::Constants::nameCamelCase, name_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::doNotPersistState, doNotPersistState_)
             END_JSON_SERIALIZABLE_PROPERTIES()
 
-            FABRIC_FIELDS_01(name_);
+            FABRIC_FIELDS_02(name_, doNotPersistState_);
 
             bool operator ==(ReliableCollectionsRef const &other) const
             {
-                return name_ == other.name_;
+                return name_ == other.name_ && doNotPersistState_ == other.doNotPersistState_;
             } 
 
             BEGIN_DYNAMIC_SIZE_ESTIMATION()
                 DYNAMIC_SIZE_ESTIMATION_MEMBER(name_)
+                DYNAMIC_SIZE_ESTIMATION_MEMBER(doNotPersistState_)
             END_DYNAMIC_SIZE_ESTIMATION()
         private:
             std::wstring name_;
+            bool doNotPersistState_ { false };
 
         };
     }

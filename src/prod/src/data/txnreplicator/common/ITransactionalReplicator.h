@@ -24,6 +24,9 @@ namespace TxnReplicator
         __declspec(property(get = get_StatefulPartition)) Data::Utilities::IStatefulPartition::SPtr StatefulPartition;
         virtual Data::Utilities::IStatefulPartition::SPtr get_StatefulPartition() const = 0;
 
+        __declspec(property(get = get_HasPersistedState)) bool HasPeristedState;
+        virtual bool get_HasPersistedState() const = 0;
+
         virtual NTSTATUS GetLastStableSequenceNumber(__out LONG64 & lsn) noexcept = 0;
 
         virtual NTSTATUS GetLastCommittedSequenceNumber(__out LONG64 & lsn) noexcept = 0;

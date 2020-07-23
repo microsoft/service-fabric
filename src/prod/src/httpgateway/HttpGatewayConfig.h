@@ -40,6 +40,12 @@ namespace HttpGateway
         //
         PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"HttpGateway", HttpGatewayHealthReportSendInterval, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Static);
 
+        //
+        // Specify the HTTP Strict Transport Security header value to be included in every response sent by the HttpGateway.
+        // When set to empty string, this header will not be included in the gateway response.
+        //
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"HttpGateway", HttpStrictTransportSecurityHeader, L"", Common::ConfigEntryUpgradePolicy::Dynamic);
+
         // Whether or not the volume GET query results are returned in preview format
         TEST_CONFIG_ENTRY(bool, L"HttpGateway", UsePreviewFormatForVolumeQueryResults, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 

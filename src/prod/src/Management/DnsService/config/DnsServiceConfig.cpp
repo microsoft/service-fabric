@@ -6,6 +6,7 @@
 #include "stdafx.h"
 
 using namespace Common;
+using namespace ServiceModel;
 
 DEFINE_SINGLETON_COMPONENT_CONFIG(DnsServiceConfig)
 

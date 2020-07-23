@@ -17,6 +17,9 @@ namespace Management
             friend BackupCopier::AzureStorageBackupCopierAsyncOperationBase;
             friend BackupCopier::AzureStorageUploadBackupAsyncOperation;
             friend BackupCopier::AzureStorageDownloadBackupAsyncOperation;
+            friend BackupCopier::DsmsAzureStorageBackupCopierAsyncOperationBase;
+            friend BackupCopier::DsmsAzureStorageUploadBackupAsyncOperation;
+            friend BackupCopier::DsmsAzureStorageDownloadBackupAsyncOperation;
             friend BackupCopier::FileShareBackupCopierAsyncOperationBase;
             friend BackupCopier::FileShareUploadBackupAsyncOperation;
             friend BackupCopier::FileShareDownloadBackupAsyncOperation;
@@ -106,6 +109,35 @@ namespace Management
 
             virtual Common::ErrorCode EndDownloadBackupFromFileShare(
                 Common::AsyncOperationSPtr const &);
+
+            virtual Common::AsyncOperationSPtr BeginUploadBackupToDsmsAzureStorage(
+                Common::ActivityId const & activityId,
+                Common::TimeSpan const timeout,
+                Common::AsyncCallback const & callback,
+                Common::AsyncOperationSPtr const & parent,
+                wstring const & storageCredentialsSourceLocation,
+                wstring const & containerName,
+                wstring const & backupStoreBaseFolderPath,
+                wstring const & sourceFileOrFolderPath,
+                wstring const & targetFolderPath,
+                wstring const & backupMetadataFileName);
+
+            virtual Common::ErrorCode EndUploadBackupToDsmsAzureStorage(
+                Common::AsyncOperationSPtr const &);
+
+            virtual Common::AsyncOperationSPtr BeginDownloadBackupFromDsmsAzureStorage(
+                Common::ActivityId const & activityId,
+                Common::TimeSpan const timeout,
+                Common::AsyncCallback const & callback,
+                Common::AsyncOperationSPtr const & parent,
+                wstring const & storageCredentialsSourceLocation,
+                wstring const & containerName,
+                wstring const & backupStoreBaseFolderPath,
+                wstring const & sourceFileOrFolderPath,
+                wstring const & targetFolderPath);
+
+            virtual Common::ErrorCode EndDownloadBackupFromDsmsAzureStorage(
+                Common::AsyncOperationSPtr const &);
         public:
             static Common::GlobalWString BackupCopierExeName;
             static Common::GlobalWString TempWorkingDirectoryPrefix;
@@ -114,6 +146,8 @@ namespace Management
 
             // Command Line Arguments Key
             static Common::GlobalWString OperationKeyName;
+
+            static Common::GlobalWString StorageCredentialsSourceLocationKeyName;
 
             static Common::GlobalWString ConnectionStringKeyName;
             static Common::GlobalWString IsConnectionStringEncryptedKeyName;
@@ -146,6 +180,8 @@ namespace Management
             // Command Line Arguments Values for operation command
             static Common::GlobalWString AzureBlobStoreUpload;
             static Common::GlobalWString AzureBlobStoreDownload;
+            static Common::GlobalWString DsmsAzureBlobStoreUpload;
+            static Common::GlobalWString DsmsAzureBlobStoreDownload;
             static Common::GlobalWString FileShareUpload;
             static Common::GlobalWString FileShareDownload;
 

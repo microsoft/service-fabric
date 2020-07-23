@@ -15,12 +15,25 @@ using namespace Common;
 #define RELIABLECOLLECTION_STANDALONE_DLL L"libReliableCollectionServiceStandalone.so"
 #endif
 
+StringLiteral const TraceComponent("ReliableCollectionRuntime");
+
 static ReliableCollectionApis g_reliableCollectionApis;
+
+extern "C" HRESULT ReliableCollectionRuntime_StartTraceSessions()
+{
+    auto error =  Common::TraceSession::Instance()->StartTraceSessions();
+    if (!error.IsSuccess())
+    {
+        return error.ToHResult();
+    }
+
+    Trace.WriteNoise(TraceComponent, "Trace sessions successfully started");
+    return S_OK;
+}
 
 extern "C" HRESULT ReliableCollectionRuntime_Initialize(uint16_t apiVersion)
 {
-    ReliableCollectionRuntime_Initialize2(apiVersion, /*standaloneMode*/ false);
-    return S_OK;
+    return ReliableCollectionRuntime_Initialize2(apiVersion, /*standaloneMode*/ false);
 }
 
 #ifdef _WIN32
@@ -31,22 +44,35 @@ extern "C" HRESULT ReliableCollectionRuntime_Initialize2(uint16_t apiVersion, BO
     std::wstring fullName;
     Environment::GetCurrentModuleFileName(currentModuleFullName);
     std::wstring directoryName = Path::GetDirectoryName(currentModuleFullName);
+    
+    Trace.WriteInfo(TraceComponent, "[ReliableCollectionRuntime_Initialize2] apiVersion={0} standAloneMode={1}", apiVersion, standAloneMode);
 
     if (standAloneMode)
-        fullName = Path::Combine(directoryName, RELIABLECOLLECTION_STANDALONE_DLL);
+        fullName = Path::Combine(directoryName, RELIABLECOLLECTION_STANDALONE_DLL); // This is app local, so need to loaded from current directory
     else
-        fullName = Path::Combine(directoryName, RELIABLECOLLECTION_CLUSTER_DLL);
+        fullName = wstring(RELIABLECOLLECTION_CLUSTER_DLL);
 
     module = ::LoadLibrary(fullName.c_str());
     if (module == NULL)
+    {
+        Trace.WriteError(TraceComponent, "[ReliableCollectionRuntime_Initialize2] LoadLibrary failed for filename={0} error={1}", fullName, GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
+    }
 
     pfnFabricGetReliableCollectionApiTable pfnGetReliableCollectionApiTable = (pfnFabricGetReliableCollectionApiTable)GetProcAddress(module, "FabricGetReliableCollectionApiTable");
     if (pfnGetReliableCollectionApiTable == NULL)
+    {
+        Trace.WriteError(TraceComponent, "[ReliableCollectionRuntime_Initialize2] GetProcAddress failed error={0}", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
+    }
 
-    pfnGetReliableCollectionApiTable(apiVersion, &g_reliableCollectionApis);
-    return S_OK;
+    HRESULT status = pfnGetReliableCollectionApiTable(apiVersion, &g_reliableCollectionApis);
+    if (FAILED(status))
+    {
+        Trace.WriteError(TraceComponent, "[ReliableCollectionRuntime_Initialize2] FabricGetReliableCollectionApiTable failed error={0}", status);
+    }
+
+    return status;
 }
 #else
 #include <dlfcn.h>
@@ -58,23 +84,35 @@ extern "C" HRESULT ReliableCollectionRuntime_Initialize2(uint16_t apiVersion, BO
     Environment::GetCurrentModuleFileName(currentModuleFullName);
     std::wstring directoryName = Path::GetDirectoryName(currentModuleFullName);
 
+    Trace.WriteInfo(TraceComponent, "[ReliableCollectionRuntime_Initialize2] apiVersion={0} standAloneMode={1}", apiVersion, standAloneMode);
+
     if (standAloneMode)
-        // shared library is already loaded in the process
-        fullName = wstring(RELIABLECOLLECTION_STANDALONE_DLL);
+        fullName = Path::Combine(directoryName, RELIABLECOLLECTION_STANDALONE_DLL);
     else
-        fullName = Path::Combine(directoryName, RELIABLECOLLECTION_CLUSTER_DLL);
+        fullName = wstring(RELIABLECOLLECTION_CLUSTER_DLL);
 
     string name = Utf16To8(fullName.c_str());
-    module = dlopen(name.c_str(), RTLD_NOW);
+    module = dlopen(name.c_str(), RTLD_LAZY);
     if (module == nullptr)
+    {
+        Trace.WriteError(TraceComponent, "[ReliableCollectionRuntime_Initialize2] dlopen failed for filename={0} error={1}", name, GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
+    }
 
     pfnFabricGetReliableCollectionApiTable pfnGetReliableCollectionApiTable = (pfnFabricGetReliableCollectionApiTable)dlsym(module, "FabricGetReliableCollectionApiTable");
     if (pfnGetReliableCollectionApiTable == nullptr)
+    {
+        Trace.WriteError(TraceComponent, "[ReliableCollectionRuntime_Initialize2] dlsym failed error={0}", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
+    }
 
-    pfnGetReliableCollectionApiTable(apiVersion, &g_reliableCollectionApis);
-    return S_OK;
+    HRESULT status = pfnGetReliableCollectionApiTable(apiVersion, &g_reliableCollectionApis);
+    if (FAILED(status))
+    {
+        Trace.WriteError(TraceComponent, "[ReliableCollectionRuntime_Initialize2] FabricGetReliableCollectionApiTable failed error={0}", status);
+    }
+
+    return status;
 }
 #endif
 
@@ -781,3 +819,5 @@ extern "C" HRESULT ConcurrentQueue_GetCount(
 {
     return g_reliableCollectionApis.ConcurrentQueue_GetCount(concurrentQueue, count);
 }
+
+

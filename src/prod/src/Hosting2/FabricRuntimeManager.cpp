@@ -132,7 +132,8 @@ ErrorCode FabricRuntimeManager::FindServiceTypeRegistration(
         svcPkgPublicActivationId = hosting_.GetOrAddServicePackagePublicActivationId(
             versionedServiceTypeId.Id.ServicePackageId,
             activationContext,
-            serviceDescription.Name);
+            serviceDescription.Name,
+            serviceDescription.ApplicationName);
     }
     else
     {

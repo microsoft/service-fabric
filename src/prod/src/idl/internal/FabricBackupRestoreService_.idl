@@ -1,0 +1,149 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricTypes_.idl";
+import "FabricRuntime_.idl";
+import "FabricClient_.idl";
+
+//
+// Forward Declarations
+//
+
+interface IFabricBackupRestoreService;
+interface IFabricBackupRestoreServiceAgent;
+
+[
+    uuid(1e1f07f6-16ed-412c-a29d-7f602ebeb866),
+    version(1.0),
+]
+library FabricBackupRestoreServiceLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricBackupRestoreService;
+    interface IFabricBackupRestoreServiceAgent;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(1ed41302-5ada-431c-a70f-728bab21c2ac),
+        noncreatable
+    ]
+    coclass FabricBackupRestoreServiceAgent
+    {
+        [default] interface IFabricBackupRestoreServiceAgent;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(dd8ae8b0-9901-4ee3-8252-f9dce69d4dca),
+        dllname("FabricBackupRestoreService.dll")
+    ]
+    module FabricBackupRestoreService {
+        [entry("CreateFabricBackupRestoreServiceAgent")] HRESULT CreateFabricBackupRestoreServiceAgent(
+            [in] REFIID riid,
+            [out, retval] void ** fabricBackupRestoreServiceAgent);
+    }
+
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(785d56a7-de89-490f-a2e2-70ca20b51159)]
+interface IFabricBackupRestoreService : IUnknown
+{
+    [] HRESULT BeginGetBackupSchedulePolicy(
+        [in] FABRIC_BACKUP_PARTITION_INFO * info,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndGetBackupSchedulePolicy(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetBackupSchedulePolicyResult ** policy);
+
+    [] HRESULT BeginGetRestorePointDetails(
+        [in] FABRIC_BACKUP_PARTITION_INFO * info,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndGetRestorePointDetails(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetRestorePointDetailsResult ** restorePointDetails);
+
+    [] HRESULT BeginReportBackupOperationResult(
+        [in] FABRIC_BACKUP_OPERATION_RESULT * backupOperationResult,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndReportBackupOperationResult(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginReportRestoreOperationResult(
+        [in] FABRIC_RESTORE_OPERATION_RESULT * restoreOperationResult,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndReportRestoreOperationResult(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(f3521ca3-d166-4954-861f-371a04d7b414)]
+interface IFabricBackupRestoreServiceAgent : IUnknown
+{
+    [] HRESULT RegisterBackupRestoreService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID,
+        [in] IFabricBackupRestoreService *,
+        [out, retval] IFabricStringResult ** serviceAddress);
+
+    [] HRESULT UnregisterBackupRestoreService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID);
+
+    [] HRESULT BeginUpdateBackupSchedulePolicy(
+        [in] FABRIC_BACKUP_PARTITION_INFO * info,
+        [in] FABRIC_BACKUP_POLICY * policy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndUpdateBackupSchedulePolicy(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginPartitionBackupOperation(
+        [in] FABRIC_BACKUP_PARTITION_INFO * info,
+        [in] FABRIC_BACKUP_OPERATION_ID operationId,
+        [in] FABRIC_BACKUP_CONFIGURATION * backupConfiguration,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndPartitionBackupOperation(
+        [in] IFabricAsyncOperationContext * context);
+}

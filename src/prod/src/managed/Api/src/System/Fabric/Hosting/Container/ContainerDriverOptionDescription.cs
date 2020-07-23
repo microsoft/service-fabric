@@ -21,15 +21,25 @@ namespace System.Fabric
 
         internal bool IsEncrypted { get; set; }
 
+        internal string Type { get; set; }
+
         internal static unsafe ContainerDriverOptionDescription CreateFromNative(
             NativeTypes.FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION nativeDescription)
         {
-            return new ContainerDriverOptionDescription
+            var driverOptionDesc = new ContainerDriverOptionDescription
             {
                 Name = NativeTypes.FromNativeString(nativeDescription.Name),
                 Value = NativeTypes.FromNativeString(nativeDescription.Value),
                 IsEncrypted = NativeTypes.FromBOOLEAN(nativeDescription.IsEncrypted)
             };
+
+            if (nativeDescription.Reserved != null)
+            {
+                var nativeDescriptionEx = *((NativeTypes.FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_EX1*)nativeDescription.Reserved);
+                driverOptionDesc.Type = NativeTypes.FromNativeString(nativeDescriptionEx.Type);
+            }
+
+            return driverOptionDesc;
         }
 
         internal static unsafe List<ContainerDriverOptionDescription> CreateFromNativeList(IntPtr nativeListPtr)

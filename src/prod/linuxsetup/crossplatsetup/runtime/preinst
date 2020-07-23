@@ -30,15 +30,6 @@ if [ $DISTROINSTALLER = "DEB" ]; then
     db_version 2.0
 fi
 
-#IsUpgrade="false"
-#for var in "$@"
-#do
-#    echo "$var"
-#     if [ "$var" == "upgrade" ]; then
-#        IsUpgrade="true"
-#     fi
-#done
-
 echo "Stopping service fabric service"
 systemctl stop servicefabric 2>&1
 
@@ -64,6 +55,22 @@ if [ $DISTROINSTALLER = "DEB" ]; then
     if [ "${source_added}" -ne "0" ] || [ "${key_added}" == "" ]; then
       echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main " >> /etc/apt/sources.list.d/dotnetdev.list
       curl "https://packages.microsoft.com/keys/microsoft.asc" | gpg --dearmor | sudo apt-key add -a
+    fi
+
+    # Update to newer jdk repo source
+    grep -q "deb http://repos.azul.com/azure-only/zulu/apt stable main" "/etc/apt/sources.list"
+    source_added="$?"
+    key_added=`apt-key export 0x219BD9C9`
+    if [ "${source_added}" -ne "0" ] || [ "${key_added}" == "" ]; then
+        apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0x219BD9C9
+        apt-add-repository "deb http://repos.azul.com/azure-only/zulu/apt stable main"
+    fi
+
+    # Moby engine & Misc Microsoft Packages
+    grep -q "https://packages.microsoft.com/ubuntu/16.04/prod xenial main" "/etc/apt/sources.list"
+    source_added=$?
+    if [ $source_added -ne 0 ]; then
+        add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/ubuntu/16.04/prod xenial main"
     fi
 
     sleep 0.001 # debconf causes script to return error 128 on slow machines if script exits too quickly

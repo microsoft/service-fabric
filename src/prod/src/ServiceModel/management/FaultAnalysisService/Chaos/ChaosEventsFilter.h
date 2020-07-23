@@ -35,8 +35,8 @@ namespace Management
                 endTimeUtc_);
 
             BEGIN_JSON_SERIALIZABLE_PROPERTIES()
-                SERIALIZABLE_PROPERTY(ServiceModel::Constants::StartTime, startTimeUtc_);
-                SERIALIZABLE_PROPERTY(ServiceModel::Constants::EndTime, endTimeUtc_);
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::StartTimeUtc, startTimeUtc_);
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::EndTimeUtc, endTimeUtc_);
             END_JSON_SERIALIZABLE_PROPERTIES()
 
         private:

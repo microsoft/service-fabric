@@ -153,6 +153,7 @@ namespace Fabric
         void StartInitializeUpgradeOrchestrationService();
         void StartInitializeCentralSecretService();
         void StartInitializeBackupRestoreService();
+        void StartInitializeEventStoreService();
 
         void TraceState();
         Common::DateTime DetermineStoppedNodeDuration();
@@ -199,6 +200,7 @@ namespace Fabric
         Hosting2::IHostingSubsystemSPtr hosting_;
         Hosting2::IRuntimeSharingHelperUPtr runtimeSharingHelper_;
         Reliability::IReliabilitySubsystemUPtr reliability_;
+        Hosting2::NetworkInventoryAgentSPtr networkInventoryAgent_;
 #if !defined(PLATFORM_UNIX)
         Management::BackupRestoreAgentComponent::BackupRestoreAgentUPtr backupRestoreAgent_;
 #endif
@@ -248,6 +250,7 @@ namespace Fabric
         class InitializeUpgradeOrchestrationServiceAsyncOperation;
         class InitializeCentralSecretServiceAsyncOperation;
         class InitializeBackupRestoreServiceAsyncOperation;
+        class InitializeEventStoreServiceAsyncOperation;
 
         Common::RwLock clusterSecuritySettingsUpdateLock_;
     };

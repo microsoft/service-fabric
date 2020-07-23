@@ -1,0 +1,83 @@
+﻿[FabricNode]
+  NodeId = [[NODE_ID]]
+  InstanceName = [[NODE_NAME]]
+  WorkingDir = [[WORKING_DIR]]
+  NodeAddress = [[NODE_ADDRESS]]
+  LeaseAgentAddress = [[LEASE_AGENT_ADDRESS]]
+  RuntimeServiceAddress = [[RUNTIME_SERVICE_ADDRESS]]
+  ClientConnectionAddress = [[CLIENT_CONNECTION_ADDRESS]]
+  GatewayIpcAddress = [[GATEWAY_IPC_ADDRESS]]
+  StartApplicationPortRange = [[START_PORT]]
+  EndApplicationPortRange = [[END_PORT]]
+
+[NodeDomainIds]
+  NodeFaultDomainId = [[FAULT_DOMAIN]]
+  UpgradeDomainId = [[UPGRADE_DOMAIN]]
+ 
+[NodeProperties]
+  NodeGroup=Group_A
+
+[Votes]
+  [[VOTERS]]
+
+[Management]
+  ImageStoreConnectionString = [[IMAGE_STORE_CONNECTION_STRING]]
+
+[NamingService]
+  PartitionCount = 1
+  TargetReplicaSetSize = 1
+  MinReplicaSetSize = 1
+
+[ClusterManager]
+  TargetReplicaSetSize=1
+  MinReplicaSetSize=1
+  ReplicatorAddress=127.0.0.1:0
+  UpgradeStatusPollInterval = 5
+
+[FailoverManager]
+  TargetReplicaSetSize = 3
+  MinReplicaSetSize = 1
+  ClusterStableWaitDuration = 0
+  PeriodicStateScanInterval = 2
+  MinActionRetryIntervalPerReplica = 2
+
+[ReconfigurationAgent]
+  RAUpgradeProgressCheckInterval = 2
+
+[PlacementAndLoadBalancing]
+  PLBRefreshInterval = 0.1
+  PlacementSearchTimeout = 0
+
+[Replication]
+  OperationQueueStartCapacity = 64
+  OperationQueueMaxCapacity = 1024
+  ReplicatorAddress = 127.0.0.1:0  
+  
+[Hosting]
+  EnableExitProcessCall = true
+  ActivationConfigurationDirectory = [[ACTIVATION_CONFIG_DIR]]
+  EndpointProviderEnabled = true
+  RunAsPolicyEnabled = false
+  EnableInteractiveMode = false
+  EnableActivateNoWindow = true
+
+[Security]
+  CrlCheckingFlag = 0
+
+[Trace/Console]
+  Level = 3
+
+[Trace/Etw]
+  Level = 5
+
+[Trace/File]
+    Level = 4
+    Path = [[WORKING_DIR]]\..\..\Logs\Node[[NODE_ID]]\FabricTest.trace
+    Option = e,p,m
+
+[FabricClient]
+  HealthOperationTimeout = 30
+  HealthReportSendInterval = 10
+
+[FabricGateway]
+  ActivateGatewayInproc = true

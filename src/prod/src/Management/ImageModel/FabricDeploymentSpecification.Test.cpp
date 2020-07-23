@@ -66,6 +66,7 @@ namespace ImageModelTests
         VERIFY_IS_TRUE(StringUtility::AreEqualCaseInsensitive(depSpec.GetWorkFolder(L"Node1"), L"DataRoot" PATHSEP L"Node1" PATHSEP L"Fabric" PATHSEP L"work"));
 #if defined(PLATFORM_UNIX)  
         VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetInstallerLogFile(L"Node1", L"1.0"), L"DataRoot" PATHSEP L"Log" PATHSEP L"Traces" PATHSEP L"startservicefabricupdater_Node1_1.0_"));
+        VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetUpgradeScriptFile(L"Node1"), L"DataRoot" PATHSEP L"doupgrade.Node1.sh"));
 #else
         VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetInstallerLogFile(L"Node1", L"1.0"), L"DataRoot" PATHSEP L"Log" PATHSEP L"Traces" PATHSEP L"MsiInstaller_Node1_1.0_"));
 #endif 
@@ -106,6 +107,7 @@ namespace ImageModelTests
 
 #if defined(PLATFORM_UNIX)  
         VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetInstallerLogFile(L"Node1", L"1.0"), L"LogRoot" PATHSEP L"Traces" PATHSEP L"startservicefabricupdater_Node1_1.0_"));
+        VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetUpgradeScriptFile(L"Node1"), L"DataRoot" PATHSEP L"doupgrade.Node1.sh"));
 #else
         VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetInstallerLogFile(L"Node1", L"1.0"), L"LogRoot" PATHSEP L"Traces" PATHSEP L"MsiInstaller_Node1_1.0_"));
 #endif 
@@ -146,6 +148,7 @@ namespace ImageModelTests
 
 #if defined(PLATFORM_UNIX)  
         VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetInstallerLogFile(L"Node1", L"1.0"), L"DataRoot" PATHSEP L"Log" PATHSEP L"Traces" PATHSEP L"startservicefabricupdater_Node1_1.0_"));
+        VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetUpgradeScriptFile(L"Node1"), L"DataRoot" PATHSEP L"doupgrade.Node1.sh"));
 #else
         VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetInstallerLogFile(L"Node1", L"1.0"), L"DataRoot" PATHSEP L"Log" PATHSEP L"Traces" PATHSEP L"MsiInstaller_Node1_1.0_"));
 #endif 
@@ -187,6 +190,7 @@ namespace ImageModelTests
 
 #if defined(PLATFORM_UNIX)  
         VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetInstallerLogFile(L"Node1", L"1.0"), L"LogRoot" PATHSEP L"Traces" PATHSEP L"startservicefabricupdater_Node1_1.0_"));
+        VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetUpgradeScriptFile(L"Node1"), L"DataRoot" PATHSEP L"doupgrade.Node1.sh"));
 #else
         VERIFY_IS_TRUE(StringUtility::StartsWithCaseInsensitive<wstring>(depSpec.GetInstallerLogFile(L"Node1", L"1.0"), L"LogRoot" PATHSEP L"Traces" PATHSEP L"MsiInstaller_Node1_1.0_"));
 #endif 

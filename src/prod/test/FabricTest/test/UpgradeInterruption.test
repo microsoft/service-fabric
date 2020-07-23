@@ -5,6 +5,9 @@ cleantest
 
 set UpgradeStatusPollInterval 5
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 +10
 +20
 +30

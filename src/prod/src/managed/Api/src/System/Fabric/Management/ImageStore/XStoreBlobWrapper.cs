@@ -41,7 +41,8 @@ namespace System.Fabric.Management.ImageStore
         public XStoreBlobWrapper(CloudBlockBlob blob)
         {
             this.blob = blob;
-            this.reqOption = new BlobRequestOptions { RetryPolicy = new NoRetry() };
+            //ExponentialRetry with 3 max retry attempts and 3 second back off interval each.
+            this.reqOption = new BlobRequestOptions { RetryPolicy = XStoreCommon.DefaultRetryPolicy }; 
         }
 
         /// <summary>

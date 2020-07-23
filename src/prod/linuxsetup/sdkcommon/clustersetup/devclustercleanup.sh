@@ -26,3 +26,8 @@ if [ $? != 0 ]; then
     echo Error: Disable of servicefabric service failed. Check output for details
     exit 1
 fi
+
+SFCTL_TEMP_DIR=/home/${SUDO_USER}/.sfctl
+if [ -d $SFCTL_TEMP_DIR ]; then
+    rm -r /home/${SUDO_USER}/.sfctl
+fi

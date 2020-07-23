@@ -18,7 +18,8 @@ GetSystemServiceListQuerySpecification::GetSystemServiceListQuerySpecification()
         QueryArgument(Query::QueryResourceProperties::Application::ApplicationName, false),
         QueryArgument(Query::QueryResourceProperties::Service::ServiceName, false),
         QueryArgument(Query::QueryResourceProperties::ServiceType::ServiceTypeName, false),
-        QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false))
+        QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+        QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false))
 {
     ParallelQuerySpecifications.push_back(
         make_shared<QuerySpecification>(
@@ -26,7 +27,8 @@ GetSystemServiceListQuerySpecification::GetSystemServiceListQuerySpecification()
             QueryAddresses::GetFM(),
             QueryArgument(Query::QueryResourceProperties::Service::ServiceName, false),
             QueryArgument(Query::QueryResourceProperties::ServiceType::ServiceTypeName, false),
-            QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false)));
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
 
     ParallelQuerySpecifications.push_back(
         make_shared<QuerySpecification>(
@@ -35,7 +37,8 @@ GetSystemServiceListQuerySpecification::GetSystemServiceListQuerySpecification()
             QueryArgument(Query::QueryResourceProperties::Application::ApplicationName),
             QueryArgument(Query::QueryResourceProperties::Service::ServiceName, false),
             QueryArgument(Query::QueryResourceProperties::ServiceType::ServiceTypeName, false),
-            QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false)));
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
 }
 
 bool GetSystemServiceListQuerySpecification::IsEntityInformationQuery(Query::QuerySpecificationSPtr const & querySpecification)

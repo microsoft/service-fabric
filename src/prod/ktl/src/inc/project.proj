@@ -1,0 +1,18 @@
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <ItemGroup>
+    <PostBuildCopy Include="*.h">
+      <DestinationFolder>$(OutDir)inc\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="$(KtlSrcRoot)\logger\src\InternalKtlLogger.h">
+      <DestinationFolder>$(OutDir)inc\internal\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="$(KtlSrcRoot)\logger\src\KtlLogRecovery.h">
+      <DestinationFolder>$(OutDir)inc\internal\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="$(INETROOT)\.config\.waes\ValidationDescription.xml">
+      <DestinationFolder>$(OutDir)CloudUnitTests\</DestinationFolder>
+    </PostBuildCopy>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+</Project>

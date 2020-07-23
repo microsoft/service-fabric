@@ -46,7 +46,7 @@
     {
       "Name": "Backup-CIT_BVT",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,mcoskun,rajak",
+      "Owners": "hrushib,raunakp,shalabhs",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -60,7 +60,7 @@
     {
       "Name": "PLB_PlacementConstraint",
       "Type": "V2_DllTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "v-brmilo,sfplbtestfailures",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",

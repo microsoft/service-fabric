@@ -86,11 +86,13 @@ namespace Naming
 
         Api::IClientFactoryPtr clientFactorPtr_;
         std::shared_ptr<Management::FileStoreService::IFileStoreClient> fileStoreClient_;
+        Api::IInternalFileStoreServiceClientPtr fileStoreServiceClient_;
         Client::ClientServerTransportSPtr clientServerTransport_;
 
         Transport::IDatagramTransportSPtr &transport_;
         Transport::DemuxerUPtr &demuxer_;
         Federation::NodeInstance instance_;
         Common::SynchronizedMap<Common::Guid, Common::AsyncOperationSPtr> pendingOperations_;
+        Common::Guid fssPartitionGuid_;
     };
 }

@@ -1,0 +1,100 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!-- Common properties for the native projects that should be included before setting the ConfigurationType -->
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_generate_config_header.target" />
+
+  <!--Define different build types imports
+  We support 3 different build types
+  * Debug - Default debug build, defines _DEBUG, no overrides
+  * Retail - Default retail build, defines NDEBUG, no overrides
+  * Debug with retail runtime - Default debug build but _DEBUG is not defined, and we force the retail CRT and references-->
+
+  <ItemGroup>
+    <ProjectReference Include="$(KTLSRCROOT)\StatusCodes\StatusCodes.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\mc\user\ktlevents.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\src\user\crt_md\KTLUSER_md.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\logger\src\user\crt_md\KtlLoggerUser_md.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\tools\commandlineparser\user\crt_md\CommandLineParserUser_md.vcxproj" />
+  </ItemGroup>
+
+  <!--Shared properties-->
+  <PropertyGroup>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <!--KTL Paths-->
+    <KtlIncludePath>$(SrcRoot)\prod\ktl\src\inc;$(SrcRoot)\prod\ktl\src\tools\inc;$(SrcRoot)\prod\ktl\src\StatusCodes\$(O);$(SrcRoot)\prod\ktl\src\logger\inc</KtlIncludePath>
+    <KtlInternalIncludePath>$(SrcRoot)\prod\ktl\src\logger\src</KtlInternalIncludePath>
+    <KtlUserLib>$(BinariesBuildTypeArchDirectory)\KTLUSER_md\KTLUSER_md.lib</KtlUserLib>
+    <KtlCommandLineParserUserLib>$(BinariesBuildTypeArchDirectory)\CommandLineParserUser_md\CommandLineParserUser_md.lib</KtlCommandLineParserUserLib>
+    <KtlLoggerUserLib>$(BinariesBuildTypeArchDirectory)\KtlLoggerUser_md\KtlLoggerUser_md.lib</KtlLoggerUserLib>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(UseRetailCrtWithDebugBuild)' == 'true'">
+      <PropertyGroup>
+        <CRuntimeLibrary>MultiThreadedDLL</CRuntimeLibrary>
+        <UseDebugLibraries>false</UseDebugLibraries>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(BuildType)' == 'retail'">
+      <PropertyGroup>
+        <CRuntimeLibrary>MultiThreadedDLL</CRuntimeLibrary>
+        <UseDebugLibraries>false</UseDebugLibraries>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(BuildType)' == 'debug'">
+      <PropertyGroup>
+        <CRuntimeLibrary>MultiThreadedDebugDLL</CRuntimeLibrary>
+        <UseDebugLibraries>true</UseDebugLibraries>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <!--Shared path-->
+  <PropertyGroup>
+    <EseLib>$(PkgEsent_Internal)\lib\x64\ese.lib</EseLib>
+    <DetoursLib>$(Pkgdetours)\build\native\lib\X64\detours.lib</DetoursLib>
+    <PkgWAStorage>$(Pkgwastorage_v140)</PkgWAStorage>
+    <PkgCppRest>$(Pkgcpprestsdk_v140_windesktop_msvcstl_dyn_rt_dyn)</PkgCppRest>
+    <PkgWAStorage_BinPath>$(PkgWAStorage)\lib\native\v140\x64</PkgWAStorage_BinPath>
+    <PkgCppRest_BinPath>$(PkgCppRest)\lib\native\v140\windesktop\msvcstl\dyn\rt-dyn\x64</PkgCppRest_BinPath>
+  </PropertyGroup>
+
+  <!-- 
+    Retail wastorage 3.* library has an AV bug when testing against LRC that the debug version avoids.
+    However, debug cpprest has a dependency on msvcp140d.dll, which we currently don't include
+    with our redistributed Visual CPP package.
+
+    TODO: In order for retail wastorage to be usable, we will either need to wait for
+    a version with the AV fixed or workaround the AV by including the debug msvcp dlls in our
+    retail drop (see external\VisualCppRedist.Corext\copy.proj).
+  -->
+  <Choose>
+    <When Condition="'$(BuildType)' == 'retail'">
+      <PropertyGroup>
+        <WAStorageLib>$(PkgWAStorage_BinPath)\Release\wastorage.lib</WAStorageLib>
+        <WAStorageDll>$(PkgWAStorage_BinPath)\Release\wastorage.dll</WAStorageDll>
+        <CppRestLib>$(PkgCppRest_BinPath)\Release\cpprest140_2_9.lib</CppRestLib>
+        <CppRestDll>$(PkgCppRest_BinPath)\Release\cpprest140_2_9.dll</CppRestDll>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(BuildType)' == 'debug'">
+      <PropertyGroup>
+        <WAStorageLib>$(PkgWAStorage_BinPath)\Debug\wastoraged.lib</WAStorageLib>
+        <WAStorageDll>$(PkgWAStorage_BinPath)\Debug\wastoraged.dll</WAStorageDll>
+        <CppRestLib>$(PkgCppRest_BinPath)\Debug\cpprest140d_2_9.lib</CppRestLib>
+        <CppRestDll>$(PkgCppRest_BinPath)\Debug\cpprest140d_2_9.dll</CppRestDll>
+
+        <!-- workaround for ArtifactsSpecification.csv (see external\WAStorage\copy.proj) -->
+        <WAStorageDll_Retail>$(PkgWAStorage_BinPath)\Release\wastorage.dll</WAStorageDll_Retail>
+        <CppRestDll_Retail>$(PkgCppRest_BinPath)\Release\cpprest140_2_9.dll</CppRestDll_Retail>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+</Project>
+
+

@@ -37,6 +37,9 @@ namespace System.Fabric.Management.ImageBuilder
         {
             fabricAssemblies = new HashSet<string>();
 
+            // Skip dlls and their debug version from the remove list (wastorage.dll and cpprest140_2_9.dll)
+            var assembliesToSkipRemoval = new HashSet<string>(new string[] { "wastorage.dll", "cpprest140_2_9.dll", "wastoraged.dll", "cpprest140d_2_9.dll" });
+
             HashSet<string> featureNames = new HashSet<string>(new string[] { "WinFabCommonBinaries", "WinFabRuntime" });
 
             foreach (var entry in ArtifactsSpecificationDescription.Entries)
@@ -44,6 +47,10 @@ namespace System.Fabric.Management.ImageBuilder
                 if (!featureNames.Contains(entry.Feature, StringComparer.OrdinalIgnoreCase)) { continue; }
 
                 if (!entry.FileName.EndsWith("dll", StringComparison.OrdinalIgnoreCase)) { continue; }
+                
+                if (assembliesToSkipRemoval.Contains(entry.FileName, StringComparer.OrdinalIgnoreCase)) { continue; }
+
+                if (assembliesToSkipRemoval.Contains(entry.FileName, StringComparer.OrdinalIgnoreCase)) { continue; }
 
                 // We need to consider only native dlls
                 if (entry.SigningCertificateType == ArtifactsSpecificationDescription.SigningCertificateType.Native)
@@ -190,12 +197,7 @@ namespace System.Fabric.Management.ImageBuilder
             }
             else
             {
-                // Resource is specified as a parameter
-                // Parse it from parameter list and get the value for the specified key
-                string parameterName = value.Substring(1, value.Length - 2);
-                convertedValue = ConvertProperty<int>(parameters[parameterName], propertyName, fileName);
-                // Do not check and throw if convertedValue is less than 0 as application should be provisioned with default params
-                // We shouldn't allow creation with incorect params
+                return null;
             }
             return convertedValue;
         }
@@ -218,12 +220,7 @@ namespace System.Fabric.Management.ImageBuilder
             }
             else
             {
-                // Resource is specified as a parameter
-                // Parse it from parameter list and get the value for the specified key
-                string parameterName = value.Substring(1, value.Length - 2);
-                convertedValue = ConvertProperty<int>(parameters[parameterName], propertyName, fileName);
-                // Do not check and throw if convertedValue is less than 1 as application should be provisioned with default params
-                // We shouldn't allow creation with incorect params
+                return null;
             }
             return convertedValue;
         }

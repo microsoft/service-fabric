@@ -47,6 +47,11 @@
       ..\..\EtlReader\FieldDefinition.cs;
       ..\..\EtlReader\ManifestCache.cs;
       ..\..\EtlReader\NativeMethods.cs;
+      ..\..\EtlReader\LttngReaderBindings.cs;
+      ..\..\EtlReader\LttngReaderStatusCode.cs;
+      ..\..\EtlReader\LttngReaderStatusMessage.cs;
+      ..\..\EtlReader\LTTngTraceHandle.cs;
+      ..\..\EtlReader\LTTngTraceInfo.cs;
       ..\..\EtlReader\PartialManifestInfo.cs;
       ..\..\EtlReader\PropertyFlags.cs;
       ..\..\EtlReader\ProviderDefinition.cs;
@@ -70,6 +75,11 @@
         <Pack>true</Pack>
       </None>
  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsLinux)' == 'true' ">
+    <Compile Include="
+      ..\..\EtlReader\LttngTraceFolderEventReader.cs;"
+        Exclude="bin\*obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj" />
   </ItemGroup>

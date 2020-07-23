@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<Data>
+  <Table Id="EtlToManifestMap">
+    <ParameterTypes>
+      <ParameterType Name="Manifests" Array="true">String</ParameterType>
+      <ParameterType Name="ExpectedMapping" Array="true">String</ParameterType>
+    </ParameterTypes>
+
+    <Row>
+      <Parameter Name="Manifests">
+        <!-- No manifests available -->
+      </Parameter>
+      <Parameter Name="ExpectedMapping">
+        <!-- ETLs cannot be mapped to manifests -->
+        <Value>c:\etl\fabric_traces_timestamp_0.etl</Value>
+        <Value>c:\etl\lease_traces_1.2.3.4_timestamp_0.etl</Value>
+      </Parameter>
+    </Row>
+
+    <Row>
+      <Parameter Name="Manifests">
+        <Value>c:\man\Microsoft-ServiceFabric-Events_0.0.0.0.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-Events_1.0.960.0.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-Events.man</Value>
+        <!-- KTL manifest available, but lease layer manifest not available -->
+        <Value>c:\man\Microsoft-ServiceFabric-KtlEvents_1.0.0.0.man</Value>
+      </Parameter>
+      <Parameter Name="ExpectedMapping">
+        <!-- If ETL file does not have a timestamp, we assume it is V1 RTM -->
+        <Value>c:\etl\fabric_traces_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_1.0.960.0.man</Value>
+        <Value>c:\etl\lease_traces_0.1.0.0_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-KtlEvents_1.0.0.0.man</Value>
+        <Value>c:\etl\lease_traces_1.0.0.0_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-KtlEvents_1.0.0.0.man</Value>
+        <Value>c:\etl\lease_traces_2.0.0.0_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-KtlEvents_1.0.0.0.man</Value>
+      </Parameter>
+    </Row>
+
+    <Row>
+      <Parameter Name="Manifests">
+        <Value>c:\man\Microsoft-ServiceFabric-Events_1.2.3.4.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-Events_1.2.3.6.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-Events_1.3.4.4.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-Events_999.900.901.902.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-Events_999.998.997.996.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-LeaseEvents_1.2.3.4.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-LeaseEvents_1.2.3.5.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-LeaseEvents.man</Value>
+        <Value>c:\man\Microsoft-ServiceFabric-KtlEvents.man</Value>
+      </Parameter>
+      <Parameter Name="ExpectedMapping">
+        <!-- ETL version older than the older manifest we have -->
+        <Value>c:\etl\fabric_traces_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_1.2.3.4.man</Value>
+        <Value>c:\etl\fabric_traces_1.2.3.3_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_1.2.3.4.man</Value>
+        <!-- ETL version newer than the newest manifest we have -->
+        <Value>c:\etl\fabric_traces_999.998.997.997_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_999.998.997.996.man</Value>
+        <!-- The following manifests test how we compute the closer of two possible matches -->
+        <Value>c:\etl\fabric_traces_999.900.901.996_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_999.900.901.902.man</Value>
+        <Value>c:\etl\fabric_traces_999.900.997.996_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_999.900.901.902.man</Value>
+        <Value>c:\etl\fabric_traces_999.950.901.902_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_999.998.997.996.man</Value>
+        <Value>c:\etl\fabric_traces_100.100.100.100_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_999.900.901.902.man</Value>
+        <Value>c:\etl\fabric_traces_1.2.3.5_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_1.2.3.6.man</Value>
+        <Value>c:\etl\fabric_traces_1.2.4.4_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-Events_1.2.3.6.man</Value>
+        <!-- ETL version newer than the newest released version -->
+        <Value>c:\etl\lease_traces_1.2.3.6_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-LeaseEvents.man, c:\man\Microsoft-ServiceFabric-KtlEvents.man</Value>
+        <!-- Lease and KTL manifests have different versions for the same ETL -->
+        <Value>c:\etl\lease_traces_timestamp_0.etl, c:\man\Microsoft-ServiceFabric-LeaseEvents_1.2.3.4.man, c:\man\Microsoft-ServiceFabric-KtlEvents.man</Value>
+      </Parameter>
+    </Row>
+  </Table>
+</Data>

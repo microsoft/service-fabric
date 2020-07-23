@@ -7935,6 +7935,84 @@ namespace System.Fabric.Interop
             IFabricComposeDeploymentUpgradeProgressResult EndGetComposeDeploymentUpgradeProgress(
                 [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
         }
+        
+        [ComImport]
+        [Guid("94a1bed3-445a-41ae-b1b4-6a9ba4be71e5")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IInternalFabricApplicationManagementClient2 : IInternalFabricApplicationManagementClient
+        {
+            // ----------------------------------------------------------------
+            // IInternalFabricApplicationManagementClient methods
+            // Base interface methods must come first to reserve vtable slots
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginRestartDeployedCodePackageInternal(
+                [In] IntPtr description,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new void EndRestartDeployedCodePackageInternal(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginCreateComposeDeployment(
+                [In] IntPtr composeApplicationDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new void EndCreateComposeDeployment(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginGetComposeDeploymentStatusList(
+                [In] IntPtr dockerComposeDeploymentStatusQueryDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new IFabricGetComposeDeploymentStatusListResult EndGetComposeDeploymentStatusList(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginDeleteComposeDeployment(
+                [In] IntPtr applicationName,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new void EndDeleteComposeDeployment(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginUpgradeComposeDeployment(
+                [In] IntPtr composeDeploymentUpgradeDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new void EndUpgradeComposeDeployment(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginGetComposeDeploymentUpgradeProgress(
+                [In] IntPtr deploymentName,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new IFabricComposeDeploymentUpgradeProgressResult EndGetComposeDeploymentUpgradeProgress(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            // ----------------------------------------------------------------
+            // IInternalFabricApplicationManagementClient2 methods
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            NativeCommon.IFabricAsyncOperationContext BeginRollbackComposeDeployment(
+                [In] IntPtr ComposeDeploymentRollbackDescriptionWrapper,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            void EndRollbackComposeDeployment(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+        }
 
         [ComImport]
         [Guid("28ab258c-c5d3-4306-bf2d-fc00dd40dddd")]
@@ -9939,6 +10017,111 @@ namespace System.Fabric.Interop
         }
 
         [ComImport]
+        [Guid("fdb754c6-69c5-4bcf-bba5-cb70c84a4398")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IFabricNetworkManagementClient
+        {
+            [return: MarshalAs(UnmanagedType.Interface)]
+            NativeCommon.IFabricAsyncOperationContext BeginCreateNetwork(
+                [In] IntPtr networkName,
+                [In] IntPtr networkDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            void EndCreateNetwork(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            NativeCommon.IFabricAsyncOperationContext BeginDeleteNetwork(
+                [In] IntPtr deleteNetworkDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            void EndDeleteNetwork(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            NativeCommon.IFabricAsyncOperationContext BeginGetNetworkList(
+                [In] IntPtr networkQueryDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IFabricGetNetworkListResult EndGetNetworkList(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            NativeCommon.IFabricAsyncOperationContext BeginGetNetworkApplicationList(
+                [In] IntPtr networkApplicationQueryDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IFabricGetNetworkApplicationListResult EndGetNetworkApplicationList(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            NativeCommon.IFabricAsyncOperationContext BeginGetNetworkNodeList(
+                [In] IntPtr networkNodeQueryDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IFabricGetNetworkNodeListResult EndGetNetworkNodeList(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            NativeCommon.IFabricAsyncOperationContext BeginGetApplicationNetworkList(
+                [In] IntPtr applicationNetworkQueryDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IFabricGetApplicationNetworkListResult EndGetApplicationNetworkList(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            NativeCommon.IFabricAsyncOperationContext BeginGetDeployedNetworkList(
+                [In] IntPtr deployedNetworkQueryDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IFabricGetDeployedNetworkListResult EndGetDeployedNetworkList(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+             NativeCommon.IFabricAsyncOperationContext BeginGetDeployedNetworkCodePackageList(
+                [In] IntPtr deployedNetworkCodePackageQueryDescription,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IFabricGetDeployedNetworkCodePackageListResult EndGetDeployedNetworkCodePackageList(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+        }
+
+        [ComImport]
         [Guid("d08373e3-b0c7-40c9-83cd-f92de738d72d")]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         public interface IInternalFabricResolvedServicePartition
@@ -10589,6 +10772,14 @@ namespace System.Fabric.Interop
 
             IFabricSecretReferencesResult EndRemoveSecrets(
                 [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            NativeCommon.IFabricAsyncOperationContext BeginGetSecretVersions(
+                [In] IntPtr secretReferences,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            IFabricSecretReferencesResult EndGetSecretVersions(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
         }
 
         [ComImport]
@@ -10681,6 +10872,125 @@ namespace System.Fabric.Interop
             IntPtr get_PagingStatus();
         }
 
+        [ComImport]
+        [Guid("bd777a0f-2020-40bb-8f23-8756649cce47")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IFabricGetNetworkListResult
+        {
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_NetworkList();
+
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_PagingStatus();
+        }
+
+        [ComImport]
+        [Guid("ad1f51ff-e244-498e-9f72-609b01124b84")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IFabricGetNetworkApplicationListResult
+        {
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_NetworkApplicationList();
+
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_PagingStatus();
+        }
+
+        [ComImport]
+        [Guid("3ba780e9-58eb-478d-bc89-42c89e19d083")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IFabricGetNetworkNodeListResult
+        {
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_NetworkNodeList();
+
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_PagingStatus();
+        }
+
+        [ComImport]
+        [Guid("4f9d0390-aa08-4dee-ba49-62891eb47c37")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IFabricGetApplicationNetworkListResult
+        {
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_ApplicationNetworkList();
+
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_PagingStatus();
+        }
+
+        [ComImport]
+        [Guid("347f5d8c-1abd-48e1-a7d1-9083556dafd3")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IFabricGetDeployedNetworkListResult
+        {
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_DeployedNetworkList();
+
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_PagingStatus();
+        }
+
+        [ComImport]
+        [Guid("6586d264-a96e-4f46-9388-189de5d61d6d")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IFabricGetDeployedNetworkCodePackageListResult
+        {
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_DeployedNetworkCodePackageList();
+
+            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Matches native API.")]
+            [PreserveSig]
+#if !DotNetCoreClr
+            [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+#endif
+            IntPtr get_PagingStatus();
+        }
         //// ----------------------------------------------------------------------------
         //// Entry Points
 

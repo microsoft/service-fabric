@@ -193,6 +193,7 @@ struct StateProvider_Info
 extern "C" 
 #endif
 {
+    CLASS_DECLSPEC HRESULT ReliableCollectionRuntime_StartTraceSessions();
     CLASS_DECLSPEC HRESULT ReliableCollectionRuntime_Initialize(uint16_t apiVersion);
     CLASS_DECLSPEC HRESULT ReliableCollectionRuntime_Initialize2(uint16_t apiVersion, BOOL standAloneMode);
 

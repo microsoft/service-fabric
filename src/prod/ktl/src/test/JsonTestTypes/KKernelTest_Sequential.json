@@ -1,0 +1,59 @@
+﻿{
+    "RequiredParameters": [ "TaskName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "Params": "",
+        "CleanupType": "",
+        "SetupTimeout": "1200",
+        "ExecutionTimeout": "2100",
+        "CleanupTimeout": "2100"
+    },
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPTYPE] [SETUPARGS] ",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\ktltest\\TE.exe",
+            "Arguments": "[BINS]\\ktltest\\TestLoader.dll /miniDumpOnCrash /stackTraceOnError /unicodeOutput:false /p:dll=[TASKNAME]Kernel /p:c=RunTests /p:target=kernel /p:driver=[TASKNAME]Kernel /p:configfile=Table:[TASKNAME]TestInput.xml#Test [PARAMS]",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
+			"WorkingDirectory": "[BINS]\\ktltest"
+        }
+    ],
+
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.out$,.-*\\.trace$,.*\\.pdb$,.*\\.dmp$,.*\\.etl$,.*\\.xml,.*\\.json,.*\\.man"  
+    }
+}

@@ -45,7 +45,9 @@ namespace System.Fabric.ImageBuilderExe
         public static readonly string SFVolumeDiskServiceEnabled = "/sfVolumeDiskServiceEnabled";
         public static readonly string SingleInstanceApplicationDescription = "/singleInstanceApplicationDescription";
         public static readonly string UseOpenNetworkConfig = "/useOpenNetworkConfig";
+        public static readonly string UseLocalNatNetworkConfig = "/useLocalNatNetworkConfig";
         public static readonly string GenerationConfig = "/generationConfig";
+        public static readonly string MountPointForSettings = "/mountPointForSettings";
 
         public static readonly string CodePath = "/codePath";
         public static readonly string ConfigPath = "/configPath";

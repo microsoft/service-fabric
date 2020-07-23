@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{2661A99B-1614-4F88-AAAE-95B727985421}</ProjectGuid>
+    <RootNamespace>FabricDCA</RootNamespace>
+    <AssemblyName>EtlInMemoryProducer</AssemblyName>
+    <AssemblyDescription>DCA's ETL-in-memory-based producer</AssemblyDescription>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\EtlReader\EtlReader.csproj">
+      <Project>{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}</Project>
+      <Name>EtlReader</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\system.fabric.dca\dll\System.Fabric.Dca.csproj">
+      <Project>{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}</Project>
+      <Name>System.Fabric.Dca</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\CheckpointManager.cs">
+      <Link>CheckpointManager.cs</Link>
+    </Compile>
+    <Compile Include="..\EtlInMemoryPerformance.cs">
+      <Link>EtlInMemoryPerformance.cs</Link>
+    </Compile>
+    <Compile Include="..\EtlInMemoryProducer.cs">
+      <Link>EtlInMemoryProducer.cs</Link>
+    </Compile>
+    <Compile Include="..\EtlInMemoryProducerConfigReader.cs">
+      <Link>EtlInMemoryProducerConfigReader.cs</Link>
+    </Compile>
+    <Compile Include="..\EtlInMemoryProducerConstants.cs">
+      <Link>EtlInMemoryProducerConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\EtlInMemoryProducerSettings.cs">
+      <Link>EtlInMemoryProducerSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\EtlInMemoryProducerWorker.cs">
+      <Link>EtlInMemoryProducerWorker.cs</Link>
+    </Compile>
+    <Compile Include="..\EtlInMemoryProducerWorkerSettingsHelper.cs">
+      <Link>EtlInMemoryProducerWorkerSettingsHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\EtlProcessor.cs">
+      <Link>EtlProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\IEtlInMemoryProducerConfigReader.cs">
+      <Link>IEtlInMemoryProducerConfigReader.cs</Link>
+    </Compile>
+    <Compile Include="..\IEtlInMemoryProducerConfigReaderFactory.cs">
+      <Link>IEtlInMemoryProducerConfigReaderFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\WFManifestRepository.cs">
+      <Link>WFManifestRepository.cs</Link>
+    </Compile>
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

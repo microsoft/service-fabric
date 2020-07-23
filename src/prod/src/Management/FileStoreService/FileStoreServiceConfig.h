@@ -109,14 +109,14 @@ namespace Management
             // The common name of the X509 certificate used to generate HMAC on the CommonNameNtlmPasswordSecret when using NTLM authentication
             PUBLIC_CONFIG_ENTRY(std::wstring, L"FileStoreService", CommonName2Ntlmx509CommonName, L"", Common::ConfigEntryUpgradePolicy::Static);
 
-            // Config to determine whether file store service accepts chunk based file upload or not during copy application package
+            // The flag to determine whether to use new version of upload protocol based on chunking file contents introduced in v6.3. This protocol version provides better performance and reliability compared to previous versions.
             PUBLIC_CONFIG_ENTRY(bool, L"FileStoreService", AcceptChunkUpload, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
             // Config for disabling NTLM authentication in the ImageStoreService
             INTERNAL_CONFIG_ENTRY(bool, L"FileStoreService", DisableNtlmAuthentication, false, Common::ConfigEntryUpgradePolicy::Dynamic);
 
-            // Config for tranporting file content to file store service using our transport message instead of SMB copy
-            INTERNAL_CONFIG_ENTRY(bool, L"FileStoreService", UseChunkContentInTransportMessage, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+            // The flag for using the new version of the upload protocol introduced in v6.4. This protocol version uses service fabric transport to upload files to image store which provides better performance than SMB protocol used in previous versions.
+            PUBLIC_CONFIG_ENTRY(bool, L"FileStoreService", UseChunkContentInTransportMessage, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
             // The period of time when generated simple transactions are batched. To disable batching, pass 0.
             INTERNAL_CONFIG_ENTRY(int, L"FileStoreService", CommitBatchingPeriod, 50, Common::ConfigEntryUpgradePolicy::Static);
@@ -144,7 +144,9 @@ namespace Management
             // The backoff interval for Recovery failure
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FileStoreService", RecoveryRetryInterval, Common::TimeSpan::FromSeconds(5.0), Common::ConfigEntryUpgradePolicy::Dynamic);            
             // Timeout for getting the primary staging location on client
-            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FileStoreService", GetStagingLocationTimeout, Common::TimeSpan::FromSeconds(60.0), Common::ConfigEntryUpgradePolicy::Dynamic);
+            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FileStoreService", GetStagingLocationTimeout, Common::TimeSpan::FromSeconds(30.0), Common::ConfigEntryUpgradePolicy::Dynamic);
+            // Retry attempt for getting the staging location from FSS primary
+            INTERNAL_CONFIG_ENTRY(uint, L"FileStoreService", MaxGetStagingLocationRetryAttempt, 5, Common::ConfigEntryUpgradePolicy::Dynamic);
             // Timeout for getting the primary staging location on client
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FileStoreService", InternalServiceCallTimeout, Common::TimeSpan::FromSeconds(90.0), Common::ConfigEntryUpgradePolicy::Dynamic);
             // The backoff interval for client-side retries

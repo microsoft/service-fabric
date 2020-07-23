@@ -16,11 +16,13 @@ namespace ServiceModel
         static Common::Global<ServiceTypeIdentifier> NamingStoreServiceTypeId;
         static Common::Global<ServiceTypeIdentifier> TombStoneServiceTypeId;
         static Common::Global<ServiceTypeIdentifier> RepairManagerServiceTypeId;
-        static Common::Global<ServiceTypeIdentifier> NamespaceManagerServiceTypeId;        
+        static Common::Global<ServiceTypeIdentifier> NamespaceManagerServiceTypeId;
         static Common::Global<ServiceTypeIdentifier> FaultAnalysisServiceTypeId;
         static Common::Global<ServiceTypeIdentifier> BackupRestoreServiceTypeId;
         static Common::Global<ServiceTypeIdentifier> UpgradeOrchestrationServiceTypeId;
         static Common::Global<ServiceTypeIdentifier> CentralSecretServiceTypeId;
+        static Common::Global<ServiceTypeIdentifier> EventStoreServiceTypeId;
+        static Common::Global<ServiceTypeIdentifier> GatewayResourceManagerServiceTypeId;
 
         ServiceTypeIdentifier();
         ServiceTypeIdentifier(ServicePackageIdentifier const & packageIdentifier, std::wstring const & serviceTypeName);

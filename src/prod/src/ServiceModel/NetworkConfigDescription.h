@@ -8,17 +8,17 @@
 namespace ServiceModel
 {
     // <NetworkConfig> element.
-    struct NetworkConfigDescription : 
+    struct NetworkConfigDescription :
         public Serialization::FabricSerializable
     {
     public:
         NetworkConfigDescription();
 
-        NetworkConfigDescription(NetworkConfigDescription const & other) = default;
-        NetworkConfigDescription(NetworkConfigDescription && other) = default;
+        NetworkConfigDescription(NetworkConfigDescription const & other);
+        NetworkConfigDescription(NetworkConfigDescription && other);
 
-        NetworkConfigDescription & operator = (NetworkConfigDescription const & other) = default;
-        NetworkConfigDescription & operator = (NetworkConfigDescription && other) = default;
+        NetworkConfigDescription const & operator = (NetworkConfigDescription const & other);
+        NetworkConfigDescription const & operator = (NetworkConfigDescription && other);
 
         bool operator == (NetworkConfigDescription const & other) const;
         bool operator != (NetworkConfigDescription const & other) const;

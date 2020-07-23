@@ -56,6 +56,9 @@ namespace Reliability
             size_t get_BatchIndex() const { return batchIndex_; }
             void set_BatchIndex(size_t index) { batchIndex_ = index; }
 
+            __declspec(property(get=get_MaxMovementSlots)) size_t MaxMovementSlots;
+            size_t get_MaxMovementSlots() const { return maxMovementSlots_; }
+
             // This function will drop all extra replicas
             void DropExtraReplicas(
                 TempSolution & solution,
@@ -278,6 +281,9 @@ namespace Reliability
             SearcherSettings const & settings_;
 
             size_t batchIndex_;
+
+            // Maximum number of movements due to throttling.
+            size_t maxMovementSlots_;
         };
     }
 }

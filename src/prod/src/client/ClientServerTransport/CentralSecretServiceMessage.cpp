@@ -16,6 +16,7 @@ using namespace ClientServerTransport;
 GlobalWString CentralSecretServiceMessage::GetSecretsAction = make_global<wstring>(L"GetSecretsAction");
 GlobalWString CentralSecretServiceMessage::SetSecretsAction = make_global<wstring>(L"SetSecretsAction");
 GlobalWString CentralSecretServiceMessage::RemoveSecretsAction = make_global<wstring>(L"RemoveSecretsAction");
+GlobalWString CentralSecretServiceMessage::GetSecretVersionsAction = make_global<wstring>(L"GetSecretVersionsAction");
 
 void WrapForCentralSecretService(ClientServerRequestMessage & requestMessage)
 {

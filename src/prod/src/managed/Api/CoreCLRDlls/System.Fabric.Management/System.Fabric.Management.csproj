@@ -54,6 +54,13 @@
       ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\CnsResponse.cs;
       ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\CreateNetworkRequest.cs;
       ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\InitializeRequest.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkSetupOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkCleanupOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkDeploymentOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkConstants.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkConfig.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkPolicyConfig.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkSubnetConfig.cs;
       ..\..\src\System\Fabric\Management\fabricdeployer\FabricNodeFirewallRules.cs;
       ..\..\src\System\Fabric\Management\fabricdeployer\FabricValidatorWrapper.cs;
       ..\..\src\System\Fabric\Management\fabricdeployer\Firewall.cs;
@@ -142,9 +149,11 @@
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Endpoint.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\FabricApplicationException.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\NetworkRef.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\EndpointRef.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ReliableCollectionsRef.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ImageRegistryCredential.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Resource.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ScalingPolicy.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Service.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Label.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\GenerationConfig.cs;
@@ -152,6 +161,7 @@
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsDescription.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsSinkBase.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsRef.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Setting.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\AzureInternalMonitoringPipelineSinkDescription.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\DuplicateDetector.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\FabricImageBuilderValidationException.cs;
@@ -161,6 +171,7 @@
       ..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilder.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilderSorterUtility.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilderUtility.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilderUtilityExtension.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\ImageStoreWrapper.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\ManifestValidatorUtility.cs;
       ..\..\src\System\Fabric\Management\ImageBuilder\ServiceManifest.cs;

@@ -1,0 +1,8 @@
+[Version]
+Signature="$WINDOWS NT$"
+
+[ProcessAffinityKernel.NT.Wdf]
+KmdfService = ProcessAffinityKernel, KmUnit_Service_kmdfInst
+
+[KmUnit_Service_kmdfInst]
+KmdfLibraryVersion = 1.9

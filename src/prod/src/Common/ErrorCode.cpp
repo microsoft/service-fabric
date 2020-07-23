@@ -63,7 +63,14 @@ ErrorCode::ErrorCode(ErrorCodeValue::Enum value, wstring && msg)
 
 ErrorCode::~ErrorCode()
 {
-    ClearThreadErrorMessage();
+    if (messageTid_ != UninitializedTid)
+    {
+        auto hr = ::FabricClearLastErrorMessage(messageTid_);
+        if (FAILED(hr))
+        {
+            Trace.WriteWarning(TraceComponent, "~FabricClearLastErrorMessage({0}) failed: hr = {1}", messageTid_, hr);
+        }
+    }
 }
 
 ErrorCode & ErrorCode::operator=(ErrorCode const& other)
@@ -142,18 +149,62 @@ void ErrorCode::SetThreadErrorMessage() const
 {
     if (value_ != ErrorCodeValue::Success && !message_.empty())
     {
-        ClearThreadErrorMessage();
+        if (messageTid_ != UninitializedTid)
+        {
+            auto hr = ::FabricClearLastErrorMessage(messageTid_);
+            if (FAILED(hr))
+            {
+                Trace.WriteWarning(TraceComponent, "FabricClearLastErrorMessage({0}) failed: hr = {1}", messageTid_, hr);
+            }
+        }
 
-        messageTid_ = FabricGlobals::Get().GetThreadErrorMessages().SetMessage(message_);
+        auto hr = ::FabricSetLastErrorMessage(message_.c_str(), &messageTid_);
+        if (FAILED(hr))
+        {
+            Trace.WriteWarning(TraceComponent, "FabricSetLastErrorMessage failed: hr = {0}", hr);
+        }
     }
 }
 
-void ErrorCode::ClearThreadErrorMessage() const
+wstring ErrorCode::GetAndClearThreadErrorMessage() 
 {
-    if (messageTid_ != UninitializedTid)
+    return GetThreadErrorMessage(true);
+}
+
+wstring ErrorCode::GetThreadErrorMessage()
+{
+    return GetThreadErrorMessage(false);
+}
+
+wstring ErrorCode::GetThreadErrorMessage(bool clear)
+{
+    wstring result;
+    ComPointer<IFabricStringResult> stringCPtr;
+    auto hr = ::FabricGetLastErrorMessage(stringCPtr.InitializationAddress());
+
+    if (SUCCEEDED(hr))
     {
-        FabricGlobals::Get().GetThreadErrorMessages().ClearMessage(messageTid_);
+        if (clear)
+        {
+            hr = ::FabricClearLastErrorMessage(::GetCurrentThreadId());
+            if (FAILED(hr))
+            {
+                Trace.WriteWarning(TraceComponent, "FabricClearLastErrorMessage, failed: hr = {0}", hr);
+            }
+        }
+
+        hr = StringUtility::LpcwstrToWstring(stringCPtr->get_String(), true, result);
+        if (FAILED(hr))
+        {
+            Trace.WriteWarning(TraceComponent, "FabricGetLastErrorMessage, LPCWSTR->wstring failed: hr = {0}", hr);
+        }
     }
+    else
+    {
+        Trace.WriteWarning(TraceComponent, "FabricGetLastErrorMessage failed: hr = {0}", hr);
+    }
+
+    return result;
 }
 
 void ErrorCode::WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const
@@ -215,11 +266,7 @@ ErrorCode ErrorCode::FromHResult(HRESULT hr, bool captureThreadErrorMessage)
     }
     else
     {
-        auto message = FabricGlobals::Get().GetThreadErrorMessages().GetMessage();
-
-        FabricGlobals::Get().GetThreadErrorMessages().ClearMessage(::GetCurrentThreadId());
-
-        return FromHResult(hr, std::move(message));
+        return FromHResult(hr, GetAndClearThreadErrorMessage());
     }
 }
 

@@ -13,11 +13,11 @@ add_precompiled_header(${exe_FabricCSS} ../stdafx.h)
 
 set_target_properties(${exe_FabricCSS} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
-
+    
 add_custom_target(CopyFabricCSS ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/CSS.Code.Current
     COMMAND ${CMAKE_COMMAND} -E copy ${TEST_OUTPUT_DIR}/${exe_FabricCSS} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/CSS.Code.Current/FabricCSS.exe
-    COMMAND strip ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/CSS.Code.Current/FabricCSS.exe
+    COMMAND ${CMAKE_STRIP} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/CSS.Code.Current/FabricCSS.exe
     DEPENDS ${exe_FabricCSS}
 )
 
@@ -50,6 +50,7 @@ target_link_libraries(${exe_FabricCSS}
   ${lib_Replication}
   ${lib_TransactionalReplicator}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}

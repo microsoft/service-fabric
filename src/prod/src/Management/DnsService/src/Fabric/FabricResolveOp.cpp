@@ -63,6 +63,7 @@ _fIsPartitionedQueryEnabled(fIsPartitionedQueryEnabled)
 
 FabricResolveOp::~FabricResolveOp()
 {
+    _tracer.Trace(DnsTraceLevel_Noise, "Destructing FabricResolveOp.");
 }
 
 //***************************************
@@ -77,11 +78,13 @@ void FabricResolveOp::OnStart()
 
 void FabricResolveOp::OnCompleted()
 {
+    _tracer.Trace(DnsTraceLevel_Noise, "FabricResolveOp::OnCompleted called.");
     _callback(*_spQuestion, _arrResults);
 }
 
 void FabricResolveOp::OnCancel()
 {
+    _tracer.Trace(DnsTraceLevel_Noise, "FabricResolveOp::OnCancel called.");
     TerminateAsync();
 }
 

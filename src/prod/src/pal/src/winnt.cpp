@@ -41,6 +41,20 @@ __movsb (
     return;
 }
 
+#ifdef __aarch64__ 
+VOID
+__stosq (
+    IN PDWORD64 Destination,
+    IN DWORD64 Value,
+    IN SIZE_T Count
+    )
+{
+    for(size_t i = 0 ;i < Count;i++)
+    {
+        Destination[i] = Value;
+    }
+}
+#else
 VOID
 __stosq (
     IN PDWORD64 Destination,
@@ -50,6 +64,7 @@ __stosq (
 {
     __asm__("rep stosq" : : "D"(Destination), "a"(Value), "c"(Count));
 }
+#endif
 
 PVOID
 RtlSecureZeroMemory(

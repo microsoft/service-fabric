@@ -704,7 +704,7 @@ public:
         servicePackageVersionInstance_(servicePackageVersionInstance),
         servicePackageDescriptionPtr__(servicePackageDescriptionPtr),
         descriptionLock_(),
-        healthPropertyId_(wformatString("Activation:{0}", servicePackageVersionInstance.Version))
+        healthPropertyId_(wformatString("Activation:{0}", servicePackageVersionInstance))
     {
     }
 

@@ -1,0 +1,31 @@
+#Placement object dump, you can copy/paste into LBSimulator for debugging
+	[LBDomains]
+	#serviceIndex metrics scores
+	0 (PrimaryCount/1/0/true/() ReplicaCount/0.3/0/true/() Count/0.1/0/true/()) (0/1/3.87298 0/1/3.87298 0/1/3.87298) true
+	-1 (Count/0.1/1/true/() PrimaryCount/1/1/true/() ReplicaCount/0.3/1/true/()) (0/1/3.87298 0/1/3.87298 0/1/3.87298) true
+	[Nodes]
+	#nodeId faultDomainIndex upgradeDomainIndex loads capacityRatios capacities
+	0 (0) (0) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	1 (0) (0) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	2 (1) (1) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	3 (1) (1) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	4 (1) (2) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	5 (1) (3) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	6 (1) (3) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	7 (1) (3) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	8 (2) (1) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	9 (2) (2) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	a (2) (2) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	b (2) (3) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	c (3) (1) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	d (3) (2) (1 1 1 1 1 1) (1 1 1) (-1 -1 -1)
+	e (3) (0) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	f (3) (0) (0 0 0 0 0 0) (1 1 1) (-1 -1 -1)
+	[Services]
+	#serviceName stateful globalMetricIndices blockList primaryBlockList dependedService onEveryNode fdDistribution isBalanced
+	TestService true (4 5 3) () () - false Packing true
+	[Partitions]
+	#partitionId serviceName version movable primaryLoad secondaryLoad existingReplicas newReplicas standByLocations
+	00000000-0000-0000-0000-000000000000 TestService 0 true (1 1 1) (0 1 1) (d/Primary/true) (Secondary Secondary) ()
+	00000001-0000-0000-0000-000000000000 TestService 0 true (1 1 1) (0 1 1) () (Primary Secondary Secondary) ()
+	00000002-0000-0000-0000-000000000000 TestService 0 true (1 1 1) (0 1 1) () (Primary Secondary Secondary) ()

@@ -86,7 +86,6 @@ void DeployedServicePackagesHealthEvaluation::SetDescription()
 {
     size_t unhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1}% ({2}/{3}).",
         HMResource::GetResources().HealthEvaluationUnhealthyDeployedServicePackages,
         GetUnhealthyPercent(unhealthyCount, totalCount_),
         unhealthyCount,

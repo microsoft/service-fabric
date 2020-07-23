@@ -187,7 +187,7 @@ namespace Query
             static Common::GlobalWString StateFilter;
             static Common::GlobalWString TypeFilter;
         };
-        
+
         class ContainerInfo
         {
         public:
@@ -196,10 +196,24 @@ namespace Query
             static Common::GlobalWString ContainerName;
         };
 
-        class VolumeResource
+	class VolumeResource
         {
         public:
             static Common::GlobalWString VolumeName;
+        };
+
+        class Network
+        {
+        public:
+            static Common::GlobalWString NetworkName;
+            static Common::GlobalWString NetworkType;
+            static Common::GlobalWString NetworkStatusFilter;
+        };
+
+        class GatewayResource
+        {
+        public:
+            static Common::GlobalWString GatewayName;
         };
     }
 }

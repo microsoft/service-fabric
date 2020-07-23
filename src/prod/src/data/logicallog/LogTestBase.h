@@ -79,9 +79,6 @@ namespace LogTests
         ktl::Awaitable<void> ReadWriteCloseRaceWorker(
             __in ILogicalLog& logicalLog,
             __in int maxSize,
-            __in ILogicalLog::SPtr logicalLogs[],
-            __in int numLogicalLogs,
-            __inout volatile LONGLONG & amountWritten,
             __inout volatile ULONGLONG & numTruncates,
             __in int fileSize,
             __in int taskId,

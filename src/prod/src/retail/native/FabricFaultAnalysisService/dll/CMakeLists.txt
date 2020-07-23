@@ -45,6 +45,7 @@ target_link_libraries(${lib_FabricFaultAnalysisService}
   ${lib_Replication}
   ${lib_TransactionalReplicator}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}

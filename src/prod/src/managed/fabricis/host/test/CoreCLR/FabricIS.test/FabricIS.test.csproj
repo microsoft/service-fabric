@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>FabricIS.Test</Description>
+    
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <DefineConstants>$(DefineConstants);DotNetCoreClr;DotNetCoreClrLinux</DefineConstants>
+    <AssemblyName>FabricIS.test</AssemblyName>
+    <PackageId>FabricIS.test</PackageId>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\ProgramTest.cs" Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\common\CoreCLR\FabricIS.common\FabricIS.common.csproj" />
+    <ProjectReference Include="..\..\..\CoreCLR\FabricIS\FabricIS.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-20170106-08" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.1.8-rc" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.0.8-rc" />
+    <PackageReference Include="NSubstitute" Version="3.1.0" />
+    <PackageReference Include="Bond.Core.CSharp" Version="6.0.0" />
+    <PackageReference Include="Bond.Compiler.CSharp" Version="6.0.0" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

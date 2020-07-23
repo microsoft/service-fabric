@@ -106,6 +106,9 @@ namespace Common
             // Backup Restore Service
             BackupRestoreService = 108,
 
+            //  Gateway Resource Manager service
+            GatewayResourceManager = 109,
+
             // Management
             ServiceModel = 110,
             ImageStore = 111,

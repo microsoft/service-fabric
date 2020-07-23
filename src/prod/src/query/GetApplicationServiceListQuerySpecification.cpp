@@ -30,7 +30,8 @@ GetApplicationServiceListQuerySpecification::GetApplicationServiceListQuerySpeci
         QueryArgument(QueryResourceProperties::Application::ApplicationName, false),
         QueryArgument(Query::QueryResourceProperties::Service::ServiceName, false),
         QueryArgument(Query::QueryResourceProperties::ServiceType::ServiceTypeName, false),
-        QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false))
+        QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+        QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false))
     , isAdhocServicesSpecification_(adhocService)
 {
     // This sets the member in the parent class QuerySpecification. You need to set this because this is how QuerySpecificationStore
@@ -45,7 +46,8 @@ GetApplicationServiceListQuerySpecification::GetApplicationServiceListQuerySpeci
         QueryArgument(QueryResourceProperties::Application::ApplicationName, false),
         QueryArgument(Query::QueryResourceProperties::Service::ServiceName, false),
         QueryArgument(Query::QueryResourceProperties::ServiceType::ServiceTypeName, false),
-        QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false)));
+        QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+        QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
 
     if (isAdhocServicesSpecification_)
     {
@@ -67,7 +69,8 @@ GetApplicationServiceListQuerySpecification::GetApplicationServiceListQuerySpeci
             QueryArgument(QueryResourceProperties::Application::ApplicationName, false),
             QueryArgument(Query::QueryResourceProperties::Service::ServiceName, false),
             QueryArgument(Query::QueryResourceProperties::ServiceType::ServiceTypeName, false),
-            QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false)));
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
 
         ParallelQuerySpecifications.push_back(
             make_shared<QuerySpecification>(
@@ -76,7 +79,8 @@ GetApplicationServiceListQuerySpecification::GetApplicationServiceListQuerySpeci
             QueryArgument(QueryResourceProperties::Application::ApplicationName, false),
             QueryArgument(Query::QueryResourceProperties::Service::ServiceName, false),
             QueryArgument(Query::QueryResourceProperties::ServiceType::ServiceTypeName, false),
-            QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false)));
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
     }
 }
 

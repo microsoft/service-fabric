@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{3869599B-43ED-46EE-B2AC-FBE66657B858}</ProjectGuid>
+    <AssemblyName>Microsoft.ServiceFabric.Internal.Strings</AssemblyName>
+    <AssemblyTitle>Service Fabric Internal Resource Strings</AssemblyTitle>
+    <AssemblyDescription>Service Fabric Internal Resource Strings for managed components</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <RootNamespace>System.Fabric.Strings</RootNamespace>
+    <ResourcesFileName>StringResources</ResourcesFileName>
+    <ResourcesClassName>$(ResourcesFileName)</ResourcesClassName>
+    <LocalizationProject>$(SRCROOT)\prod\loc\Microsoft.ServiceFabric.Internal.Strings.locbld\locbld.proj</LocalizationProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(IntermediateOutputPath)StringResources.cs" />
+    <Compile Include="_friends.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(O)StringResources.resx">
+      <SubType>Designer</SubType>
+      <LogicalName>$(RootNamespace).StringResources.resources</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(PkgLocalization)\Localization.CSharp.targets" />
+  <Import Project="$(CONFROOT)\FabricVersions.Targets " />
+  <!-- NOTE: The input to the BeforeResGen target must not contain any property name expansion, otherwise the 
+       incremental build does not function correctly and the resource cs file will be generated even if the
+       resx file is not modified
+   -->
+   <!-- 
+        Be careful changing this - MS.SF.internal.Strings is simply another compilation of the resx file in System.Fabric.Strings
+
+        The string resources in sf.strings needs to be under the ms.internal.strings project path otherwise the localized build will fail
+
+        In addition it should be under $(O) so that git will ignore it for checkin      
+    -->
+  <Target Name="BeforeBuild" Inputs="..\System.Fabric.Strings\StringResources.resx" Outputs="$(O)StringResources.resx">
+    <MakeDir Directories="$(MSBuildProjectDirectory)\$(O)"/>
+    <Copy SourceFiles="..\System.Fabric.Strings\StringResources.resx" DestinationFiles="$(O)StringResources.resx" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="BeforeResGen" Inputs="..\System.Fabric.Strings\StringResources.resx" Outputs="$(IntermediateOutputPath)StringResources.cs">
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe $(O)StringResources.resx $(IntermediateOutputPath)\$(RootNamespace).$(ResourcesFileName).resources /str:csharp,$(RootNamespace),$(ResourcesClassName),$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </Target>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest ApplicationTypeName="GatewayProxyApplicationType" ApplicationTypeVersion="1.0"
+  xmlns="http://schemas.microsoft.com/2011/01/fabric"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <Parameters>
+    <Parameter Name="Gateway_Listen_Network" DefaultValue="" />
+    <Parameter Name="Gateway_Config" DefaultValue="" />
+    <Parameter Name="Gateway_Proxy_Container_Name" DefaultValue="microsoft/service-fabric-reverse-proxy:0.20.0" />
+    <Parameter Name="Gateway_Proxy_Endpoint_Port" DefaultValue="80" />
+    <Parameter Name="Gateway_Proxy_Instance_Count" DefaultValue="-1" />
+    <Parameter Name="Gateway_Proxy_CPUCores" DefaultValue="1" />
+    <Parameter Name="Gateway_Proxy_Isolation" DefaultValue="hyperv" />
+
+    <Parameter Name="SF_ClientCertCommonName" DefaultValue="" />
+    <Parameter Name="SF_ClientCertIssuerThumbprints" DefaultValue="" />
+    <Parameter Name="SF_ClusterCertCommonNames" DefaultValue="" />
+    <Parameter Name="SF_ClusterCertIssuerThumbprints" DefaultValue="" />
+    <Parameter Name="SF_CertsFolder" DefaultValue="" />
+
+    <Parameter Name="internalNetwork" DefaultValue="Open" />
+    <Parameter Name="externalNetwork" DefaultValue="Open" />
+  </Parameters>
+
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="Proxy" ServiceManifestVersion="1.0"/>
+
+    <ResourceOverrides>
+      <Endpoints>
+        <Endpoint Name="GatewayProxyEndpoint" Port="[Gateway_Proxy_Endpoint_Port]" Protocol="http" />
+      </Endpoints>
+    </ResourceOverrides>
+
+    <EnvironmentOverrides CodePackageRef="GatewayProxyService.Code">
+      <EnvironmentVariable Name="Gateway_Listen_Network" Value="[Gateway_Listen_Network]"/>
+      <EnvironmentVariable Name="Gateway_Config" Value="[Gateway_Config]"/>
+
+      <EnvironmentVariable Name="SF_ClientCertCommonName" Value="[SF_ClientCertCommonName]"/>
+      <EnvironmentVariable Name="SF_ClientCertIssuerThumbprints" Value="[SF_ClientCertIssuerThumbprints]"/>
+      <EnvironmentVariable Name="SF_ClusterCertCommonNames" Value="[SF_ClusterCertCommonNames]"/>
+      <EnvironmentVariable Name="SF_ClusterCertIssuerThumbprints" Value="[SF_ClusterCertIssuerThumbprints]"/>
+    </EnvironmentOverrides>
+
+    <Policies>
+      <ContainerHostPolicies CodePackageRef="GatewayProxyService.Code" Isolation="[Gateway_Proxy_Isolation]">
+        <Volume Source="[SF_CertsFolder]" Destination="[SF_CertsFolder]" />
+
+        <ImageOverrides>
+          <Image Name="[Gateway_Proxy_Container_Name]" />
+        </ImageOverrides>
+      </ContainerHostPolicies>
+
+      <ResourceGovernancePolicy CodePackageRef="GatewayProxyService.Code" MemoryInMB="512" CpuShares="100"/>
+      <ServicePackageResourceGovernancePolicy CpuCores="[Gateway_Proxy_CPUCores]"/>
+
+      <NetworkPolicies>
+        <ContainerNetworkPolicy NetworkRef="[internalNetwork]">
+        </ContainerNetworkPolicy>
+
+        <ContainerNetworkPolicy NetworkRef="[externalNetwork]">
+          <EndpointBinding EndpointRef="GatewayProxyEndpoint"/>
+        </ContainerNetworkPolicy>
+      </NetworkPolicies>
+
+      <ServicePackageContainerPolicy Hostname="NodeOnSF" Isolation="[Gateway_Proxy_Isolation]" />
+    </Policies>
+
+  </ServiceManifestImport>
+
+  <DefaultServices>
+    <Service Name="GatewayProxyService">
+      <StatelessService ServiceTypeName="GatewayProxyServiceType" InstanceCount="[Gateway_Proxy_Instance_Count]">
+        <SingletonPartition />
+      </StatelessService>
+    </Service>
+  </DefaultServices>
+</ApplicationManifest>

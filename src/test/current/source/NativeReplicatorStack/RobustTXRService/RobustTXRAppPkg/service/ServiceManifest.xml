@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ServiceManifest
+  Name="service"
+  Version="1.0"
+  xmlns="http://schemas.microsoft.com/2011/01/fabric"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Description>Robust Transactional Replicator Service</Description>
+    <ServiceTypes>
+        <StatefulServiceType ServiceTypeName="RobustTXRServiceType" HasPersistedState="true">
+            <LoadMetrics>
+                <LoadMetric Name="BalancePrimaries" Weight="High" PrimaryDefaultLoad="1" SecondaryDefaultLoad="0" />
+            </LoadMetrics>
+        </StatefulServiceType>
+    </ServiceTypes>
+    <CodePackage Name="Code" Version="1.0">
+        <EntryPoint>
+            <ExeHost>
+                <Program>RobustTXRService.exe</Program>
+              <ConsoleRedirection FileMaxSizeInKb="204800" FileRetentionCount="10"/>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <ConfigPackage Name="Config" Version="1.0" />
+    <Resources>
+      <Endpoints>
+         <Endpoint Name="ReplicatorEndpoint" Type="Internal" Protocol="tcp"/>
+         <Endpoint Name="ServiceHttpEndpoint" Type="Input" Protocol="http"/>
+      </Endpoints>
+   </Resources>
+</ServiceManifest>

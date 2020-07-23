@@ -788,10 +788,20 @@ KIoBufferTest(
     int argc, WCHAR* args[]
     )
 {
-    KTestPrintf("KIoBufferTest: STARTED\n");
 
     NTSTATUS status;
 
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+	
+    KTestPrintf("KIoBufferTest: STARTED\n");
+	
     status = KtlSystem::Initialize();
     if (!NT_SUCCESS(status)) {
         return status;
@@ -813,6 +823,11 @@ Finish:
     KtlSystem::Shutdown();
 
     KTestPrintf("KIoBufferTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+	
     return status;
 }
 

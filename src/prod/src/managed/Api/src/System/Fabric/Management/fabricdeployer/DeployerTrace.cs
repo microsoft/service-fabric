@@ -25,7 +25,11 @@ namespace System.Fabric.FabricDeployer
             TraceConfig.InitializeFromConfigStore();
 #endif
             traceSource = FabricEvents.ExtensionsEvents.GetEventSource(FabricEvents.Tasks.FabricDeployer);
+#if DotNetCoreClrLinux
+            TraceConfig.SetDefaultLevel(TraceSinkType.Console, EventLevel.Informational);
+#else
             TraceConfig.SetDefaultLevel(TraceSinkType.Console, EventLevel.Error);
+#endif
             TraceConfig.SetDefaultLevel(TraceSinkType.ETW, EventLevel.Informational);
         }
 

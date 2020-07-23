@@ -54,6 +54,8 @@ namespace Data
 
             ktl::Awaitable<NTSTATUS> AwaitCompletionPhase1FirstCheckpointOnFullCopy();
 
+            virtual std::wstring ToString() const override;
+
             void SignalExceptionForPhase1OfFirstCheckpointOnFullCopy(__in NTSTATUS error);
 
             void SignalCompletionPhase1FirstCheckpointOnFullCopy();

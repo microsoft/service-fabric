@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsFabricTaskList xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Tasks>
+    <Task Name="Raw Ktl Disk Perf (IAAS)" ResourcesRequired="Server:1" Owner="alanwar,richhas">
+      <PrimaryExecutionTask>
+        <ExecutionUnit EntryPoint="BinCache\bins\ktltest\DiskPerfTool.exe" Arguments="-t:write -i:sequential -l:512 -z:TRUE -f:d: -n:512 -q:32 -x:0 -a:Results.perf" WorkingDirectory="BinCache\bins\ktltest" ExecutionLocation="RemoteOne" MaxExecutionTimeInSeconds="4800" />
+      </PrimaryExecutionTask>
+      <ResourceSetupTask>
+        <ExecutionUnit EntryPoint="BinCache\bins\ktltest\WinFabric.TestInfra.TestTools.exe" Arguments="//enablecrashdump DiskPerfTool.exe" WorkingDirectory="BinCache\bins\ktltest" ExecutionLocation="RemoteOne" MaxExecutionTimeInSeconds="600" />
+      </ResourceSetupTask>
+      <ResourceCleanupTask>
+        <ExecutionUnit EntryPoint="BinCache\bins\ktltest\CleanupKtlPerfTest.cmd" Arguments="" WorkingDirectory="BinCache\bins\ktltest" ExecutionLocation="RemoteOne" MaxExecutionTimeInSeconds="1800" />
+      </ResourceCleanupTask>
+    </Task>
+
+    <Task Name="Core Logger Perf (IAAS)" ResourcesRequired="Server:1" Owner="alanwar,richhas">
+      <PrimaryExecutionTask>
+        <ExecutionUnit EntryPoint="BinCache\bins\ktltest\RawLoggerPerf.exe" Arguments="-a:Results.perf -l:16 -f:\??\d:\aa -n:16 -t:180" WorkingDirectory="BinCache\bins\ktltest" ExecutionLocation="RemoteOne" MaxExecutionTimeInSeconds="1800" />
+      </PrimaryExecutionTask>
+      <ResourceSetupTask>
+        <ExecutionUnit EntryPoint="BinCache\bins\ktltest\WinFabric.TestInfra.TestTools.exe" Arguments="//enablecrashdump RawLoggerPerf.exe" WorkingDirectory="BinCache\bins\ktltest" ExecutionLocation="RemoteOne" MaxExecutionTimeInSeconds="600" />
+      </ResourceSetupTask>
+      <ResourceCleanupTask>
+        <ExecutionUnit EntryPoint="BinCache\bins\ktltest\CleanupKtlPerfTest.cmd" Arguments="" WorkingDirectory="BinCache\bins\ktltest" ExecutionLocation="RemoteOne" MaxExecutionTimeInSeconds="1800" />
+      </ResourceCleanupTask>
+    </Task>
+
+  </Tasks>
+</WindowsFabricTaskList>

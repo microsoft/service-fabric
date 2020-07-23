@@ -88,11 +88,15 @@ namespace
         Invariant2(err.IsSuccess(), "EnsureFolder: failed to create folder '{0}': {1}", folder, err);
     }
 
-    string GetX509Folder(string const & x509Folder)
+    string GetX509Folder(string const & x509Folder, bool useSFUserCertPath=false)
     {
         if (x509Folder.empty())
         {
             auto folder = SecurityConfig::GetConfig().X509Folder;
+            if(useSFUserCertPath)
+            {
+                folder = SecurityConfig::GetConfig().AppRunAsAccountGroupX509Folder;
+            }
             EnsureFolder(folder);
             Trace.WriteNoise(TraceType, "GetX509Folder: input = '{0}', output = '{1}'", x509Folder, folder);
             return folder;
@@ -154,16 +158,23 @@ namespace
         return path;
     }
 
-    string GetX509Path_NoExt(X509Context const & x509, string const & x509Folder = "")
+    string GetX509Path_NoExt(X509Context const & x509, string const & x509Folder = "", bool useSFUserCertPath = false)
     {
         auto thumbprintStr = GetThumbprintFileName_NoExt(x509);
-        auto folder = GetX509Folder(x509Folder); 
+        auto folder = GetX509Folder(x509Folder, useSFUserCertPath); 
         return Path::Combine(folder, thumbprintStr);
     }
 
     string GetX509InstallPath(X509Context const & x509, string const & x509Folder)
     {
         auto path = GetX509Path_NoExt(x509, x509Folder);
+        Path::ChangeExtension(path, SecurityConfig::GetConfig().X509InstallExtension);
+        return path;
+    }
+    
+    string GetX509SFUserInstallPath(X509Context const & x509, string const & x509Folder)
+    {
+        auto path = GetX509Path_NoExt(x509, x509Folder, true);
         Path::ChangeExtension(path, SecurityConfig::GetConfig().X509InstallExtension);
         return path;
     }
@@ -194,6 +205,14 @@ namespace
         auto path = GetX509Path_NoExt(x509);
         Path::ChangeExtension(path, SecurityConfig::GetConfig().PrivateKeyInstallExtension);
         Trace.WriteNoise(TraceType, "GetDefaultPrivKeyInstallPath: '{0}'", path); 
+        return path;
+    }
+    
+    string GetDefaultSFUserPrivKeyInstallPath(X509Context const & x509)
+    {
+        auto path = GetX509Path_NoExt(x509, "", true);
+        Path::ChangeExtension(path, SecurityConfig::GetConfig().PrivateKeyInstallExtension);
+        Trace.WriteNoise(TraceType, "GetDefaultSFUserPrivKeyInstallPath: '{0}'", path); 
         return path;
     }
 
@@ -992,11 +1011,30 @@ ErrorCode LinuxCryptUtil::CreateSelfSignedCertificate(
 
         lastActivity = " calling WritePrivateKey() ";
         LogInfo(__FUNCTION__, lastActivity);
-        auto privKeyPath = GetDefaultPrivKeyInstallPath(newCertUPtr);
+        string privKeyPath, certPath;
+
+        // sfuser does not have write access to cert store path /var/lib/sfcerts.
+        // This prevents us to write Private key of selfsigned certificate to be written to cert store
+        // to be consumed while setting transport security using self signed certificate.
+        // This change separates cert store folders for Selfsigned Certificates for root and sfuser
+        // Fabric processes running as sfuser will use /home/sfuser/sfusercerts for storing self signed cert
+        // and Fabric processes running as root will use /var/lib/sfcerts for storing self signed cert
+        if(0 != getuid() && 0 != geteuid())
+        {
+            privKeyPath = GetDefaultSFUserPrivKeyInstallPath(newCertUPtr);
+            certPath = GetX509SFUserInstallPath(newCertUPtr, "");
+            newCertUPtr.SetFilePath(certPath);
+        }
+        else
+        {
+            privKeyPath = GetDefaultPrivKeyInstallPath(newCertUPtr);
+        }
+
         error = WritePrivateKey(privKeyPath, pkey.get());
         if (!error.IsSuccess()) { break; }
 
         pkey.SetFilePath(privKeyPath);
+        
 
         // Success -- set output variable
         certContext = move(newCertUPtr);
@@ -1018,16 +1056,30 @@ ErrorCode LinuxCryptUtil::WritePrivateKey(string const& privKeyFilePath, EVP_PKE
         return LogError(__FUNCTION__, " EVP_PKEY* pkey is NULL.", ErrorCodeValue::ArgumentNull);
     }
 
-    // Make private key accessible only by the current user
-    auto savedMask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
-    KFinally([=] { umask(savedMask); });
+    // important for security that we create and set permissions before writing key
+    std::wstring wPrivKeyFilePath = StringUtility::Utf8ToUtf16(privKeyFilePath);
+    if (File::Exists(wPrivKeyFilePath))
+    {
+        if (0 != chmod(privKeyFilePath.c_str(), S_IRUSR | S_IWUSR))
+        {
+            return LogError(__FUNCTION__, privKeyFilePath + " permissions could not be set with chmod.", ErrorCode::FromErrno());
+        }
+    }
 
-    // save pkey to file
-    auto fp = fopen(privKeyFilePath.c_str(), "a");
-    if (fp == NULL)
+    auto fd = open(privKeyFilePath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (fd == -1)
     {
         return LogError(__FUNCTION__, privKeyFilePath + " could not be opened for writing private-key.", ErrorCode::FromErrno());
     }
+    
+    // save pkey to file
+    auto fp = fdopen(fd, "w");
+    if (fp == NULL)
+    {
+        close(fd);
+        return LogError(__FUNCTION__, privKeyFilePath + " file pointer could not be opened for writing private-key.", ErrorCode::FromErrno());
+    }
+    // fclose on the fp will also close the fd
     KFinally([=] { fclose(fp);});
 
     auto error = PEM_write_PrivateKey(
@@ -1299,7 +1351,7 @@ ErrorCode LinuxCryptUtil::ReadPrivateKey(X509Context const & x509, PrivKeyContex
 {
     auto& x509FilePath = x509.FilePath();
     WriteInfo(TraceType, "ReadPrivateKey: x509.FilePath = '{0}'", x509FilePath);  
-
+    
     ErrorCode err;
     if (!x509FilePath.empty())
     {
@@ -1321,6 +1373,14 @@ ErrorCode LinuxCryptUtil::ReadPrivateKey(X509Context const & x509, PrivKeyContex
     }
 
     auto filepath = GetDefaultPrivKeyLoadPath(x509);
+    err = ReadPrivateKey(filepath, privKey);
+    if (err.IsSuccess()) return err;
+            
+    filepath = GetDefaultPrivKeyInstallPath(x509);
+    err = ReadPrivateKey(filepath, privKey);
+    if (err.IsSuccess()) return err;
+    
+    filepath = GetDefaultSFUserPrivKeyInstallPath(x509);
     err = ReadPrivateKey(filepath, privKey);
     return err;
 }

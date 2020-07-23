@@ -13,6 +13,7 @@ using namespace Hosting2;
 using namespace Management;
 using namespace ImageModel;
 using namespace Management::ResourceMonitor;
+using namespace Management::NetworkInventoryManager;
 
 StringLiteral const TraceType_ActivationManager("ProcessActivationManager");
 
@@ -402,10 +403,10 @@ class ProcessActivationManager::OpenAsyncOperation :
                 timeoutHelper_.GetRemainingTime(),
                 [this](AsyncOperationSPtr const& operation)
             {
-                this->OnContainerActivationCompleted(operation, false);
+                this->OnContainerActivatorOpenCompleted(operation, false);
             },
                 thisSPtr);
-            OnContainerActivationCompleted(operation, true);
+            OnContainerActivatorOpenCompleted(operation, true);
         }
 #if defined(PLATFORM_UNIX)
 
@@ -463,7 +464,7 @@ CleanupSetupCgroup:
         }
 
 #endif
-        void OnContainerActivationCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSyncronously)
+        void OnContainerActivatorOpenCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSyncronously)
         {
             if (operation->CompletedSynchronously != expectedCompletedSyncronously)
             {
@@ -477,8 +478,13 @@ CleanupSetupCgroup:
                 "ContainerActivator open returned error {0}",
                 error);
 
-            //Schedule a timer to Post Statistics.
+            // Schedule a timer to Post Statistics.
             owner_.ScheduleTimerForStats(HostingConfig::GetConfig().InitialStatisticsInterval);
+
+            // Create marker files for all container log directory so that FabricDCA can delete them.
+            // If FabricHost crashes and comes back up this will ensure that we are not leaving any
+            // container log directories behind.
+            ContainerHelper::GetContainerHelper().MarkContainerLogFolder(L"", false /*forProcessing*/,  true /*MarkAllLogDirectories*/);
 
             TryComplete(operation->Parent, error);
         }
@@ -646,11 +652,17 @@ private:
 
         ErrorCode error = owner_.containerActivator_->EndClose(operation);
 
-        auto lastError = ErrorCode(ErrorCodeValue::Success);
+        if (!error.IsSuccess())
         {
-            lastError = lastError_;
-            lastError_.ReadValue();
+            WriteError(
+                TraceType_ActivationManager,
+                owner_.Root.TraceId,
+                "Failed to close ContainerActivator. Error {0}",
+                error);
+            lastError_.Overwrite(error);
         }
+
+        lastError_.ReadValue();
         TryComplete(operation->Parent, lastError_);
     }
 
@@ -1095,8 +1107,45 @@ private:
         {
             owner_.containerActivator_->CleanupAssignedIpsToNode(parentId_);
             RemoveCGroups();
-            TryComplete(thisSPtr, lastError_);
+            RemoveAssignedOverlayNetworkResourcesToNode(thisSPtr, parentId_);
         }
+    }
+   
+    void RemoveAssignedOverlayNetworkResourcesToNode(AsyncOperationSPtr const & thisSPtr, wstring nodeId)
+    {
+        auto operation = owner_.containerActivator_->BeginCleanupAssignedOverlayNetworkResourcesToNode(
+            nodeId,
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnCleanupAssignedOverlayNetworkResourcesToNodeCompleted(operation, false);
+        },
+            thisSPtr);
+        
+        this->OnCleanupAssignedOverlayNetworkResourcesToNodeCompleted(operation, true);
+    }
+
+    void OnCleanupAssignedOverlayNetworkResourcesToNodeCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynhronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynhronously)
+        {
+            return;
+        }
+
+        auto error = owner_.containerActivator_->EndCleanupAssignedOverlayNetworkResourcesToNode(operation);
+        
+        WriteInfo(TraceType_ActivationManager,
+            owner_.Root.TraceId,
+            "Clean up assigned overlay network resources to node completed for Node={0} with error={1}.",
+            parentId_,
+            error);
+
+        if (!error.IsSuccess())
+        {
+            lastError_.Overwrite(error);
+        }
+
+        TryComplete(operation->Parent, lastError_);
     }
 
     void RemoveCGroups()
@@ -1134,15 +1183,7 @@ class ProcessActivationManager::ActivateContainerGroupRootAsyncOperation
 public:
     ActivateContainerGroupRootAsyncOperation(
         ProcessActivationManager & owner,
-        wstring const & nodeId,
-        wstring const & assignedIp,
-        wstring const & servicePackageId,
-        wstring const & appfolder,
-        wstring const & appId,
-        wstring const & appName,
-        wstring const & partitionId,
-        wstring const & servicePackageActivationId,
-        ServicePackageResourceGovernanceDescription const & spRg,
+        SetupContainerGroupRequest & request,
 #if defined(PLATFORM_UNIX)
         ContainerPodDescription const &podDesc,
 #endif
@@ -1151,21 +1192,24 @@ public:
         AsyncCallback const & callback,
         AsyncOperationSPtr const & parent)
         : AsyncOperation(callback, parent),
-        nodeId_(nodeId),
-        assignedIp_(assignedIp),
-        servicePackageId_(servicePackageId),
-        appId_(appId),
-        appFolder_(appfolder),
-        appName_(appName),
-        partitionId_(partitionId),
-        servicePackageActivationId_(servicePackageActivationId),
-        containerName_(GetContainerName(appId)),
+        nodeId_(request.NodeId),
+        networkType_(request.NetworkType),
+        openNetworkAssignedIp_(request.OpenNetworkAssignedIp),
+        overlayNetworkResources_(request.OverlayNetworkResources),
+        dnsServers_(request.DnsServers),
+        servicePackageId_(request.ServicePackageId),
+        appId_(request.AppId),
+        appFolder_(request.AppFolder),
+        appName_(request.AppName), 
+        partitionId_(request.PartitionId),
+        servicePackageActivationId_(request.ServicePackageActivationId),
+        containerName_(GetContainerName(request.AppId)),
         context_(move(context)),
         owner_(owner),
-        spRg_(spRg),
 #if defined(PLATFORM_UNIX)
         podDescription_(podDesc),
 #endif
+        spRg_(request.ServicePackageRG),
         timeoutHelper_(timeout),
         processId_(0)
     {
@@ -1204,7 +1248,6 @@ protected:
             SendActivateProcessReplyAndComplete(thisSPtr, error);
             return;
         }
-
 
         ActivatorRequestorSPtr activatorRequestor;
         error = owner_.requestorMap_.Get(nodeId_, activatorRequestor);
@@ -1268,6 +1311,16 @@ protected:
             entryPoint = L"tail,-f,/dev/null";
         }
 #endif
+
+        ContainerNetworkConfigDescription containerNetworkConfig(
+            openNetworkAssignedIp_,
+            overlayNetworkResources_,
+            map<wstring, wstring>(), // port bindings
+            nodeId_,
+            L"", // nodeName
+            L"", // nodeIpAddress
+            networkType_);
+
         ContainerDescription containerDescription(
             appName_,
             containerName_,
@@ -1278,14 +1331,14 @@ protected:
             L"",
             L"",
             L"",
-            assignedIp_,
             map<wstring, wstring>(),
             LogConfigDescription(),
             vector<ContainerVolumeDescription>(),
             vector<ContainerLabelDescription>(),
-            vector<wstring>(),
+            dnsServers_,
             RepositoryCredentialsDescription(),
             ContainerHealthConfigDescription(),
+            containerNetworkConfig,
             vector<wstring>(),
 #if defined(PLATFORM_UNIX)
             podDescription_,
@@ -1392,7 +1445,10 @@ private:
 private:
     TimeoutHelper timeoutHelper_;
     wstring nodeId_;
-    wstring assignedIp_;
+    ServiceModel::NetworkType::Enum networkType_;
+    wstring openNetworkAssignedIp_;
+    std::map<std::wstring, std::wstring> overlayNetworkResources_;
+    std::vector<std::wstring> dnsServers_;
     wstring servicePackageId_;
     wstring appFolder_;
     ApplicationServiceSPtr appService_;
@@ -2345,7 +2401,6 @@ private:
     Transport::IpcReceiverContextUPtr context_;
 };
 
-
 class ProcessActivationManager::GetImagesAsyncOperation : public AsyncOperation
 {
 public:
@@ -2467,6 +2522,391 @@ protected:
 private:
     ProcessActivationManager & owner_;
     Transport::IpcReceiverContextUPtr context_;
+};
+
+class ProcessActivationManager::GetOverlayNetworkDefinitionAsyncOperation :
+    public AsyncOperation,
+    TextTraceComponent<TraceTaskCodes::Hosting>
+{
+public:
+    GetOverlayNetworkDefinitionAsyncOperation(
+        ProcessActivationManager & owner,
+        wstring const & networkName,
+        wstring const & parentId,
+        wstring const & nodeName,
+        wstring const & nodeIpAddress,
+        Common::TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr parent)
+        : AsyncOperation(callback, parent),
+        owner_(owner),
+        networkName_(networkName),
+        parentId_(parentId),
+        nodeName_(nodeName),
+        nodeIpAddress_(nodeIpAddress),
+        timeoutHelper_(timeout)
+    {
+    }
+
+    static ErrorCode GetOverlayNetworkDefinitionAsyncOperation::End(AsyncOperationSPtr const & operation, __out OverlayNetworkDefinitionSPtr & networkDefinition)
+    {
+        auto thisPtr = AsyncOperation::End<GetOverlayNetworkDefinitionAsyncOperation>(operation);
+        if (thisPtr->Error.IsSuccess())
+        {
+            networkDefinition = move(thisPtr->networkDefinition_);
+        }
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        ActivatorRequestorSPtr requestor;
+        auto error = owner_.requestorMap_.Get(parentId_, requestor);
+        if (error.IsSuccess())
+        {
+            MessageUPtr request = CreateNetworkAllocationRequest();
+            auto operation = owner_.activationManager_.IpcServerObj.BeginRequest(
+                move(request),
+                requestor->CallbackAddress,
+                timeoutHelper_.GetRemainingTime(),
+                [this](AsyncOperationSPtr const & operation) { OnGetOverlayNetworkDefinitionCompleted(operation, false); },
+                thisSPtr);
+
+            OnGetOverlayNetworkDefinitionCompleted(operation, true);
+        }
+        else
+        {
+            TryComplete(thisSPtr, error);
+        }
+    }
+
+    void OnGetOverlayNetworkDefinitionCompleted(AsyncOperationSPtr operation, bool expectedCompletedAsynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedAsynchronously)
+        {
+            return;
+        }
+
+        MessageUPtr reply;
+        auto error = owner_.activationManager_.IpcServerObj.EndRequest(operation, reply);
+        WriteInfo(TraceType_ActivationManager,
+            owner_.Root.TraceId,
+            "Get overlay network definition completed for Node={0} Network={1} with error={2}.",
+            parentId_,
+            networkName_,
+            error);
+
+        if (error.IsSuccess())
+        {
+            // process the reply
+            Management::NetworkInventoryManager::NetworkAllocationResponseMessage networkAllocationResponse;
+            if (!reply->GetBody<Management::NetworkInventoryManager::NetworkAllocationResponseMessage>(networkAllocationResponse))
+            {
+                error = ErrorCode::FromNtStatus(reply->Status);
+                WriteWarning(
+                    TraceType_ActivationManager,
+                    owner_.Root.TraceId,
+                    "GetBody<Management::NetworkInventoryManager::NetworkAllocationResponseMessage> failed: Message={0}, ErrorCode={1}",
+                    *reply,
+                    error);
+                TryComplete(operation->Parent, error);
+                return;
+            }
+
+            error = networkAllocationResponse.ErrorCode;
+
+            if (error.IsSuccess())
+            {
+                // convert to network definition
+                wstring subnet = wformatString("{0}/{1}", networkAllocationResponse.Subnet, networkAllocationResponse.Prefix);
+
+                this->networkDefinition_ = make_shared<OverlayNetworkDefinition>(
+                    networkAllocationResponse.NetworkName,
+                    networkAllocationResponse.NetworkId,
+                    Common::ContainerEnvironment::ContainerOverlayNetworkTypeName,
+                    subnet,
+                    networkAllocationResponse.Gateway,
+                    networkAllocationResponse.Prefix,
+                    networkAllocationResponse.OverlayId,
+                    networkAllocationResponse.StartMacPoolAddress,
+                    networkAllocationResponse.EndMacPoolAddress,
+                    networkAllocationResponse.NodeIpAddress,
+                    parentId_,
+                    this->nodeName_,
+                    networkAllocationResponse.IpMacAddressMapToBeAdded,
+                    networkAllocationResponse.IpMacAddressMapToBeRemoved);
+
+                std::wstring isolatedNetworkInterfaceName;
+                error = FabricEnvironment::GetFabricIsolatedNetworkInterfaceName(isolatedNetworkInterfaceName);
+                if (error.IsSuccess())
+                {
+                    this->networkDefinition_->NetworkAdapterName = isolatedNetworkInterfaceName;
+                }
+                else
+                {
+                    WriteWarning(
+                        TraceType_ActivationManager,
+                        owner_.Root.TraceId,
+                        "GetFabricIsolatedNetworkInterfaceName failed: ErrorCode={0}",
+                        error);
+                }
+            }
+        }
+
+        TryComplete(operation->Parent, error);
+    }
+
+    MessageUPtr CreateNetworkAllocationRequest()
+    {
+        NetworkAllocationRequestMessage networkAllocationRequest(
+            this->networkName_,
+            this->nodeName_,
+            this->nodeIpAddress_);
+
+        MessageUPtr request = make_unique<Message>(networkAllocationRequest);
+        request->Headers.Add(Transport::ActorHeader(Actor::FabricActivatorClient));
+        request->Headers.Add(Transport::ActionHeader(Hosting2::Protocol::Actions::GetOverlayNetworkDefinition));
+
+        WriteNoise(TraceType_ActivationManager,
+            owner_.Root.TraceId,
+            "Get overlay network definition request: Message={0}, Body={1}", *request, networkAllocationRequest);
+            
+        return move(request);
+    }
+
+private:
+    ProcessActivationManager & owner_;
+    OverlayNetworkDefinitionSPtr networkDefinition_;
+    TimeoutHelper timeoutHelper_;
+    wstring parentId_;
+    wstring networkName_;
+    wstring nodeName_;
+    wstring nodeIpAddress_;
+};
+
+class ProcessActivationManager::DeleteOverlayNetworkDefinitionAsyncOperation :
+    public AsyncOperation,
+    TextTraceComponent<TraceTaskCodes::Hosting>
+{
+public:
+    DeleteOverlayNetworkDefinitionAsyncOperation(
+        ProcessActivationManager & owner,
+        wstring const & networkName,
+        wstring const & parentId,
+        Common::TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr parent)
+        : AsyncOperation(callback, parent),
+        owner_(owner),
+        networkName_(networkName),
+        parentId_(parentId),
+        timeoutHelper_(timeout)
+    {
+    }
+
+    static ErrorCode DeleteOverlayNetworkDefinitionAsyncOperation::End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<DeleteOverlayNetworkDefinitionAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        ActivatorRequestorSPtr requestor;
+        auto error = owner_.requestorMap_.Get(parentId_, requestor);
+        if (error.IsSuccess())
+        {
+            MessageUPtr request = CreateNetworkRemoveRequestMessage();
+            auto operation = owner_.activationManager_.IpcServerObj.BeginRequest(
+                move(request),
+                requestor->CallbackAddress,
+                timeoutHelper_.GetRemainingTime(),
+                [this](AsyncOperationSPtr const & operation) { OnDeleteOverlayNetworkDefinitionCompleted(operation, false); },
+                thisSPtr);
+
+            OnDeleteOverlayNetworkDefinitionCompleted(operation, true);
+        }
+        else
+        {
+            TryComplete(thisSPtr, error);
+        }
+    }
+
+    void OnDeleteOverlayNetworkDefinitionCompleted(AsyncOperationSPtr operation, bool expectedCompletedAsynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedAsynchronously)
+        {
+            return;
+        }
+
+        MessageUPtr reply;
+        auto error = owner_.activationManager_.IpcServerObj.EndRequest(operation, reply);
+        WriteInfo(TraceType_ActivationManager,
+            owner_.Root.TraceId,
+            "Delete overlay network definition completed for Node={0} Network={1} with error={2}.",
+            parentId_,
+            networkName_,
+            error);
+
+        if (error.IsSuccess())
+        {
+            // process the reply
+            Management::NetworkInventoryManager::NetworkErrorCodeResponseMessage networkRemoveResponse;
+            if (!reply->GetBody<Management::NetworkInventoryManager::NetworkErrorCodeResponseMessage>(networkRemoveResponse))
+            {
+                error = ErrorCode::FromNtStatus(reply->Status);
+                WriteWarning(
+                    TraceType_ActivationManager,
+                    owner_.Root.TraceId,
+                    "GetBody<Management::NetworkInventoryManager::NetworkErrorCodeResponseMessage> failed: Message={0}, ErrorCode={1}",
+                    *reply,
+                    error);
+                TryComplete(operation->Parent, error);
+                return;
+            }
+
+            error = networkRemoveResponse.ErrorCode;
+        }
+
+        TryComplete(operation->Parent, error);
+    }
+
+    MessageUPtr CreateNetworkRemoveRequestMessage()
+    {
+        NetworkRemoveRequestMessage networkRemoveRequest(
+            this->networkName_,
+            this->parentId_);
+
+        MessageUPtr request = make_unique<Message>(networkRemoveRequest);
+        request->Headers.Add(Transport::ActorHeader(Actor::FabricActivatorClient));
+        request->Headers.Add(Transport::ActionHeader(Hosting2::Protocol::Actions::DeleteOverlayNetworkDefinition));
+
+        WriteNoise(TraceType_ActivationManager,
+            owner_.Root.TraceId,
+            "Delete overlay network definition request: Message={0}, Body={1}", *request, networkRemoveRequest);
+
+        return move(request);
+    }
+
+private:
+    ProcessActivationManager & owner_;
+    TimeoutHelper timeoutHelper_;
+    wstring parentId_;
+    wstring networkName_;
+};
+
+class ProcessActivationManager::PublishNetworkTablesAsyncOperation :
+    public AsyncOperation,
+    TextTraceComponent<TraceTaskCodes::Hosting>
+{
+public:
+    PublishNetworkTablesAsyncOperation(
+        ProcessActivationManager & owner,
+        wstring const & networkName,
+        wstring const & parentId,
+        Common::TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr parent)
+        : AsyncOperation(callback, parent),
+        owner_(owner),
+        networkName_(networkName),
+        parentId_(parentId),
+        timeoutHelper_(timeout)
+    {
+    }
+
+    static ErrorCode PublishNetworkTablesAsyncOperation::End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<PublishNetworkTablesAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        ActivatorRequestorSPtr requestor;
+        auto error = owner_.requestorMap_.Get(parentId_, requestor);
+        if (error.IsSuccess())
+        {
+            MessageUPtr request = CreatePublishNetworkTablesRequestMessage();
+            auto operation = owner_.activationManager_.IpcServerObj.BeginRequest(
+                move(request),
+                requestor->CallbackAddress,
+                timeoutHelper_.GetRemainingTime(),
+                [this](AsyncOperationSPtr const & operation) { OnPublishNetworkTablesRequestCompleted(operation, false); },
+                thisSPtr);
+
+            OnPublishNetworkTablesRequestCompleted(operation, true);
+        }
+        else
+        {
+            TryComplete(thisSPtr, error);
+        }
+    }
+
+    void OnPublishNetworkTablesRequestCompleted(AsyncOperationSPtr operation, bool expectedCompletedAsynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedAsynchronously)
+        {
+            return;
+        }
+
+        MessageUPtr reply;
+        auto error = owner_.activationManager_.IpcServerObj.EndRequest(operation, reply);
+        WriteInfo(TraceType_ActivationManager,
+            owner_.Root.TraceId,
+            "Publish network tables request completed for Node={0} Network={1} with error={2}.",
+            parentId_,
+            networkName_,
+            error);
+
+        if (error.IsSuccess())
+        {
+            // process the reply
+            Management::NetworkInventoryManager::NetworkErrorCodeResponseMessage publishNetworkTablesResponse;
+            if (!reply->GetBody<Management::NetworkInventoryManager::NetworkErrorCodeResponseMessage>(publishNetworkTablesResponse))
+            {
+                error = ErrorCode::FromNtStatus(reply->Status);
+                WriteWarning(
+                    TraceType_ActivationManager,
+                    owner_.Root.TraceId,
+                    "GetBody<Reliability::PublishNetworkTablesResponseMessage> failed: Message={0}, ErrorCode={1}",
+                    *reply,
+                    error);
+                TryComplete(operation->Parent, error);
+                return;
+            }
+
+            error = publishNetworkTablesResponse.ErrorCode;
+        }
+
+        TryComplete(operation->Parent, error);
+    }
+
+    MessageUPtr CreatePublishNetworkTablesRequestMessage()
+    {
+        PublishNetworkTablesMessageRequest publishNetworkTablesRequest(
+            this->networkName_,
+            this->parentId_);
+
+        MessageUPtr request = make_unique<Message>(publishNetworkTablesRequest);
+        request->Headers.Add(Transport::ActorHeader(Actor::FabricActivatorClient));
+        request->Headers.Add(Transport::ActionHeader(Hosting2::Protocol::Actions::PublishNetworkTablesRequest));
+
+        WriteNoise(TraceType_ActivationManager,
+            owner_.Root.TraceId,
+            "Publish network tables request: Message={0}, Body={1}", *request, publishNetworkTablesRequest);
+
+        return move(request);
+    }
+
+private:
+    ProcessActivationManager & owner_;
+    TimeoutHelper timeoutHelper_;
+    wstring parentId_;
+    wstring networkName_;
 };
 
 ProcessActivationManager::ProcessActivationManager(
@@ -2759,6 +3199,77 @@ void ProcessActivationManager::FinishSendContainerHealthCheckStatusMessage(
     }
 }
 
+Common::AsyncOperationSPtr ProcessActivationManager::BeginGetOverlayNetworkDefinition(
+    std::wstring const & networkName,
+    std::wstring const & nodeId,
+    std::wstring const & nodeName,
+    std::wstring const & nodeIpAddress,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<GetOverlayNetworkDefinitionAsyncOperation>(
+        *this,
+        networkName,
+        nodeId,
+        nodeName,
+        nodeIpAddress,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ProcessActivationManager::EndGetOverlayNetworkDefinition(
+    Common::AsyncOperationSPtr const & operation,
+    OverlayNetworkDefinitionSPtr & networkDefinition)
+{
+    return GetOverlayNetworkDefinitionAsyncOperation::End(operation, networkDefinition);
+}
+
+Common::AsyncOperationSPtr ProcessActivationManager::BeginDeleteOverlayNetworkDefinition(
+    std::wstring const & networkName,
+    std::wstring const & nodeId,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<DeleteOverlayNetworkDefinitionAsyncOperation>(
+        *this,
+        networkName,
+        nodeId,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ProcessActivationManager::EndDeleteOverlayNetworkDefinition(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return DeleteOverlayNetworkDefinitionAsyncOperation::End(operation);
+}
+
+Common::AsyncOperationSPtr ProcessActivationManager::BeginPublishNetworkTablesRequest(
+    std::wstring const & networkName,
+    std::wstring const & nodeId,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<PublishNetworkTablesAsyncOperation>(
+        *this,
+        networkName,
+        nodeId,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ProcessActivationManager::EndPublishNetworkTablesRequest(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return PublishNetworkTablesAsyncOperation::End(operation);
+}
+
 bool ProcessActivationManager::IsRequestorRegistered(wstring const & requestorId)
 {
     bool contains;
@@ -2987,6 +3498,22 @@ void ProcessActivationManager::ProcessIpcMessage(
     else if (action == Hosting2::Protocol::Actions::AssignIpAddresses)
     {
         this->ProcessAssignIPAddressesRequest(message, context);
+    }
+    else if (action == Hosting2::Protocol::Actions::ManageOverlayNetworkResources)
+    {
+        this->ProcessManageOverlayNetworkResourcesRequest(message, context);
+    }
+    else if (action == Hosting2::Protocol::Actions::UpdateOverlayNetworkRoutes)
+    {
+        this->ProcessUpdateOverlayNetworkRoutesRequest(message, context);
+    }
+    else if (action == Hosting2::Protocol::Actions::GetNetworkDeployedCodePackages)
+    {
+        this->ProcessGetDeployedNetworkCodePackagesRequest(message, context);
+    }
+    else if (action == Hosting2::Protocol::Actions::GetDeployedNetworks)
+    {
+        this->ProcessGetDeployedNetworksRequest(message, context);
     }
 #if defined(PLATFORM_UNIX)
     else if (action == Hosting2::Protocol::Actions::DeleteApplicationFolder)
@@ -3938,9 +4465,267 @@ void ProcessActivationManager::ProcessAssignIPAddressesRequest(
     MessageUPtr reply = make_unique<Message>(*replyBody);
     WriteNoise(TraceType_ActivationManager,
         Root.TraceId,
-        "Sending AssignIPAddressReply: for NodeId {0} ServicePackageIdId={1}",
+        "Sending AssignIPAddressReply: for NodeId {0} ServicePackageId={1}",
         request.NodeId,
         request.ServicePackageId);
+    context->Reply(move(reply));
+}
+
+void ProcessActivationManager::ProcessManageOverlayNetworkResourcesRequest(
+    __in Transport::Message & message,
+    __in Transport::IpcReceiverContextUPtr & context)
+{
+    ManageOverlayNetworkResourcesRequest request;
+    if (!message.GetBody<ManageOverlayNetworkResourcesRequest>(request))
+    {
+        auto error = ErrorCode::FromNtStatus(message.Status);
+        WriteWarning(
+            TraceType_ActivationManager,
+            Root.TraceId,
+            "Invalid message received: {0}, dropping",
+            message);
+        return;
+    }
+
+    if (request.Action == ManageOverlayNetworkAction::Assign)
+    {
+        this->containerActivator_->BeginAssignOverlayNetworkResources(
+            request.NodeId,
+            request.NodeName,
+            request.NodeIpAddress,
+            request.ServicePackageId,
+            request.CodePackageNetworkNames,
+            HostingConfig::GetConfig().RequestTimeout,
+            [this, request, ctx = context.release()](AsyncOperationSPtr const & operation)
+        {
+            std::map<std::wstring, std::map<std::wstring, std::wstring>> assignedNetworkResources;
+            ErrorCode error(ErrorCodeValue::Success);
+            error = this->containerActivator_->EndAssignOverlayNetworkResources(operation, assignedNetworkResources);
+            unique_ptr<ManageOverlayNetworkResourcesReply> replyBody;
+            replyBody = make_unique<ManageOverlayNetworkResourcesReply>(request.Action, error, assignedNetworkResources);
+
+            MessageUPtr reply = make_unique<Message>(*replyBody);
+            WriteNoise(TraceType_ActivationManager,
+                Root.TraceId,
+                "Sending ManageOverlayNetworkResourcesReply: for NodeId={0} ServicePackageId={1} Action={2}",
+                request.NodeId,
+                request.ServicePackageId,
+                request.Action);
+
+            ctx->Reply(move(reply));
+        },
+            this->Root.CreateAsyncOperationRoot());
+    }
+    else
+    {
+        std::set<wstring> networkNamesSet;
+        for (auto const & cpn : request.CodePackageNetworkNames)
+        {
+            for (auto const & networkName : cpn.second)
+            {
+                networkNamesSet.insert(networkName);
+            }
+        }
+
+        std::vector<wstring> networkNames;
+        networkNames.assign(networkNamesSet.begin(), networkNamesSet.end());
+
+        this->containerActivator_->BeginReleaseOverlayNetworkResources(
+            request.NodeId,
+            request.NodeName,
+            request.NodeIpAddress,
+            request.ServicePackageId,
+            networkNames,
+            HostingConfig::GetConfig().RequestTimeout,
+            [this, request, ctx = context.release()](AsyncOperationSPtr const & operation)
+        {
+            ErrorCode error(ErrorCodeValue::Success);
+            error = this->containerActivator_->EndReleaseOverlayNetworkResources(operation);
+            unique_ptr<ManageOverlayNetworkResourcesReply> replyBody;
+            replyBody = make_unique<ManageOverlayNetworkResourcesReply>(request.Action, error, std::map<wstring, std::map<std::wstring, std::wstring>>());
+
+            MessageUPtr reply = make_unique<Message>(*replyBody);
+            WriteNoise(TraceType_ActivationManager,
+                Root.TraceId,
+                "Sending ManageOverlayNetworkResourcesReply: for NodeId={0} ServicePackageId={1} Action={2}",
+                request.NodeId,
+                request.ServicePackageId,
+                request.Action);
+
+            ctx->Reply(move(reply));
+        },
+            this->Root.CreateAsyncOperationRoot());
+    }
+}
+
+void ProcessActivationManager::ProcessUpdateOverlayNetworkRoutesRequest(
+    __in Transport::Message & message,
+    __in Transport::IpcReceiverContextUPtr & context)
+{
+    UpdateOverlayNetworkRoutesRequest request;
+    if (!message.GetBody<UpdateOverlayNetworkRoutesRequest>(request))
+    {
+        auto error = ErrorCode::FromNtStatus(message.Status);
+        WriteWarning(
+            TraceType_ActivationManager,
+            Root.TraceId,
+            "Invalid message received: {0}, dropping",
+            message);
+        return;
+    }
+
+    std::vector<OverlayNetworkRouteSPtr> overlayNetworkRoutes;
+    for (auto const & r : request.NetworkMappingTable)
+    {
+        auto overlayNetworkRoute = make_shared<OverlayNetworkRoute>(r->IpAddress, r->MacAddress, r->InfraIpAddress);
+        overlayNetworkRoutes.push_back(overlayNetworkRoute);
+    }
+
+    auto overlayNetworkRoutingInformation = make_shared<OverlayNetworkRoutingInformation>(
+        request.NetworkName,
+        request.NodeIpAddress,
+        request.InstanceID,
+        request.SequenceNumber,
+        request.IsDelta,
+        overlayNetworkRoutes);
+
+    this->containerActivator_->BeginUpdateRoutes(
+        overlayNetworkRoutingInformation,
+        HostingConfig::GetConfig().RequestTimeout,
+        [this, request, ctx = context.release()](AsyncOperationSPtr const & operation)
+    {
+        ErrorCode error(ErrorCodeValue::Success);
+        error = this->containerActivator_->EndUpdateRoutes(operation);
+        unique_ptr<UpdateOverlayNetworkRoutesReply> replyBody;
+        replyBody = make_unique<UpdateOverlayNetworkRoutesReply>(request.NetworkName, request.NodeIpAddress, error);
+
+        MessageUPtr reply = make_unique<Message>(*replyBody);
+        WriteNoise(TraceType_ActivationManager,
+            Root.TraceId,
+            "Sending UpdateOverlayNetworkRoutesReply: for NodeIp={0} NetworkName={1}",
+            request.NodeIpAddress,
+            request.NetworkName);
+
+        ctx->Reply(move(reply));
+    },
+        this->Root.CreateAsyncOperationRoot());
+}
+
+void ProcessActivationManager::ProcessGetDeployedNetworkCodePackagesRequest(
+    __in Transport::Message & message,
+    __in Transport::IpcReceiverContextUPtr & context)
+{
+    GetNetworkDeployedPackagesRequest request;
+    if (!message.GetBody<GetNetworkDeployedPackagesRequest>(request))
+    {
+        auto error = ErrorCode::FromNtStatus(message.Status);
+        WriteWarning(
+            TraceType_ActivationManager,
+            Root.TraceId,
+            "Invalid message received: {0}, dropping",
+            message);
+        return;
+    }
+
+    std::map<std::wstring, std::vector<std::wstring>> networkReservedCodePackages;
+    ErrorCode error(ErrorCodeValue::Success);
+    this->containerActivator_->GetDeployedNetworkCodePackages(
+        request.ServicePackageIds,
+        request.CodePackageName,
+        request.NetworkName,
+        __out networkReservedCodePackages
+    );
+
+    std::map<std::wstring, std::wstring> containerInfoMap;
+    for (auto const & cp : request.CodePackageInstanceAppHostMap)
+    {
+        ApplicationServiceSPtr appService;
+        auto appServiceGetError = applicationServiceMap_->Get(request.NodeId, cp.second, appService);
+        if (appServiceGetError.IsSuccess())
+        {
+            // key is of format: "codePackageInstanceId,containerId"
+            auto key = wformatString("{0},{1}", cp.first, appService->ContainerId);
+
+            // assigned ips
+            wstring assignedIpAddresses = L"";
+            if (!appService->ContainerDescriptionObj.NetworkConfig.OpenNetworkAssignedIp.empty())
+            {
+                assignedIpAddresses = appService->ContainerDescriptionObj.NetworkConfig.OpenNetworkAssignedIp;
+            }
+
+            for (auto const & onr : appService->ContainerDescriptionObj.NetworkConfig.OverlayNetworkResources)
+            {
+                wstring ipAddress;
+                wstring macAddress;
+                StringUtility::SplitOnce(onr.second, ipAddress, macAddress, L",");
+                if (assignedIpAddresses.empty())
+                {
+                    assignedIpAddresses = ipAddress;
+                }
+                else
+                {
+                    assignedIpAddresses = wformatString("{0},{1}", assignedIpAddresses, ipAddress);
+                }
+            }
+
+            containerInfoMap[key] = assignedIpAddresses;
+        }
+    }
+
+    unique_ptr<GetNetworkDeployedPackagesReply> replyBody;
+    replyBody = make_unique<GetNetworkDeployedPackagesReply>(networkReservedCodePackages, containerInfoMap);
+    MessageUPtr reply = make_unique<Message>(*replyBody);
+
+    wstring servicePackageIdsStr = L"";
+    for (auto const & servicePackageId : request.ServicePackageIds)
+    {
+        if (servicePackageIdsStr.empty())
+        {
+            servicePackageIdsStr = servicePackageId;
+        }
+        else
+        {
+            servicePackageIdsStr = wformatString("{0},{1}", servicePackageIdsStr, servicePackageId);
+        }
+    }
+
+    WriteNoise(TraceType_ActivationManager,
+        Root.TraceId,
+        "Sending GetNetworkDeployedPackagesReply: for ServicePackageIds={0} CodePackageName={1} NetworkName={2}",
+        servicePackageIdsStr,
+        request.CodePackageName,
+        request.NetworkName);
+
+    context->Reply(move(reply));
+}
+
+void ProcessActivationManager::ProcessGetDeployedNetworksRequest(
+    __in Transport::Message & message,
+    __in Transport::IpcReceiverContextUPtr & context)
+{
+    GetDeployedNetworksRequest request;
+    if (!message.GetBody<GetDeployedNetworksRequest>(request))
+    {
+        auto error = ErrorCode::FromNtStatus(message.Status);
+        WriteWarning(
+            TraceType_ActivationManager,
+            Root.TraceId,
+            "Invalid message received: {0}, dropping",
+            message);
+        return;
+    }
+
+    std::vector<std::wstring> results;
+    this->containerActivator_->GetDeployedNetworkNames(request.NetworkType, results);
+
+    unique_ptr<GetDeployedNetworksReply> replyBody;
+    replyBody = make_unique<GetDeployedNetworksReply>(results);
+    MessageUPtr reply = make_unique<Message>(*replyBody);
+
+    WriteNoise(TraceType_ActivationManager, 
+        Root.TraceId, 
+        "Sending GetDeployedNetworksReply");
+
     context->Reply(move(reply));
 }
 
@@ -4312,15 +5097,7 @@ void ProcessActivationManager::ProcessSetupContainerGroupRequest(
 
         auto operation = AsyncOperation::CreateAndStart<ActivateContainerGroupRootAsyncOperation>(
             *this,
-            request.NodeId,
-            request.AssignedIP,
-            request.ServicePackageId,
-            request.AppFolder,
-            request.AppId,
-            request.AppName,
-            request.PartitionId,
-            request.ServicePackageActivationId,
-            request.ServicePackageRG,
+            request,
 #if defined(PLATFORM_UNIX)
              request.PodDescription,
 #endif
@@ -4828,6 +5605,44 @@ void ProcessActivationManager::ProcessConfigureSMBShareRequest(
         }
     }
 
+    // Trace out ACLs that are applied to the share.
+    // LookupAccount is an expensive operation, so delete the code block below when tracing is not needed anymore
+    std::wstring strAclSids;
+    Common::StringWriter writer(strAclSids);
+    if (error.IsSuccess())
+    {
+        for (auto const &sid : allowedSids)
+        {
+            wstring sidString, domain, accountName;
+            auto innerError = sid->ToString(sidString);
+            if (!innerError.IsSuccess())
+            {
+                WriteWarning(TraceType_ActivationManager,
+                    Root.TraceId,
+                    "Unable to convert sid to string Error={0}",
+                    innerError);
+
+                continue;
+            }
+
+            innerError = Sid::LookupAccount(sid->PSid, domain, accountName);
+            if (innerError.IsSuccess())
+            {
+                writer.Write("{0}|{1}|{2} ", sidString, accountName, domain);
+            }
+            else
+            {
+                WriteWarning(TraceType_ActivationManager,
+                    Root.TraceId,
+                    "Unable to lookup sid to account name Sid={0} Error={1}",
+                    sidString,
+                    innerError);
+
+                writer.Write("{0}|<>|<> ", sidString);
+            }
+        }
+    }
+
     if (anonymousSid)
     {
         error = SMBShareUtility::EnableAnonymousAccess(request.LocalFullPath, request.ShareName, request.AccessMask, anonymousSid, timoutHelper.GetRemainingTime());
@@ -4858,11 +5673,12 @@ void ProcessActivationManager::ProcessConfigureSMBShareRequest(
         error.IsSuccess() ? LogLevel::Info : LogLevel::Warning,
         TraceType_ActivationManager,
         Root.TraceId,
-        "ProcessConfigureSMBShareRequest completed with LocalFullPath={0}, ShareName={1}, AccessMask={2}, Error={3}",
+        "ProcessConfigureSMBShareRequest completed with LocalFullPath={0}, ShareName={1}, AccessMask={2}, Error={3}, SidsAcled(Sid|Account|Domain)={4}",
         request.LocalFullPath,
         request.ShareName,
         request.AccessMask,
-        error);
+        error,
+        strAclSids);
 
     this->SendFabricActivatorOperationReply(error, context);
 
@@ -4887,10 +5703,16 @@ void ProcessActivationManager::ProcessConfigureSMBShareRequest(
     StringUtility::Utf16ToUtf8(request.LocalFullPath, dir);
 
     wstring str;
-    SecurityUserSPtr securityUser = make_shared<BuiltinServiceAccount>(str, str, str, str, false,
-        SecurityPrincipalAccountType::NetworkService,
-        std::vector<std::wstring>(),
-        std::vector<std::wstring>());
+    SecurityUserSPtr securityUser = make_shared<BuiltinServiceAccount>(
+                                        str,
+                                        str,
+                                        str,
+                                        str,
+                                        false,
+                                        false,
+                                        SecurityPrincipalAccountType::NetworkService,
+                                        std::vector<std::wstring>(),
+                                        std::vector<std::wstring>());
     securityUser->ConfigureAccount();
 
     string fabricuname;
@@ -5133,9 +5955,10 @@ void ProcessActivationManager::OnContainerTerminated(
     WriteTrace(err.ToLogLevel(),
         TraceType_ActivationManager,
         this->Root.TraceId,
-        "Removing service with Id {0} from servicemap returned error {1}",
+        "Removing service with Id {0} from servicemap returned error {1}. The service is ContainerHost.",
         appServiceId,
         err);
+
     if (err.IsSuccess())
     {
         bool isRootContainer = false;
@@ -5147,22 +5970,26 @@ void ProcessActivationManager::OnContainerTerminated(
                 appService->ContainerDescriptionObj.ApplicationName,
                 appService->ContainerDescriptionObj.ServiceName,
                 appService->ContainerDescriptionObj.CodePackageName);
+
             isRootContainer = appService->IsContainerRoot;
 
 #if defined(PLATFORM_UNIX)
             this->UnmapClearContainerVolumes(appService);
 #endif
+            appService->SetTerminatedExternally(true);
+            appService->AbortAndWaitForTermination();
         }
-        
-        this->SendApplicationServiceTerminationNotification(
-            nodeId,
-            appServiceId,
-            exitCode,
-            ActivityDescription(ActivityId(), ActivityType::Enum::ServicePackageEvent),
-            isRootContainer);
     }
 
-    MarkContainerLogFolderForDeletion(appServiceId);
+    this->SendApplicationServiceTerminationNotification(
+        nodeId,
+        appServiceId,
+        exitCode,
+        ActivityDescription(ActivityId(), ActivityType::Enum::ServicePackageEvent),
+        false);
+
+    // Create marker files for the container log directory with appHostId so that FabricDCA can delete them.
+    ContainerHelper::GetContainerHelper().MarkContainerLogFolder(appServiceId);
 }
 
 #if defined(PLATFORM_UNIX)
@@ -5216,61 +6043,6 @@ void ProcessActivationManager::OnUnmapAllVolumesCompleted(
     VolumeMapper::EndUnmapAllVolumes(operation);
 }
 #endif
-
-void ProcessActivationManager::MarkContainerLogFolderForDeletion(wstring const & appServiceId)
-{
-    WriteInfo(TraceType_ActivationManager,
-        "MarkContainerLogFolderForDeletion for appServiceId {0}",
-        appServiceId);
-
-    wstring fabricLogRoot;
-    auto error = Common::FabricEnvironment::GetFabricLogRoot(fabricLogRoot);
-    if (!error.IsSuccess())
-    {
-        WriteWarning(
-            TraceType_ActivationManager,
-            "GetFabricLogRoot(fabricLogRoot) failed. Container folder was not marked for deletion");
-        return;
-    }
-
-    wstring containerLogRoot = Path::Combine(fabricLogRoot, L"Containers");
-    if (!Directory::Exists(containerLogRoot))
-    {
-        WriteWarning(
-            TraceType_ActivationManager,
-            "Directory {0} does not exist. Container folder was not marked for deletion",
-            containerLogRoot);
-        return;
-    }
-
-    vector<wstring> appServiceLogRoot = Directory::GetSubDirectories(containerLogRoot, wformatString("*{1}*", appServiceId), true, true);
-    if (appServiceLogRoot.size() == 0)
-    {
-        WriteWarning(
-            TraceType_ActivationManager,
-            "Container Log Root not found at {0} for appId {1}",
-            containerLogRoot,
-            appServiceId);
-        return;
-    }
-
-    TESTASSERT_IF(appServiceLogRoot.size() > 1, "Multiple log folders found for same appServiceId");
-    FileWriter removeContainerLog;
-    error = removeContainerLog.TryOpen(Path::Combine(appServiceLogRoot[0], L"RemoveContainerLog.txt"));
-    if (!error.IsSuccess())
-    {
-        WriteWarning(
-            TraceType_ActivationManager,
-            "Error while opening file: error={0}. Container folder was not marked for deletion",
-            ::GetLastError());
-
-        removeContainerLog.Close();
-        return;
-    }
-    wstring removeContainerLogString = L"RemoveContainerLog = true";
-    removeContainerLog.WriteUnicodeBuffer(removeContainerLogString.c_str(), removeContainerLogString.size());
-    removeContainerLog.Close();
-}
 
 void ProcessActivationManager::OnContainerEngineTerminated(
     DWORD exitCode,

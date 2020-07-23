@@ -294,6 +294,12 @@ void ApplicationHostProxy::TerminateExternally()
     Hosting.ApplicationHostManagerObj->FabricActivator->AbortProcess(this->HostId);
 }
 
+bool ApplicationHostProxy::GetLinuxContainerIsolation()
+{
+    // return false for other host proxies except for the SingleCodeHostProxy
+    return false;
+}
+
 ApplicationHostProxy::ApplicationHostProxy(
     HostingSubsystemHolder const & hostingHolder,
     ApplicationHostContext const & context,
@@ -358,10 +364,6 @@ ErrorCode ApplicationHostProxy::AddHostContextAndRuntimeConnection(EnvironmentMa
     // SQL Server: Defect 1461864: FabricTestHost should register IFabricCodePackageHost first to get NodeId
     envMap[Constants::EnvironmentVariable::NodeId] = Hosting.NodeId;
     envMap[Constants::EnvironmentVariable::NodeName] = Hosting.NodeName;
-    envMap[Constants::EnvironmentVariable::OnPrimaryEventName] = HelperUtilities::GetSecondaryCodePackageEventName(servicePackageInstanceId_, true, false);
-    envMap[Constants::EnvironmentVariable::OnSecondaryEventName] = HelperUtilities::GetSecondaryCodePackageEventName(servicePackageInstanceId_, false, false);
-    envMap[Constants::EnvironmentVariable::OnActivationCompletedEventName] = HelperUtilities::GetSecondaryCodePackageEventName(servicePackageInstanceId_, true, true);
-    envMap[Constants::EnvironmentVariable::OnDeactivationCompletedEventName] = HelperUtilities::GetSecondaryCodePackageEventName(servicePackageInstanceId_, false, true);
     ErrorCode error(ErrorCodeValue::Success);
     if (Hosting.IpcServerObj.IsTlsListenerEnabled())
     {
@@ -375,13 +377,13 @@ ErrorCode ApplicationHostProxy::AddTlsConnectionInformation(__inout EnvironmentM
 {
     envMap[Constants::EnvironmentVariable::RuntimeSslConnectionAddress] = Hosting.RuntimeServiceAddressForContainers;
 
-#ifndef PLATFORM_UNIX
     SecureString certKey;
     CertContextUPtr cert;
+    ErrorCode error = ErrorCode(ErrorCodeValue::Success);
 
     {
         AcquireWriteLock lock(lock_);
-        auto error = Hosting.IpcServerObj.SecuritySettingsTls.GenerateClientCert(certKey, cert);
+        error = Hosting.IpcServerObj.SecuritySettingsTls.GenerateClientCert(certKey, cert);
         if (!error.IsSuccess())
         {
             WriteNoise(
@@ -393,11 +395,25 @@ ErrorCode ApplicationHostProxy::AddTlsConnectionInformation(__inout EnvironmentM
         }
     }
 
+#ifndef PLATFORM_UNIX
     envMap[Constants::EnvironmentVariable::RuntimeSslConnectionCertKey] = certKey.GetPlaintext();
     envMap[Constants::EnvironmentVariable::RuntimeSslConnectionCertEncodedBytes] =  CryptoUtility::CertToBase64String(cert);
-
-    envMap[Constants::EnvironmentVariable::RuntimeSslConnectionCertThumbprint] = Hosting.IpcServerObj.ServerCertThumbprintTls.PrimaryToString();
+#else
+    LinuxCryptUtil cryptoUtil;
+    error = cryptoUtil.InstallCertificate(cert, L"");
+    if (!error.IsSuccess())
+    {
+        WriteNoise(
+            TraceType,
+            TraceId,
+            "ApplicationHostProxy::AddTlsConnectionInformation  cryptoUtil.InstallCertificate() failed with error {0}",
+            error);
+        return error;
+    }
+    wstring certFilePathStr(cert.FilePath().begin(), cert.FilePath().end());
+    envMap[Constants::EnvironmentVariable::RuntimeSslConnectionCertFilePath] =  certFilePathStr;
 #endif
+    envMap[Constants::EnvironmentVariable::RuntimeSslConnectionCertThumbprint] = Hosting.IpcServerObj.ServerCertThumbprintTls.PrimaryToString();
 
     return  ErrorCode(ErrorCodeValue::Success);
 }
@@ -425,19 +441,25 @@ ErrorCode ApplicationHostProxy::GetCurrentProcessEnvironmentVariables(
 
     // Ensure PATH to fabric binaries
     auto pathIter = envMap.find(L"Path");
-    wstring path = fabricBinFolder;
+    wstring path;
     if (pathIter != envMap.end())
     {
-        path.append(L";");
-        path.append(pathIter->second);
+        path = EnvironmentVariable::AppendDirectoryToPathEnvVarValue(fabricBinFolder, pathIter->second);
+    }
+    else
+    {
+        path = fabricBinFolder;
     }
     envMap[L"Path"] = path;
 
-    // TODO: This code is duplicated in several places - create an encapsulation around environment map
-    auto const & configStoreDesc = FabricGlobals::Get().GetConfigStore();
-    if (!configStoreDesc.StoreEnvironmentVariableName.empty())
+    wstring configStoreEnvVarName;
+    wstring configStoreEnvVarValue;
+    auto error = ComProxyConfigStore::FabricGetConfigStoreEnvironmentVariable(configStoreEnvVarName, configStoreEnvVarValue);
+    if (!error.IsSuccess()) { return error; }
+
+    if (!configStoreEnvVarName.empty())
     {
-        envMap[configStoreDesc.StoreEnvironmentVariableName] = configStoreDesc.StoreEnvironmentVariableValue;
+        envMap[configStoreEnvVarName] = configStoreEnvVarValue;
     }
 
     return ErrorCode(ErrorCodeValue::Success);
@@ -478,6 +500,44 @@ wstring ApplicationHostProxy::GetWellKnownValue(wstring const &value)
     if (StringUtility::AreEqualCaseInsensitive(value, *Constants::WellKnownPartitionIdFormat))
     {
         return ServicePackageInstanceId.ActivationContext.ActivationGuid.ToString();
+    }
+    else if (StringUtility::AreEqualCaseInsensitive(value, *Constants::WellKnownServiceNameFormat)) // @ServiceName@
+    {
+        wstring serviceName;
+        wstring applicationName;
+        if ((!Hosting.TryGetExclusiveServicePackageServiceName(
+                ServicePackageInstanceId.ServicePackageId,
+                ServicePackageInstanceId.ActivationContext,
+                serviceName)) ||
+            (!Hosting.TryGetServicePackagePublicApplicationName(
+                ServicePackageInstanceId.ServicePackageId,
+                ServicePackageInstanceId.ActivationContext,
+                applicationName)))
+        {
+            return value;
+        }
+
+        return serviceName.substr(serviceName.find(applicationName, 0), wstring::npos);
+    }
+    else if (StringUtility::AreEqualCaseInsensitive(value, *Constants::WellKnownApplicationNameFormat)) // @ApplicationName@
+    {
+        wstring applicationName;
+        if (!Hosting.TryGetServicePackagePublicApplicationName(
+                ServicePackageInstanceId.ServicePackageId,
+                ServicePackageInstanceId.ActivationContext,
+                applicationName))
+        {
+            return value;
+        }
+
+        ErrorCode error;
+        error = NamingUri::FabricNameToId(applicationName, applicationName);
+        if (!error.IsSuccess())
+        {
+            return value;
+        }
+
+        return applicationName;
     }
     else
     {

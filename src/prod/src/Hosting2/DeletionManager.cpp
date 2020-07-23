@@ -11,6 +11,7 @@ using namespace Hosting2;
 using namespace Management;
 using namespace ImageModel;
 using namespace ImageStore;
+using namespace ImageCache;
 using namespace ServiceModel;
 using namespace Api;
 using namespace Client;
@@ -218,28 +219,50 @@ private:
         auto iter = appTypeInstanceMap_.find(appTypeName);
         if(iter != appTypeInstanceMap_.end()) { appIds = iter->second; }
 
+        ContentSet imageCacheChecksumContent = GetContentSetFromMap(imageCacheChecksumContent_, appTypeName);
         ContentSet imageCacheContent = GetContentSetFromMap(imageCacheContent_, appTypeName);
         ContentSet appInstanceContent = GetContentSetFromMap(appInstanceContent_, appTypeName);
         ContentSet sharedContent = GetContentSetFromMap(sharedContent_, appTypeName);
         
-        RemoveUsedCodePackages(appTypeName, dependencyMap.CodePackages, appIds, imageCacheContent, appInstanceContent, sharedContent);
-        RemoveUsedConfigPackages(appTypeName, dependencyMap.ConfigPackages, appIds, imageCacheContent, appInstanceContent, sharedContent);
-        RemoveUsedDataPackages(appTypeName, dependencyMap.DataPackages, appIds, imageCacheContent, appInstanceContent, sharedContent);
-        RemoveUsedServiceManifestFiles(appTypeName, dependencyMap.ServiceManifests, appIds, imageCacheContent, appInstanceContent);
+        RemoveUsedCodePackages(appTypeName, dependencyMap.CodePackages, appIds, imageCacheChecksumContent, imageCacheContent, appInstanceContent, sharedContent);
+        RemoveUsedConfigPackages(appTypeName, dependencyMap.ConfigPackages, appIds, imageCacheChecksumContent, imageCacheContent, appInstanceContent, sharedContent);
+        RemoveUsedDataPackages(appTypeName, dependencyMap.DataPackages, appIds, imageCacheChecksumContent, imageCacheContent, appInstanceContent, sharedContent);
+        RemoveUsedServiceManifestFiles(appTypeName, dependencyMap.ServiceManifests, appIds, imageCacheChecksumContent, imageCacheContent, appInstanceContent);
+
+        // important that checksums are deleted first because they indicate integrity of cache
+        // if checksum can't be deleted, then the deletion should be aborted
+        for (auto const & content : imageCacheChecksumContent)
+        {
+            auto error = DeleteIfNotModifiedSinceCheckpoint(appTypeName, content, true /* shouldAcquireCacheLock */);
+            if (!error.IsSuccess())
+            {
+                WriteError(
+                    Trace_DeletionManager,
+                    owner_.Root.TraceId,
+                    "Failed to delete checksum file '{0}'. Aborting deletion of AppType: '{1}'. Error: {2}",
+                    content,
+                    appTypeName,
+                    error);
+                
+                uint64 pendingAppTypeCount = --pendingAppTypeCount_;
+                CheckPendingOperations(thisSPtr, pendingAppTypeCount);
+                return;
+            }
+        }
         
         for (auto const & content : imageCacheContent)
         {
-            DeleteIfNotModifiedSinceCheckpoint(appTypeName, content, true);
+            DeleteIfNotModifiedSinceCheckpoint(appTypeName, content, true /* shouldAcquireCacheLock */).ReadValue();
         }
 
         for (auto const & content : sharedContent)
         {
-            DeleteIfNotModifiedSinceCheckpoint(appTypeName, content, false);
+            DeleteIfNotModifiedSinceCheckpoint(appTypeName, content, false /* shouldAcquireCacheLock */).ReadValue();
         }
 
         for (auto const & content : appInstanceContent)
         {
-            DeleteIfNotModifiedSinceCheckpoint(appTypeName, content, false);
+            DeleteIfNotModifiedSinceCheckpoint(appTypeName, content, false /* shouldAcquireCacheLock */).ReadValue();
         }
 
         uint64 pendingAppTypeCount = --pendingAppTypeCount_;
@@ -287,6 +310,7 @@ private:
         wstring const & appTypeName, 
         vector<wstring> const & usedServiceManifests,
         set<ApplicationIdentifier> const & appIds,
+        ContentSet & imageCacheChecksumContent,
         ContentSet & imageCacheContent,
         ContentSet & appInstanceContent)
     {
@@ -299,7 +323,6 @@ private:
                 continue;
             }
 
-
             wstring imageCacheFile = imageCacheLayout_.GetServiceManifestFile(
                 appTypeName,
                 serviceManifestName,
@@ -310,7 +333,7 @@ private:
                 appTypeName,
                 serviceManifestName,
                 serviceManifestVersion);
-            imageCacheContent.erase(imageCacheChecksumFile);
+            imageCacheChecksumContent.erase(imageCacheChecksumFile);
 
             //Check if the file is present before Parsing
             if (File::Exists(imageCacheFile))
@@ -359,6 +382,7 @@ private:
         wstring const & appTypeName, 
         vector<wstring> const & usedCodePackages, 
         set<ApplicationIdentifier> const & appIds,
+        ContentSet & imageCacheChecksumContent,
         ContentSet & imageCacheContent,
         ContentSet & appInstanceContent,
         ContentSet & sharedContent)
@@ -385,7 +409,7 @@ private:
                 serviceManifestName, 
                 packageName, 
                 packageVersion);            
-            imageCacheContent.erase(imageCacheChecksumFile);
+            imageCacheChecksumContent.erase(imageCacheChecksumFile);
 
             wstring sharedFolder = owner_.hosting_.SharedLayout.GetCodePackageFolder(
                 appTypeName,
@@ -421,6 +445,7 @@ private:
         wstring const & appTypeName, 
         vector<wstring> const & usedConfigPackages, 
         set<ApplicationIdentifier> const & appIds, 
+        ContentSet & imageCacheChecksumContent,
         ContentSet & imageCacheContent,
         ContentSet & appInstanceContent,
         ContentSet & sharedContent)
@@ -439,7 +464,6 @@ private:
                 serviceManifestName, 
                 packageName, 
                 packageVersion);
-
             imageCacheContent.erase(imageCacheFolder);
             imageCacheContent.erase(ImageModelUtility::GetSubPackageArchiveFileName(imageCacheFolder));
 
@@ -448,15 +472,13 @@ private:
                 serviceManifestName, 
                 packageName, 
                 packageVersion);            
-
-            imageCacheContent.erase(imageCacheChecksumFile);
+            imageCacheChecksumContent.erase(imageCacheChecksumFile);
 
             wstring sharedFolder = owner_.hosting_.SharedLayout.GetConfigPackageFolder(
                 appTypeName,
                 serviceManifestName,
                 packageName,
                 packageVersion);
-
             sharedContent.erase(sharedFolder);
             sharedContent.erase(ImageModelUtility::GetSubPackageArchiveFileName(sharedFolder));
 
@@ -469,7 +491,6 @@ private:
                     packageName,
                     packageVersion,
                     false);
-
                 appInstanceContent.erase(path);
 
                 wstring symbolicLinkPath = owner_.hosting_.RunLayout.GetConfigPackageFolder(
@@ -478,7 +499,6 @@ private:
                     packageName,
                     packageVersion,
                     true);
-
                 appInstanceContent.erase(symbolicLinkPath);
             }
         }
@@ -488,6 +508,7 @@ private:
         wstring const & appTypeName, 
         vector<wstring> const & usedDataPackages, 
         set<ApplicationIdentifier> const & appIds,
+        ContentSet & imageCacheChecksumContent,
         ContentSet & imageCacheContent,
         ContentSet & appInstanceContent,
         ContentSet & sharedContent)
@@ -506,7 +527,6 @@ private:
                 serviceManifestName, 
                 packageName, 
                 packageVersion);
-
             imageCacheContent.erase(imageCacheFolder);
             imageCacheContent.erase(ImageModelUtility::GetSubPackageArchiveFileName(imageCacheFolder));
 
@@ -515,15 +535,13 @@ private:
                 serviceManifestName, 
                 packageName, 
                 packageVersion);            
-
-            imageCacheContent.erase(imageCacheChecksumFile);
+            imageCacheChecksumContent.erase(imageCacheChecksumFile);
 
             wstring sharedFolder = owner_.hosting_.SharedLayout.GetDataPackageFolder(
                 appTypeName,
                 serviceManifestName,
                 packageName,
                 packageVersion);
-
             sharedContent.erase(sharedFolder);
             sharedContent.erase(ImageModelUtility::GetSubPackageArchiveFileName(sharedFolder));
 
@@ -536,7 +554,6 @@ private:
                     packageName,
                     packageVersion,
                     false);
-
                 appInstanceContent.erase(path);
 
                 wstring symbolicLinkPath = owner_.hosting_.RunLayout.GetDataPackageFolder(
@@ -545,7 +562,6 @@ private:
                     packageName,
                     packageVersion,
                     true);
-
                 appInstanceContent.erase(symbolicLinkPath);
             }
         }
@@ -594,28 +610,37 @@ private:
         return ErrorCodeValue::Success;
     }    
 
-    void DeleteIfNotModifiedSinceCheckpoint(wstring const & appTypeName, wstring const & path, bool const shouldAcquireCacheLock)
+    ErrorCode DeleteIfNotModifiedSinceCheckpoint(wstring const & appTypeName, wstring const & path, bool const shouldAcquireCacheLock)
     {
+        ErrorCode error;
+
         ExclusiveFile cacheLock(path + L".CacheLock");
         if(shouldAcquireCacheLock)
         {
-            if(!cacheLock.Acquire(TimeSpan::Zero).IsSuccess())
+            error = cacheLock.Acquire(TimeSpan::Zero);
+            if(!error.IsSuccess())
             {
-                return;
+                return error;
             }
         }
 
         FileWriterLock writerLock(path);
-        if(!writerLock.Acquire().IsSuccess())
+        error = writerLock.Acquire();
+        if(!error.IsSuccess())
         {
-            return;
+            return error;
         }
 
         if(File::Exists(path))
         {
             DateTime lastWriteTime;
-            auto error = File::GetLastWriteTime(path, lastWriteTime);
-            if(error.IsSuccess() && lastWriteTime <= checkpointTime_)
+            error = File::GetLastWriteTime(path, lastWriteTime);
+            if(!error.IsSuccess())
+            {
+                return error;
+            }
+
+            if(lastWriteTime <= checkpointTime_)
             {
                 error = File::Delete2(path, true /*deleteReadOnlyFiles*/);
                 if(error.IsSuccess())
@@ -625,15 +650,38 @@ private:
                 else
                 {
                     hostingTrace.ApplicationTypeContentDeletionFailed(owner_.Root.TraceId, appTypeName, path, error);
+                    return error;
                 }
             }
         }
         else if(Directory::Exists(path))
         {
             DateTime lastWriteTime;
-            auto error = Directory::GetLastWriteTime(path, lastWriteTime);
-            if(error.IsSuccess() && lastWriteTime <= checkpointTime_)
+            error = Directory::GetLastWriteTime(path, lastWriteTime);
+            if(!error.IsSuccess())
             {
+                return error;
+            }
+
+            if(lastWriteTime <= checkpointTime_)
+            {
+                // important to delete the marker file first because it represents integrity of an extracted zip
+                // if it can't be deleted, then maintain integrity by aborting
+                wstring markerFilePath = Path::Combine(path, Management::ImageCache::Constants::ArchiveMarkerFileName);
+                if(File::Exists(markerFilePath))
+                {
+                    error = File::Delete2(markerFilePath, true /* deleteReadOnly */);
+                    if(error.IsSuccess())
+                    {
+                        hostingTrace.ApplicationTypeContentDeletionSuccess(owner_.Root.TraceId, appTypeName, markerFilePath);
+                    }
+                    else
+                    {
+                        hostingTrace.ApplicationTypeContentDeletionFailed(owner_.Root.TraceId, appTypeName, markerFilePath, error);
+                        return error;
+                    }
+                }
+
                 error = Directory::Delete(path, true /*recursive*/, true /*deleteReadOnlyFiles*/);
                 if(error.IsSuccess())
                 {
@@ -642,9 +690,12 @@ private:
                 else
                 {
                     hostingTrace.ApplicationTypeContentDeletionFailed(owner_.Root.TraceId, appTypeName, path, error);
+                    return error;
                 }
             }
         }
+
+        return ErrorCode::Success();
     }
 
     void ProcessApplicationsFolder(AppTypeInstanceMap const & appTypeInstanceMap)
@@ -657,7 +708,6 @@ private:
             {
                 wstring appInstanceFolder = Path::Combine(owner_.hosting_.DeploymentFolder, appId.ToString());
                 GetContent(appInstanceFolder, contents);
-                
             }
 
             if(contents.size() > 0)
@@ -702,14 +752,24 @@ private:
         for (auto const & appTypeFolder : appTypeImageCacheFolders)
         {                
             wstring appTypeName = appTypeFolder;
+            wstring imageCacheAppTypeFolder = Path::Combine(imageCacheStoreFolder, appTypeFolder);
 
             ContentSet contents;
-            GetContent(Path::Combine(imageCacheStoreFolder, appTypeFolder), contents);
+            GetContent(imageCacheAppTypeFolder, contents);
             if(contents.size() > 0)
             {                
                 imageCacheContent_.insert(make_pair(appTypeName, move(contents)));
                 appTypesList_.insert(appTypeName);
             }
+
+            ContentSet checksumContents;
+            GetChecksumContent(imageCacheAppTypeFolder, checksumContents);
+            if(checksumContents.size() > 0)
+            {                
+                imageCacheChecksumContent_.insert(make_pair(appTypeName, move(checksumContents)));
+                appTypesList_.insert(appTypeName);
+            }
+
             if (pruneContainerImages_)
             {
                 ConstructContainerImageMap(Path::Combine(imageCacheStoreFolder, appTypeFolder));
@@ -717,6 +777,7 @@ private:
         }
     }
 
+    // Important that we don't add checksums here. They're a special case and need to be put in their own ContentSet.
     static void GetContent(wstring const & folder, __out ContentSet & contents)
     {
         vector<wstring> serviceManifestFiles = Directory::GetFiles(folder, L"*.xml", true /*fullPath*/, true /*topDirOnly*/);
@@ -741,12 +802,6 @@ private:
             }
         }
 
-        vector<wstring> checksumFiles = Directory::GetFiles(folder, L"*.checksum", true /*fullPath*/, true /*topDirOnly*/);
-        for (auto const & checksumFile : checksumFiles)
-        {
-            contents.insert(checksumFile);
-        }
-
         auto archiveFiles = ImageModelUtility::GetArchiveFiles(folder, true /*fullPath*/, true /*topDirOnly*/);
         for (auto const & archiveFile : archiveFiles)
         {
@@ -769,10 +824,20 @@ private:
         }        
     }
 
+    static void GetChecksumContent(wstring const & folder, __out ContentSet & contents)
+    {
+        vector<wstring> checksumFiles = Directory::GetFiles(folder, L"*.checksum", true /*fullPath*/, true /*topDirOnly*/);
+        for (auto const & checksumFile : checksumFiles)
+        {
+            contents.insert(checksumFile);
+        }
+    }
+
     
 private:
     set<wstring> appTypesList_;    
     AppTypeInstanceMap appTypeInstanceMap_;
+    AppTypeContentMap imageCacheChecksumContent_;    
     AppTypeContentMap imageCacheContent_;    
     AppTypeContentMap sharedContent_;    
     AppTypeContentMap appInstanceContent_;       

@@ -61,6 +61,17 @@ InformationLogRecord::SPtr InformationLogRecord::Create(
     return InformationLogRecord::SPtr(pointer);
 }
 
+std::wstring InformationLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CompEndlJSON;
+
+    logRecordString += L"Information Event" + Constants::DivisionJSON +
+        std::to_wstring(informationEvent_) + Constants::Quote;
+    logRecordString += Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}
+
 InformationLogRecord::SPtr InformationLogRecord::Create(
     __in LONG64 lsn,
     __in_opt PhysicalLogRecord * const linkedPhysicalRecord,

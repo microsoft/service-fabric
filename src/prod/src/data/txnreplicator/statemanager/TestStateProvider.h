@@ -255,6 +255,8 @@ namespace StateManagerTests
         // #10485130: Temperory config used to disable the WriteAsync call in PerformCheckpointAsync for perf tests
         bool checkpointing_ = true;
 
+        bool hasPersistedState_ = true;
+
     private:
         KString::CSPtr workFolder_;
         KString::CSPtr tempCheckpointFilePath_;

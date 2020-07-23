@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <AssemblyName>WindowsFabricAzureWrapperService</AssemblyName>
+    <RootNamespace>System.Fabric.SourceInclude.Common</RootNamespace>
+    <ProjectGuid>{055A4A07-1645-4D8F-8155-4F18B33D6629}</ProjectGuid>
+    <AssemblyDescription>WindowsFabric AzureWrapper Service</AssemblyDescription>
+    <AssemblyTitle>Windows Fabric AzureWrapper Service</AssemblyTitle>
+    <OutputType>Exe</OutputType>
+    <OutDirSuffix>WindowsFabricAzureWrapperService.AzureSDK2.7</OutDirSuffix>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(BinariesBuildTypeArchDirectory)\WindowsFabricServiceModel\ServiceFabricServiceModel.cs" />
+    <Compile Include="..\..\..\..\..\Api\src\System\Fabric\Common\FxCop.cs">
+      <Link>FxCop.cs</Link>
+    </Compile>
+    <Compile Include="..\..\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\ClusterTopology.cs">
+      <Link>ClusterTopology.cs</Link>
+    </Compile>
+    <Compile Include="..\..\LocalNodeConfiguration.cs">
+      <Link>LocalNodeConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\..\NetworkConfigManager.cs">
+      <Link>NetworkConfigManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\NonWindowsFabricEndpointSet.cs">
+      <Link>NonWindowsFabricEndpointSet.cs</Link>
+    </Compile>
+    <Compile Include="..\..\TextLogger.cs">
+      <Link>TextLogger.cs</Link>
+    </Compile>
+    <Compile Include="..\..\TopologyProvider.cs">
+      <Link>TopologyProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\WindowsFabricAzureWrapper.cs">
+      <Link>WindowsFabricAzureWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\WindowsFabricAzureWrapperService.cs">
+      <SubType>Component</SubType>
+      <Link>WindowsFabricAzureWrapperService.cs</Link>
+    </Compile>
+    <Compile Include="..\..\WindowsFabricAzureWrapperServiceInstaller.cs">
+      <SubType>Component</SubType>
+      <Link>WindowsFabricAzureWrapperServiceInstaller.cs</Link>
+    </Compile>
+    <Compile Include="..\..\WindowsFabricEndpointSet.cs">
+      <Link>WindowsFabricEndpointSet.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\WindowsFabricAzureWrapperServiceCommon.cs">
+      <Link>WindowsFabricAzureWrapperServiceCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\wrappercommon\CodingException.cs">
+      <Link>CodingException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\wrappercommon\Constants.cs">
+      <Link>Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\wrappercommon\Errorcode.cs">
+      <Link>Errorcode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\wrappercommon\IEntryPoint.cs">
+      <Link>IEntryPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\wrappercommon\InfrastructureWrapper.cs">
+      <Link>InfrastructureWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\wrappercommon\Logger.cs">
+      <Link>Logger.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\wrappercommon\Utilities.cs">
+      <Link>Utilities.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\..\Api\src\System\Fabric\FabricConstants.cs">
+      <Link>FabricConstants.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\WindowsFabricAzureWrapperService.exe.config ">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel.CsFileBuilder\System.Fabric.Management.ServiceModel.CsFileBuilder.csproj">
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <Reference Include="$(PkgWinFab_Azure_Libs)\Microsoft.WindowsAzure.ServiceRuntime.v2.7\Microsoft.WindowsAzure.ServiceRuntime.dll" />
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+  </ItemGroup>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\AzureSDK2.7" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\AzureSDK2.7" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

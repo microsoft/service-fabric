@@ -27,6 +27,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <AssemblyVersion>$(BuildMajorVersionOnly)</AssemblyVersion>
     <AssemblyFileVersion>$(BuildMajorVersionOnly)</AssemblyFileVersion>
     <LinuxBuildArtifacts>$(SRCROOT)/../external/ServiceFabric.Linux.Coreclr.BuildArtifacts/build</LinuxBuildArtifacts>
+    <SfDotnetType>$(SF_DOTNET_TYPE)</SfDotnetType>
   </PropertyGroup>
 
   <!-- Create a dummy SetEnvironment task for linux -->

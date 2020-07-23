@@ -19,6 +19,9 @@ set AllowConstraintCheckFixesDuringApplicationUpgrade true
 set LocalResourceManagerTestMode true
 set ExpectedReplicaUpgradeDuration 5
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 +10 ud=UD1 fd=fd:/FD1 cap=servicefabric:/_CpuCores:10,servicefabric:/_MemoryInMB:15000
 +20 ud=UD2 fd=fd:/FD1 cap=servicefabric:/_CpuCores:10,servicefabric:/_MemoryInMB:15000
 +30 ud=UD3 fd=fd:/FD2 cap=servicefabric:/_CpuCores:10,servicefabric:/_MemoryInMB:15000

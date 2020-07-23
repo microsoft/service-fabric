@@ -1,0 +1,41 @@
+var accountKey <get.secret.AccountKey-shrek>
+var containerPrefix v2hairball-<get.guid>
+var dumpContainerName <var.containerPrefix>dump
+var profilerDataContainerName <var.containerPrefix>-prof
+
+var vmSize Standard_D3
+setcfg VmssLinux.VmSize Standard_D3
+
+fmservice 3 1
+namingservice 1 3 1
+cmandfsservice 3 1
+faservice 3 1
+
+cm.add v1
+
+var NumNodes 5
+var NumSeedNodes 3
+
+cm.setnodes v1 <var.NumNodes> <var.NumSeedNodes>
+
+cm.deployandstart v1
+
+uploadapp TStoreLonghaulApp app@sftestappstore:tstore-longhaul-linux:
+provisionapp TStoreLonghaulApp
+createapp fabric:/TStoreLonghaulApp TStoreLonghaulApp
+verify
+
+uploadapp LinuxTestReverseProxyApp app@sftestappstore:reverseproxy-linux-tp11:
+provisionapp LinuxTestReverseProxyApp
+createapp fabric:/LinuxTestReverseProxyApp LinuxTestReverseProxyApp
+verify
+
+# Start client and test
+client.newclient TStoreLonghaul NativeReplicatorHTTPClient.HTTPClient,NativeReplicatorHTTPClient parameters=serviceName:fabric:/TStoreLonghaulApp/Service
+
+client.starttask TStoreLonghaul TStoreLonghaulTask StartTest parameters={"loopCount":"8","int64PartitionKey":"1","retryCount":"256","sendTimeout":"30","PAAS":"true","clusterEnvironment":"Linux"}
+
+# test takes a day
+client.waittask taskIds=TpccTask timeout=86400
+
+quit

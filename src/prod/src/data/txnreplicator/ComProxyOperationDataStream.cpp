@@ -93,6 +93,12 @@ Awaitable<NTSTATUS> ComProxyOperationDataStream::AsyncGetNextContext::GetNextAsy
         co_return status;
     }
 
+    if (!parent_->comOperationDataStream_)
+    {
+        operation = nullptr;
+        co_return status;
+    }
+
     ComPointer<IFabricAsyncOperationContext> context;
 
     HRESULT hr = parent_->comOperationDataStream_->BeginGetNext(

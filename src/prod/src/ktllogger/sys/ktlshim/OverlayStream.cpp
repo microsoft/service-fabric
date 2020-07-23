@@ -107,7 +107,8 @@ OverlayStream::OverlayStream(
        _PeriodicTimerTestDelayInSec(0),
 #endif
        _StreamAllocation(0),
-       _OpenServiceFSMCallout(nullptr)
+       _OpenServiceFSMCallout(nullptr),
+       _SharedTruncationEvent(FALSE, FALSE)  // Auto reset
 #if DBG
        ,_SharedTimerDelay(0),
        _DedicatedTimerDelay(0)
@@ -245,7 +246,8 @@ BOOLEAN OverlayStream::IsUnderPressureToFlush()
     BOOLEAN isUnderMemoryPressure, isUnderSharedLogPressure;
 
     isUnderMemoryPressure = _ThrottledAllocator->IsUnderMemoryPressure();
-    isUnderSharedLogPressure = (_LastSharedLogStatus == STATUS_LOG_FULL); 
+    isUnderSharedLogPressure = ((_LastSharedLogStatus == STATUS_LOG_FULL) ||                                
+                                (GetOverlayLog()->WaitingThrottledCount() > 0));
 
     return(isUnderSharedLogPressure || isUnderMemoryPressure);
 }
@@ -628,6 +630,8 @@ StateMachine:
             //
             RvdLogStreamType logStreamType;
             KGuid logStreamTypeGuid;
+
+            _SharedLogStream->SetTruncationCompletionEvent(&_SharedTruncationEvent);
             
             _SharedLogStream->QueryLogStreamType(logStreamType);
 
@@ -1094,6 +1098,7 @@ FinishOpen:
                 goto CloseDedicatedContainer;
             }
 
+            _SharedLogStream->SetTruncationCompletionEvent(NULL);           
             _SharedLogStream = nullptr;
             _CopySharedToDedicated = nullptr;
             _CopySharedToBackup = nullptr;
@@ -1135,6 +1140,10 @@ CloseDedicatedContainer:
 #endif
 
             _DedicatedLogStream = nullptr;
+            if (_SharedLogStream)
+            {
+                _SharedLogStream->SetTruncationCompletionEvent(NULL);
+            }
             _SharedLogStream = nullptr;
 
             if (_CoalesceRecords)
@@ -1262,7 +1271,19 @@ OverlayStream::CloseServiceFSM(
             _PerfCounterSetInstance = nullptr;
 #endif
 
+            //
+            // Force all waiters on the shared truncation event to be
+            // completed. There may be a race between OverlayStream
+            // close and the OverlayLog accelerated truncation
+            // functionality.
+            //          
+            while (! _SharedTruncationEvent.IsSignaled())
+            {
+                _SharedTruncationEvent.SetEvent();
+            }
+
             _DedicatedLogStream = nullptr;
+            _SharedLogStream->SetTruncationCompletionEvent(NULL);           
             _SharedLogStream = nullptr;
 
             if (_CoalesceRecords)
@@ -1573,18 +1594,31 @@ BOOLEAN OverlayStream::ThrottleWriteIfNeeded(
     
     ULONGLONG totalSpace, freeSpace;
     BOOLEAN sharedThrottled;
+    LONGLONG lowestLsn;
+    LONGLONG highestLsn;
+    RvdLogStreamId lowestLsnStreamId;
 
     //
     // First check if write needs to be throttled as a result of shared
     // log usage.
     //
-    sharedThrottled = _OverlayLog->ShouldThrottleSharedLog(DestagingWriteContext, totalSpace, freeSpace);
+    sharedThrottled = _OverlayLog->ShouldThrottleSharedLog(DestagingWriteContext,
+                                                           totalSpace,
+                                                           freeSpace,
+                                                           lowestLsn,
+                                                           highestLsn,
+                                                           lowestLsnStreamId);
     if (sharedThrottled)
     {
         KDbgCheckpointWDataInformational(GetActivityId(), "Throttled write", STATUS_SUCCESS, (ULONGLONG)&DestagingWriteContext,
                             freeSpace,
                             DestagingWriteContext.GetRecordAsn().Get(),
                             totalSpace);
+        KDbgCheckpointWDataInformational(GetActivityId(), "Throttled write2", STATUS_SUCCESS,
+                                         lowestLsnStreamId.Get().Data1,
+                                         0,
+                                         lowestLsn,
+                                         highestLsn);
         return(FALSE);
     }
 
@@ -2223,21 +2257,26 @@ VOID OverlayStream::AsyncDestagingWriteContextOverlay::ProcessWriteCompletion(
 {
     LONG completedToCaller = 1;
     ULONG asyncsOutstanding = 99;
+    ULONGLONG lsn = 0;
 
     if (SharedWriteCompleted)
     {
         if (NT_SUCCESS(Status))
         {
-            _ContainerOperation.EndOperation(_DataSize);        
+            _ContainerOperation.EndOperation(_DataSize);
+            
+            lsn = 0;
+            _SharedLogStream->QueryRecord(_RecordAsn,
+                                          RvdLogStream::AsyncReadContext::ReadExactRecord,
+                                          NULL,
+                                          NULL,
+                                          NULL,
+                                          &lsn);
         }
         
         KDbgCheckpointWDataInformational(_OverlayStream->GetActivityId(),
-                            "ProcessWriteCompletion enter", Status, (ULONGLONG)this, _RecordAsn.Get(), _Version,
+                            "ProcessWriteCompletion enter", Status, lsn, _RecordAsn.Get(), _Version,
                             (_DataSize ) + (ULONGLONG)(0x100000000));
-    } else {
-        KDbgCheckpointWData(_OverlayStream->GetActivityId(),
-                            "ProcessWriteCompletion enter", Status, (ULONGLONG)this, _RecordAsn.Get(), _Version,
-                            (_DataSize ));
     }
     
     //
@@ -2394,14 +2433,17 @@ finish:
 
         if (NT_SUCCESS(_OverlayStream->GetFailureStatus()))
         {
-            //
-            // Advance the dedicated write completed asn to only what has
-            // been contiguously completed. If the list is empty then
-            // lowestDestagingLsn will be -1 and so we use the last
-            // completed ASN instead.
-            //
-            _OverlayStream->TruncateSharedStreamIfPossible(_OverlayStream->GetSharedTruncationAsn(),
-                                                           _OverlayStream->GetSharedTruncationVersion());
+            if (_TruncateOnDedicatedCompletion)
+            {
+                //
+                // Advance the dedicated write completed asn to only what has
+                // been contiguously completed. If the list is empty then
+                // lowestDestagingLsn will be -1 and so we use the last
+                // completed ASN instead.
+                //
+                _OverlayStream->TruncateSharedStreamIfPossible(_OverlayStream->GetSharedTruncationAsn(),
+                                                               _OverlayStream->GetSharedTruncationVersion());
+            }
 
             //
             // Determine if any truncation notifications need to be fired
@@ -2522,7 +2564,6 @@ OverlayStream::AsyncDestagingWriteContextOverlay::SharedWriteCompletion(
         // Set flag that log is full to force quick flushing
         //
         _OverlayStream->SetLastSharedLogStatus(status);
-
         
         _SharedLogFullRetries++;
         KDbgCheckpointWDataInformational(_OverlayStream->GetActivityId(),
@@ -2690,6 +2731,7 @@ OverlayStream::AsyncDestagingWriteContextOverlay::OnStart(
 
     _RequestRefAcquired = TRUE;
 
+    _TruncateOnDedicatedCompletion = TRUE;
     _TruncationPendingAsn = 0;     // Assume no truncation
     
     _TotalNumberBytesToWrite = NumberBytesForWrite();
@@ -5973,7 +6015,7 @@ OverlayStream::TruncateSharedStreamIfPossible(
         // than the just completed ASN, it is not safe to truncate.
         // 
         // TODO: Remove me when code is fully stabilized
-        KDbgCheckpointWDataInformational(GetActivityId(), "outstanding write with an ASN less", STATUS_SUCCESS,
+        KDbgCheckpointWDataInformational(GetActivityId(), "TRUNC** outstanding write with an ASN less", STATUS_SUCCESS,
                             (ULONGLONG)this,
                             (ULONGLONG)DesiredTruncationPoint.Get(),
                             (ULONGLONG)mustTruncationBelowAsn.Get(),
@@ -7169,6 +7211,34 @@ OverlayStream::AsyncIoctlContextOverlay::FSMContinue(
                     }
                     break;
                 }
+
+                case KLogicalLogInformation::QueryAcceleratedFlushMode:
+                {
+                    if (_OverlayStream->_IsStreamForLogicalLog)
+                    {
+                        KBuffer::SPtr outBuffer;
+                        KLogicalLogInformation::AcceleratedFlushMode* outStruct;
+
+                        Status = KBuffer::Create(sizeof(KLogicalLogInformation::AcceleratedFlushMode),
+                                                    outBuffer,
+                                                    GetThisAllocator());
+                        if (! NT_SUCCESS(Status))
+                        {
+                            KTraceFailedAsyncRequest(Status, this, _State, 0);
+
+                            _State = CompletedWithError;
+                            Complete(Status);
+                            return;
+                        }
+
+                        outStruct = (KLogicalLogInformation::AcceleratedFlushMode*)outBuffer->GetBuffer();
+                        outStruct->IsAccelerateInActiveMode = _OverlayStream->GetOverlayLog()->IsAccelerateInActiveMode();
+
+                        *_OutBuffer = outBuffer;
+                    }
+                    break;
+                }
+
                 
                 default:
                 {
@@ -8046,3 +8116,28 @@ VOID OverlayStream::FreeKIoBuffer(
     _ThrottledAllocator->FreeKIoBuffer(ActivityId, Size);
 }
 
+
+NTSTATUS OverlayStream::CreateTruncateCompletedWaiter(
+    __out KAsyncEvent::WaitContext::SPtr& WaitContext
+)
+{
+    NTSTATUS status;
+    
+    status = TryAcquireRequestRef();
+    if (!NT_SUCCESS(status))
+    {
+        return(status);
+    }
+    KFinally([&] { ReleaseRequestRef(); });
+
+    status = _SharedTruncationEvent.CreateWaitContext(GetThisAllocationTag(),
+                                                      GetThisAllocator(),
+                                                      WaitContext);
+
+    return(status);
+}
+
+VOID OverlayStream::ResetTruncateCompletedEvent()
+{
+    _SharedTruncationEvent.ResetEvent();
+}

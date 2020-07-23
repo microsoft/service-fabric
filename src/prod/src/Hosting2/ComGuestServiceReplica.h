@@ -87,5 +87,7 @@ namespace Hosting2
         bool isDeactivationInProgress_;
         ULONGLONG eventRegistrationHandle_;
         Common::ComPointer<IFabricStatefulServicePartition2> partition_;
+        ComPointer<ComDummyReplicator> dummyReplicator_;
+        std::wstring partitionName_;
     };
 }

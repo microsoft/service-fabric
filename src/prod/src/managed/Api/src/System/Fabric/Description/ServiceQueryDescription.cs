@@ -14,7 +14,7 @@ namespace System.Fabric.Description
     /// <para>Represents the multiple filters that can be specified to refine the return.
     /// Used by <see cref="System.Fabric.FabricClient.QueryClient.GetServicePagedListAsync(System.Fabric.Description.ServiceQueryDescription, TimeSpan, System.Threading.CancellationToken)" />.</para>
     /// </summary>
-    public sealed class ServiceQueryDescription
+    public sealed class ServiceQueryDescription : PagedQueryDescriptionBase
     {
         /// <summary>
         /// <para>Initializes a new instance of the <see cref="System.Fabric.Description.ServiceQueryDescription" /> class.</para>
@@ -24,7 +24,6 @@ namespace System.Fabric.Description
             ApplicationName = applicationName;
             ServiceNameFilter = null;
             ServiceTypeNameFilter = null;
-            ContinuationToken = null;
         }
 
         /// <summary>
@@ -61,17 +60,6 @@ namespace System.Fabric.Description
         /// </remarks>
         public string ServiceTypeNameFilter { get; set; }
 
-        /// <summary>
-        /// <para>Gets or sets the token that can be used by queries to get the next page.</para>
-        /// </summary>
-        /// <value>
-        /// <para>The token that can be used by queries to get the next page.</para>
-        /// </value>
-        /// <remarks>
-        /// <para>ContinuationToken is received by a previous query.</para>
-        /// </remarks>
-        public string ContinuationToken { get; set; }
-
         internal static void Validate(ServiceQueryDescription description)
         {
             if (description.ServiceNameFilter != null && !string.IsNullOrEmpty(description.ServiceTypeNameFilter))
@@ -91,10 +79,16 @@ namespace System.Fabric.Description
 
             var ex2 = new NativeTypes.FABRIC_SERVICE_QUERY_DESCRIPTION_EX2();
             ex2.ServiceTypeNameFilter = pinCollection.AddObject(this.ServiceTypeNameFilter);
-            ex2.Reserved = IntPtr.Zero;
 
+            var ex3 = new NativeTypes.FABRIC_SERVICE_QUERY_DESCRIPTION_EX3();
+            if (this.MaxResults.HasValue)
+            {
+                ex3.MaxResults = this.MaxResults.Value;
+            }
+
+            ex3.Reserved = IntPtr.Zero;
+            ex2.Reserved = pinCollection.AddBlittable(ex3);
             ex1.Reserved = pinCollection.AddBlittable(ex2);
-
             nativeDescription.Reserved = pinCollection.AddBlittable(ex1);
 
             return pinCollection.AddBlittable(nativeDescription);

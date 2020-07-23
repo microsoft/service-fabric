@@ -929,7 +929,7 @@ namespace Naming
             {
                 statefulDescriptionEx4->ScalingPolicyCount = 0;
                 statefulDescriptionEx4->ServiceScalingPolicies = nullptr;
-            }
+	    }
         }
         else
         {
@@ -1225,7 +1225,7 @@ namespace Naming
             typeIdentifier,
             partitionCount,
             targetReplicaSize,
-            psdWrapper.MinReplicaSetSize,
+            minReplicaSetSize,
             (psdWrapper.ServiceKind == FABRIC_SERVICE_KIND_STATEFUL),
             scheme,
             psdWrapper.LowKeyInt64,
@@ -1264,7 +1264,7 @@ namespace Naming
             0, // UpdateVersion
             partitionCount,
             targetReplicaSize,
-            psdWrapper.MinReplicaSetSize,
+            minReplicaSetSize,
             (psdWrapper.ServiceKind == FABRIC_SERVICE_KIND_STATEFUL),
             psdWrapper.HasPersistedState,
             replicaRestartWaitDuration,
@@ -1282,7 +1282,6 @@ namespace Naming
             psdWrapper.PackageActivationMode,
             psdWrapper.ServiceDnsName,
             psdWrapper.ScalingPolicies);
-
 
         service_ = move(description);
         partitionScheme_ = scheme;            
@@ -1475,7 +1474,7 @@ namespace Naming
 
             hr = StringUtility::LpcwstrToWstring(statelessEx3->ServiceDnsName, true /*acceptNull*/, serviceDnsName);
             if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
-
+           
             if (statelessEx3->Reserved == NULL)
             {
                 break;
@@ -1676,7 +1675,7 @@ namespace Naming
                 hr = StringUtility::LpcwstrToWstring(statefulEx3->ServiceDnsName, true /*acceptNull*/, serviceDnsName);
                 if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
 
-		if (statefulEx3->Reserved == NULL)
+                if (statefulEx3->Reserved == NULL)
                 {
                     break;
                 }
@@ -2290,73 +2289,120 @@ namespace Naming
 
     bool PartitionedServiceDescriptor::operator == (PartitionedServiceDescriptor const & other) const
     {
-        // Do not compare CUIDs because they are generated internally when a new
-        // instance is constructed and do not cross the public API boundary.
-        //
-         
-        bool isEqual = (partitionNames_.size() == other.partitionNames_.size());
-
-        if (isEqual)
-        {
-            for (auto iter = partitionNames_.begin(); iter != partitionNames_.end(); ++iter)
-            {
-                auto findIter = find(other.partitionNames_.begin(), other.partitionNames_.end(), *iter);
-                if (findIter == other.partitionNames_.end())
-                {
-                    isEqual = false;
-                    break;
-                }
-            }
-        }
-
-        if (isEqual)
-        {
-            for (auto iter = other.partitionNames_.begin(); iter != other.partitionNames_.end(); ++iter)
-            {
-                auto findIter = find(partitionNames_.begin(), partitionNames_.end(), *iter);
-                if (findIter == partitionNames_.end())
-                {
-                    isEqual = false;
-                    break;
-                }
-            }
-        }
-
-        if (isEqual)
-        {
-            if (service_.IsServiceGroup && other.service_.IsServiceGroup)
-            {
-                // ServiceGroup PSD contains the service member identifiers in its initialization data. 
-                // These should be ignored during comparison.
-
-                // Check whether the SDs are equal without the SG init data
-                ServiceDescription first(service_, move(vector<byte>()));
-                ServiceDescription second(other.service_, move(vector<byte>()));
-
-                isEqual = (first == second);
-
-                if (isEqual)
-                {
-                    // Check whether the SG init datas are equal ignoring the service member identifiers
-                    isEqual = (TRUE == ServiceModel::CServiceGroupDescription::Equals(service_.InitializationData, other.service_.InitializationData, TRUE));
-                }
-            }
-            else
-            {
-                isEqual = (service_ == other.service_);
-            }
-        }
-
-        return isEqual && 
-            (partitionScheme_ == other.partitionScheme_ &&
-            version_ == other.version_ &&
-            lowRange_ == other.lowRange_ &&
-            highRange_ == other.highRange_);
+        auto error = Equals(other);
+        return error.IsSuccess();
     }
 
     bool PartitionedServiceDescriptor::operator != (PartitionedServiceDescriptor const & other) const
     {
         return !(*this == other);
+    }
+
+    ErrorCode PartitionedServiceDescriptor::Equals(PartitionedServiceDescriptor const & other) const
+    {
+        
+        // Do not compare CUIDs because they are generated internally when a new
+        // instance is constructed and do not cross the public API boundary.
+        //
+
+        if (partitionNames_.size() != other.partitionNames_.size())
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidArgument,
+                wformatString(
+                    GET_NS_RC(PartitionName_Count_Changed), partitionNames_.size(), other.partitionNames_.size()));
+        }
+
+        // check if this.partitionNames_ is a subset of other.partitionNames_
+        for (auto iter = partitionNames_.begin(); iter != partitionNames_.end(); ++iter)
+        {
+            auto findIter = find(other.partitionNames_.begin(), other.partitionNames_.end(), *iter);
+            if (findIter == other.partitionNames_.end())
+            {
+                return ErrorCode(
+                    ErrorCodeValue::InvalidArgument,
+                    wformatString(
+                        GET_NS_RC(PartitionName_Removed), *iter));
+            }
+        }
+
+        // check if other.partitionNames_ is a subset of this.partitionNames_
+        for (auto iter = other.partitionNames_.begin(); iter != other.partitionNames_.end(); ++iter)
+        {
+            auto findIter = find(partitionNames_.begin(), partitionNames_.end(), *iter);
+            if (findIter == partitionNames_.end())
+            {
+                return ErrorCode(
+                    ErrorCodeValue::InvalidArgument,
+                    wformatString(
+                        GET_NS_RC(PartitionName_Inserted), *iter));
+            }
+        }
+
+        if (service_.IsServiceGroup && other.service_.IsServiceGroup)
+        {
+            // ServiceGroup PSD contains the service member identifiers in its initialization data. 
+            // These should be ignored during comparison.
+
+            // Check whether the SDs are equal without the SG init data
+            ServiceDescription first(service_, move(vector<byte>()));
+            ServiceDescription second(other.service_, move(vector<byte>()));
+
+            auto error = first.Equals(second);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+
+            // Check whether the SG init datas are equal ignoring the service member identifiers
+            error = ServiceModel::CServiceGroupDescription::Equals(service_.InitializationData, other.service_.InitializationData, TRUE);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+        }
+        else
+        {
+            auto error = service_.Equals(other.service_);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+        }
+
+        if (partitionScheme_ != other.partitionScheme_)
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidArgument,
+                wformatString(
+                    GET_NS_RC(PartitionScheme_Changed), partitionScheme_, other.partitionScheme_));
+        }
+
+        if (version_ != other.version_)
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidArgument,
+                wformatString(
+                    GET_NS_RC(PSD_Version_Changed), version_, other.version_));
+        }
+
+        if (lowRange_ != other.lowRange_)
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidArgument,
+                wformatString(
+                    GET_NS_RC(PSD_LowRange_Changed), lowRange_, other.lowRange_));
+        }
+
+        if (highRange_ != other.highRange_)
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidArgument,
+                wformatString(
+                    GET_NS_RC(PSD_HighRange_Changed), highRange_, other.highRange_));
+        }
+
+        return ErrorCode::Success();
     }
 
     void PartitionedServiceDescriptor::GetPartitionRange(int partitionIndex, __out __int64 & partitionLowKey, __out __int64 & partitionHighKey) const

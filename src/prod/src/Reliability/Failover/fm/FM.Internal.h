@@ -26,6 +26,7 @@
 #include "query/Query.h"
 
 #include "client/HealthClient.h"
+#include "client/TestClientFactory.h"
 
 #include "Reliability/Failover/common/Common.Internal.h"
 #include "client/ClientServerTransport/ClientServerTransport.external.h"
@@ -97,6 +98,16 @@
 #include "Reliability/Failover/fm/LockedFailoverUnitPtr.h"
 #include "Reliability/Failover/fm/BackgroundManager.h"
 #include "Reliability/Failover/fm/FabricUpgradeManager.h"
+
+#include "Management/NetworkInventoryManager/lib/NIMNetworkDefinitionStoreData.h"
+#include "Management/NetworkInventoryManager/lib/NIMNetworkNodeAllocationStoreData.h"
+#include "Management/NetworkInventoryManager/lib/NIMNetworkAllocationPool.h"
+#include "Management/NetworkInventoryManager/lib/NIMNetworkAddressPoolStoreData.h"
+#include "Management/NetworkInventoryManager/lib/NIMNetworkManager.h"
+#include "Management/NetworkInventoryManager/lib/NIMNetworkInventoryAllocationManager.h"
+#include "Management/NetworkInventoryManager/lib/NIMNetworkInventoryService.h"
+
+
 #include "Reliability/Failover/fm/BackgroundThreadContext.h"
 #include "Reliability/Failover/fm/UpgradeContext.h"
 #include "Reliability/Failover/fm/FabricUpgradeContext.h"

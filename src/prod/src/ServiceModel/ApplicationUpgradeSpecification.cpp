@@ -19,7 +19,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification()
     packageUpgrades_(),
     applicationName_(),
     spRGSettings_(),
-    cpContainersImages_()
+    cpContainersImages_(),
+    networks_()
 {
 }
 
@@ -34,7 +35,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification(
     vector<ServicePackageUpgradeSpecification> && packageUpgrades,
     vector<ServiceTypeRemovalSpecification> && removedTypes,
     ServicePackageResourceGovernanceMap && spRGSettings,
-    CodePackageContainersImagesMap && cpContainersImages)
+    CodePackageContainersImagesMap && cpContainersImages,
+    vector<wstring> && networks)
     : applicationId_(applicationId),
     applicationVersion_(applicationVersion),
     instanceId_(instanceId),
@@ -45,7 +47,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification(
     removedTypes_(move(removedTypes)),
     applicationName_(move(applicationName)),
     spRGSettings_(move(spRGSettings)),
-    cpContainersImages_(move(cpContainersImages))
+    cpContainersImages_(move(cpContainersImages)),
+    networks_(move(networks))
 {
 }
 
@@ -60,7 +63,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification(ApplicationUpgr
     removedTypes_(other.removedTypes_),
     applicationName_(other.applicationName_),
     spRGSettings_(other.spRGSettings_),
-    cpContainersImages_(other.cpContainersImages_)
+    cpContainersImages_(other.cpContainersImages_),
+    networks_(other.networks_)
 {
 }
 
@@ -75,7 +79,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification(ApplicationUpgr
     removedTypes_(move(other.removedTypes_)),
     applicationName_(move(other.applicationName_)),
     spRGSettings_(move(other.spRGSettings_)),
-    cpContainersImages_(move(other.cpContainersImages_))
+    cpContainersImages_(move(other.cpContainersImages_)),
+    networks_(move(other.networks_))
 {
 }
 
@@ -95,6 +100,7 @@ ApplicationUpgradeSpecification const & ApplicationUpgradeSpecification::operato
         this->applicationName_ = other.applicationName_;
         this->spRGSettings_ = other.spRGSettings_;
         this->cpContainersImages_ = other.cpContainersImages_;
+        this->networks_ = other.networks_;
     }
 
     return *this;
@@ -115,6 +121,7 @@ ApplicationUpgradeSpecification const & ApplicationUpgradeSpecification::operato
         this->applicationName_ = move(other.applicationName_);
         this->spRGSettings_ = move(other.spRGSettings_);
         this->cpContainersImages_ = move(other.cpContainersImages_);
+        this->networks_ = move(other.networks_);
     }
 
     return *this;
@@ -286,6 +293,8 @@ void ApplicationUpgradeSpecification::WriteTo(TextWriter & w, FormatOptions cons
         }
         w.Write("}");
     }
+
+    w.Write(",NetworkCount={0}", networks_.size());
 }
 
 void ApplicationUpgradeSpecification::FillEventData(Common::TraceEventContext & context) const

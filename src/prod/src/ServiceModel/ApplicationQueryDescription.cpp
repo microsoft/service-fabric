@@ -17,7 +17,7 @@ ApplicationQueryDescription::ApplicationQueryDescription()
     , applicationTypeNameFilter_()
     , applicationDefinitionKindFilter_(0)
     , excludeApplicationParameters_(false)
-    , queryPagingDescriptionUPtr_()
+    , queryPagingDescription_()
 {
 }
 
@@ -65,12 +65,20 @@ ErrorCode ApplicationQueryDescription::FromPublicApi(FABRIC_APPLICATION_QUERY_DE
                 {
                     auto applicationQueryDescriptionEx4 = reinterpret_cast<FABRIC_APPLICATION_QUERY_DESCRIPTION_EX4 *>(applicationQueryDescriptionEx3->Reserved);
                     auto maxResults = applicationQueryDescriptionEx4->MaxResults;
+
+                    if (maxResults < 0)
+                    {
+                        return ErrorCode(
+                            ErrorCodeValue::InvalidArgument,
+                            wformatString(GET_COMMON_RC(Invalid_Max_Results), maxResults));
+                    }
+
                     pagingDescription.MaxResults = maxResults;
                 }
             }
         }
 
-        queryPagingDescriptionUPtr_ = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryPagingDescription_ = make_unique<QueryPagingDescription>(move(pagingDescription));
     }
 
     return ErrorCodeValue::Success;
@@ -106,9 +114,9 @@ void ApplicationQueryDescription::GetQueryArgumentMap(__out QueryArgumentMap & a
             wformatString(excludeApplicationParameters_));
     }
 
-    if (queryPagingDescriptionUPtr_ != nullptr)
+    if (queryPagingDescription_ != nullptr)
     {
-        queryPagingDescriptionUPtr_->SetQueryArguments(argMap);
+        queryPagingDescription_->SetQueryArguments(argMap);
     }
 }
 
@@ -171,7 +179,7 @@ Common::ErrorCode ApplicationQueryDescription::GetDescriptionFromQueryArgumentMa
     auto error = pagingDescription.GetFromArgumentMap(queryArgs);
     if (error.IsSuccess())
     {
-        queryPagingDescriptionUPtr_ = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryPagingDescription_ = make_unique<QueryPagingDescription>(move(pagingDescription));
     }
 
     applicationNameFilter_ = NamingUri(trimmed);

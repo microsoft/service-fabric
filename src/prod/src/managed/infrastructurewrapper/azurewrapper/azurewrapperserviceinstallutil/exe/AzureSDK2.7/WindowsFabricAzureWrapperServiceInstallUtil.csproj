@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <AssemblyName>WindowsFabricAzureWrapperServiceInstallUtil</AssemblyName>
+    <RootNamespace>Microsoft.Fabric.InfrastructureWrapper</RootNamespace>
+    <ProjectGuid>{E7A7EB84-367C-4F1E-A845-562EE2922813}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <OutDirSuffix>WindowsFabricAzureWrapperServiceInstallUtil.AzureSDK2.7</OutDirSuffix>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="..\..\WindowsFabricAzureWrapperServiceInstallUtil.exe.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Compile Include="..\..\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\WindowsFabricAzureWrapperServiceInstallUtil.cs">
+      <Link>WindowsFabricAzureWrapperServiceInstallUtil.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\AzureRegistryStore.cs">
+      <Link>..\AzureRegistryStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\WindowsFabricAzureWrapperServiceCommon.cs">
+      <Link>..\WindowsFabricAzureWrapperServiceCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\..\Api\src\System\Fabric\FabricConstants.cs">
+      <Link>..\..\..\Api\src\System\Fabric\FabricConstants.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="$(PkgWinFab_Azure_Libs)\Microsoft.WindowsAzure.ServiceRuntime.v2.7\Microsoft.WindowsAzure.ServiceRuntime.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\AzureSDK2.7" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\AzureSDK2.7" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

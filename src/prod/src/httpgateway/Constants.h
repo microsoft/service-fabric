@@ -44,6 +44,7 @@ namespace HttpGateway
         static Common::GlobalWString FaultsHandlerPath;
         static Common::GlobalWString NamesHandlerPath;
         static Common::GlobalWString BackupRestoreHandlerPath;
+        static Common::GlobalWString NetworksHandlerPath;
         static Common::GlobalWString ContentTypeHeader;
         static Common::GlobalWString ContentLengthHeader;
         static Common::GlobalWString ContentRangeHeader;
@@ -53,12 +54,15 @@ namespace HttpGateway
         static Common::GlobalWString LocationHeader;
         static Common::GlobalWString AuthorizationHeader;
         static Common::GlobalWString Bearer;
+        static Common::GlobalWString SecretsResourceHandlerPath;
         static Common::GlobalWString ClusterIdHeader;
         static Common::GlobalWString ServiceFabricHttpClientRequestIdHeader;
         static Common::GlobalWString ServerRedirectResponse;
         static Common::GlobalWString ContentTypeOptionsHeader;
         static Common::GlobalWString ContentTypeNoSniffValue;
+        static Common::GlobalWString HSTSHeader;
         static Common::GlobalWString ApplicationsResourceHandlerPath;
+        static Common::GlobalWString GatewaysHandlerPath;
 
         static Common::GlobalWString JsonContentType;
         static Common::GlobalWString HtmlContentType;
@@ -122,6 +126,12 @@ namespace HttpGateway
         static Common::GlobalWString PropertyNameString;
         static Common::GlobalWString InstanceIdString;
         static Common::GlobalWString VolumeNameString;
+        static Common::GlobalWString SecretNameString;
+        static Common::GlobalWString SecretVersionString;
+        static Common::GlobalWString IncludeValueString;
+        static Common::GlobalWString NetworkNameString;
+        static Common::GlobalWString NetworkStatusFilterString;
+        static Common::GlobalWString GatewayNameString;
 
         static Common::GlobalWString CommandType;
 
@@ -158,6 +168,8 @@ namespace HttpGateway
         static Common::GlobalWString ReplicasResourceEntityKeyPath;
         static Common::GlobalWString ContainerCodePackageKeyPath;
         static Common::GlobalWString ContainerCodePackageLogsKeyPath;
+        static Common::GlobalWString GatewaysResourceEntitySetPath;
+        static Common::GlobalWString GatewaysResourceEntityKeyPath;
 
         // path suffixes for backup restore
         static Common::GlobalWString BackupRestoreServiceName;
@@ -205,10 +217,28 @@ namespace HttpGateway
         static Common::GlobalWString ServiceReplicaEntityKeyPathViaPartition;
         static Common::GlobalWString ServiceReplicaEntitySetPathViaService;
         static Common::GlobalWString ServiceReplicaEntityKeyPathViaService;
+        static Common::GlobalWString SecretsResourceEntitySetPath;
+        static Common::GlobalWString SecretsResourceEntityKeyPath;
+        static Common::GlobalWString SecretsResourceVersionEntitySetPath;
+        static Common::GlobalWString SecretsResourceVersionEntityKeyPath;
+        static Common::GlobalWString SecretsResourceVersionEntityKeyValuePath;
+        static Common::GlobalWString SecretsResourceValueListAction;
         static Common::GlobalWString SystemServiceReplicaEntitySetPath;
         static Common::GlobalWString SystemEntitySetPath;
         static Common::GlobalWString NodesEntitySetPath;
         static Common::GlobalWString NodesEntityKeyPath;
+
+        static Common::GlobalWString NetworksEntitySetPath;
+        static Common::GlobalWString NetworksEntityKeyPath;
+        static Common::GlobalWString ApplicationsEntitySetPathViaNetwork;
+        static Common::GlobalWString ApplicationsEntityKeyPathViaNetwork;
+        static Common::GlobalWString NodesEntitySetPathViaNetwork;
+        static Common::GlobalWString NodesEntityKeyPathViaNetwork;
+        static Common::GlobalWString NetworksEntitySetPathViaApplication;
+        static Common::GlobalWString NetworksOnNodeEntitySetPath;
+        static Common::GlobalWString NetworksOnNodeEntityKeyPath;
+        static Common::GlobalWString CodePackagesEntitySetPathViaNetworkViaNode;
+        static Common::GlobalWString CodePackagesEntityKeyPathViaNetworkViaNode;
 
         static Common::GlobalWString TestCommandsSetPath;
         static Common::GlobalWString TestCommandsEntityKeyPath;
@@ -356,6 +386,7 @@ namespace HttpGateway
         static Common::GlobalWString GetUpgradeProgress;
         static Common::GlobalWString MoveToNextUpgradeDomain;
         static Common::GlobalWString GetClusterManifest;
+        static Common::GlobalWString GetClusterVersion;
         static Common::GlobalWString GetApplicationManifest;
         static Common::GlobalWString GetServiceManifest;
         static Common::GlobalWString GetServicePackage;
@@ -378,6 +409,10 @@ namespace HttpGateway
         static Common::GlobalWString GetPartitions;
         static Common::GlobalWString GetReplicas;
         static Common::GlobalWString GetApplications;
+        static Common::GlobalWString Applications;
+        static Common::GlobalWString GetNodes;
+        static Common::GlobalWString Nodes;
+        static Common::GlobalWString GetNetworks;
         static Common::GlobalWString GetCodePackages;
         static Common::GlobalWString RecoverAllPartitions;
         static Common::GlobalWString Recover;
@@ -441,6 +476,7 @@ namespace HttpGateway
         static USHORT StatusOk;
         static USHORT StatusCreated;
         static USHORT StatusNoContent;
+        static USHORT StatusBadRequest;
         static USHORT StatusAccepted;
         static USHORT StatusAuthenticate;
         static USHORT StatusUnauthorized;
@@ -453,6 +489,7 @@ namespace HttpGateway
         static Common::GlobalWString StatusDescriptionOk;
         static Common::GlobalWString StatusDescriptionCreated;
         static Common::GlobalWString StatusDescriptionNoContent;
+        static Common::GlobalWString StatusDescriptionBadRequest;
         static Common::GlobalWString StatusDescriptionAccepted;
         static Common::GlobalWString StatusDescriptionClientCertificateRequired;
         static Common::GlobalWString StatusDescriptionClientCertificateInvalid;
@@ -495,6 +532,29 @@ namespace HttpGateway
         static Common::GlobalWString TestCommandTypeQuorumLoss;
         static Common::GlobalWString TestCommandTypeRestartPartition;
 
+        // /Networks?NetworkStatusFilter={networkStatusFilter}
+        static Common::GlobalWString NetworkStatusFilterDefaultString;
+        static Common::GlobalWString NetworkStatusFilterAllString;
+        static Common::GlobalWString NetworkStatusFilterReadyString;
+        static Common::GlobalWString NetworkStatusFilterCreatingString;
+        static Common::GlobalWString NetworkStatusFilterDeletingString;
+        static Common::GlobalWString NetworkStatusFilterUpdatingString;
+        static Common::GlobalWString NetworkStatusFilterStoppingString;
+        static Common::GlobalWString NetworkStatusFilterStoppedString;
+        static Common::GlobalWString NetworkStatusFilterStartingString;
+        static Common::GlobalWString NetworkStatusFilterFailedString;
+
+        static Common::GlobalWString NetworkStatusFilterDefault;
+        static Common::GlobalWString NetworkStatusFilterAll;
+        static Common::GlobalWString NetworkStatusFilterReady;
+        static Common::GlobalWString NetworkStatusFilterCreating;
+        static Common::GlobalWString NetworkStatusFilterDeleting;
+        static Common::GlobalWString NetworkStatusFilterUpdating;
+        static Common::GlobalWString NetworkStatusFilterStopping;
+        static Common::GlobalWString NetworkStatusFilterStopped;
+        static Common::GlobalWString NetworkStatusFilterStarting;
+        static Common::GlobalWString NetworkStatusFilterFailed;
+
         // Data loss modes
         static Common::GlobalWString PartialDataLoss;
         static Common::GlobalWString FullDataLoss;
@@ -517,7 +577,6 @@ namespace HttpGateway
         static Common::GlobalWString EventsStoreHandlerPath;
         static Common::GlobalWString EventsStoreServiceName;
         static Common::GlobalWString EventsStorePrefix;
-        static Common::GlobalWString EventsReaderOutputDir;
 
         #define EMPTY_URI_QUERY_FILTER Common::NamingUri::RootNamingUri
         #define EMPTY_STRING_QUERY_FILTER std::wstring()

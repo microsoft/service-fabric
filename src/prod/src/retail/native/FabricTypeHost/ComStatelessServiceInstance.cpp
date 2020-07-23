@@ -8,6 +8,7 @@
 using namespace std;
 using namespace Common;
 using namespace FabricTypeHost;
+using namespace ServiceModel;
 
 StringLiteral const TraceType("FabricTypeHost.StatelessServiceInstance");
 

@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_mstest.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>b707ae6a-7e17-4058-9847-8cd3ec7f8d4f</ProjectGuid>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyName>System.Fabric.Test</AssemblyName>
+    <RootNamespace>System.Fabric.Test</RootNamespace>
+    <Description>System.Fabric.Test tests</Description>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <DefineConstants>$(DefineConstants);TRACE;SYSTEM_FABRIC</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(SrcRoot)\prod\src\ServiceModel\xsd\ServiceFabricServiceModel.xsd">
+      <LogicalName>System.Fabric.Test.ServiceFabricServiceModel.xsd</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\common\.cfg.template">
+      <LogicalName>System.Fabric.Test.Templates.cfg.template</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\common\app.config.template">
+      <LogicalName>System.Fabric.Test.Templates.app.config.template</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\common\ClusterConfig.ini.template">
+      <LogicalName>System.Fabric.Test.Templates.ClusterConfig.ini.template</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\common\FabricConfig.cfg.template">
+      <LogicalName>System.Fabric.Test.Templates.FabricConfig.cfg.template</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\common\HostConfig.ini.template">
+      <LogicalName>System.Fabric.Test.Templates.HostConfig.ini.template</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\hosting\EntryPointManager.config.template">
+      <LogicalName>System.Fabric.Test.Templates.EntryPointManager.config.template</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\_friends.cs" Exclude="bin\**;obj\**;objd\**;packages\**" />
+    <Compile Include="..\..\Common\AsyncTaskCallInAdapterTest.cs" />
+    <Compile Include="..\..\Common\FabricUtility\ApplicationDeployer.cs" />
+    <Compile Include="..\..\Common\FabricUtility\DefaultEntryPoint.cs" />
+    <Compile Include="..\..\Common\FabricUtility\FabricDeployment.cs" />
+    <Compile Include="..\..\Common\FabricUtility\FabricDeploymentParameters.cs" />
+    <Compile Include="..\..\Common\FabricUtility\FabricHost.cs" />
+    <Compile Include="..\..\Common\FabricUtility\FabricNode.cs" />
+    <Compile Include="..\..\Common\FabricUtility\FabricNodeParameters.cs" />
+    <Compile Include="..\..\Common\FabricUtility\FabricTestClient.cs" />
+    <Compile Include="..\..\Common\FabricUtility\InProc\NodeConfig.cs" />
+    <Compile Include="..\..\Common\FabricUtility\InProc\PortHelper.cs" />
+    <Compile Include="..\..\Common\FabricUtility\InProc\WinFabricNodeId.cs" />
+    <Compile Include="..\..\Common\ItemCollectionTest.cs" />
+    <Compile Include="..\..\Common\ItemListTest.cs" />
+    <Compile Include="..\..\Common\OperationFetcher.cs" />
+    <Compile Include="..\..\Common\OperationProcessorInfo.cs" />
+    <Compile Include="..\..\Common\Serialization\DescriptionSerializationInterop.Test.cs" />
+    <Compile Include="..\..\Common\Serialization\HealthSerializationInterop.Test.cs" />
+    <Compile Include="..\..\Common\Serialization\QuerySerializationInterop.Test.cs" />
+    <Compile Include="..\..\Common\Serialization\SerializationUtil.cs" />
+    <Compile Include="..\..\Common\TempDirectory.cs" />
+    <Compile Include="..\..\Common\Tracing\EventDataArrayBuilderTest.cs" />
+    <Compile Include="..\..\Common\Tracing\ExtensionsEventsTest.cs" />
+    <Compile Include="..\..\Common\Tracing\TraceConfigTest.cs" />
+    <Compile Include="..\..\Common\Tracing\VariantTest.cs" />
+    <Compile Include="..\..\Common\Utilities\EmbeddedResourceUtility.cs" />
+    <Compile Include="..\..\Common\Utilities\EqualityComparer.cs" />
+    <Compile Include="..\..\Common\Utilities\FileUtility.cs" />
+    <Compile Include="..\..\Common\Utilities\LogHelper.cs" />
+    <Compile Include="..\..\Common\Utilities\LogManUtil.cs" />
+    <Compile Include="..\..\Common\Utilities\MiscUtility.cs" />
+    <Compile Include="..\..\Common\Utilities\ProcessMonitor.cs" />
+    <Compile Include="..\..\Common\Utilities\ProcessUtility.cs" />
+    <Compile Include="..\..\Common\Utilities\SimpleHttpListener.cs" />
+    <Compile Include="..\..\Common\Utilities\TestUtility.cs" />
+    <Compile Include="..\..\Common\UtilityTest.cs" />
+    <Compile Include="..\..\Common\WinFabricNodeId.cs" />
+    <Compile Include="..\..\Description\CodePackageDescriptionTest.cs" />
+    <Compile Include="..\..\Description\ConfigurationPackageDescriptionTest.cs" />
+    <Compile Include="..\..\Description\DataPackageDescriptionTest.cs" />
+    <Compile Include="..\..\Description\DescriptionElementTestBase.cs" />
+    <Compile Include="..\..\Description\DescriptionExtensionTest.cs" />
+    <Compile Include="..\..\Description\EndPointDescriptionTest.cs" />
+    <Compile Include="..\..\Description\EntryPointDescriptionTest.cs" />
+    <Compile Include="..\..\Description\PackageDescriptionTest.cs" />
+    <Compile Include="..\..\Description\PartitionDescriptionTest.cs" />
+    <Compile Include="..\..\Description\ServiceCorrelationDescriptionTest.cs" />
+    <Compile Include="..\..\Description\ServiceDescriptionTest.cs" />
+    <Compile Include="..\..\Description\ServiceGroupDescriptionTest.cs" />
+    <Compile Include="..\..\Description\ServiceLoadMetricDescriptionTest.cs" />
+    <Compile Include="..\..\Description\ServiceManifest.cs" />
+    <Compile Include="..\..\Description\ServiceManifestTest.cs" />
+    <Compile Include="..\..\Description\ServiceTypeDescriptionTest.cs" />
+    <Compile Include="..\..\Description\Utility.cs" />
+    <Compile Include="..\..\EpochTest.cs" />
+    <Compile Include="..\..\FabricDirectoryTest.cs" />
+    <Compile Include="..\..\FabricPathTest.cs" />
+    <Compile Include="..\..\Hosting\CodePackageActivationContextTest.cs" />
+    <Compile Include="..\..\Hosting\DefaultServiceFactoryTest.cs" />
+    <Compile Include="..\..\Hosting\FabricRuntimeTest.cs" />
+    <Compile Include="..\..\Hosting\Interop.Mscoree\ICorRuntimeHost.cs" />
+    <Compile Include="..\..\Interop\AccessControlListTest.cs" />
+    <Compile Include="..\..\Interop\DateTimeTest.cs" />
+    <Compile Include="..\..\Interop\OperationDataTest.cs" />
+    <Compile Include="..\..\Interop\ReplicaInformationTest.cs" />
+    <Compile Include="..\..\NodeIdTest.cs" />
+    <Compile Include="..\..\OperationFetcherTest.cs" />
+    <Compile Include="..\..\Replication\NativeReplicator.cs" />
+    <Compile Include="..\..\Replication\OperationData.cs" />
+    <Compile Include="..\..\Replication\StatefulPartitionTest.cs" />
+    <Compile Include="..\..\Replication\StatelessNativePartition.cs" />
+    <Compile Include="..\..\Replication\StatelessPartitionTest.cs" />
+    <Compile Include="..\..\Security\AccessControlUtility.cs" />
+    <Compile Include="..\..\Security\X509Test.cs" />
+    <Compile Include="..\..\ServiceFactoryBrokerTest.cs" />
+    <Compile Include="..\..\ServiceInitializationParametersTest.cs" />
+    <Compile Include="..\..\ServicePartitionInfoTest.cs" />
+    <Compile Include="..\..\StatefulServiceReplicaBrokerTests.cs" />
+    <Compile Include="..\..\StringResourcesTest.cs" />
+    <Compile Include="..\..\Stubs\CodePackageActivationContextStubs.cs" />
+    <Compile Include="..\..\Stubs\FabricRuntimeStubs.cs" />
+    <Compile Include="..\..\Stubs\misc.cs" />
+    <Compile Include="..\..\Stubs\OperationStreamStubs.cs" />
+    <Compile Include="..\..\Stubs\PartitionStubs.cs" />
+    <Compile Include="..\..\Stubs\ServiceFactoryStubs.cs" />
+    <Compile Include="..\..\Stubs\StatefulServiceReplicaStubs.cs" />
+    <Compile Include="..\..\Stubs\StatelessServiceStubs.cs" />
+    <Compile Include="..\..\Stubs\StateReplicatorStubs.cs" />
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <!-- Tests running only in windows. -->
+  <ItemGroup Condition=" '$(TargetsWindows)' == true ">
+    <!-- NTTypes are ifdef out in Linux -->
+    <Compile Include="..\..\FabricFileTest.cs" />
+    <!-- No KtlInteropTestNativeComponent.so for linux -->
+    <Compile Include="..\..\Interop\KtlAsyncInteropTest.cs" />
+
+    <!-- Not compiled following files : -->
+    <!--
+         System.Fabric.JsonSerializerWrapper not ported to dotnetstd2.0 :
+
+         ..\..\Common\Serialization\JsonSerialization.Test.cs;
+         ..\..\Common\Serialization\JsonSerializationInterop.Test.cs;
+
+         Not using custom corext mstest package :$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+
+         ..\..\Hosting\FabricHostEntryPointTest.cs;
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Castle.Core" Version="4.1.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.1.18" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.1.18" />
+    <PackageReference Include="Moq" Version="4.7.8" />
+    <ProjectReference Include="..\..\..\..\..\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\managed\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\managed\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <!-- Not yet donetstd2.0 converted projects : -->
+    <!-- System.Fabric.JsonSerializerWrapper, Microsoft.ServiceFabric.ClusterManagementCommon, Microsoft.ServiceFabric.DeploymentManager -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsLinux)' == true ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+  </ItemGroup>
+
+  <Target Name="AfterPublishCopy" AfterTargets="Publish" Condition=" '$(TargetsWindows)' == true ">
+    <ItemGroup>
+      <KtlInteropTestFiles Include="$(BinariesBuildTypeArchDirectory)\bin\KtlInteropTestNativeComponent.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(KtlInteropTestFiles)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test.targets" />
+</Project>

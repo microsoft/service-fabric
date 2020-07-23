@@ -99,7 +99,7 @@ namespace System.Fabric.FabricDeployer
                 CopyBaselinePackageIfPathExists(parameters.BootstrapMSIPath, parameters.FabricDataRoot, parameters.DeploymentPackageType, parameters.MachineName);
             }
 
-            SetFabricRegistrySettings(parameters);
+            Utility.SetFabricRegistrySettings(parameters);
             ConfigureFromManifest(parameters, clusterManifest, infrastructure);
 
             string destinationCabPath = Path.Combine(parameters.FabricDataRoot, Constants.FileNames.BaselineCab);
@@ -171,12 +171,12 @@ namespace System.Fabric.FabricDeployer
 #if !DotNetCoreClrLinux
             try
             {
+                RegistryKey hklm = Utility.GetHklm(machineName);
+
                 //Enable all the symlink in registry key.
-                using (RegistryKey key = string.IsNullOrEmpty(machineName) ? Registry.LocalMachine.OpenSubKey(@"System\CurrentControlSet\Control\FileSystem", true)
-                    : RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, machineName).OpenSubKey(@"System\CurrentControlSet\Control\FileSystem", true))
+                using (RegistryKey key = hklm.OpenSubKey(@"System\CurrentControlSet\Control\FileSystem", true))
                 {
-                    using (RegistryKey regKey = key ?? (string.IsNullOrEmpty(machineName) ? (Registry.LocalMachine.CreateSubKey(@"System\CurrentControlSet\Control\FileSystem"))
-                                : RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, machineName).CreateSubKey(@"System\CurrentControlSet\Control\FileSystem")))
+                    using (RegistryKey regKey = key ?? hklm.CreateSubKey(@"System\CurrentControlSet\Control\FileSystem"))
                     {
                         regKey.SetValue("SymlinkLocalToLocalEvaluation", 1, RegistryValueKind.DWord);
                         regKey.SetValue("SymlinkLocalToRemoteEvaluation", 1, RegistryValueKind.DWord);
@@ -270,47 +270,6 @@ namespace System.Fabric.FabricDeployer
             }
             DeployerTrace.WriteInfo("Set Service Fabric Host Service to start up type to {0}", serviceStartupType);
 #endif
-        }
-
-        private void SetFabricRegistrySettings(DeploymentParameters parameters)
-        {
-            string machineNameForRegistry = string.IsNullOrEmpty(parameters.MachineName) ? null : @"\\" + parameters.MachineName;
-
-            if (!string.IsNullOrEmpty(parameters.FabricPackageRoot))
-            {
-                DeployerTrace.WriteInfo("Setting FabricRoot to {0} on machine {1}", parameters.FabricPackageRoot, parameters.MachineName);
-                FabricEnvironment.SetFabricRoot(parameters.FabricPackageRoot, machineNameForRegistry);
-
-                string fabricBinRoot = Path.Combine(parameters.FabricPackageRoot, Constants.FabricBinRootRelativePath);
-                DeployerTrace.WriteInfo("Setting FabricBinRoot to {0} on machine {1}", fabricBinRoot, parameters.MachineName);
-                FabricEnvironment.SetFabricBinRoot(fabricBinRoot, machineNameForRegistry);
-
-                string fabricCodePath = Path.Combine(parameters.FabricPackageRoot, Constants.FabricCodePathRelativePath);
-                DeployerTrace.WriteInfo("Setting FabricCodePath to {0} on machine {1}", fabricCodePath, parameters.MachineName);
-                FabricEnvironment.SetFabricCodePath(fabricCodePath, machineNameForRegistry);
-            }
-
-            if (!string.IsNullOrEmpty(parameters.FabricDataRoot))
-            {
-                DeployerTrace.WriteInfo("Setting FabricDataRoot to {0} on machine {1}", parameters.FabricDataRoot, parameters.MachineName);
-                FabricEnvironment.SetDataRoot(parameters.FabricDataRoot, machineNameForRegistry);
-            }
-
-            if (!string.IsNullOrEmpty(parameters.FabricLogRoot))
-            {
-                DeployerTrace.WriteInfo("Setting FabricLogRoot to {0} on machine {1}", parameters.FabricLogRoot, parameters.MachineName);
-                FabricEnvironment.SetLogRoot(parameters.FabricLogRoot, machineNameForRegistry);
-            }
-
-            DeployerTrace.WriteInfo("Setting EnableCircularTraceSession to {0} on machine {1}", parameters.EnableCircularTraceSession, parameters.MachineName);
-            FabricEnvironment.SetEnableCircularTraceSession(parameters.EnableCircularTraceSession, machineNameForRegistry);
-
-            // Set the state for preview features that need to lightup at runtime
-            DeployerTrace.WriteInfo("Setting EnableUnsupportedPreviewFeatures to {0} on machine {1}", parameters.EnableUnsupportedPreviewFeatures, parameters.MachineName);
-            FabricEnvironment.SetEnableUnsupportedPreviewFeatures(parameters.EnableUnsupportedPreviewFeatures, machineNameForRegistry);
-
-            DeployerTrace.WriteInfo("Setting IsSFVolumeDiskServiceEnabled to {0} on machine {1}", parameters.IsSFVolumeDiskServiceEnabled, parameters.MachineName);
-            FabricEnvironment.SetIsSFVolumeDiskServiceEnabled(parameters.IsSFVolumeDiskServiceEnabled, machineNameForRegistry);
         }
 
         private void CopyBaselinePackageIfPathExists(string bootstrapPackagePath, string fabricDataRoot, FabricPackageType fabricPackageType, string machineName)

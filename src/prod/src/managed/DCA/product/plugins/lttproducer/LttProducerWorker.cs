@@ -16,7 +16,7 @@ namespace FabricDCA
     using System.Linq;
     using System.Threading.Tasks;
     using System.Text;
-    using LttngReader;
+    using Tools.EtlReader;
 
     // This class implements a wrapper around the ETL producer worker object
     internal class LttProducerWorker
@@ -51,6 +51,10 @@ namespace FabricDCA
 
         private readonly LttTraceProcessor lttngTraceProcessor;
 
+        private bool disposed = false;
+        private bool stopping = false;
+        private object disposeLock = new object();
+
         internal LttProducerWorker(LttProducerWorkerParameters initParam)
         {
             this.traceSource = new FabricEvents.ExtensionsEvents(FabricEvents.Tasks.FabricDCA);
@@ -84,7 +88,7 @@ namespace FabricDCA
                             this.sinksIEtlFile.Count,
                             this.sinksICsvFile.Count);
 
-            this.lastReadTimestampUnixEpochNanoSec = this.InitializeLastReadTimestamp();
+            this.lastReadTimestampUnixEpochNanoSec = this.InitializeLastReadTimestamp(initParam.WorkDirectory);
 
             this.lttngTraceProcessor = new LttTraceProcessor(
                 this.traceSource,
@@ -113,19 +117,89 @@ namespace FabricDCA
             StringBuilder serviceFabricSessionName = new StringBuilder(LttProducerWorker.ServiceFabricSessionName);
             StringBuilder serviceFabricSessionOutputPath = new StringBuilder(LttProducerWorker.PathMaxSize);
 
-            if (LttngReaderBindings.get_active_lttng_session_path(serviceFabricSessionName, serviceFabricSessionOutputPath, LttProducerWorker.PathMaxSize))
+            // If processing traces from container LTTng session the session is not accessible from host.
+            // In this case the the active session is the one and only one folder inside the Log/Containers/sf-containerid/lttng-traces folder.
+            string containerTraceFolder;
+            if (this.TryGetContainerTraceFolder(out containerTraceFolder))
+            {
+                return containerTraceFolder;
+            }
+
+            LttngReaderStatusCode res = LttngReaderBindings.get_active_lttng_session_path(serviceFabricSessionName, serviceFabricSessionOutputPath, LttProducerWorker.PathMaxSize);
+            if (res == LttngReaderStatusCode.SUCCESS)
             {
                 return serviceFabricSessionOutputPath.ToString().TrimEnd(Path.DirectorySeparatorChar);
             }
             else
             {
+                string errorMessage = LttngReaderStatusMessage.GetMessage(res);
                 this.traceSource.WriteWarning(
                     this.logSourceId,
-                    "Unable to find active Service Fabric Ltt trace session with name starting with: {0}",
-                    LttProducerWorker.ServiceFabricSessionName);
+                    "Unable to find active Service Fabric Ltt trace session with name starting with: {0}.\nInner error : {1}",
+                    LttProducerWorker.ServiceFabricSessionName,
+                    errorMessage);
             }
 
             return null;
+        }
+
+        private bool TryGetContainerTraceFolder(out string containerTraceFolder)
+        {
+            containerTraceFolder = null;
+
+            var applicationInstanceId = ContainerEnvironment.GetContainerApplicationInstanceId(this.logSourceId);
+            if (ContainerEnvironment.IsContainerApplication(applicationInstanceId))
+            {
+                string containerTraceFolderParent = Path.Combine(
+                                                ContainerEnvironment.GetContainerLogFolder(applicationInstanceId),
+                                                LttProducerConstants.LttSubDirectoryUnderLogDirectory);
+
+                IEnumerable<string> traceFolders = null;
+                int numberOfTraceFolders;
+
+                try
+                {
+                    traceFolders = Directory.EnumerateDirectories(
+                        containerTraceFolderParent,
+                        $"{LttProducerConstants.LttTraceSessionFolderNamePrefix}*");
+
+                    numberOfTraceFolders = traceFolders.Count();
+                }
+                catch (OverflowException)
+                {
+                    this.traceSource.WriteWarning(this.logSourceId, $"Number of container trace folders found is too large.");
+                    numberOfTraceFolders = int.MaxValue;
+                }
+                catch (Exception e)
+                {
+                    this.traceSource.WriteExceptionAsError(this.logSourceId, e, $"Exception when trying to get container trace folder");
+                    return false;
+                }
+
+                if (traceFolders == null)
+                {
+                    return false;
+                }
+
+                switch (numberOfTraceFolders)
+                {
+                    case 0:
+                        this.traceSource.WriteWarning(this.logSourceId, "No LTTng traces folder found for container.");
+                        containerTraceFolder = null;
+                        break;
+                    case 1:
+                        containerTraceFolder = traceFolders.First();
+                        this.traceSource.WriteInfo(this.logSourceId, $"Processing LTTng traces from container at: {containerTraceFolder}");
+                        break;
+                    default:
+                        containerTraceFolder = traceFolders.FirstOrDefault();
+                        this.traceSource.WriteWarning(this.logSourceId, $"Found {numberOfTraceFolders} container trace folders. Using {containerTraceFolder}");
+                        break;
+                }
+                return true;
+            }
+
+            return false;
         }
 
         private static bool HasCsvSink(IEnumerable<Object> sinks)
@@ -281,7 +355,6 @@ namespace FabricDCA
                         e);
                 }
             }
-
         }
 
         private ulong ReadLastReadTimestampFromFile(string filePath)
@@ -312,45 +385,53 @@ namespace FabricDCA
 
         private void LttReadCallback(object state)
         {
-            this.traceSource.WriteInfo(
-                            this.logSourceId,
-                            "Starting the Ltt handler, ApplicationInstance: {0}",
-                            applicationInstanceId);
-
-            this.OnLttProcessingPassBegin();
-
-            // try to get active tracing session if previously none was found.
-            if (this.activeLttTraceSessionOutputPath == null)
+            lock(this.disposeLock)
             {
-                this.activeLttTraceSessionOutputPath = this.GetServiceFabricSessionOutputPath();
+                if (this.stopping)
+                {
+                    return;
+                }
 
-                // trying to load the correct manifest file if session found.
+                this.traceSource.WriteInfo(
+                                this.logSourceId,
+                                "Starting the Ltt handler, ApplicationInstance: {0}",
+                                applicationInstanceId);
+
+                this.OnLttProcessingPassBegin();
+
+                // try to get active tracing session if previously none was found.
+                if (this.activeLttTraceSessionOutputPath == null)
+                {
+                    this.activeLttTraceSessionOutputPath = this.GetServiceFabricSessionOutputPath();
+
+                    // trying to load the correct manifest file if session found.
+                    if (this.activeLttTraceSessionOutputPath != null)
+                    {
+                        this.lttngTraceProcessor.EnsureCorrectWinFabManifestVersionLoaded(this.activeLttTraceSessionOutputPath);
+                    }
+                }
+
+                // lttng_handler will be only executed by starthost at the beginning to start the tracing session.
+                // Now the same session is used and we use Ltt tracefile-size trace-count to rotate the trace files.
+                // Ltt-enable channel switch-timer is used to flush the traces and the metadata so it can be read here.
                 if (this.activeLttTraceSessionOutputPath != null)
                 {
-                    this.lttngTraceProcessor.EnsureCorrectWinFabManifestVersionLoaded(this.activeLttTraceSessionOutputPath);
+                    this.lastReadTimestampUnixEpochNanoSec = this.lttngTraceProcessor.ProcessTraces(this.activeLttTraceSessionOutputPath, this.lastReadTimestampUnixEpochNanoSec != 0, this.lastReadTimestampUnixEpochNanoSec);
                 }
+
+                this.OnLttProcessingPassEnd();
+
+                // Persist lastReadTimestamp in case process restarts.
+                this.PersistToFileLastReadTimestamp(this.lastReadTimestampUnixEpochNanoSec);
+
+                if (this.sinksICsvFile.Any())
+                {
+                    // Read the table file and send the events to consumer
+                    var task = Task.Run(() => this.ProcessTableEvents());
+                }
+
+                this.LttReadTimer.Start(this.LttReadIntervalMinutes * 60 * 1000);
             }
-
-            // lttng_handler will be only executed by starthost at the beginning to start the tracing session.
-            // Now the same session is used and we use Ltt tracefile-size trace-count to rotate the trace files.
-            // Ltt-enable channel switch-timer is used to flush the traces and the metadata so it can be read here.
-            if (this.activeLttTraceSessionOutputPath != null)
-            {
-                this.lastReadTimestampUnixEpochNanoSec = this.lttngTraceProcessor.ProcessTraces(this.activeLttTraceSessionOutputPath, this.lastReadTimestampUnixEpochNanoSec != 0, this.lastReadTimestampUnixEpochNanoSec);
-            }
-
-            this.OnLttProcessingPassEnd();
-
-            // Persist lastReadTimestamp in case process restarts.
-            this.PersistToFileLastReadTimestamp(this.lastReadTimestampUnixEpochNanoSec);
-
-            if (this.sinksICsvFile.Any())
-            {
-                // Read the table file and send the events to consumer
-                var task = Task.Run(() => this.ProcessTableEvents());
-            }
-
-            this.LttReadTimer.Start(this.LttReadIntervalMinutes * 60 * 1000);
         }
 
         private void ProcessTableEvents()
@@ -397,7 +478,7 @@ namespace FabricDCA
 
         // Returns the last read timestamp as persisted on disk
         // if not found creates the needed folders and files for persistence.
-        private ulong InitializeLastReadTimestamp()
+        private ulong InitializeLastReadTimestamp(string workFolder)
         {
             // get or creates path to where last read timestamp will be or was persisted
             if (!Utility.CreateWorkSubDirectory(
@@ -405,14 +486,14 @@ namespace FabricDCA
                 this.logSourceId,
                 LttProducerWorker.LastReadTimestampWorkSubDirectoryKey,
                 LttProducerWorker.LastReadTimestampPersistenceFolder,
-                Utility.DcaWorkFolder,
+                workFolder,
                 out this.lastReadTimestampPersistenceFilePath))
             {
                 // failed to create folder this.lastReadTimestampPersistenceFilePath will be null
                 this.traceSource.WriteError(
                     this.logSourceId,
                     "Unable to create or access WorkSubDirectory for persisting trace processing persistence with: DCAWorkFolder: {0}, PersistenceFolder: {1}, WorkSubDirectoryKey: {2}. Trace processing will start from beginning on process restart.",
-                    Utility.DcaWorkFolder,
+                    workFolder,
                     LttProducerWorker.LastReadTimestampPersistenceFolder,
                     LttProducerWorker.LastReadTimestampWorkSubDirectoryKey);
 
@@ -485,13 +566,27 @@ namespace FabricDCA
         
         public void Dispose()
         {
-            this.LttReadTimer.StopAndDispose();
+            lock (this.disposeLock)
+            {
+                this.stopping = true;
+
+                if (this.disposed)
+                {
+                    return;
+                }
+
+                this.LttReadTimer.StopAndDispose();
+                this.disposed = true;
+
+                GC.SuppressFinalize(this);
+            }
         }
 
         internal struct LttProducerWorkerParameters
         {
             internal FabricEvents.ExtensionsEvents TraceSource;
             internal string LogDirectory;
+            internal string WorkDirectory;
             internal string ProducerInstanceId;
             internal List<LttProducer> LttProducers;
             internal ProducerInitializationParameters LatestSettings;

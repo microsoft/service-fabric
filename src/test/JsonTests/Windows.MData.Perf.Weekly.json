@@ -5,7 +5,7 @@
     {
       "Name": "Hairball DD Perf (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "ImanG, HaNagar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Hairball,D14,1P",
       "TestExecutionParameters": {
@@ -20,7 +20,7 @@
     {
       "Name": "Hairball MRCQ Perf (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "yzha, tyadam",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Hairball,D14,1P",
       "TestExecutionParameters": {
@@ -35,7 +35,7 @@
     {
       "Name": "Hairball DD Perf 3-Replica (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "ImanG, HaNagar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Hairball,D14,1P",
       "TestExecutionParameters": {
@@ -50,7 +50,7 @@
     {
       "Name": "Hairball MRCQ Perf 3-Replica (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "yzha, tyadam",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Hairball,D14,1P",
       "TestExecutionParameters": {
@@ -65,7 +65,7 @@
     {
       "Name": "Hairball KVS Perf (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "harahma",
+      "Owners": "shalabhs,kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Hairball,D14,1P",
       "TestExecutionParameters": {
@@ -80,7 +80,7 @@
     {
       "Name": "Hairball KVS Perf 3-Replica (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "harahma",
+      "Owners": "shalabhs,kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Hairball,D14,1P",
       "TestExecutionParameters": {
@@ -95,7 +95,7 @@
     {
       "Name": "Hairball V1Repl Perf 3-Replica (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "ImanG, HaNagar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Hairball,D14,1P",
       "TestExecutionParameters": {
@@ -110,7 +110,7 @@
     {
       "Name": "Hairball DD Perf 3-Replica-6P (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "ImanG, HaNagar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags" : "Hairball,D14,6P",
       "TestExecutionParameters": {
@@ -125,7 +125,7 @@
     {
       "Name": "Hairball MRCQ Perf 3-Replica-6P (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "yzha, tyadam",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags" : "Hairball,D14,6P",
       "TestExecutionParameters": {
@@ -138,9 +138,9 @@
       }
     },
     {
-      "Name": "Hairball DD Perf 1-Replica-6P Direct Dedicated Log (D14)",
+      "Name": "Hairball DD Perf 1R6P DirDed Log (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "AlanWar, Tyadam",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags" : "Hairball,D14,6P",
       "TestExecutionParameters": {
@@ -155,7 +155,7 @@
     {
       "Name": "Hairball KVS Perf 3-Replica-6P (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "harahma",
+      "Owners": "shalabhs,kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags" : "Hairball,D14,6P",
       "TestExecutionParameters": {
@@ -170,7 +170,7 @@
     {
       "Name": "Hairball V1Repl Perf 3-Replica-6P (D14)",
       "Type": "Azure_ScriptTest",
-      "Owners": "ImanG, HaNagar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags" : "Hairball,D14,6P",
       "TestExecutionParameters": {
@@ -185,7 +185,7 @@
     {
       "Name": "YCSBMeasurementTest (DS4)",
       "Type": "Azure_ScriptTest",
-      "Owners": "t-shahs",
+      "Owners": "kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -199,7 +199,7 @@
     {
       "Name": "E2EDictionary-3P-3N (D4)",
       "Type": "Azure_ScriptTest_Quark",
-      "Owners": "HaNagar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "E2EPerf,PaaS,D4,3P3N",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
@@ -214,7 +214,7 @@
     {
       "Name": "E2EDictionary-3P-3N-Backups (D4)",
       "Type": "Azure_ScriptTest_Quark",
-      "Owners": "HaNagar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "E2EPerf,PaaS,D4,3P3N",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
@@ -229,7 +229,7 @@
     {
       "Name": "Hairball DD Perf 3-Replica-6P Write Throttled (A7)",
       "Type": "Azure_ScriptTest",
-      "Owners": "AlanWar, Tyadam",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags":"Hairball,A7,6P",
       "TestExecutionParameters": {
@@ -244,7 +244,7 @@
     {
       "Name": "Hairball DD Perf 3-Replica-6P Write Throttled (D3)",
       "Type": "Azure_ScriptTest",
-      "Owners": "AlanWar, Tyadam",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Hairball,D3,6P",
       "TestExecutionParameters": {

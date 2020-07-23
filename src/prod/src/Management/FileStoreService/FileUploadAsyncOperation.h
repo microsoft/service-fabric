@@ -42,6 +42,7 @@ namespace Management
 
         private:
             class MoveAsyncOperation;
+            bool CheckIfPreviousVersionExists();
 
             std::wstring const stagingFullPath_;
             std::wstring const storeFullPath_;

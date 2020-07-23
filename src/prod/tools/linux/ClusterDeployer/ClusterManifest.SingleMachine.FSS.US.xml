@@ -129,6 +129,7 @@
       <Parameter Name="ActivatedProcessDieOnUnhandledExceptionEnabled" Value="False" />
       <Parameter Name="RunAsPolicyEnabled" Value="True" />
       <Parameter Name="EndpointProviderEnabled" Value="True" />
+      <Parameter Name="FabricContainerAppsEnabled" Value="True" />
     </Section>
     <Section Name="HttpGateway">
       <Parameter Name="IsEnabled" Value="True" />

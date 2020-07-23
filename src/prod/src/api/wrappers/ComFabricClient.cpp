@@ -6938,7 +6938,7 @@ public:
         return S_OK;
     }
 
-    static HRESULT End(__in IFabricAsyncOperationContext * context, IFabricSecretReferencesResult **result)
+    static HRESULT End(__in IFabricAsyncOperationContext * context, IFabricSecretsResult **result)
     {
         if (context == NULL || result == NULL) { return E_POINTER; }
 
@@ -6947,9 +6947,9 @@ public:
         auto hr = thisOperation->ComAsyncOperationContextEnd();
         if (SUCCEEDED(hr))
         {
-            Common::ComPointer<IFabricSecretReferencesResult> secretReferencesResult = make_com<ComSecretReferencesResult, IFabricSecretReferencesResult>(
+            Common::ComPointer<IFabricSecretsResult> secretsResult = make_com<ComSecretsResult, IFabricSecretsResult>(
                 thisOperation->result_);
-            *result = secretReferencesResult.DetachNoRelease();
+            *result = secretsResult.DetachNoRelease();
         }
 
         return hr;
@@ -6975,7 +6975,7 @@ private:
     }
 
     SecretsDescription description_;
-    SecretReferencesDescription result_;
+    SecretsDescription result_;
 };
 
 // {D1A35E10-27B3-41DB-92BA-1541756BFA9E}
@@ -7059,6 +7059,89 @@ private:
     SecretReferencesDescription description_;
     SecretReferencesDescription result_;
 };
+
+// {65835992-F186-414D-AF2F-4283E391F115}
+static const GUID CLSID_ComFabricClient_GetSecretVersionsAsyncOperation =
+{ 0x65835992, 0xf186, 0x414d,{ 0xaf, 0x2f, 0x42, 0x83, 0xe3, 0x91, 0xf1, 0x15 } };
+
+class ComFabricClient::GetSecretVersionsAsyncOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(GetSecretVersionsAsyncOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            GetSecretVersionsAsyncOperation,
+            CLSID_ComFabricClient_GetSecretVersionsAsyncOperation,
+            GetSecretVersionsAsyncOperation,
+            ComAsyncOperationContext)
+public:
+
+    GetSecretVersionsAsyncOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+    {
+    }
+
+    virtual ~GetSecretVersionsAsyncOperation() {};
+
+    HRESULT Initialize(
+        __in FABRIC_SECRET_REFERENCE_LIST const * secretReferences,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback,
+        __out wstring & errorMessage)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = this->description_.FromPublicApi(secretReferences);
+        if (!error.IsSuccess())
+        {
+            errorMessage = error.TakeMessage();
+            return error.ToHResult();
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, IFabricSecretReferencesResult **result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<GetSecretVersionsAsyncOperation> thisOperation(context, CLSID_ComFabricClient_GetSecretVersionsAsyncOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricSecretReferencesResult> secretReferencesResult = make_com<ComSecretReferencesResult, IFabricSecretReferencesResult>(
+                thisOperation->result_);
+            *result = secretReferencesResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.secretStoreClient_->BeginGetSecretVersions(
+            description_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnGetSecretVersionsComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+    void OnGetSecretVersionsComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.secretStoreClient_->EndGetSecretVersions(operation, result_);
+        TryComplete(operation->Parent, move(error));
+    }
+
+    SecretReferencesDescription description_;
+    SecretReferencesDescription result_;
+};
+
 
 // {4a7b27f4-1ca0-43a3-8657-257bd8c1eae1}
 static const GUID CLSID_ComFabricClient_InvokeDataLossAsyncOperation =
@@ -10900,7 +10983,7 @@ public:
         auto error = queryDescription_.FromPublicApi(*queryDescription);
         if (!error.IsSuccess())
         {
-            return ComUtility::OnPublicApiReturn(error.ToHResult());
+            return ComUtility::OnPublicApiReturn(move(error));
         }
 
         excludeStoppedNodeInfo_ = excludeStoppedNodeInfo == 0 ? false : true;
@@ -11373,7 +11456,7 @@ public:
         ErrorCode err = applicationQueryDescription_.FromPublicApi(*queryDescription);
         if (!err.IsSuccess())
         {
-            return ComUtility::OnPublicApiReturn(err.ToHResult());
+            return ComUtility::OnPublicApiReturn(move(err));
         }
 
         return S_OK;
@@ -11474,7 +11557,7 @@ public:
         ErrorCode err = dockerComposeDeploymentStatusQueryDescription_.FromPublicApi(*queryDescription);
         if (!err.IsSuccess())
         {
-            return ComUtility::OnPublicApiReturn(err.ToHResult());
+            return ComUtility::OnPublicApiReturn(move(err));
         }
 
         return S_OK;
@@ -11560,7 +11643,7 @@ public:
 
         if (!err.IsSuccess())
         {
-            return ComUtility::OnPublicApiReturn(err.ToHResult());
+            return ComUtility::OnPublicApiReturn(move(err));
         }
         return S_OK;
     }
@@ -13561,7 +13644,7 @@ public:
 
         if (!err.IsSuccess())
         {
-            return ComUtility::OnPublicApiReturn(err.ToHResult());
+            return ComUtility::OnPublicApiReturn(move(err));
         }
 
         return S_OK;
@@ -13886,7 +13969,7 @@ public:
 
         if (!err.IsSuccess())
         {
-            return ComUtility::OnPublicApiReturn(err.ToHResult());
+            return ComUtility::OnPublicApiReturn(move(err));
         }
 
         return S_OK;
@@ -13934,6 +14017,733 @@ private:
     PagingStatusUPtr pagingStatus_;
 };
 
+// 9E5003B0-FAA8-435C-9C3D-B1ECA0552B93
+static const GUID CLSID_ComFabricClient_RollbackComposeDeploymentOperation = 
+{ 0x9e5003b0, 0xfaa8, 0x435c, { 0x9c, 0x3d, 0xb1, 0xec, 0xa0, 0x55, 0x2b, 0x93 } };
+class ComFabricClient::RollbackComposeDeploymentOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(RollbackComposeDeploymentOperation)
+        
+    COM_INTERFACE_AND_DELEGATE_LIST(
+        RollbackComposeDeploymentOperation,
+        CLSID_ComFabricClient_RollbackComposeDeploymentOperation,
+        RollbackComposeDeploymentOperation,
+        ComAsyncOperationContext)
+public:
+
+    RollbackComposeDeploymentOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , deploymentName_()
+    {
+    }
+
+    virtual ~RollbackComposeDeploymentOperation() {};
+
+    HRESULT Initialize(
+        __in LPCWSTR deploymentName,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        TRY_COM_PARSE_PUBLIC_STRING_OUT(deploymentName, parsedDeploymentName, false);
+
+        this->deploymentName_ = move(parsedDeploymentName);
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context)
+    {
+        if (context == nullptr) { return E_POINTER; }
+
+        ComPointer<RollbackComposeDeploymentOperation> thisOperation(context, CLSID_ComFabricClient_RollbackComposeDeploymentOperation);
+        return thisOperation->ComAsyncOperationContextEnd();
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.composeMgmtClient_->BeginRollbackComposeDeployment(
+            deploymentName_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnRollbackComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+    void OnRollbackComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.composeMgmtClient_->EndRollbackComposeDeployment(operation);
+        TryComplete(operation->Parent, move(error));
+    }
+
+    wstring deploymentName_;
+};
+
+// {15d0270d-8da4-4430-a1ec-6d77410166ad}
+static const GUID CLSID_ComFabricClient_CreateNetworkOperation =
+{ 0x15d0270d, 0x8da4, 0x4430,{ 0xa1, 0xec, 0x6d, 0x77, 0x41, 0x01, 0x66, 0xad } };
+
+class ComFabricClient::CreateNetworkOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(CreateNetworkOperation)
+
+    COM_INTERFACE_AND_DELEGATE_LIST(
+        CreateNetworkOperation,
+        CLSID_ComFabricClient_CreateNetworkOperation,
+        CreateNetworkOperation,
+        ComAsyncOperationContext)
+public:
+
+    CreateNetworkOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , networkDesc_()
+    {
+    }
+
+    virtual ~CreateNetworkOperation() {};
+
+    HRESULT Initialize(
+        __in wstring &networkName,
+        __in NetworkDescription &networkDesc,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        ServiceModel::ModelV2::NetworkResourceDescription networkResourceDescription(networkName, networkDesc);
+
+        networkDesc_ = move(networkResourceDescription);
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context)
+    {
+        if (context == NULL) { return E_POINTER; }
+
+        ComPointer<CreateNetworkOperation> thisOperation(context, CLSID_ComFabricClient_CreateNetworkOperation);
+        return thisOperation->ComAsyncOperationContextEnd();
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.networkMgmtClient_->BeginCreateNetwork(
+            networkDesc_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+            {
+                this->OnCreateComplete(operation);
+            },
+            proxySPtr);
+    }
+
+private:
+
+    void OnCreateComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.networkMgmtClient_->EndCreateNetwork(operation);
+        TryComplete(operation->Parent, error);
+    }
+
+    ServiceModel::ModelV2::NetworkResourceDescription networkDesc_;
+};
+
+// {b9a1fc69-8d65-4507-a6a3-fc8965c73297}
+static const GUID CLSID_ComFabricClient_DeleteNetworkOperation =
+{ 0xb9a1fc69, 0x8d65, 0x4507,{ 0xa6, 0xa3, 0xfc, 0x89, 0x65, 0xc7, 0x32, 0x97 } };
+
+class ComFabricClient::DeleteNetworkOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(DeleteNetworkOperation)
+
+    COM_INTERFACE_AND_DELEGATE_LIST(
+        DeleteNetworkOperation,
+        CLSID_ComFabricClient_DeleteNetworkOperation,
+        DeleteNetworkOperation,
+        ComAsyncOperationContext)
+public:
+
+    DeleteNetworkOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , deleteNetworkDesc_()
+    {
+    }
+
+    virtual ~DeleteNetworkOperation() {};
+
+    HRESULT Initialize(
+        __in DeleteNetworkDescription &deleteNetworkDesc,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        deleteNetworkDesc_ = move(deleteNetworkDesc);
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context)
+    {
+        if (context == NULL) { return E_POINTER; }
+
+        ComPointer<DeleteNetworkOperation> thisOperation(context, CLSID_ComFabricClient_DeleteNetworkOperation);
+        return thisOperation->ComAsyncOperationContextEnd();
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.networkMgmtClient_->BeginDeleteNetwork(
+            deleteNetworkDesc_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnCreateComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+
+    void OnCreateComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.networkMgmtClient_->EndDeleteNetwork(operation);
+        TryComplete(operation->Parent, error);
+    }
+
+    DeleteNetworkDescription deleteNetworkDesc_;
+};
+
+// {cdd6e0e1-a5de-4fa5-8654-63e3d55d01dc}
+static const GUID CLSID_ComFabricClient_GetNetworkListOperation =
+{ 0xcdd6e0e1, 0xa5de, 0x4fa5,{ 0x86, 0x54, 0x63, 0xe3, 0xd5, 0x5d, 0x01, 0xdc } };
+
+class ComFabricClient::GetNetworkListOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(GetNetworkListOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            GetNetworkListOperation,
+            CLSID_ComFabricClient_GetNetworkListOperation,
+            GetNetworkListOperation,
+            ComAsyncOperationContext)
+public:
+
+    GetNetworkListOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , networkQueryDesc_()
+        , networkList_()
+        , pagingStatus_()
+    {
+    }
+
+    virtual ~GetNetworkListOperation() {};
+
+    HRESULT Initialize(
+        __in const FABRIC_NETWORK_QUERY_DESCRIPTION * queryDescription,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+        
+        auto error = networkQueryDesc_.FromPublicApi(*queryDescription);
+        if (!error.IsSuccess())
+        {
+            return ComUtility::OnPublicApiReturn(error.ToHResult());
+        }		
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, __in IFabricGetNetworkListResult ** result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<GetNetworkListOperation> thisOperation(context, CLSID_ComFabricClient_GetNetworkListOperation);
+        
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            vector<NetworkInformation> networkInformationList;
+
+            for (auto iter = thisOperation->networkList_.begin();
+                iter != thisOperation->networkList_.end();
+                ++iter)
+            {
+                NetworkInformation networkInformation(iter->NetworkName, iter->NetworkAddressPrefix, iter->NetworkType, iter->NetworkStatus);
+
+                networkInformationList.push_back(move(networkInformation));
+            }
+
+            Common::ComPointer<IFabricGetNetworkListResult> networkListResult =
+                make_com<ComGetNetworkListResult, IFabricGetNetworkListResult>(move(networkInformationList), move(thisOperation->pagingStatus_));
+            *result = networkListResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.networkMgmtClient_->BeginGetNetworkList(
+            networkQueryDesc_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnGetNetworkListComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+
+    void OnGetNetworkListComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.networkMgmtClient_->EndGetNetworkList(operation, networkList_, pagingStatus_);
+        TryComplete(operation->Parent, error);
+    }
+
+    NetworkQueryDescription networkQueryDesc_;
+    vector<ModelV2::NetworkResourceDescriptionQueryResult> networkList_;
+    PagingStatusUPtr pagingStatus_;
+};
+
+// {8017e230-a1f5-402b-9c4d-2732fdc7042c}
+static const GUID CLSID_ComFabricClient_GetNetworkApplicationListOperation =
+{ 0x8017e230, 0xa1f5, 0x402b,{ 0x9c, 0x4d, 0x27, 0x32, 0xfd, 0xc7, 0x04, 0x2c } };
+
+class ComFabricClient::GetNetworkApplicationListOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(GetNetworkApplicationListOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            GetNetworkApplicationListOperation,
+            CLSID_ComFabricClient_GetNetworkApplicationListOperation,
+            GetNetworkApplicationListOperation,
+            ComAsyncOperationContext)
+public:
+
+    GetNetworkApplicationListOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , networkApplicationQueryDesc_()
+        , networkApplicationList_()
+        , pagingStatus_()
+    {
+    }
+
+    virtual ~GetNetworkApplicationListOperation() {};
+
+    HRESULT Initialize(
+        __in const FABRIC_NETWORK_APPLICATION_QUERY_DESCRIPTION * queryDescription,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = networkApplicationQueryDesc_.FromPublicApi(*queryDescription);
+        if (!error.IsSuccess())
+        {
+            return ComUtility::OnPublicApiReturn(error.ToHResult());
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, __in IFabricGetNetworkApplicationListResult ** result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<GetNetworkApplicationListOperation> thisOperation(context, CLSID_ComFabricClient_GetNetworkApplicationListOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricGetNetworkApplicationListResult> networkApplicationListResult =
+                make_com<ComGetNetworkApplicationListResult, IFabricGetNetworkApplicationListResult>(move(thisOperation->networkApplicationList_), move(thisOperation->pagingStatus_));
+            *result = networkApplicationListResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.networkMgmtClient_->BeginGetNetworkApplicationList(
+            networkApplicationQueryDesc_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnGetNetworkApplicationListComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+
+    void OnGetNetworkApplicationListComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.networkMgmtClient_->EndGetNetworkApplicationList(operation, networkApplicationList_, pagingStatus_);
+        TryComplete(operation->Parent, error);
+    }
+
+    NetworkApplicationQueryDescription networkApplicationQueryDesc_;
+    vector<NetworkApplicationQueryResult> networkApplicationList_;
+    PagingStatusUPtr pagingStatus_;
+};
+
+// {86c1e38d-eaca-4697-be24-75ffc9dd1208}
+static const GUID CLSID_ComFabricClient_GetNetworkNodeListOperation =
+{ 0x86c1e38d, 0xeaca, 0x4697,{ 0xbe, 0x24, 0x75, 0xff, 0xc9, 0xdd, 0x12, 0x08 } };
+
+class ComFabricClient::GetNetworkNodeListOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(GetNetworkNodeListOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            GetNetworkNodeListOperation,
+            CLSID_ComFabricClient_GetNetworkNodeListOperation,
+            GetNetworkNodeListOperation,
+            ComAsyncOperationContext)
+public:
+
+    GetNetworkNodeListOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , networkNodeQueryDesc_()
+        , networkNodeList_()
+        , pagingStatus_()
+    {
+    }
+
+    virtual ~GetNetworkNodeListOperation() {};
+
+    HRESULT Initialize(
+        __in const FABRIC_NETWORK_NODE_QUERY_DESCRIPTION * queryDescription,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = networkNodeQueryDesc_.FromPublicApi(*queryDescription);
+        if (!error.IsSuccess())
+        {
+            return ComUtility::OnPublicApiReturn(error.ToHResult());
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, __in IFabricGetNetworkNodeListResult ** result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<GetNetworkNodeListOperation> thisOperation(context, CLSID_ComFabricClient_GetNetworkNodeListOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricGetNetworkNodeListResult> networkNodeListResult =
+                make_com<ComGetNetworkNodeListResult, IFabricGetNetworkNodeListResult>(move(thisOperation->networkNodeList_), move(thisOperation->pagingStatus_));
+            *result = networkNodeListResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.networkMgmtClient_->BeginGetNetworkNodeList(
+            networkNodeQueryDesc_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnGetNetworkNodeListComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+
+    void OnGetNetworkNodeListComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.networkMgmtClient_->EndGetNetworkNodeList(operation, networkNodeList_, pagingStatus_);
+        TryComplete(operation->Parent, error);
+    }
+
+    NetworkNodeQueryDescription networkNodeQueryDesc_;
+    vector<NetworkNodeQueryResult> networkNodeList_;
+    PagingStatusUPtr pagingStatus_;
+};
+
+// {ee0b0721-8ba3-485f-8a6d-a0e7d2a6d537}
+static const GUID CLSID_ComFabricClient_GetApplicationNetworkListOperation =
+{ 0xee0b0721, 0x8ba3, 0x485f,{ 0x8a, 0x6d, 0xa0, 0xe7, 0xd2, 0xa6, 0xd5, 0x37 } };
+
+class ComFabricClient::GetApplicationNetworkListOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(GetApplicationNetworkListOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            GetApplicationNetworkListOperation,
+            CLSID_ComFabricClient_GetApplicationNetworkListOperation,
+            GetApplicationNetworkListOperation,
+            ComAsyncOperationContext)
+public:
+
+    GetApplicationNetworkListOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , applicationNetworkQueryDesc_()
+        , applicationNetworkList_()
+        , pagingStatus_()
+    {
+    }
+
+    virtual ~GetApplicationNetworkListOperation() {};
+
+    HRESULT Initialize(
+        __in const FABRIC_APPLICATION_NETWORK_QUERY_DESCRIPTION * queryDescription,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = applicationNetworkQueryDesc_.FromPublicApi(*queryDescription);
+        if (!error.IsSuccess())
+        {
+            return ComUtility::OnPublicApiReturn(error.ToHResult());
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, __in IFabricGetApplicationNetworkListResult ** result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<GetApplicationNetworkListOperation> thisOperation(context, CLSID_ComFabricClient_GetApplicationNetworkListOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricGetApplicationNetworkListResult> applicationNetworkListResult =
+                make_com<ComGetApplicationNetworkListResult, IFabricGetApplicationNetworkListResult>(move(thisOperation->applicationNetworkList_), move(thisOperation->pagingStatus_));
+            *result = applicationNetworkListResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.networkMgmtClient_->BeginGetApplicationNetworkList(
+            applicationNetworkQueryDesc_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnGetApplicationNetworkListComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+
+    void OnGetApplicationNetworkListComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.networkMgmtClient_->EndGetApplicationNetworkList(operation, applicationNetworkList_, pagingStatus_);
+        TryComplete(operation->Parent, error);
+    }
+
+    ApplicationNetworkQueryDescription applicationNetworkQueryDesc_;
+    vector<ApplicationNetworkQueryResult> applicationNetworkList_;
+    PagingStatusUPtr pagingStatus_;
+};
+
+// {f963e6ac-5d70-40d4-9272-b4d3b16e3707}
+static const GUID CLSID_ComFabricClient_GetDeployedNetworkListOperation =
+{ 0xf963e6ac, 0x5d70, 0x40d4,{ 0x92, 0x72, 0xb4, 0xd3, 0xb1, 0x6e, 0x37, 0x07 } };
+
+class ComFabricClient::GetDeployedNetworkListOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(GetDeployedNetworkListOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            GetDeployedNetworkListOperation,
+            CLSID_ComFabricClient_GetDeployedNetworkListOperation,
+            GetDeployedNetworkListOperation,
+            ComAsyncOperationContext)
+public:
+
+    GetDeployedNetworkListOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , deployedNetworkQueryDesc_()
+        , deployedNetworkList_()
+        , pagingStatus_()
+    {
+    }
+
+    virtual ~GetDeployedNetworkListOperation() {};
+
+    HRESULT Initialize(
+        __in const FABRIC_DEPLOYED_NETWORK_QUERY_DESCRIPTION * queryDescription,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = deployedNetworkQueryDesc_.FromPublicApi(*queryDescription);
+        if (!error.IsSuccess())
+        {
+            return ComUtility::OnPublicApiReturn(error.ToHResult());
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, __in IFabricGetDeployedNetworkListResult ** result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<GetDeployedNetworkListOperation> thisOperation(context, CLSID_ComFabricClient_GetDeployedNetworkListOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricGetDeployedNetworkListResult> deployedNetworkListResult =
+                make_com<ComGetDeployedNetworkListResult, IFabricGetDeployedNetworkListResult>(move(thisOperation->deployedNetworkList_), move(thisOperation->pagingStatus_));
+            *result = deployedNetworkListResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.networkMgmtClient_->BeginGetDeployedNetworkList(
+            deployedNetworkQueryDesc_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnGetDeployedNetworkListComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+
+    void OnGetDeployedNetworkListComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.networkMgmtClient_->EndGetDeployedNetworkList(operation, deployedNetworkList_, pagingStatus_);
+        TryComplete(operation->Parent, error);
+    }
+
+    DeployedNetworkQueryDescription deployedNetworkQueryDesc_;
+    vector<DeployedNetworkQueryResult> deployedNetworkList_;
+    PagingStatusUPtr pagingStatus_;
+};
+
+// {412f6a08-15e8-4b04-a2fe-3d6215eb6987}
+static const GUID CLSID_ComFabricClient_GetDeployedNetworkCodePackageListOperation =
+{ 0x412f6a08, 0x15e8, 0x4b04,{ 0xa2, 0xfe, 0x3d, 0x62, 0x15, 0xeb, 0x69, 0x87 } };
+
+class ComFabricClient::GetDeployedNetworkCodePackageListOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(GetDeployedNetworkCodePackageListOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            GetDeployedNetworkCodePackageListOperation,
+            CLSID_ComFabricClient_GetDeployedNetworkCodePackageListOperation,
+            GetDeployedNetworkCodePackageListOperation,
+            ComAsyncOperationContext)
+public:
+
+    GetDeployedNetworkCodePackageListOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+        , deployedNetworkCodePackageQueryDesc_()
+        , deployedNetworkCodePackageList_()
+        , pagingStatus_()
+    {
+    }
+
+    virtual ~GetDeployedNetworkCodePackageListOperation() {};
+
+    HRESULT Initialize(
+        __in const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_DESCRIPTION * queryDescription,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = deployedNetworkCodePackageQueryDesc_.FromPublicApi(*queryDescription);
+        if (!error.IsSuccess())
+        {
+            return ComUtility::OnPublicApiReturn(error.ToHResult());
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, __in IFabricGetDeployedNetworkCodePackageListResult ** result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<GetDeployedNetworkCodePackageListOperation> thisOperation(context, CLSID_ComFabricClient_GetDeployedNetworkCodePackageListOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricGetDeployedNetworkCodePackageListResult> deployedNetworkCodePackageListResult =
+                make_com<ComGetDeployedNetworkCodePackageListResult, IFabricGetDeployedNetworkCodePackageListResult>(move(thisOperation->deployedNetworkCodePackageList_), move(thisOperation->pagingStatus_));
+            *result = deployedNetworkCodePackageListResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.networkMgmtClient_->BeginGetDeployedNetworkCodePackageList(
+            deployedNetworkCodePackageQueryDesc_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnGetDeployedNetworkCodePackageListComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+
+    void OnGetDeployedNetworkCodePackageListComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.networkMgmtClient_->EndGetDeployedNetworkCodePackageList(operation, deployedNetworkCodePackageList_, pagingStatus_);
+        TryComplete(operation->Parent, error);
+    }
+
+    DeployedNetworkCodePackageQueryDescription deployedNetworkCodePackageQueryDesc_;
+    vector<DeployedNetworkCodePackageQueryResult> deployedNetworkCodePackageList_;
+    PagingStatusUPtr pagingStatus_;
+};
 
 // ****************************************************************************
 // ComFabricClient methods
@@ -14026,6 +14836,9 @@ HRESULT ComFabricClient::Initialize()
     if (!error.IsSuccess()) { return error.ToHResult(); }
 
     error = factoryPtr_->CreateSecretStoreClient(secretStoreClient_);
+    if (!error.IsSuccess()) { return error.ToHResult(); }
+
+    error = factoryPtr_->CreateNetworkManagementClient(networkMgmtClient_);
     if (!error.IsSuccess()) { return error.ToHResult(); }
 
     return S_OK;
@@ -19786,6 +20599,10 @@ HRESULT ComFabricClient::EndStartApprovedUpgrades(
     return ComUtility::OnPublicApiReturn(StartApprovedUpgradesAsyncOperation::End(context));
 }
 
+//
+// IFabricSecretStoreClient methods
+//
+
 HRESULT STDMETHODCALLTYPE ComFabricClient::BeginGetSecrets(
     /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
     /* [in] */ BOOLEAN includeValue,
@@ -19853,7 +20670,7 @@ HRESULT STDMETHODCALLTYPE ComFabricClient::BeginSetSecrets(
 
 HRESULT STDMETHODCALLTYPE ComFabricClient::EndSetSecrets(
     /* [in] */ IFabricAsyncOperationContext *context,
-    /* [retval][out] */ IFabricSecretReferencesResult **result)
+    /* [retval][out] */ IFabricSecretsResult **result)
 {
     return ComUtility::OnPublicApiReturn(SetSecretsAsyncOperation::End(context, result));
 }
@@ -19891,6 +20708,41 @@ HRESULT STDMETHODCALLTYPE ComFabricClient::EndRemoveSecrets(
     /* [retval][out] */ IFabricSecretReferencesResult **result)
 {
     return ComUtility::OnPublicApiReturn(RemoveSecretsAsyncOperation::End(context, result));
+}
+
+HRESULT STDMETHODCALLTYPE ComFabricClient::BeginGetSecretVersions(
+    /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ IFabricAsyncOperationContext **context)
+{
+    if (context == NULL)
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    ComPointer<GetSecretVersionsAsyncOperation> operation = make_com<GetSecretVersionsAsyncOperation>(*this);
+
+    wstring errorMessage;
+
+    HRESULT hr = operation->Initialize(
+        secretReferences,
+        timeoutMilliseconds,
+        callback,
+        errorMessage);
+    if (FAILED(hr))
+    {
+        return ComUtility::OnPublicApiReturn(hr, move(errorMessage));
+    }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT STDMETHODCALLTYPE ComFabricClient::EndGetSecretVersions(
+    /* [in] */ IFabricAsyncOperationContext *context,
+    /* [retval][out] */ IFabricSecretReferencesResult **result)
+{
+    return ComUtility::OnPublicApiReturn(GetSecretVersionsAsyncOperation::End(context, result));
 }
 
 HRESULT ComFabricClient::Upload(
@@ -20184,6 +21036,37 @@ HRESULT ComFabricClient::EndGetComposeDeploymentUpgradeProgress(
         reinterpret_cast<void**>(result)));
 }
 
+HRESULT ComFabricClient::BeginRollbackComposeDeployment(
+    /* [in] */ const FABRIC_COMPOSE_DEPLOYMENT_ROLLBACK_DESCRIPTION *rollbackDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ IFabricAsyncOperationContext **context)
+{
+    if ((context == nullptr) ||
+        (rollbackDescription == nullptr) ||
+        (rollbackDescription->DeploymentName == nullptr))
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    ComPointer<RollbackComposeDeploymentOperation> operation = make_com<RollbackComposeDeploymentOperation>(*this);
+
+    HRESULT hr = operation->Initialize(
+        rollbackDescription->DeploymentName,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndRollbackComposeDeployment(
+    /* [in] */ IFabricAsyncOperationContext *context)
+{
+    return ComUtility::OnPublicApiReturn(RollbackComposeDeploymentOperation::End(context));
+}
+
+
 //
 // IFabricQueryClient10 methods.
 //
@@ -20215,4 +21098,279 @@ HRESULT ComFabricClient::EndGetDeployedApplicationPagedList(
     /* [retval][out] */ IFabricGetDeployedApplicationPagedListResult **result)
 {
     return ComUtility::OnPublicApiReturn(GetDeployedApplicationPagedListOperation::End(context, result));
+}
+
+//
+// IFabricNetworkManagementClient methods
+//
+
+HRESULT ComFabricClient::BeginCreateNetwork(
+    /* [in] */ LPCWSTR networkName,
+    /* [in] */ const FABRIC_NETWORK_DESCRIPTION * description,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if ((context == NULL) ||
+        (description == NULL))				
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    auto operation = make_com<CreateNetworkOperation>(*this);
+
+    NetworkDescription networkDescription;
+    auto error = networkDescription.FromPublicApi(*description);
+    if (!error.IsSuccess())
+    {
+        return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::InitializeAndComplete(
+            error,
+            move(operation),
+            callback,
+            context));
+    }
+
+    wstring networkNameWstring;
+    HRESULT hr = StringUtility::LpcwstrToWstring(
+        networkName,
+        false, // dont accept null
+        networkNameWstring);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    hr = operation->Initialize(
+        networkNameWstring,
+        networkDescription,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndCreateNetwork(
+    /* [in] */ IFabricAsyncOperationContext * context)
+{
+    return ComUtility::OnPublicApiReturn(CreateNetworkOperation::End(context));
+}
+
+HRESULT ComFabricClient::BeginDeleteNetwork(
+    /* [in] */ const FABRIC_DELETE_NETWORK_DESCRIPTION * deleteDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if ((context == NULL) ||
+        (deleteDescription == NULL))
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    auto operation = make_com<DeleteNetworkOperation>(*this);
+
+    DeleteNetworkDescription deleteNetworkDescription;
+    auto error = deleteNetworkDescription.FromPublicApi(*deleteDescription);
+    if (!error.IsSuccess())
+    {
+        return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::InitializeAndComplete(
+            error,
+            move(operation),
+            callback,
+            context));
+    }
+
+    HRESULT hr = operation->Initialize(
+        deleteNetworkDescription,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+
+}
+
+HRESULT ComFabricClient::EndDeleteNetwork(
+    /* [in] */ IFabricAsyncOperationContext * context)
+{
+    return ComUtility::OnPublicApiReturn(DeleteNetworkOperation::End(context));
+}
+
+
+HRESULT ComFabricClient::BeginGetNetworkList(
+    /* [in] */ const FABRIC_NETWORK_QUERY_DESCRIPTION * queryDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if ((context == NULL) ||
+        (queryDescription == NULL))
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    auto operation = make_com<GetNetworkListOperation>(*this);
+    
+    HRESULT hr = operation->Initialize(
+        queryDescription,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetNetworkList(
+    /* [in] */ IFabricAsyncOperationContext * context,
+    /* [retval][out] */ IFabricGetNetworkListResult ** result)
+{
+    return ComUtility::OnPublicApiReturn(GetNetworkListOperation::End(context, result));
+}
+
+HRESULT ComFabricClient::BeginGetNetworkApplicationList(
+    /* [in] */ const FABRIC_NETWORK_APPLICATION_QUERY_DESCRIPTION * queryDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if ((context == NULL) ||
+        (queryDescription == NULL))
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    auto operation = make_com<GetNetworkApplicationListOperation>(*this);
+    
+    HRESULT hr = operation->Initialize(
+        queryDescription,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetNetworkApplicationList(
+    /* [in] */ IFabricAsyncOperationContext * context,
+    /* [retval][out] */ IFabricGetNetworkApplicationListResult ** result)
+{
+    return ComUtility::OnPublicApiReturn(GetNetworkApplicationListOperation::End(context, result));
+}
+
+HRESULT ComFabricClient::BeginGetNetworkNodeList(
+    /* [in] */ const FABRIC_NETWORK_NODE_QUERY_DESCRIPTION * queryDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if ((context == NULL) ||
+        (queryDescription == NULL))
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    auto operation = make_com<GetNetworkNodeListOperation>(*this);
+
+    HRESULT hr = operation->Initialize(
+        queryDescription,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetNetworkNodeList(
+    /* [in] */ IFabricAsyncOperationContext * context,
+    /* [retval][out] */ IFabricGetNetworkNodeListResult ** result)
+{
+    return ComUtility::OnPublicApiReturn(GetNetworkNodeListOperation::End(context, result));
+}
+
+HRESULT ComFabricClient::BeginGetApplicationNetworkList(
+    /* [in] */ const FABRIC_APPLICATION_NETWORK_QUERY_DESCRIPTION * queryDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if ((context == NULL) ||
+        (queryDescription == NULL))
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    auto operation = make_com<GetApplicationNetworkListOperation>(*this);
+
+    HRESULT hr = operation->Initialize(
+        queryDescription,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetApplicationNetworkList(
+    /* [in] */ IFabricAsyncOperationContext * context,
+    /* [retval][out] */ IFabricGetApplicationNetworkListResult ** result)
+{
+    return ComUtility::OnPublicApiReturn(GetApplicationNetworkListOperation::End(context, result));
+}
+
+HRESULT ComFabricClient::BeginGetDeployedNetworkList(
+    /* [in] */ const FABRIC_DEPLOYED_NETWORK_QUERY_DESCRIPTION * queryDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if ((context == NULL) ||
+        (queryDescription == NULL))
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    auto operation = make_com<GetDeployedNetworkListOperation>(*this);
+
+    HRESULT hr = operation->Initialize(
+        queryDescription,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetDeployedNetworkList(
+    /* [in] */ IFabricAsyncOperationContext * context,
+    /* [retval][out] */ IFabricGetDeployedNetworkListResult ** result)
+{
+    return ComUtility::OnPublicApiReturn(GetDeployedNetworkListOperation::End(context, result));
+}
+
+HRESULT ComFabricClient::BeginGetDeployedNetworkCodePackageList(
+    /* [in] */ const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_DESCRIPTION * queryDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if ((context == NULL) ||
+        (queryDescription == NULL))
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    auto operation = make_com<GetDeployedNetworkCodePackageListOperation>(*this);
+
+    HRESULT hr = operation->Initialize(
+        queryDescription,
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetDeployedNetworkCodePackageList(
+    /* [in] */ IFabricAsyncOperationContext * context,
+    /* [retval][out] */ IFabricGetDeployedNetworkCodePackageListResult ** result)
+{
+    return ComUtility::OnPublicApiReturn(GetDeployedNetworkCodePackageListOperation::End(context, result));
 }

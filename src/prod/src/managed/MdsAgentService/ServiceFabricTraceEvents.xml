@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--  This file contains the MA configuration for collecting ServiceFabric events. 
+      This file is provided by ServiceFabric team. Include this file in your top level MA config.
+      It is not supposed to be edited by customers. -->
+<MonitoringManagement version="1.0" timestamp="2016-12-12T00:00:00.000Z">
+  <Events>
+    <DynamicEvents>
+      <!-- Table for Windows Fabric traces -->
+      <DirectoryWatchItem eventName="FabricLogs" storeType="CentralBond" duration="PT1M" retentionInDays="1">
+        <!-- The directory specified below is the directory in which the DCA creates the local MDS tables.
+             Notes:
+               1. The DCA needs to be configured to create local MDS tables via the cluster manifest. -->
+        <Directory><![CDATA[Concat("", GetEnvironmentVariable("MONITORING_SF_LOG_DIRECTORY"), "\Fabric")]]></Directory>
+      </DirectoryWatchItem>
+      <!-- Table for Windows Fabric Lease Layer traces -->
+      <DirectoryWatchItem eventName="LeaseLogs" storeType="CentralBond" duration="PT1M" retentionInDays="1">
+        <!-- The directory specified below is the directory in which the DCA creates the local MDS tables.
+             Notes:
+               1. The DCA needs to be configured to create local MDS tables via the cluster manifest. -->
+        <Directory><![CDATA[Concat("", GetEnvironmentVariable("MONITORING_SF_LOG_DIRECTORY"), "\Lease")]]></Directory>
+      </DirectoryWatchItem>
+    </DynamicEvents>
+    <DerivedEvents>
+      <!-- Creates the MDM metrics from fabric logs when hosted service activation limit exceeds or when FM fails to load. -->
+      <DerivedEvent source="FabricLogs" eventName="FabricLogsDerivedEvent" storeType="Local" duration="PT60S">
+        <Query>
+          <![CDATA[
+            let MdmAccount = GetEnvironmentVariable("MONITORING_MDM_ACCOUNT_NAME")
+            let MdmNamespace = GetEnvironmentVariable("MONITORING_MDM_NAMESPACE")
+            let ClusterName = GetEnvironmentVariable("MONITORING_TENANT")
+            let ApplicationName = GetEnvironmentVariable("MONITORING_APP") 
+            let NodeName = GetEnvironmentVariable("MONITORING_NODENAME")
+            let Role = GetEnvironmentVariable("MONITORING_ROLE")
+            let RoleInstance = GetEnvironmentVariable("MONITORING_ROLE_INSTANCE")
+            let DataCenter = GetEnvironmentVariable("MONITORING_DATACENTER")
+            let DeploymentId = GetEnvironmentVariable("MONITORING_DEPLOYMENT_ID")
+            let IsMetricSet = false
+            let IsDefaultActivationLimitMetricSet = false
+            let IsDefaultFMLoadFailedMetricSet = false
+            if (TaskName == "Hosting" && EventType == "HostedServiceActivationLimitExceeded" && Id == "Fabric.exe")
+            {
+              IsMetricSet = SetMdmMeasureMetric(MdmAccount, MdmNamespace, "ActivationLimitExceededEvent", 1, 
+                "ClusterName", ClusterName, "AppName", ApplicationName, "NodeName", NodeName, 
+                "TaskName", TaskName, "EventType", EventType, "Level", Level,
+                "Role", Role, "RoleInstance", RoleInstance, "DataCenter", DataCenter, "DeploymentId", DeploymentId)
+            }
+            else
+            {
+              IsDefaultActivationLimitMetricSet = SetMdmMeasureMetric(MdmAccount, MdmNamespace, "ActivationLimitExceededEvent", 0, 
+                "ClusterName", ClusterName, "AppName", ApplicationName, "NodeName", NodeName, 
+                "TaskName", TaskName, "EventType", EventType, "Level", Level,
+                "Role", Role, "RoleInstance", RoleInstance, "DataCenter", DataCenter, "DeploymentId", DeploymentId)
+            }
+            if (TaskName == "FM" && EventType == "LifeCycle" && Level == "Error")
+            {
+              IsMetricSet = SetMdmMeasureMetric(MdmAccount, MdmNamespace, "FailoverManagerLoadFailedEvent", 1, 
+                "ClusterName", ClusterName, "AppName", ApplicationName, "NodeName", NodeName, 
+                "TaskName", TaskName, "EventType", EventType, "Level", Level,
+                "Role", Role, "RoleInstance", RoleInstance, "DataCenter", DataCenter, "DeploymentId", DeploymentId)
+            }
+            else
+            {
+              IsDefaultFMLoadFailedMetricSet = SetMdmMeasureMetric(MdmAccount, MdmNamespace, "FailoverManagerLoadFailedEvent", 0, 
+                "ClusterName", ClusterName, "AppName", ApplicationName, "NodeName", NodeName, 
+                "TaskName", TaskName, "EventType", EventType, "Level", Level,
+                "Role", Role, "RoleInstance", RoleInstance, "DataCenter", DataCenter, "DeploymentId", DeploymentId)
+            }
+          ]]>
+        </Query>
+      </DerivedEvent>
+    </DerivedEvents>
+  </Events>
+</MonitoringManagement>

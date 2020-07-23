@@ -25,10 +25,11 @@
         "LogsFolderPath": "RunTests\\log",
         "TestInfra.IAAS.Endpoint": "http://10.158.23.133:8000",
         "TestInfra.PAAS.Endpoint": "https://sftestinfra.westus.cloudapp.azure.com:8000",
-        "TestInfra.PAAS.CertThumbprint": "27B3DFCE8054446DDE1E238591933EB4FE7B0C8C",
+        "TestInfra.Linux.PAAS.CertThumbprint": "6108D2170756888910B43787F0FE8C6DD9162FE7",
+        "TestInfra.Windows.PAAS.CertThumbprint": "27B3DFCE8054446DDE1E238591933EB4FE7B0C8C",
         "TestKeyVaultUri": "https://TestInfraKeyVault.vault.azure.net",
         "TestKeyVaultClientId": "33e3af95-cf38-49be-9db9-909bb5b3cb2e",
-        "TestKeyVaultAppCertThumbprint": "27B3DFCE8054446DDE1E238591933EB4FE7B0C8C",
+        "TestKeyVaultAppCertThumbprint": "6108D2170756888910B43787F0FE8C6DD9162FE7",
         "TestInfraDbConnectionStringKeyVaultName": "TestInfraDbConnectionString",
         "LogsLocationConnectionStringKeyVaultName": "LogsLocationConnectionString",
         "BuildLocationConnectionStringKeyVaultName": "BuildLocationConnectionString",
@@ -57,9 +58,10 @@
         "NTServicesToStop": "FabricHostSvc",
         "NTServiceStopTimeoutInSeconds": "120",
         "ProcessImageNamesToKillAfterTest": "FabricHost,FabricTest,FederationTest,FabricTestHost,Fabric,TE,WinFabricTestRunner,Common.Test,Transport.Test,Naming.Test,Hosting2.Test",
-        "LinuxSuiteWhitelist": "SingleMachine-CIT.json,SingleMachine-Functional.json",
+        "LinuxSuiteWhitelist": "SingleMachine-CIT.json,SingleMachine-Functional.json,LinuxKtlUnitTests.json",
         "TestTypesToExcludeFromRetailBuildRuns": "V2_ScriptTest_DebugOnly,Azure_ScriptTest_DebugOnly",
         "TestTypesToExcludeFromDebugBuildRuns": "V2_ScriptTest_RetailOnly,Azure_ScriptTest_RetailOnly,FabricTest_RetailOnly",
         "LinuxCITDefaultMachineGroup": "linuxcit",
+        "PerfTestTypesToExcludeFromModifiedScriptSelection": "Azure_DllTest_Perf_Quark,Azure_ScriptTest_Perf,Azure_ScriptTest_Perf_Quark,Linux_ScriptTest_Perf,V2_Dll_Perf_Test,V2_Dll_Perf_Test_Quark,V2_ScriptTest_Container_Perf,V2_ScriptTest_Perf,V2_ScriptTest_Perf_Cleanup_Fusion,V2_ScriptTest_Perf_NoValidation_Quark,V2_ScriptTest_Perf_Quark"
     }
 }

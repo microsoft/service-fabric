@@ -12,7 +12,7 @@ using namespace ServiceModel;
 using namespace Management::ResourceManager;
 using namespace Management::CentralSecretService;
 
-StringLiteral const TraceComponent("GetSecretsAsyncOperation");
+StringLiteral const GetSecretsAsyncOperation::TraceComponent("CentralSecretServiceReplica::GetSecretsAsyncOperation");
 
 GetSecretsAsyncOperation::GetSecretsAsyncOperation(
     Management::CentralSecretService::SecretManager & secretManager,
@@ -38,46 +38,63 @@ void GetSecretsAsyncOperation::Execute(AsyncOperationSPtr const & thisSPtr)
     ErrorCode error(ErrorCodeValue::Success);
     GetSecretsDescription description;
 
-    WriteInfo(TraceComponent,
-        "{0} GetSecrets: Begins.",
-        this->TraceId);
-
     if (this->RequestMsg.GetBody(description))
     {
-        WriteNoise(TraceComponent,
-            "{0}: GetSecrets: Create StoreTransaction.",
-            this->TraceId);
-        vector<Secret> secrets;
+        WriteInfo(
+            this->TraceComponent,
+            "{0}: {1} -> Getting secrets ...",
+            this->TraceId,
+            this->TraceComponent);
+        
+        auto operationSPtr = this->SecretManager.BeginGetSecrets(
+            description.SecretReferences,
+            description.IncludeValue,
+            this->RemainingTime,
+            [this](AsyncOperationSPtr const & operationSPtr)
+            {
+                this->CompleteGetSecretsOperation(operationSPtr, false);
+            },
+            thisSPtr,
+            this->ActivityId);
 
-        error = this->SecretManager.GetSecrets(description.SecretReferences, description.IncludeValue, this->ActivityId, secrets);
-
-        if (!error.IsSuccess())
-        {
-            WriteWarning(TraceComponent,
-                "{0}: GetSecrets: Failed to apply GetSecrets operations, ErrorCode: {1}.",
-                this->TraceId,
-                error);
-        }
-        else
-        {
-            this->SetReply(make_unique<SecretsDescription>(secrets));
-        }
+        this->CompleteGetSecretsOperation(operationSPtr, true);
     }
     else
     {
         error = ErrorCode::FromNtStatus(this->RequestMsg.GetStatus());
-        WriteWarning(TraceComponent,
-            "{0}: GetSecrets: Failed to get the body of the request, ErrorCode: {1}.",
+        WriteWarning(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to get the body of the request. Error: {2}.",
             this->TraceId,
+            this->TraceComponent,
+            error);
+
+        this->Complete(thisSPtr, error);
+    }
+}
+
+void GetSecretsAsyncOperation::CompleteGetSecretsOperation(
+    AsyncOperationSPtr const & operationSPtr,
+    bool expectedCompletedSynchronously)
+{
+    if (operationSPtr->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    vector<Secret> readSecrets;
+
+    auto error = this->SecretManager.EndGetSecrets(operationSPtr, readSecrets);
+    if (!error.IsSuccess())
+    {
+        WriteError(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to get secrets. Error: {2}.",
+            this->TraceId,
+            this->TraceComponent,
             error);
     }
+    else
+    {
+        this->SetReply(make_unique<SecretsDescription>(readSecrets));
+    }
 
-    WriteTrace(
-        error.IsSuccess() ? LogLevel::Info : LogLevel::Error,
-        TraceComponent,
-        "{0} GetSecrets: Ended with ErrorCode: {1}",
-        this->TraceId,
-        error);
-
-    this->Complete(thisSPtr, error);
+    this->Complete(operationSPtr->Parent, error);
 }

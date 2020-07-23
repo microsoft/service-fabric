@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <OutputType>library</OutputType>
+    <RootNamespace>ClusterAnalysis.Common</RootNamespace>
+    <AssemblyName>ClusterAnalysis.Common</AssemblyName>
+    <ProjectGuid>{2A57DBD9-3F75-4D08-B215-0A4BF3118FEF}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BinaryPackagePath>.\$(BinaryPackageName)</BinaryPackagePath>
+    <BinaryPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\ClusterAnalysis</BinaryPackageDropPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Config\Config.cs" />
+    <Compile Include="Config\NamedConfigManager.cs" />
+    <Compile Include="Config\INamedConfig.cs" />
+    <Compile Include="Config\RunMode.cs" />
+    <Compile Include="Config\RuntimeContext.cs" />
+    <Compile Include="Config\SimpleConfig.cs" />
+    <Compile Include="Duration.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="IHasUniqueIdentity.cs" />
+    <Compile Include="ITaskRunner.cs" />
+    <Compile Include="IUniquelyIdentifiable.cs" />
+    <Compile Include="Logger\FabricTraceLogger.cs" />
+    <Compile Include="Logger\FabricTraceLogProvider.cs" />
+    <Compile Include="Logger\ServiceFabricTracer.cs" />
+    <Compile Include="PerformanceTracker\IPerformanceSessionManager.cs" />
+    <Compile Include="PerformanceTracker\ITimeProvider.cs" />
+    <Compile Include="PerformanceTracker\PerformanceSession.cs" />
+    <Compile Include="PerformanceTracker\RealTimeProvider.cs" />
+    <Compile Include="Runtime\IInsightRuntime.cs" />
+    <Compile Include="Runtime\DefaultInsightRuntime.cs" />
+    <Compile Include="Logger\ILogger.cs" />
+    <Compile Include="Logger\ILogProvider.cs" />
+    <Compile Include="Logger\LocalDiskLogger.cs" />
+    <Compile Include="Store\AgeBasedRetentionPolicy.cs" />
+    <Compile Include="Store\DataRetentionPolicy.cs" />
+    <Compile Include="Store\InMemoryStore.cs" />
+    <Compile Include="Store\IPersistentStore.cs" />
+    <Compile Include="Store\IStoreProvider.cs" />
+    <Compile Include="Store\SizeBasedRetentionPolicy.cs" />
+    <Compile Include="Store\TypedObjectStore.cs" />
+    <Compile Include="Util\Assert.cs" />
+    <Compile Include="Util\HandyUtil.cs" />
+    <Compile Include="Util\IMaxHeap.cs" />
+    <Compile Include="Util\MaxHeapImpl.cs" />
+    <Compile Include="Util\RetryOperation.cs" />
+    <Compile Include="Util\ValidatedNotNullAttribute.cs" />
+    <Compile Include="IResolveServiceEndpoint.cs" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)" isRecursive="true">
+      <DestinationFolder>$(BinaryPackageDropPath)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+</Project>

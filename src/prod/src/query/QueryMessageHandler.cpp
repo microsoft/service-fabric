@@ -128,7 +128,7 @@ public:
             QuerySpecificationSPtr currentQuerySpecification = parallelQuerySpecification_->ParallelQuerySpecifications[index];
             wstring queryAddress;
             auto queryGenerationError = currentQuerySpecification->GenerateAddress(
-                activityHeader_.ActivityId, 
+                activityHeader_.ActivityId,
                 currentQueryArg,
                 queryAddress);
             // We assume that the parallel query specification should include all the arguments required for inner queries.

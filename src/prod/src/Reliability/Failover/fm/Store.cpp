@@ -8,6 +8,7 @@
 using namespace Common;
 using namespace Reliability;
 using namespace Reliability::FailoverManagerComponent;
+using namespace Management::NetworkInventoryManager;
 using namespace std;
 using namespace Store;
 
@@ -18,6 +19,7 @@ template ErrorCode FailoverManagerStore::LoadAll<vector<ServiceTypeSPtr>>(vector
 template ErrorCode FailoverManagerStore::LoadAll<vector<ServiceInfoSPtr>>(vector<ServiceInfoSPtr> & data) const;
 template ErrorCode FailoverManagerStore::LoadAll<vector<LoadInfoSPtr>>(vector<LoadInfoSPtr> & data) const;
 template ErrorCode FailoverManagerStore::LoadAll<vector<InBuildFailoverUnitUPtr>>(vector<InBuildFailoverUnitUPtr> & data) const;
+template ErrorCode FailoverManagerStore::LoadAll<vector<NodeInfoSPtr>>(vector<NodeInfoSPtr> & data) const;
 
 template ErrorCode FailoverManagerStore::UpdateData<ApplicationInfo>(ApplicationInfo & data, __out int64 & commitDuration) const;
 template ErrorCode FailoverManagerStore::UpdateData<ServiceInfo>(ServiceInfo & data, __out int64 & commitDuration) const;
@@ -39,6 +41,18 @@ template ErrorCode FailoverManagerStore::EndUpdateData<ServiceType>(ServiceType 
 template ErrorCode FailoverManagerStore::EndUpdateData<FailoverUnit>(FailoverUnit & data, AsyncOperationSPtr const& updateOperation, __out int64 & commitDuration) const;
 template ErrorCode FailoverManagerStore::EndUpdateData<NodeInfo>(NodeInfo & data, AsyncOperationSPtr const& updateOperation, __out int64 & commitDuration) const;
 
+
+template ErrorCode FailoverManagerStore::LoadAll<vector<std::shared_ptr<NIMNetworkNodeAllocationStoreData>>>(vector<std::shared_ptr<NIMNetworkNodeAllocationStoreData>> & data) const;
+template ErrorCode FailoverManagerStore::LoadAll<vector<std::shared_ptr<NIMNetworkDefinitionStoreData>>>(vector<std::shared_ptr<NIMNetworkDefinitionStoreData>> & data) const;
+template ErrorCode FailoverManagerStore::LoadAll<vector<NIMNetworkMACAddressPoolStoreDataSPtr>>(vector<NIMNetworkMACAddressPoolStoreDataSPtr> & data) const;
+template ErrorCode FailoverManagerStore::LoadAll<vector<NIMNetworkIPv4AddressPoolStoreDataSPtr>>(vector<NIMNetworkIPv4AddressPoolStoreDataSPtr> & data) const;
+
+template ErrorCode FailoverManagerStore::UpdateData<NIMNetworkNodeAllocationStoreData>(NIMNetworkNodeAllocationStoreData & data, __out int64 & commitDuration) const;
+template ErrorCode FailoverManagerStore::UpdateData<NIMNetworkDefinitionStoreData>(NIMNetworkDefinitionStoreData & data, __out int64 & commitDuration) const;
+template ErrorCode FailoverManagerStore::UpdateData<NIMNetworkMACAddressPoolStoreData>(NIMNetworkMACAddressPoolStoreData & data, __out int64 & commitDuration) const;
+template ErrorCode FailoverManagerStore::UpdateData<NIMNetworkIPv4AddressPoolStoreData>(NIMNetworkIPv4AddressPoolStoreData & data, __out int64 & commitDuration) const;
+
+
 StringLiteral const TraceStore("Store");
 
 size_t const FailoverManagerStore::StoreDataBufferSize(Reliability::Constants::FMStoreBufferSize);
@@ -56,6 +70,13 @@ wstring const FailoverManagerStore::StringType(L"StringType");
 
 wstring const FailoverManagerStore::FabricVersionInstanceKey(L"FabricVersionInstanceKey");
 wstring const FailoverManagerStore::FabricUpgradeKey(L"FabricUpgradeKey");
+
+wstring const FailoverManagerStore::NetworkDefinitionType(L"NetworkDefinitionType");
+wstring const FailoverManagerStore::NetworkNodeType(L"NetworkNodeType");
+wstring const FailoverManagerStore::NetworkMACAddressPoolType(L"NetworkMACAddressPoolType");
+wstring const FailoverManagerStore::NetworkIPv4AddressPoolType(L"NetworkIPv4AddressPoolType");
+
+
 
 struct BasicStringKeyBody : public Serialization::FabricSerializable
 {

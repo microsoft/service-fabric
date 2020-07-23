@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest Name="ServiceFabricVolumeDriverPkg"
+                 Version="!FABRIC_VERSION!"
+                 xmlns="http://schemas.microsoft.com/2011/01/fabric"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 ManifestId="59b4fb77-0363-4e05-bc73-96758498dbe9">
+  <ServiceTypes>
+    <StatelessServiceType ServiceTypeName="ServiceFabricVolumeDriverServiceType" />
+  </ServiceTypes>
+  <CodePackage Name="Code" Version="!FABRIC_VERSION!">
+    <SetupEntryPoint>
+      <ExeHost>
+        <Program>ServiceFabricVolumeDriverSetup</Program>
+      </ExeHost>
+    </SetupEntryPoint>
+    <EntryPoint>
+      <ExeHost>
+        <Program>ServiceFabricVolumeDriver</Program>
+      </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="Config" Version="!FABRIC_VERSION!" />
+  <Resources>
+    <Endpoints>
+	    <Endpoint Protocol="http" Name="ServiceEndpoint" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

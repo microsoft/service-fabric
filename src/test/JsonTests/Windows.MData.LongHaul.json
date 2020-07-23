@@ -5,7 +5,7 @@
     {
       "Name": "Backup Run 0",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "MData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -20,7 +20,7 @@
     {
       "Name": "Backup Run 1",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "MData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -35,7 +35,7 @@
     {
       "Name": "Backup Chained Run 0",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "MData,Backup,IBAR",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -50,7 +50,7 @@
     {
       "Name": "Backup Chained Run 1",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "MData,Backup,IBAR",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -65,7 +65,7 @@
     {
       "Name": "BackupStress Quick SingleMachine",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,rajak",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "MData,Backup,BackupStress",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -80,7 +80,7 @@
     {
       "Name": "BackupStress Quick MultiMachine",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,rajak",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "MData,Backup,BackupStress",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
@@ -95,7 +95,7 @@
     {
       "Name": "BackupStress SingleMachine",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,rajak",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "MData,Backup,BackupStress",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -110,7 +110,7 @@
     {
       "Name": "BackupStress MultiMachine IBAR",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,rajak",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "MData,Backup,BackupStress,IBAR",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
@@ -125,7 +125,7 @@
     {
       "Name": "TPCC-CIT",
       "Type": "V2_ScriptTest",
-      "Owners": "preethas,zuparvez",
+      "Owners": "zuparvez,deeom,viyogend,preethas",
       "Tags": "MData,TPCC",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -140,7 +140,7 @@
     {
       "Name": "TPCC 1Day 1Partition",
       "Type": "V2_ScriptTest",
-      "Owners": "preethas,zuparvez",
+      "Owners": "zuparvez,deeom,viyogend,preethas",
       "Tags": "MData,TPCC",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -155,7 +155,7 @@
     {
       "Name": "TPCC 1Day 1Partition Flighting",
       "Type": "V2_ScriptTest",
-      "Owners": "preethas,zuparvez",
+      "Owners": "zuparvez,deeom,viyogend,preethas",
       "Tags": "MData,TPCC",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -170,7 +170,7 @@
     {
       "Name": "ReliableQueueSlimFailures",
       "Type": "V2_ScriptTest",
-      "Owners": "yzha,tyadam,rajak",
+      "Owners": "deeom,preethas",
       "Tags": "MData,RCQ",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -185,7 +185,7 @@
     {
       "Name": "ReliableQueueSlimStress",
       "Type": "V2_ScriptTest",
-      "Owners": "yzha,tyadam,rajak",
+      "Owners": "deeom,preethas",
       "Tags": "MData,RCQ",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -200,7 +200,7 @@
     {
       "Name": "State Manager Long Haul",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,preethas",
+      "Owners": "zuparvez,preethas",
       "Tags": "MData,SM",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -215,7 +215,7 @@
     {
       "Name": "CrashOnRunAsync",
       "Type": "V2_ScriptTest",
-      "Owners": "imang",
+      "Owners": "shalabhs,preethas",
       "Tags": "MData,Robustness",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -232,7 +232,7 @@
     {
       "Name": "ReplicatorStack.LongRunning.dll",
       "Type": "TAEFTest_Sequential",
-      "Owners": "zhol,preethas,rajak",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "MData,LongRunning",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -243,7 +243,7 @@
     {
       "Name": "Microsoft.ServiceFabric.Stress.Test.dll",
       "Type": "TAEFTest_Sequential",
-      "Owners": "preethas,zuparvez",
+      "Owners": "zuparvez,preethas",
       "Tags": "MData,Stress",
       "TestExecutionParameters": {
         "SetupType": "XCopy",

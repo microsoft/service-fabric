@@ -150,6 +150,14 @@ namespace System.Fabric.ImageStore
         public void UploadContent(string storeDestination, string localSource, IImageStoreProgressHandler handler, TimeSpan timeout, CopyFlag copyFlag, bool acquireSourceReaderLock)
         {
             TimeoutHelper helper = timeout == TimeSpan.MaxValue ? null : new TimeoutHelper(timeout);
+
+            storeDestination = storeDestination.TrimEnd('\\');
+            if (string.Compare(storeDestination, Constants.StoreFolder, true) == 0 ||
+                string.Compare(storeDestination, Constants.WindowsFabricStoreFolder, true) == 0)
+            {
+                throw new FabricImageBuilderReservedDirectoryException(string.Format(StringResources.Error_InvalidReservedImageStoreOperation, storeDestination));
+            }
+
             localSource = this.GetLocalPath(localSource);
             if ((!FabricFile.Exists(localSource)) &&
                 (!FabricDirectory.Exists(localSource)))
@@ -277,10 +285,13 @@ namespace System.Fabric.ImageStore
                     bool fabricDirectoryExists = FabricDirectory.Exists(smbSourcePath);
                     if (fabricDirectoryExists && skipFiles.Any())
                     {
-                        string[] fileNames = FabricDirectory.GetFiles(smbSourcePath, "*", false, SearchOption.TopDirectoryOnly);
-                        string[] filtered = fileNames.Where(file => !skipFiles.Contains<string>(file)).ToArray<string>();
+                        string[] fullFileNames = FabricDirectory.GetFiles(smbSourcePath, "*", true, SearchOption.AllDirectories);
+                        var relativeFilePath = from file in fullFileNames
+                                               select file.Replace(smbSourcePath, "").TrimStart(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
 
-                        if (filtered.Count() < fileNames.Count())
+                        string[] filtered = relativeFilePath.Where(file => !skipFiles.Contains<string>(Path.GetFileName(file))).ToArray<string>();
+
+                        if (filtered.Count() < fullFileNames.Count())
                         {
                             foreach (string file in filtered)
                             {

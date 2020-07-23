@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{EA087145-15B5-42B9-A5C5-E62DB09B934C}</ProjectGuid>
+    <RootNamespace>FileLogUtil</RootNamespace>
+    <AssemblyName>FileLogUtil</AssemblyName>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <ProjectReference Include="..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj">
+      <Project>{ECDDA3CB-B09D-4056-A3A2-17C9BF681CC5}</Project>
+      <Name>Microsoft.ServiceFabric.Data.Impl</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="_friends.cs" />
+    <Compile Include="FileLogicalLogParser.cs" />
+    <Compile Include="FileLogicalLogStats.cs" />
+    <Compile Include="LogRecordStats.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="StatUtility.cs" />
+  </ItemGroup>
+  <!--Standard targets required for building in CoreXT4 - do not remove.-->
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

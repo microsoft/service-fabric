@@ -16,7 +16,7 @@ add_precompiled_header(${exe_FabricHost} ../stdafx.h)
 
 set_target_properties(${exe_FabricHost} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
-
+    
 target_link_libraries(${exe_FabricHost}
   ${lib_FabricNode}
   ${lib_Communication}
@@ -43,6 +43,7 @@ target_link_libraries(${exe_FabricHost}
   ${lib_StoreRepairPolicy}
   ${lib_Replication}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}
@@ -64,6 +65,7 @@ target_link_libraries(${exe_FabricHost}
   ${lib_InternalFabricUUID}
   ${lib_FabricUUID}
   ${lib_FabricResources}
+  ${lib_NetworkInventoryManager}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}

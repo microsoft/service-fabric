@@ -137,6 +137,20 @@ namespace HttpGateway
         void DeployServicePackageToNode(Common::AsyncOperationSPtr const& thisSPtr);
         void OnDeployServicePackageToNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
+        void GetAllNetworksOnNode(__in Common::AsyncOperationSPtr const& thisSPtr);
+        void OnGetAllNetworksOnNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+
+        void GetAllCodePackagesOnNetworkOnNode(__in Common::AsyncOperationSPtr const& thisSPtr);
+        void OnGetAllCodePackagesOnNetworkOnNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+
+        void GetCodePackagesOnNetworkOnNodeByName(__in Common::AsyncOperationSPtr const& thisSPtr);
+        void OnGetCodePackagesOnNetworkOnNodeByNameComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+
+        bool GetDeployedNetworkCodePackageQueryDescription(
+            Common::AsyncOperationSPtr const& thisSPtr,
+            bool includeCodePackageName,
+            __out ServiceModel::DeployedNetworkCodePackageQueryDescription & queryDescription);
+
         class DeactivateNodeData : public Common::IFabricJsonSerializable
         {
         public:

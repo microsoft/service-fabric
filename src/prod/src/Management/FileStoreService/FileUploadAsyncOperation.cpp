@@ -177,8 +177,29 @@ FileUploadAsyncOperation::~FileUploadAsyncOperation()
 {
 }
 
+bool FileUploadAsyncOperation::CheckIfPreviousVersionExists()
+{
+    // For version which didn't have the UploadRequestId field in the metadata (for v<=6.2), random guid will be generated and used for comparison
+    FileMetadata metadata(this->StoreRelativePath);
+    auto error = this->ReplicatedStoreWrapperObj.ReadExact(this->ActivityId, metadata);
+    if (error.IsSuccess() && FileState::IsStable(metadata.State) && metadata.UploadRequestId != this->uploadRequestId_)
+    {
+        WriteInfo(
+            TraceComponent,
+            "FileUploadAsyncOperation::TransitionToIntermediateState Previous version exists for file {0} newUploadId:{1}",
+            metadata,
+            this->uploadRequestId_
+        );
+        return true;
+    }
+
+    return false;
+}
+
 ErrorCode FileUploadAsyncOperation::TransitionToIntermediateState(StoreTransaction const & storeTx)
-{           
+{
+    bool previousVersionExists = CheckIfPreviousVersionExists();
+
     FileMetadata metadata(this->StoreRelativePath, fileVersion_, FileState::Updating, this->uploadRequestId_);
     bool doesExist = false;
     auto error = this->ReplicatedStoreWrapperObj.TryReadOrInsertIfNotFound(this->ActivityId, storeTx, metadata, doesExist);
@@ -197,7 +218,7 @@ ErrorCode FileUploadAsyncOperation::TransitionToIntermediateState(StoreTransacti
 
     if(doesExist)
     {
-        if (metadata.UploadRequestId == this->uploadRequestId_)
+        if (!previousVersionExists)
         {
             if (FileState::IsStable(metadata.State))
             {

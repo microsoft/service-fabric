@@ -11,9 +11,11 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
     {
         public NetworkRef()
         {
-            name = "";
+            name = string.Empty;
+            endpointRefs = null;
         }
 
         public string name;
+        public List<EndpointRef> endpointRefs;
     }
 }

@@ -59,6 +59,8 @@ GlobalWString NamingTcpMessage::ResolveSystemServiceRequestAction = make_global<
 GlobalWString NamingTcpMessage::ResolveSystemServiceReplyAction = make_global<wstring>(L"ResolveSystemServiceReply");
 GlobalWString NamingTcpMessage::ResetPartitionLoadAction = make_global<wstring>(L"ResetPartitionLoad");
 GlobalWString NamingTcpMessage::ToggleVerboseServicePlacementHealthReportingAction = make_global<wstring>(L"ToggleVerboseServicePlacementHealthReporting");
+GlobalWString NamingTcpMessage::CreateNetworkAction = make_global<wstring>(L"CreateNetwork");
+GlobalWString NamingTcpMessage::DeleteNetworkAction = make_global<wstring>(L"DeleteNetwork");
 
 GlobalWString NamingTcpMessage::ClientOperationFailureAction = make_global<wstring>(L"ClientOperationFailure");
 

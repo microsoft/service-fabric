@@ -123,3 +123,119 @@ ErrorCode ContainerHelper::GetCurrentOsBuildNumber(__out wstring & os)
     return ErrorCode(ErrorCodeValue::InvalidOperation, wformatString(StringResource::Get(IDS_HOSTING_RtlGetVersionFailed), status));
 #endif
 }
+
+ErrorCode ContainerHelper::GetContainerLogRoot(wstring & containerLogRoot)
+{
+    wstring fabricLogRoot;
+    auto error = Common::FabricEnvironment::GetFabricLogRoot(fabricLogRoot);
+    if (!error.IsSuccess())
+    {
+        TraceError(
+            TraceTaskCodes::Hosting,
+            TraceType_ContainerHelper,
+            "GetFabricLogRoot(fabricLogRoot) failed. Container folder will not be marked.");
+        return error;
+    }
+
+    containerLogRoot = Path::Combine(fabricLogRoot, L"Containers");
+    if (!Directory::Exists(containerLogRoot))
+    {
+        TraceWarning(
+            TraceTaskCodes::Hosting,
+            TraceType_ContainerHelper,
+            "Directory {0} does not exist. Container folder will not be marked.",
+            containerLogRoot);
+        return error;
+    }
+
+    return error;
+}
+
+void ContainerHelper::MarkContainerLogFolder(
+    wstring const & appServiceId,
+    bool forProcessing,
+    bool markAllDirectories)
+{
+    /*
+    Whenever a container crashes/fails to start, we create a marker file(ContainerLogRemovalMarkerFile) for FabricDCA to consume.
+    FabricDCA will then delete the directory.
+    If the flag "forProcessing" is set to true. It will create the ContainerLogProcessMarkerFile which informs DCA that the host is Container
+    host and has FabricRuntime in it. FabricDCA can now start monitoring this file for logs.
+    */
+    TraceInfo(
+        TraceTaskCodes::Hosting,
+        TraceType_ContainerHelper,
+        "MarkContainerLog for appServiceId:{0}, forProcessing:{1}, markAllDirectories:{2}",
+        appServiceId,
+        forProcessing,
+        markAllDirectories);
+
+    wstring containerLogRoot;
+    auto error = GetContainerLogRoot(containerLogRoot);
+    if (!error.IsSuccess())
+    {
+        TraceWarning(
+            TraceTaskCodes::Hosting,
+            TraceType_ContainerHelper,
+            "Container Log Root not found.");
+        return;
+    }
+
+    vector<wstring> appServiceLogRoot;
+    if (markAllDirectories)
+    {
+        appServiceLogRoot = Directory::GetSubDirectories(containerLogRoot, L"*.*", true, true);
+    }
+    else
+    {
+        appServiceLogRoot = Directory::GetSubDirectories(containerLogRoot, wformatString("*{0}*", appServiceId), true, true);
+        TESTASSERT_IF(appServiceLogRoot.size() > 1, "Multiple log folders found for same appServiceId");
+    }
+
+    auto logDirectoriesCount = appServiceLogRoot.size();
+
+    if (logDirectoriesCount  == 0)
+    {
+        TraceWarning(
+            TraceTaskCodes::Hosting,
+            TraceType_ContainerHelper,
+            "Container Log Root not found at:{0} for appServiceId:{1}. Container folder will not be marked.",
+            containerLogRoot,
+            appServiceId);
+        return;
+    }
+
+    TraceInfo(
+        TraceTaskCodes::Hosting,
+        TraceType_ContainerHelper,
+        "MarkContainerLog folder root:{0}, number of subdirectories to process :{1}",
+        containerLogRoot,
+        logDirectoriesCount);
+
+    wstring markerFile = forProcessing ? Constants::ContainerLogProcessMarkerFile : Constants::ContainerLogRemovalMarkerFile;
+    wstring markerFileText = forProcessing ? L"ProcessContainerLog = true" : L"RemoveContainerLog = true";
+
+    for (auto const& logRoot : appServiceLogRoot)
+    {
+        auto markerFilePath = Path::Combine(logRoot, markerFile);
+        if (!File::Exists(markerFilePath))
+        {
+            FileWriter containerLogMarkerFile;
+            error = containerLogMarkerFile.TryOpen(markerFilePath);
+            if (!error.IsSuccess())
+            {
+                TraceWarning(
+                    TraceTaskCodes::Hosting,
+                    TraceType_ContainerHelper,
+                    "Error while opening file:{0}, error:{1}. Container folder will not be marked.",
+                    markerFilePath,
+                    ::GetLastError());
+            }
+            else
+            {
+                containerLogMarkerFile.WriteUnicodeBuffer(markerFileText.c_str(), markerFileText.size());
+                containerLogMarkerFile.Close();
+            }
+        }
+    }
+}

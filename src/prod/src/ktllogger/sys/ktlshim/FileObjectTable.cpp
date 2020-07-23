@@ -574,6 +574,7 @@ NTSTATUS FileObjectTable::CreateAndRegisterOverlayManagerInternal(
     //
     KtlLogManager::MemoryThrottleLimits memoryThrottleLimits;
     KtlLogManager::SharedLogContainerSettings sharedLogContainerSettings;
+    KtlLogManager::AcceleratedFlushLimits accelerateFlushLimits;
 
     //
     // Default memory throttle limits and settings
@@ -586,6 +587,7 @@ NTSTATUS FileObjectTable::CreateAndRegisterOverlayManagerInternal(
     memoryThrottleLimits.PeriodicTimerIntervalInSec = KtlLogManager::MemoryThrottleLimits::_DefaultPeriodicTimerIntervalInSec;
     memoryThrottleLimits.AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_DefaultAllocationTimeoutInMs;
     memoryThrottleLimits.MaximumDestagingWriteOutstanding = KtlLogManager::MemoryThrottleLimits::_DefaultMaximumDestagingWriteOutstanding;
+    memoryThrottleLimits.SharedLogThrottleLimit = KtlLogManager::MemoryThrottleLimits::_DefaultSharedLogThrottleLimit;
 
     //
     // Use global default settings in the case that FabricNode does not
@@ -601,11 +603,17 @@ NTSTATUS FileObjectTable::CreateAndRegisterOverlayManagerInternal(
     sharedLogContainerSettings.MaximumRecordSize = 0;
     sharedLogContainerSettings.Flags = 0;
 
+    accelerateFlushLimits.AccelerateFlushActiveTimerInMs = KtlLogManager::AcceleratedFlushLimits::DefaultAccelerateFlushActiveTimerInMs;
+    accelerateFlushLimits.AccelerateFlushPassiveTimerInMs = KtlLogManager::AcceleratedFlushLimits::DefaultAccelerateFlushPassiveTimerInMs;
+    accelerateFlushLimits.AccelerateFlushActivePercent = KtlLogManager::AcceleratedFlushLimits::DefaultAccelerateFlushActivePercent;
+    accelerateFlushLimits.AccelerateFlushPassivePercent = KtlLogManager::AcceleratedFlushLimits::DefaultAccelerateFlushPassivePercent;
+    
     OverlayManager::SPtr overlayManager;
 
     status = OverlayManager::Create(overlayManager,
-                                    &memoryThrottleLimits,
-                                    &sharedLogContainerSettings,
+                                    memoryThrottleLimits,
+                                    sharedLogContainerSettings,
+                                    accelerateFlushLimits,
                                     Allocator,
                                     AllocationTag
                                     );

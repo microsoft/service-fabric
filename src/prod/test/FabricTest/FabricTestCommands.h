@@ -29,6 +29,8 @@ namespace FabricTest
         static std::wstring const RemoveInfrastructureServiceCommand;
         static std::wstring const DefineRepairManagerServiceCommand;
         static std::wstring const DefineDnsServiceCommand;
+        static std::wstring const DefineNIMServiceCommand;
+        static std::wstring const DefineEnableUnsupportedPreviewFeaturesCommand;
         static std::wstring const DefineMockImageBuilderCommand;
         static std::wstring const ListCommand;
         static std::wstring const FMCommand;
@@ -163,6 +165,13 @@ namespace FabricTest
         static std::wstring const CreateComposeCommand;
         static std::wstring const DeleteComposeCommand;
         static std::wstring const UpgradeComposeCommand;
+        static std::wstring const RollbackComposeCommand;
+
+        // For container network related tests
+        static std::wstring const CreateNetworkCommand;
+        static std::wstring const DeleteNetworkCommand;
+        static std::wstring const GetNetworkCommand;
+        static std::wstring const ShowNetworksCommand;
 
         static std::wstring const PrepareUpgradeFabricCommand;
         static std::wstring const ProvisionFabricCommand;

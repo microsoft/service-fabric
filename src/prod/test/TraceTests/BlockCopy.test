@@ -1,0 +1,21 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 3 1
+namingservice 1 3 2
+fmservice 3 1
+cleantest
++10
++20
++30
+verify
+createname fabric:/test1
+createservice fabric:/test1 TestStoreServiceType y 1 4
+verify
+clientput fabric:/test1 10 10
+clientput fabric:/test1 20 10
+clientput fabric:/test1 30 10
+!wait
+addbehavior b1 * * CopyOperation
++40
+!pause,300
+!q

@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <!--Required before anything else.-->
+  <PropertyGroup>  
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <ProjectGuid>{F4598049-C09F-4A6C-A5C7-9D215EF355CA}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.ClusterManagementCommon</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.ClusterManagementCommon</AssemblyName>
+    <AssemblyDescription>Common code to be shared between stand alone and resource provider.</AssemblyDescription>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.strings.csproj">
+      <Name>Microsoft.ServiceFabric.Internal.strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Project>{99ff4c48-c442-4a40-a160-a3d123d57b26}</Project>
+      <Name>Microsoft.ServiceFabric.Internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599f-c6b0-4c47-ae92-5bdafe19f12e}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgNewtonsoft_Json_6_0)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AdminConfigVersion.cs" />
+    <Compile Include="Argument.cs" />
+    <Compile Include="AutoScaleClusterUpgradeStateBase.cs" />
+    <Compile Include="AzureActiveDirectory.cs" />
+    <Compile Include="BaselineClusterUpgradeStateBase.cs" />
+    <Compile Include="CertificateClusterUpgradeFlow.cs" />
+    <Compile Include="CertificateClusterUpgradeStateBase.cs" />
+    <Compile Include="CertificateClusterUpgradeStep.cs" />
+    <Compile Include="CertificateDescription.cs" />
+    <Compile Include="CertificateCommonNameBase.cs" />
+    <Compile Include="CertificateIssuerStore.cs" />
+    <Compile Include="ClientCertificateCommonName.cs" />
+    <Compile Include="ServerCertificateCommonNames.cs" />
+    <Compile Include="ClientCertificateThumbprint.cs" />
+    <Compile Include="ClientIdentity.cs" />
+    <Compile Include="ClusterExternalState.cs" />
+    <Compile Include="ClusterManagementErrorCode.cs" />
+    <Compile Include="ClusterManagementException.cs" />
+    <Compile Include="ClusterManifestBuilder.cs" />
+    <Compile Include="IClusterManifestBuilderActivator.cs" />
+    <Compile Include="IClusterManifestSettings.cs" />
+    <Compile Include="ClusterNodeConfig.cs" />
+    <Compile Include="ClusterProvisioningState.cs" />
+    <Compile Include="ClusterResourceStateMachine.cs" />
+    <Compile Include="ClusterState.cs" />
+    <Compile Include="ClusterUpgradeDeltaHealthPolicy.cs" />
+    <Compile Include="ClusterUpgradeHealthPolicy.cs" />
+    <Compile Include="ClusterUpgradeFailureReason.cs" />
+    <Compile Include="ClusterUpgradePolicy.cs" />
+    <Compile Include="ClusterUpgradeStateBase.cs" />
+    <Compile Include="ClusterUpgradeStateFactory.cs" />
+    <Compile Include="ConfigDescription.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="DiagnosticStoreType.cs" />
+    <Compile Include="DiagnosticsStorageAccountConfig.cs" />
+    <Compile Include="LogicalDirectory.cs" />
+    <Compile Include="DurabilityLevel.cs" />
+    <Compile Include="EncryptableDiagnosticStoreInformation.cs" />
+    <Compile Include="EndpointDescription.cs" />
+    <Compile Include="EndpointRangeDescription.cs" />
+    <Compile Include="EqualityUtility.cs" />
+    <Compile Include="FabricSettingsGeneratorBase.cs" />
+    <Compile Include="FabricSettingsMetadata.cs" />
+    <Compile Include="GatekeepingClusterUpgradeState.cs" />
+    <Compile Include="IAdminConfig.cs" />
+    <Compile Include="ClusterManifestGeneratorSettings.cs" />
+    <Compile Include="ICluster.cs" />
+    <Compile Include="IClusterTopology.cs" />
+    <Compile Include="IFabricSettingsActivator.cs" />
+    <Compile Include="IManifestVersionGenerator.cs" />
+    <Compile Include="IterativeMatrixSearch.cs" />
+    <Compile Include="ITraceLogger.cs" />
+    <Compile Include="IUpgradeStateActivator.cs" />
+    <Compile Include="IUserConfig.cs" />
+    <Compile Include="MultiphaseClusterUpgradeState.cs" />
+    <Compile Include="NodeDescription.cs" />
+    <Compile Include="NodeStatus.cs" />
+    <Compile Include="NodeTypeDescription.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="KtlLogger.cs" />
+    <Compile Include="RandomMatrixSearch.cs" />
+    <Compile Include="AddonFeature.cs" />
+    <Compile Include="ReliabilityLevelExtension.cs" />
+    <Compile Include="ResourceId.cs" />
+    <Compile Include="ResourceIdConverter.cs" />
+    <Compile Include="ScaleClusterUpgradeBase.cs" />
+    <Compile Include="ScaleDownClusterUpgradeStateBase.cs" />
+    <Compile Include="ScaleUpClusterUpgradeStateBase.cs" />
+    <Compile Include="Security.cs" />
+    <Compile Include="SeedNodeSelector.cs" />
+    <Compile Include="SeedNodeUpgradeStateBase.cs" />
+    <Compile Include="SettingsParameterDescription.cs" />
+    <Compile Include="SettingsSectionDescription.cs" />
+    <Compile Include="SettingsValidator.cs" />
+    <Compile Include="SimpleClusterUpgradeState.cs" />
+    <Compile Include="StringConstants.cs" />
+    <Compile Include="TimeoutHelper.cs" />
+    <Compile Include="TraceType.cs" />
+    <Compile Include="ReplicaSetSize.cs" />
+    <Compile Include="UserConfigVersion.cs" />
+    <Compile Include="ValidationException.cs" />
+    <Compile Include="ValidatorExtensions.cs" />
+    <Compile Include="VMResourceDescription.cs" />
+    <Compile Include="Windows.cs" />
+    <Compile Include="X509.cs" />
+    <Compile Include="X509CertificateUtility.cs" />
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTestInfra" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

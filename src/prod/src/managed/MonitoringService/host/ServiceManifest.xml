@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="MonitoringServicePackage" Version="6.0.20" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ServiceTypes>
+    <StatefulServiceType ServiceTypeName="FabricMonitoringServiceType">
+      <LoadMetrics>
+        <LoadMetric Name="__FabricMonitoringServicePrimaryCount__" PrimaryDefaultLoad="1" SecondaryDefaultLoad="0" Weight="Low" />
+        <LoadMetric Name="__FabricMonitoringServiceSecondaryCount__" PrimaryDefaultLoad="0" SecondaryDefaultLoad="1" Weight="Low" />
+      </LoadMetrics>
+    </StatefulServiceType>
+  </ServiceTypes>
+  <CodePackage Name="MonitoringService.Code" Version="6.0.20"> 
+    <EntryPoint>
+        <ExeHost>
+          <Program>FabricMonSvc.exe</Program>
+        </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="MonitoringService.Config" Version="6.0.20" />
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="ReplicatorEndpoint" Protocol="tcp" Type="Internal"/>
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

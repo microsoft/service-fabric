@@ -12,6 +12,9 @@
 
 namespace LoggingReplicatorTests
 {
+// Disable these tests until they are fixed
+// RDBUG 13414908
+#if 0
     using namespace std;
     using namespace ktl;
     using namespace Data::LogRecordLib;
@@ -730,4 +733,5 @@ namespace LoggingReplicatorTests
     }
 
     BOOST_AUTO_TEST_SUITE_END()
+#endif
 }

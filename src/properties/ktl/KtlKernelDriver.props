@@ -1,0 +1,73 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <!--Actually building a driver now-->
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <!-- <TrackFileAccess>false</TrackFileAccess> -->
+    <ConfigurationType>Driver</ConfigurationType>
+    <DriverType>KMDF</DriverType>
+    <IsDriver>true</IsDriver>
+    <TargetExt>.sys</TargetExt>
+    <OutputType>sys</OutputType>
+    <LinkCompiled>true</LinkCompiled>
+    <GenerateManifest>false</GenerateManifest>
+    <LegacyManifestEmbedding>true</LegacyManifestEmbedding>
+    <!--Required if including any rc files-->
+    <GenerateAssemblyFileVersion>false</GenerateAssemblyFileVersion>
+  </PropertyGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.props" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <!--Standard kernel header and lib imports-->
+  <Import Project="$(SRCROOT)\properties\ktl\imports\KtlKernelImports.props" />
+  <ItemDefinitionGroup>
+    <!--Link dependencies are required if driver only-->
+    <Link>
+      <TargetExt>.sys</TargetExt>
+      <SubSystem>Native</SubSystem>
+      <Driver>Driver</Driver>
+      <StackCommitSize>0x1000</StackCommitSize>
+      <StackReserveSize>0x40000</StackReserveSize>
+      <EntryPointSymbol>FxDriverEntry</EntryPointSymbol>
+      <LinkIncremental>false</LinkIncremental>
+
+      <SpecifySectionAttributes>INIT,d</SpecifySectionAttributes>
+      <Version></Version>
+      <Profile></Profile>
+
+      <AdditionalOptions> /DYNAMICBASE /NXCOMPAT /IGNORE:4010,4037,4039,4065,4070,4078,4087,4089,4221,4198,4281 /INCREMENTAL:NO /release /WX /debug /debugtype:cv,fixup,pdata /version:6.2 /osversion:6.2 /GUARD:CF /pdbcompress /driver /kernel /base:0x10000 /TLBID:1 /d2:-guardspecload</AdditionalOptions>
+      <AdditionalLibraryDirectories>
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\wdf\kmdf\$(KmdfVersion)\;
+      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+        <!--Explicitly override any includes that are not the razzle libs-->
+        ntoskrnl.lib;
+        hal.lib;
+        wmilib.lib;
+        ntstrsafe.lib;
+        wdmsec.lib;
+        WdfLdr.lib;
+        WdfDriverEntry.lib;
+        ksecdd.lib;
+        netio.lib;
+        bufferoverflowk.lib;
+        libcpmt.lib;
+      </AdditionalDependencies>
+    </Link>
+    <Lib>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+</Project>

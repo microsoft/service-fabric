@@ -76,6 +76,7 @@ if [ 0 == $outputDoesNotContain128 ]; then
     exit 128
 fi
 
+sudo apt-get update
 sudo apt-get install -f -y
 if [ $? != 0 ]; then
     echo Error: Install failed

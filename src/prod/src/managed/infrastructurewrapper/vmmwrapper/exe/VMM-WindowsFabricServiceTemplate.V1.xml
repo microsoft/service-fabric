@@ -1,0 +1,208 @@
+<?xml version="1.0"?>
+<ovf:Envelope xmlns:vmmst="http://www.microsoft.com/schema/vmmst" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" vmmst:schemaVersion="2.0" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
+  <ovf:References>
+    <ovf:File ovf:id="Win2k8NoVCLarge.vhd" ovf:href="Win2k8NoVCLarge.vhd" ovf:size="11705081856" vmmst:resourceName="Win2k8NoVCLarge.vhd" vmmst:resourceFamilyName="" vmmst:resourceRelease="" vmmst:resourceDescription="" vmmst:resourceURI="\\rsinha-vmm2012.redmond.corp.microsoft.com\MSSCVMMLibrary\VHDs\Win2k8NoVCLarge.vhd" />
+    <ovf:File ovf:id="WindowsFabric.CR" ovf:href="WindowsFabric.CR" ovf:size="24179940" vmmst:resourceName="WindowsFabric.CR" vmmst:resourceFamilyName="" vmmst:resourceRelease="" vmmst:resourceDescription="" vmmst:resourceURI="\\rsinha-vmm2012.redmond.corp.microsoft.com\MSSCVMMLibrary\ApplicationFrameworks\WindowsFabric.CR" />
+  </ovf:References>
+  <ovf:DiskSection>
+    <ovf:Info>Virtual disks used in the package</ovf:Info>
+    <ovf:Disk ovf:diskId="Win2k8NoVCLarge.vhd" ovf:fileRef="Win2k8NoVCLarge.vhd" ovf:capacity="64424509440" ovf:capacityAllocationUnits="bytes" ovf:format="http://www.microsoft.com/technet/virtualserver/downloads/vhdspec.mspx" vmmst:diskType="DynamicallyExpanding" />
+  </ovf:DiskSection>
+  <ovf:NetworkSection>
+    <ovf:Info>Logical networks used in the package</ovf:Info>
+    <ovf:Network ovf:name="corp">
+      <ovf:Description />
+    </ovf:Network>
+  </ovf:NetworkSection>
+  <ovf:Section xsi:type="vmmst:RunAsAccountSection_Type">
+    <ovf:Info>Run As accounts used in the package</ovf:Info>
+    <vmmst:RunAsAccount vmmst:name="NT AUTHORITY\System" />
+  </ovf:Section>
+  <ovf:VirtualSystemCollection ovf:id="Windows Fabric Service Template" vmmst:resourceRelease="V1" vmmst:priority="Normal" vmmst:owner="REDMOND\rsinha" vmmst:ownerSID="S-1-5-21-2127521184-1604012920-1887927527-3684892" vmmst:ownerUserRole="Administrator" vmmst:useAsPattern="false">
+    <ovf:Info />
+    <ovf:ProductSection ovf:class="vmmCustomProperties">
+      <ovf:Info>Custom properties</ovf:Info>
+    </ovf:ProductSection>
+    <ovf:ProductSection ovf:class="vmmGlobalSettings">
+      <ovf:Info>Service template globals settings</ovf:Info>
+      <ovf:Property ovf:key="CMLocation" ovf:type="string" ovf:value="\\rsinha4\ImageStore\ClusterManifest.xml" vmmst:mandatory="true" vmmst:globalSettingType="String">
+        <ovf:Description />
+      </ovf:Property>
+      <ovf:Property ovf:key="UpgradeDomainCount" ovf:type="string" ovf:value="3" vmmst:mandatory="true" vmmst:globalSettingType="String">
+        <ovf:Description />
+      </ovf:Property>
+    </ovf:ProductSection>
+    <ovf:VirtualSystem ovf:id="Single Tier" vmmst:owner="REDMOND\rsinha" vmmst:ownerSID="S-1-5-21-2127521184-1604012920-1887927527-3684892" vmmst:ownerUserRole="Administrator" vmmst:costCenter="" vmmst:quotaPoints="1" vmmst:tag="(none)" vmmst:servicingOrder="1" vmmst:deploymentOrder="1">
+      <ovf:Info />
+      <ovf:Name>Single Tier</ovf:Name>
+      <ovf:ProductSection ovf:class="vmmCustomProperties">
+        <ovf:Info>Custom properties</ovf:Info>
+        <ovf:Property ovf:key="Custom1" ovf:type="string" ovf:value="CMLocation">
+          <ovf:Description>Custom 1</ovf:Description>
+        </ovf:Property>
+        <ovf:Property ovf:key="Custom2" ovf:type="string" ovf:value="UpgradeDomainCount">
+          <ovf:Description>Custom 2</ovf:Description>
+        </ovf:Property>
+      </ovf:ProductSection>
+      <ovf:Section xsi:type="vmmst:MachineTierSection_Type">
+        <ovf:Info>Scale out machine tier details</ovf:Info>
+        <vmmst:Description>Computer Tier for this service</vmmst:Description>
+        <vmmst:DefaultInstanceCount>3</vmmst:DefaultInstanceCount>
+        <vmmst:MinimumInstanceCount>1</vmmst:MinimumInstanceCount>
+        <vmmst:MaximumInstanceCount>3</vmmst:MaximumInstanceCount>
+        <vmmst:NumberOfUpgradeDomains>1</vmmst:NumberOfUpgradeDomains>
+        <vmmst:BlockAutomaticMigration>false</vmmst:BlockAutomaticMigration>
+      </ovf:Section>
+      <ovf:VirtualHardwareSection>
+        <ovf:Info>Hardware description</ovf:Info>
+        <ovf:System>
+          <vssd:ElementName>Virtual Hardware</vssd:ElementName>
+          <vssd:InstanceID>0bbb9cd8-6208-4cee-8780-bdced8535ca1</vssd:InstanceID>
+          <vssd:VirtualSystemType>vmm-3</vssd:VirtualSystemType>
+        </ovf:System>
+        <ovf:Item>
+          <rasd:Address>0</rasd:Address>
+          <rasd:ElementName>IDE Controller</rasd:ElementName>
+          <rasd:InstanceID>0</rasd:InstanceID>
+          <rasd:ResourceType>5</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Address>1</rasd:Address>
+          <rasd:ElementName>IDE Controller</rasd:ElementName>
+          <rasd:InstanceID>1</rasd:InstanceID>
+          <rasd:ResourceType>5</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:ElementName>Memory</rasd:ElementName>
+          <rasd:InstanceID>2</rasd:InstanceID>
+          <rasd:ResourceType>4</rasd:ResourceType>
+          <rasd:VirtualQuantity>2048</rasd:VirtualQuantity>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:ElementName>Video Adapter</rasd:ElementName>
+          <rasd:InstanceID>3</rasd:InstanceID>
+          <rasd:ResourceType>24</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:ElementName>Processor</rasd:ElementName>
+          <rasd:InstanceID>4</rasd:InstanceID>
+          <rasd:Limit>100</rasd:Limit>
+          <rasd:Reservation>0</rasd:Reservation>
+          <rasd:ResourceType>3</rasd:ResourceType>
+          <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
+          <rasd:Weight>100</rasd:Weight>
+          <vmmst:LimitCPUID>false</vmmst:LimitCPUID>
+          <vmmst:LimitProcessorFeatures>false</vmmst:LimitProcessorFeatures>
+          <vmmst:ExpectedCPUUtilization>20</vmmst:ExpectedCPUUtilization>
+          <!--1-processor 3.60 GHz Xeon (2 MB L2 cache)-->
+          <vmmst:BenchmarkProcessorType>b0957fcd95e34d7e899330a280f7207b</vmmst:BenchmarkProcessorType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Connection>corp</rasd:Connection>
+          <rasd:ElementName>Network Adapter</rasd:ElementName>
+          <rasd:InstanceID>5</rasd:InstanceID>
+          <rasd:ResourceSubType>Emulated</rasd:ResourceSubType>
+          <rasd:ResourceType>10</rasd:ResourceType>
+          <vmmst:StaticMacAddress>false</vmmst:StaticMacAddress>
+          <vmmst:IPv4AddressType>Dynamic</vmmst:IPv4AddressType>
+          <vmmst:IPv6AddressType>Dynamic</vmmst:IPv6AddressType>
+          <vmmst:AllowMacSpoofing>false</vmmst:AllowMacSpoofing>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Address>0</rasd:Address>
+          <rasd:ElementName>COM Port</rasd:ElementName>
+          <rasd:InstanceID>6</rasd:InstanceID>
+          <rasd:ResourceType>21</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Address>1</rasd:Address>
+          <rasd:ElementName>COM Port</rasd:ElementName>
+          <rasd:InstanceID>7</rasd:InstanceID>
+          <rasd:ResourceType>21</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Address>0</rasd:Address>
+          <rasd:ElementName>Disk Drive</rasd:ElementName>
+          <rasd:HostResource>ovf:/disk/Win2k8NoVCLarge.vhd</rasd:HostResource>
+          <rasd:InstanceID>8</rasd:InstanceID>
+          <rasd:Parent>0</rasd:Parent>
+          <rasd:ResourceType>17</rasd:ResourceType>
+          <vmmst:CreateNewDisk>false</vmmst:CreateNewDisk>
+          <vmmst:VolumeType>BootAndSystem</vmmst:VolumeType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:ElementName>Floppy Drive</rasd:ElementName>
+          <rasd:InstanceID>9</rasd:InstanceID>
+          <rasd:ResourceType>14</rasd:ResourceType>
+        </ovf:Item>
+        <vmmst:HighlyAvailable>false</vmmst:HighlyAvailable>
+        <vmmst:DRProtectionRequired>false</vmmst:DRProtectionRequired>
+        <vmmst:NumLockEnabled>false</vmmst:NumLockEnabled>
+        <vmmst:DiskIO>0</vmmst:DiskIO>
+        <vmmst:NetworkUtilization>0</vmmst:NetworkUtilization>
+        <vmmst:NumaIsolationRequired>false</vmmst:NumaIsolationRequired>
+      </ovf:VirtualHardwareSection>
+      <ovf:OperatingSystemSection ovf:id="0">
+        <ovf:Info>Guest operating system</ovf:Info>
+        <!--64-bit edition of Windows Server 2008 R2 Enterprise-->
+        <vmmst:OperatingSystemId>a4959488a31c461f8e9a5187ef2dfb6b</vmmst:OperatingSystemId>
+      </ovf:OperatingSystemSection>
+      <ovf:Section xsi:type="vmmst:ApplicationSection_Type">
+        <ovf:Info>Applications deployed on virtual machine</ovf:Info>
+        <vmmst:CompatibleOperatingSystems>
+          <vmmst:OperatingSystemId>a4959488a31c461f8e9a5187ef2dfb6b</vmmst:OperatingSystemId>
+        </vmmst:CompatibleOperatingSystems>
+        <vmmst:ApplicationProfileCompatibilityType>General</vmmst:ApplicationProfileCompatibilityType>
+        <vmmst:ScriptCommand vmmst:scriptType="PreInstall">
+          <vmmst:Executable>cmd.exe</vmmst:Executable>
+          <vmmst:Parameters>/q /c VMMWrapper.exe @CMLocation@ @UpgradeDomainCount@</vmmst:Parameters>
+          <vmmst:CustomResourceRef>ovf:/file/WindowsFabric.CR</vmmst:CustomResourceRef>
+          <vmmst:RunAsAccountRef>NT AUTHORITY\System</vmmst:RunAsAccountRef>
+          <vmmst:TimeoutSeconds>900</vmmst:TimeoutSeconds>
+          <vmmst:WorkingDirectory />
+          <vmmst:PersistStandardOutputPath>c:\temp.err</vmmst:PersistStandardOutputPath>
+          <vmmst:PersistStandardErrorPath>c:\temp.out</vmmst:PersistStandardErrorPath>
+          <vmmst:StandardErrorRegex>.+</vmmst:StandardErrorRegex>
+          <vmmst:StandardOutputRegex />
+          <vmmst:ExitCodeRegex>[1-9][0-9]*</vmmst:ExitCodeRegex>
+          <vmmst:ErrorPolicy>FailOnMatch</vmmst:ErrorPolicy>
+          <vmmst:RebootExitCodeRegex>{1641}|{3010}|{3011}</vmmst:RebootExitCodeRegex>
+          <vmmst:RestartScriptOnExitCodeReboot>false</vmmst:RestartScriptOnExitCodeReboot>
+          <vmmst:AlwaysReboot>false</vmmst:AlwaysReboot>
+          <vmmst:StandardInput>@ServiceVMComputerNames@</vmmst:StandardInput>
+          <vmmst:RestartOnRetry>true</vmmst:RestartOnRetry>
+          <vmmst:DeploymentOrder>2</vmmst:DeploymentOrder>
+        </vmmst:ScriptCommand>
+        <vmmst:ScriptCommand vmmst:scriptType="PreInstall">
+          <vmmst:Executable>cmd.exe</vmmst:Executable>
+          <vmmst:Parameters>/q /c vcredist_x64.exe /q /norestart</vmmst:Parameters>
+          <vmmst:CustomResourceRef>ovf:/file/WindowsFabric.CR</vmmst:CustomResourceRef>
+          <vmmst:RunAsAccountRef>NT AUTHORITY\System</vmmst:RunAsAccountRef>
+          <vmmst:TimeoutSeconds>120</vmmst:TimeoutSeconds>
+          <vmmst:WorkingDirectory />
+          <vmmst:PersistStandardOutputPath />
+          <vmmst:PersistStandardErrorPath />
+          <vmmst:StandardErrorRegex>.+</vmmst:StandardErrorRegex>
+          <vmmst:StandardOutputRegex />
+          <vmmst:ExitCodeRegex>[1-9][0-9]*</vmmst:ExitCodeRegex>
+          <vmmst:ErrorPolicy>FailOnMatch</vmmst:ErrorPolicy>
+          <vmmst:RebootExitCodeRegex>{1641}|{3010}|{3011}</vmmst:RebootExitCodeRegex>
+          <vmmst:RestartScriptOnExitCodeReboot>false</vmmst:RestartScriptOnExitCodeReboot>
+          <vmmst:AlwaysReboot>false</vmmst:AlwaysReboot>
+          <vmmst:RestartOnRetry>false</vmmst:RestartOnRetry>
+          <vmmst:DeploymentOrder>1</vmmst:DeploymentOrder>
+        </vmmst:ScriptCommand>
+      </ovf:Section>
+      <ovf:Section xsi:type="vmmst:OperatingSystemUnattendedInstallSection_Type">
+        <ovf:Info>Operating system unattended installation details</ovf:Info>
+        <vmmst:ComputerName>rsinha####</vmmst:ComputerName>
+        <vmmst:TimeZone>4</vmmst:TimeZone>
+        <vmmst:GuiRunOnce />
+        <vmmst:JoinDomain>redmond.corp.microsoft.com</vmmst:JoinDomain>
+        <vmmst:DomainUserName>redmond\rsinha</vmmst:DomainUserName>
+        <vmmst:DomainUserPassword>SGVybWlfKDk=</vmmst:DomainUserPassword>
+        <vmmst:OSType>Windows</vmmst:OSType>
+      </ovf:Section>
+    </ovf:VirtualSystem>
+  </ovf:VirtualSystemCollection>
+</ovf:Envelope>

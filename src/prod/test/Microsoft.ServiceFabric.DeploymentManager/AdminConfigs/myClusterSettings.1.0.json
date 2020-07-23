@@ -1,0 +1,125 @@
+{
+    "Version": "2.1",
+    "CommonClusterSettings": {
+        "Section": [
+            {
+                "Parameter": [
+                    {
+                        "Name": "ClusterCredentialType",
+                        "Value": "None"
+                    },
+                    {
+                        "Name": "ServerAuthCredentialType",
+                        "Value": "None"
+                    },
+                    {
+                        "Name": "ClientRoleEnabled",
+                        "Value": "true"
+                    },
+                    {
+                        "Name": "DisableFirewallRuleForPublicProfile",
+                        "Value": "true"
+                    },
+                    {
+                        "Name": "DisableFirewallRuleForPrivateProfile",
+                        "Value": "true"
+                    },
+                    {
+                        "Name": "DisableFirewallRuleForDomainProfile",
+                        "Value": "true"
+                    }
+                ],
+                "Name": "Security"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "ImageStoreConnectionString",
+                        "Value": "fabric:ImageStore"
+                    }
+                ],
+                "Name": "Management"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "NodeIdGeneratorVersion",
+                        "Value": "V4"
+                    }
+                ],
+                "Name": "Federation"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "EndpointProviderEnabled",
+                        "Value": "true"
+                    },
+                    {
+                        "Name": "RunAsPolicyEnabled",
+                        "Value": "true"
+                    },
+                    {
+                        "Name": "FirewallPolicyEnabled",
+                        "Value": "true"
+                    }
+                ],
+                "Name": "Hosting"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "IsEnabled",
+                        "Value": "true"
+                    }
+                ],
+                "Name": "HttpGateway"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "Level",
+                        "Value": "4"
+                    }
+                ],
+                "Name": "Trace/Etw"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "IsDeactivationInfoEnabled",
+                        "Value": "true"
+                    }
+                ],
+                "Name": "ReconfigurationAgent"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "MaxDiskQuotaInMB",
+                        "Value": "5120"
+                    }
+                ],
+                "Name": "Diagnostics"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "IsSingletonReplicaMoveAllowedDuringUpgrade",
+                        "Value": "True"
+                    }
+                ],
+                "Name": "FailoverManager"
+            },
+            {
+                "Parameter": [
+                    {
+                        "Name": "QuorumBasedReplicaDistributionPerUpgradeDomains",
+                        "Value": "true"
+                    }
+                ],
+                "Name": "PlacementAndLoadBalancing"
+            }
+        ]
+    }
+}

@@ -22,6 +22,7 @@ namespace Hosting2
             std::wstring const & accountName,
             std::wstring const & password,
             bool isPasswordEncrypted,
+            bool loadProfile,
             ServiceModel::SecurityPrincipalAccountType::Enum accountType,
             std::vector<std::wstring> parentApplicationGroups,
             std::vector<std::wstring> parentSystemGroups);

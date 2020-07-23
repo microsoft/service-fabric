@@ -77,12 +77,11 @@ namespace Common
 
     ConfigStoreSPtr Config::InitConfigStore()
     {
-        // TODO: Rethink this mechanism of overriding the default configuration store
         ConfigStoreSPtr store = defaultStore_;
 
         if (!store)
         {
-            store = FabricGlobals::Get().GetConfigStore().Store;
+            store = ComProxyConfigStore::Create();
         }
 
         return store;

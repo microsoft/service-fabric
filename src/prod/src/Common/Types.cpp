@@ -225,7 +225,7 @@ namespace Common
     }
 
     template <typename T>
-    CryptObjContext<T>::CryptObjContext(T* obj, string const & filePath) : obj_(obj), filePath_(filePath)
+    CryptObjContext<T>::CryptObjContext(T* obj, string const & filePath) : obj_(obj), filePath_(move(filePath))
     {
         ASSERT(!deleter_);
         Trace.WriteNoise(CryptObjContextTrace, "{0}: ctor: obj_ = {1}, filePath_ = {2}", TextTraceThis, TextTracePtr(obj_), filePath_);
