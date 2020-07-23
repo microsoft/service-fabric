@@ -6,20 +6,19 @@ One of the easiest ways to contribute is to participate in discussions and discu
 ## Open an Issue
 
 ### Production Issues
-Issues related to Production workloads  **MUST NOT BE REPORTED** in this repository. Production support is out of scope of this repositories obejctives. To receive urgent support you must file a support request through below recommended channels.
+Issues related to Production workloads  **MUST NOT BE REPORTED** in this repository. Production support is out of scope of this repository's obejctives. To receive product  support, you must file a support request through below recommended channels.
   
   #### Support Channels
   - [Azure Support options](https://azure.microsoft.com/en-us/support/options/)
   - [Service Fabric Support Policies](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-support) 
 
 ### Reporting security issues and bugs
-Security issues and bugs should be reported privately, via email, to the Microsoft Security Response Center (MSRC)  secure@microsoft.com. You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [Security TechCenter](https://technet.microsoft.com/en-us/security/ff852094.aspx).
+Security issues and bugs should be reported privately, via email, to  **[Microsoft Security Response Center (MSRC)](secure@microsoft.com)**. You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [Security TechCenter](https://technet.microsoft.com/en-us/security/ff852094.aspx).
 
-### Open Non-Production issue
-For non-security related bugs, issues, or other discussion, please log a new issue in the appropriate GitHub repo.
+### Non-Production/Non-Security Issues
 
-#### New Issues Creation Guideline
-   -  Use this template [create_new_issue](https://github.com/microsoft/service-fabric/issues/new?template=create_new_issue.md) to submit new issues to Github repos listed       below.
+#### Guidelines to files issues for this repository
+   -  File issues pertaining to Service Fabric runtime in this repo using this [template](https://github.com/microsoft/service-fabric/issues/new?template=create_new_issue.md) 
    -  Edit the title and fill in the details (runtime version, OS type, behaviors) requested in the template.
    -  New issues will be assigned automatically to our team @microsoft/service-fabric-triage . ***Do not update the assignees listed in the template***
      
