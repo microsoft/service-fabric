@@ -114,8 +114,8 @@ namespace Hosting2
         //
         std::list<std::wstring> GetGhostReservations();
 
-        // Get the gateway ip address for the vnet
-        Common::ErrorCode GetGatewayIpAddress(uint &gatewayIpAddress);
+        // Get the subnet(CIDR) and gateway ip address for the vnet
+        Common::ErrorCode GetSubnetAndGatewayIpAddress(wstring &subnetCIDR, uint &gatewayIpAddress);
 
         // Get the number of ips that are currently managed, and not
         // reserved.
@@ -173,14 +173,14 @@ namespace Hosting2
         //
         list<uint> GetIpsFromConfig(FlatIPConfiguration &config);
 
-        // GetGatewayAddressFromConfig: This helper method walks though the configuration
-        // data, retrieving the subnet gateway for the primary interface.
+        // GetSubnetAndGatewayIpAddressFromConfig: This helper method walks though the configuration
+        // data, retrieving the subnet and gateway for the primary interface.
         //
         // The arguments are:
         // config: The configuration data to apply.
         //
-        // Returns: Gateway ip address.
-        uint GetGatewayIpAddressFromConfig(FlatIPConfiguration &config);
+        // Returns: Subnet and gateway ip address.
+        void GetSubnetAndGatewayIpAddressFromConfig(FlatIPConfiguration &config, wstring &subnetCIDR, uint &gatewayIp);
 
         // RemoveGhostIf: This helper method removes the supplied reservation
         // from the set of ghost reservations, if it was present.  Otherwise,
@@ -248,6 +248,9 @@ namespace Hosting2
 
         // Gateway ip address for the vnet
         uint gatewayIpAddress_;
+
+        // Subnet address for the vnet in CIDR format
+        wstring subnetCIDR_;
 
         // Is refresh processing cancelled
         bool refreshProcessingCancelled_;

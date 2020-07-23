@@ -20,6 +20,7 @@ namespace System.Fabric.Management.ImageStore
     using System.Threading;
     using System.Xml;
     using System.Fabric.Common;
+    using System.Fabric.Strings;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.RetryPolicies;
     using Microsoft.WindowsAzure.Storage;
@@ -74,6 +75,28 @@ namespace System.Fabric.Management.ImageStore
             bool isFolder,
             int retryCount,
             TimeoutHelper timeoutHelper)
+                 : this(operationType, srcUri, dstUri, isFolder, retryCount, timeoutHelper, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the XStoreFileOperationTask class.
+        /// </summary>
+        /// <param name="operationType">Operation type</param>
+        /// <param name="srcUri">Source uri of this operation</param>
+        /// <param name="dstUri">Destination uri of this operation</param>
+        /// <param name="isFolder">Bool to indicate if this operaton is on a folder</param>
+        /// <param name="retryCount">Retry count of this operation</param>
+        /// <param name="timeoutHelper">The timeout helper object</param>
+        /// <param name="operationId">The unique ID of the XStore operation.</param>
+        public XStoreFileOperationTask(
+            XStoreTaskType operationType,
+            string srcUri,
+            string dstUri,
+            bool isFolder,
+            int retryCount,
+            TimeoutHelper timeoutHelper,
+            Guid? operationId)
         {
             this.OpType = operationType;
             this.SrcUri = srcUri;
@@ -87,12 +110,13 @@ namespace System.Fabric.Management.ImageStore
             this.Length = 0;
             this.IsSucceeded = false;
             this.TimeoutHelper = timeoutHelper;
+            this.OperationId = operationId;
 
             if ((this.OpType & TypesWithExtraTracing) == this.OpType)
             {
                 this.ExtraTracingEnabled = true;
                 this.OperationContext = new OperationContext();
-                this.OperationContext.ClientRequestID = Guid.NewGuid().ToString();
+                this.OperationContext.ClientRequestID = (this.OperationId == null ? Guid.NewGuid().ToString() : this.OperationId.ToString());
             }
             else
             {
@@ -189,6 +213,9 @@ namespace System.Fabric.Management.ImageStore
         /// <summary>The context for a request to provides additional information about its execution</summary>
         public OperationContext OperationContext { get; set; }
 
+        /// <summary> Get the unique ID of the XStore opertion </summary>
+        public Guid? OperationId { get; }
+
         /// <summary>
         /// Indicates that the request needs to be tracked with extra trace information
         /// </summary>
@@ -228,6 +255,11 @@ namespace System.Fabric.Management.ImageStore
             if (this.ExtraTracingEnabled && this.OperationContext.RequestResults != null && this.OperationContext.RequestResults.Count > 0)
             {
                 StringBuilder builder = new StringBuilder();
+                if (OperationId != null)
+                {
+                    builder.Append(string.Format(CultureInfo.CurrentCulture, "OperationID:{0}", this.OperationId));
+                }
+
                 builder.Append(string.Format(CultureInfo.CurrentCulture, "RequestID:{0}", this.OperationContext.ClientRequestID));
                 builder.Append(string.Format(CultureInfo.CurrentCulture, ",SourceUri:{0}", this.SrcUri));
                 builder.Append(string.Format(CultureInfo.CurrentCulture, ",RequestResults:"));
@@ -774,10 +806,9 @@ namespace System.Fabric.Management.ImageStore
             {
                 if (null == this.defaultRequestOption)
                 {
-                    ExponentialRetry retry = new ExponentialRetry(TimeSpan.FromSeconds(3), 3);
                     this.defaultRequestOption = new BlobRequestOptions
                     {
-                        RetryPolicy = retry,
+                        RetryPolicy = XStoreCommon.DefaultRetryPolicy, //ExponentialRetry with 3 max retry attempts and 3 second back off interval
                         MaximumExecutionTime = new TimeSpan(0, 0, DefaultTimeoutSeconds)
                     };
                 }
@@ -810,12 +841,41 @@ namespace System.Fabric.Management.ImageStore
              string[] filterFileNames,
              TimeoutHelper helper)
         {
+            this.CopyFolder(srcRootUri, dstRootUri, operationType, copyFlag, filterExtensions, filterFileNames, helper, null);
+        }
+
+        /// <summary>
+        /// Wrapper of copyfolder. We have this function to prevent multiple instances of copyfolder running at the same time for the reason below:
+        ///         We have multiple worker threads for copyfolder. And each worker thread can probably spin more
+        ///         threads to max the i/o. If we have muliple of copyfolder running at the same time (like imagebuilder,
+        ///         servicemgr use threadpool to run the copyfolder in multi-threads) it can easily overload the system and
+        ///         degrade performance.
+        /// However we are now change the code and multiple copyfolder is fine. Keep the wrapper for a while in case we need to tune it later
+        /// </summary>
+        /// <param name="srcRootUri">Source uri that needs to be copied. Example: FolderName (under container) for xstore path</param>
+        /// <param name="dstRootUri">Destination uri. Example: \\buildserver\\sql\\buildnumber</param>
+        /// <param name="operationType">File operation type</param>
+        /// <param name="copyFlag">Copy flag to indicate which kind of copy is used: AtomicCopy, CopyIfDifferent, etc.</param>
+        /// <param name="filterExtensions">File extensions to be filtered out of the operation</param>
+        /// <param name="filterFileNames">File names to be filtered out of the operation.</param>
+        /// <param name="helper">The timeout helper object.</param>
+        /// <param name="operationId">The unique ID of the XStore operation.</param>
+        public void CopyFolder(
+             string srcRootUri,
+             string dstRootUri,
+             XStoreFileOperationType operationType,
+             CopyFlag copyFlag,
+             string[] filterExtensions,
+             string[] filterFileNames,
+             TimeoutHelper helper,
+             Guid? operationId)
+        {
             this.ThrowIfDisposed();
             this.traceSource.WriteInfo(
                 ClassName,
                 string.Format(CultureInfo.CurrentCulture, "Start CopyFolder from {0} to {1} with OpType {2}", srcRootUri, dstRootUri, operationType));
 
-            this.CopyFolderImpl(srcRootUri, dstRootUri, operationType, copyFlag, filterExtensions, filterFileNames, helper);
+            this.CopyFolderImpl(srcRootUri, dstRootUri, operationType, copyFlag, filterExtensions, filterFileNames, helper, operationId);
 
             this.traceSource.WriteInfo(
                 ClassName,
@@ -1414,16 +1474,22 @@ namespace System.Fabric.Management.ImageStore
         private CloudBlobClient GetCloudBlobClientConnection()
         {
             CloudBlobClient blobClient = null;
-
-            string useConnectionString = this.connectionStringProvider.GetConnectionString(this.usePrimaryConnectionString);
-            if (!this.OpenConnectionToXStoreWithConnectionString(useConnectionString, this.usePrimaryConnectionString, out blobClient))
+            
+            string connectionString = this.connectionStringProvider.GetConnectionString(this.usePrimaryConnectionString);
+            string primaryConnectionString = connectionString;
+            if (!this.OpenConnectionToXStoreWithConnectionString(connectionString, this.usePrimaryConnectionString, out blobClient))
             {
                 this.usePrimaryConnectionString = !this.usePrimaryConnectionString;
-                useConnectionString = this.connectionStringProvider.GetConnectionString(this.usePrimaryConnectionString);
-                this.OpenConnectionToXStoreWithConnectionString(useConnectionString, this.usePrimaryConnectionString, out blobClient);
+                connectionString = this.connectionStringProvider.GetConnectionString(this.usePrimaryConnectionString);
+                this.OpenConnectionToXStoreWithConnectionString(connectionString, this.usePrimaryConnectionString, out blobClient);
             }
 
-            Utility.ReleaseAssert(blobClient != null, "Unable to get client connection to CloudBlob, check xstore connection string provided.");
+            if (blobClient == null)
+            {
+                var errorMessage = string.Format(CultureInfo.CurrentCulture, StringResources.XStore_CheckConnectionString, primaryConnectionString, connectionString);
+                throw new ArgumentException(errorMessage);
+            }
+            
             return blobClient;
         }
 
@@ -1499,6 +1565,7 @@ namespace System.Fabric.Management.ImageStore
         /// <param name="filterExtensions">File extensions to be filtered out of the operation</param>
         /// <param name="filterFileNames">File names to be filtered out of the operation.</param>
         /// <param name="helper">The timeout helper object.</param>
+        /// <param name="operationId">The unique ID of the XStore operation.</param>
         private void CopyFolderImpl(
             string srcRootUri,
             string destRootUri,
@@ -1506,7 +1573,8 @@ namespace System.Fabric.Management.ImageStore
             CopyFlag copyFlag,
             IEnumerable<string> filterExtensions,
             IEnumerable<string> filterFileNames,
-            TimeoutHelper helper)
+            TimeoutHelper helper,
+            Guid? operationId)
         {
             XStoreFileOperationTask task = null;
 
@@ -1528,8 +1596,8 @@ namespace System.Fabric.Management.ImageStore
                         this.dstRootUri,
                         true,
                         0,
-                        helper);
-
+                        helper,
+                        operationId);
 
                     task.FileCopyFlag = copyFlag;
                     task.IsRoot = true;
@@ -1567,8 +1635,8 @@ namespace System.Fabric.Management.ImageStore
                         this.dstRootUri,
                         true,
                         0,
-                        helper);
-
+                        helper,
+                        operationId);
 
                     task.FileCopyFlag = copyFlag;
                     task.IsRoot = true;

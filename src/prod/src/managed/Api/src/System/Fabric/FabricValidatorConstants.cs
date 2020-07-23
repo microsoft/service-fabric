@@ -112,8 +112,10 @@ namespace System.Fabric
             public const string BackupRestoreServiceReplicatorAddress = "BackupRestoreServiceReplicatorAddress";
             public const string CentralSecretServiceReplicatorAddress = "CentralSecretServiceReplicatorAddress";
             public const string UpgradeOrchestrationServiceReplicatorAddress = "UpgradeOrchestrationServiceReplicatorAddress";
+            public const string GatewayResourceManagerReplicatorAddress = "GatewayResourceManagerReplicatorAddress";
             public const string NamingReplicatorAddress = "NamingReplicatorAddress";
             public const string FailoverManagerReplicatorAddress = "FailoverManagerReplicatorAddress";
+            public const string EventStoreServiceReplicatorAddress = "EventStoreServiceReplicatorAddress";
             public const string RuntimeServiceAddress = "RuntimeServiceAddress";
             public const string StartApplicationPortRange = "StartApplicationPortRange";
             public const string EndApplicationPortRange = "EndApplicationPortRange";
@@ -166,12 +168,17 @@ namespace System.Fabric
             public const string StandByReplicaKeepDuration = "StandByReplicaKeepDuration";
             public const string Providers = "Providers";
             public const string DataDeletionAgeInDays = "DataDeletionAgeInDays";
+            public const string DeploymentId = "DeploymentId";
             public const string TableNamePrefix = "TableNamePrefix";
             public const string EtlReadIntervalInMinutes = "EtlReadIntervalInMinutes";
 
             internal static class Common
             {
                 public const string EnableUnsupportedPreviewFeatures = "EnableUnsupportedPreviewFeatures";
+#if DotNetCoreClrLinux
+                // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+                public const string LinuxStructuredTracesEnabled = "LinuxStructuredTracesEnabled";
+#endif
             }
 
             internal static class DNSService
@@ -288,6 +295,7 @@ namespace System.Fabric
                 public const string MoveParentToFixAffinityViolationTransitionPercentage = "MoveParentToFixAffinityViolationTransitionPercentage";
                 public const string StatisticsTracingInterval = "StatisticsTracingInterval";
                 public const string QuorumBasedLogicAutoSwitch = "QuorumBasedLogicAutoSwitch";
+                public const string ThrottlingConstraintPriority = "ThrottlingConstraintPriority";
             }
 
             internal static class FileStoreService
@@ -328,6 +336,8 @@ namespace System.Fabric
                 public const string ActivationTimeout = "ActivationTimeout";
                 public const string ApplicationUpgradeTimeout = "ApplicationUpgradeTimeout";
                 public const string IsSFVolumeDiskServiceEnabled = "IsSFVolumeDiskServiceEnabled";
+                public const string IPProviderEnabled = "IPProviderEnabled";
+                public const string LocalNatIPProviderEnabled = "LocalNatIPProviderEnabled";
             }
 
             internal static class UpgradeService
@@ -349,6 +359,20 @@ namespace System.Fabric
                 public const string NodeDeactivationMaxReplicaCloseDuration = "NodeDeactivationMaxReplicaCloseDuration";
                 public const string FabricUpgradeMaxReplicaCloseDuration = "FabricUpgradeMaxReplicaCloseDuration";
                 public const string IsDeactivationInfoEnabled = "IsDeactivationInfoEnabled";
+            }
+
+            internal static class CentralSecretService {
+                public const string IsEnabled = "IsEnabled";
+                public const string EncryptionCertificateThumbprint = "EncryptionCertificateThumbprint";
+            }
+
+            internal static class NetworkInventoryManager {
+                public const string IsEnabled = "IsEnabled";
+            }
+
+            internal static class Setup {
+                public const string ContainerNetworkSetup = "ContainerNetworkSetup";
+                public const string IsolatedNetworkSetup = "IsolatedNetworkSetup";
             }
         }
 
@@ -391,10 +415,15 @@ namespace System.Fabric
             public const string NodeBufferPercentage = "NodeBufferPercentage";
             public const string DefragmentationScopedAlgorithmEnabled = "DefragmentationScopedAlgorithmEnabled";
             public const string DefragmentationEmptyNodeWeight = "DefragmentationEmptyNodeWeight";
+            public const string DefragmentationNonEmptyNodeWeight = "DefragmentationNonEmptyNodeWeight";
             public const string PlacementStrategy = "PlacementStrategy";
             public const string MetricEmptyNodeThresholds = "MetricEmptyNodeThresholds";
             public const string ReservedLoadPerNode = "ReservedLoadPerNode";
             public const string BalancingByPercentage = "BalancingByPercentage";
+            public const string MaximumInBuildReplicasPerNode = "MaximumInBuildReplicasPerNode";
+            public const string MaximumInBuildReplicasPerNodeBalancingThrottle = "MaximumInBuildReplicasPerNodeBalancingThrottle";
+            public const string MaximumInBuildReplicasPerNodeConstraintCheckThrottle = "MaximumInBuildReplicasPerNodeConstraintCheckThrottle";
+            public const string MaximumInBuildReplicasPerNodePlacementThrottle = "MaximumInBuildReplicasPerNodePlacementThrottle";
             public const string PlacementAndLoadBalancing = "PlacementAndLoadBalancing";
             public const string PerformanceCounterLocalStore = "PerformanceCounterLocalStore";
             public const string HttpGateway = "HttpGateway";
@@ -423,6 +452,8 @@ namespace System.Fabric
             public const string Setup = "Setup";
             public const string NativeRunConfiguration = "NativeRunConfiguration";
             public const string Common = "Common";
+            public const string CentralSecretService = "CentralSecretService";
+            public const string NetworkInventoryManager = "NetworkInventoryManager";
 
             internal static class Replication
             {

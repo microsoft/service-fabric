@@ -11,6 +11,7 @@ using namespace Query;
 using namespace Reliability;
 using namespace std;
 using namespace ServiceModel;
+using namespace Management::NetworkInventoryManager;
 
 // *** Helper Functions
 //
@@ -1140,6 +1141,124 @@ Common::ErrorCode ServiceAdminClient::EndToggleVerboseServicePlacementHealthRepo
 
     return error;
 
+}
+
+AsyncOperationSPtr ServiceAdminClient::BeginCreateNetwork(
+    ServiceModel::ModelV2::NetworkResourceDescription const &networkDescription,
+    FabricActivityHeader const & activityHeader,
+    Common::TimeSpan timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    ReliabilitySubsystem::WriteInfo(
+        Constants::NIMApiSource, L"CreateNetwork",
+        "[{0}] {1}: Starting CreateNetwork for network {2} with type {3}",
+        TraceId, activityHeader, networkDescription.Name, (int)networkDescription.NetworkType);
+
+    if (!Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
+    {
+        ReliabilitySubsystem::WriteError(
+            Constants::NIMApiSource, L"CreateNetwork",
+            "[{0}] {1}: CreateNetwork: NetworkInventoryManager not configured (network {2} with type {3})",
+            TraceId, activityHeader, networkDescription.Name, (int)networkDescription.NetworkType);
+
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::SystemServiceNotFound, callback, parent);
+    }
+
+    ActivityId activityId = activityHeader.ActivityId;
+
+    CreateNetworkMessageBody body(networkDescription);
+
+    MessageUPtr createNetworkMessage = NIMMessage::GetCreateNetwork().CreateMessage<CreateNetworkMessageBody>(body);
+
+    NIMMessage::AddActivityHeader(*createNetworkMessage, activityHeader);
+    createNetworkMessage->Idempotent = false;
+
+    AsyncOperationSPtr operation = transport_.BeginRequestToFM(std::move(createNetworkMessage), FailoverConfig::GetConfig().RoutingRetryTimeout, timeout, callback, parent);
+
+    operation->PushOperationContext(make_unique<OperationContext<ActivityId>>(move(activityId)));
+
+    return operation;
+}
+
+Common::ErrorCode ServiceAdminClient::EndCreateNetwork(AsyncOperationSPtr const & operation)
+{    
+    ActivityId activityId = operation->PopOperationContext<ActivityId>()->Context;
+
+    MessageUPtr reply;
+    ErrorCode error = transport_.EndRequestToFM(operation, reply);
+
+    if (error.IsSuccess())
+    {
+        BasicFailoverReplyMessageBody body;
+        error = TryGetMessageBody(*reply, body);
+        if (error.IsSuccess())
+        {
+            error = body.ErrorCodeValue;
+        }
+    }
+    else
+    {
+        ReliabilitySubsystem::WriteWarning(
+            Constants::NIMApiSource, L"CreateNetwork",
+            "CreateNetwork completed with error {0}", error);
+    }
+
+    return error;
+}
+
+AsyncOperationSPtr ServiceAdminClient::BeginDeleteNetwork(
+    ServiceModel::DeleteNetworkDescription const &deleteNetworkDescription,
+    FabricActivityHeader const & activityHeader,
+    Common::TimeSpan timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    ReliabilitySubsystem::WriteInfo(
+        Constants::NIMApiSource, L"DeleteNetwork",
+        "[{0}] {1}: Starting DeleteNetwork for network {2}",
+        TraceId, activityHeader, deleteNetworkDescription.NetworkName);
+
+    ActivityId activityId = activityHeader.ActivityId;
+
+    DeleteNetworkMessageBody body(deleteNetworkDescription);
+
+    MessageUPtr deleteNetworkMessage = NIMMessage::GetDeleteNetwork().CreateMessage<DeleteNetworkMessageBody>(body);
+
+    NIMMessage::AddActivityHeader(*deleteNetworkMessage, activityHeader);
+    deleteNetworkMessage->Idempotent = false;
+
+    AsyncOperationSPtr operation = transport_.BeginRequestToFM(std::move(deleteNetworkMessage), FailoverConfig::GetConfig().RoutingRetryTimeout, timeout, callback, parent);
+
+    operation->PushOperationContext(make_unique<OperationContext<ActivityId>>(move(activityId)));
+
+    return operation;
+}
+
+Common::ErrorCode ServiceAdminClient::EndDeleteNetwork(AsyncOperationSPtr const & operation)
+{
+    ActivityId activityId = operation->PopOperationContext<ActivityId>()->Context;
+
+    MessageUPtr reply;
+    ErrorCode error = transport_.EndRequestToFM(operation, reply);
+
+    if (error.IsSuccess())
+    {
+        BasicFailoverReplyMessageBody body;
+        error = TryGetMessageBody(*reply, body);
+        if (error.IsSuccess())
+        {
+            error = body.ErrorCodeValue;
+        }
+    }
+    else
+    {
+        ReliabilitySubsystem::WriteWarning(
+            Constants::NIMApiSource, L"DeleteNetwork",
+            "DeleteNetwork completed with error {0}", error);
+    }
+
+    return error;
 }
 
 ServiceAdminClient::NodeStateRemovedAsycOperation::NodeStateRemovedAsycOperation(

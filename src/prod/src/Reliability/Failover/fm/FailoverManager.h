@@ -27,6 +27,7 @@ namespace Reliability
                 Federation::FederationSubsystemSPtr && federation,
                 Client::HealthReportingComponentSPtr const & healthClient,
                 Api::IServiceManagementClientPtr serviceManagementClient,
+                Api::IClientFactoryPtr const & clientFactory,
                 Common::FabricNodeConfigSPtr const& nodeConfig,
                 FailoverManagerStoreUPtr && fmStore,
                 ComPointer<IFabricStatefulServicePartition> const& servicePartition,
@@ -148,8 +149,15 @@ namespace Reliability
             __declspec (property(get=get_HealthClient)) Client::HealthReportingComponentSPtr const & HealthClient;
             Client::HealthReportingComponentSPtr const & get_HealthClient() const { return healthClient_; }
 
+            __declspec (property(get=get_ClientFactory, put=set_ClientFactory)) Api::IClientFactoryPtr const & ClientFactory;
+            Api::IClientFactoryPtr const & get_ClientFactory() const { return clientFactory_; }
+            void set_ClientFactory(Api::IClientFactoryPtr const & clientFactory) { clientFactory_ = clientFactory; }
+
             __declspec (property(get = get_QueueFullThrottle)) FailoverThrottle & QueueFullThrottle;
             FailoverThrottle& get_QueueFullThrottle() { return queueFullThrottle_; }
+
+            __declspec (property(get=get_NetworkInventoryService)) Management::NetworkInventoryManager::NetworkInventoryService & NIS;
+            Management::NetworkInventoryManager::NetworkInventoryService & get_NetworkInventoryService() const { return *networkInventoryServiceUPtr_; }
 
             static Common::Global<FailoverManagerComponent::EventSource> FMEventSource;
             static Common::Global<FailoverManagerComponent::MessageEventSource> FMMessageEventSource;
@@ -243,6 +251,7 @@ namespace Reliability
 
             void StartLoading(bool isRetry);
             void Load();
+            Common::ErrorCode InitializeNetworkInventoryService();
 
             static void AdjustTimestamps(std::vector<LoadInfoSPtr> & loadInfos);
 
@@ -389,6 +398,7 @@ namespace Reliability
             void RegisterEvents(Common::EventHandler const & readyEvent, Common::EventHandler const & failureEvent);
             Federation::FederationSubsystemSPtr federation_;
             Client::HealthReportingComponentSPtr healthClient_;
+            Api::IClientFactoryPtr clientFactory_;
 
             Common::FabricNodeConfigSPtr nodeConfig_;
 
@@ -450,6 +460,8 @@ namespace Reliability
             FailoverThrottle queueFullThrottle_;
             
             Api::IServiceManagementClientPtr serviceManagementClient_;
+
+            Management::NetworkInventoryManager::NetworkInventoryServiceUPtr networkInventoryServiceUPtr_;
         };
     }
 }

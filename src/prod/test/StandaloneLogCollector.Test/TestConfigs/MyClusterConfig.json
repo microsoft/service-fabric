@@ -1,0 +1,95 @@
+﻿{
+  "Properties": {
+    "NodeTypes": [
+      {
+        "Name": "NodeType0",
+        "ClientConnectionEndpointPort": 19000,
+        "HttpGatewayEndpointPort": 19080,
+        "ReverseProxyEndpointPort": 19081,
+        "LeaseDriverEndpointPort": 19002,
+        "ClusterConnectionEndpointPort": 19001,
+        "ServiceConnectionEndpointPort": 19003,
+        "ApplicationPorts": {
+          "StartPort": 20001,
+          "EndPort": 20031
+        },
+        "IsPrimary": true
+      },
+      {
+        "Name": "NodeType1",
+        "ClientConnectionEndpointPort": 19004,
+        "HttpGatewayEndpointPort": 19082,
+        "ReverseProxyEndpointPort": 19083,
+        "LeaseDriverEndpointPort": 19006,
+        "ClusterConnectionEndpointPort": 19005,
+        "ServiceConnectionEndpointPort": 19007,
+        "ApplicationPorts": {
+          "StartPort": 20288,
+          "EndPort": 20318
+        },
+        "IsPrimary": true
+      },
+      {
+        "Name": "NodeType2",
+        "ClientConnectionEndpointPort": 19008,
+        "HttpGatewayEndpointPort": 19084,
+        "ReverseProxyEndpointPort": 19085,
+        "LeaseDriverEndpointPort": 19010,
+        "ClusterConnectionEndpointPort": 19009,
+        "ServiceConnectionEndpointPort": 19011,
+        "ApplicationPorts": {
+          "StartPort": 20575,
+          "EndPort": 20605
+        },
+        "IsPrimary": true
+      }
+    ],
+    "FabricSettings": [
+      {
+        "Name": "Setup",
+        "Parameters": [
+          {
+            "Name": "FabricDataRoot",
+            "Value": "D:\\ProgramData\\CustomDataRoot"
+          },
+          {
+            "Name": "FabricLogRoot",
+            "Value": "D:\\ProgramData\\CustomLogRoot"
+          }
+        ]
+      }
+    ],
+    "DiagnosticsStore": {
+      "StoreType": "FileShare",
+      "DataDeletionAgeInDays": 7,
+      "Connectionstring": "D:\\ProgramData\\DiagnosticsStore",
+      "IsEncrypted": false
+    }
+  },
+  "Nodes": [
+    {
+      "NodeName": "vm0",
+      "NodeTypeRef": "NodeType0",
+      "IPAddress": "Machine0",
+      "FaultDomain": "fd:/dc1/r0",
+      "UpgradeDomain": "UD0"
+    },
+    {
+      "NodeName": "vm1",
+      "NodeTypeRef": "NodeType1",
+      "IPAddress": "Machine1",
+      "FaultDomain": "fd:/dc1/r1",
+      "UpgradeDomain": "UD1"
+    },
+    {
+      "NodeName": "vm2",
+      "NodeTypeRef": "NodeType2",
+      "IPAddress": "Machine2",
+      "FaultDomain": "fd:/dc1/r2",
+      "UpgradeDomain": "UD2"
+    }
+  ],
+  "ApiVersion": "10-2017",
+  "Name": "MyServiceFabricCluster",
+  "ClusterConfigurationVersion": "1.0.0"
+}

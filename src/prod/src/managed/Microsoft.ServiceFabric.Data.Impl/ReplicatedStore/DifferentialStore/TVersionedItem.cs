@@ -302,11 +302,20 @@ namespace System.Fabric.Store
                 return;
             }
 
-            // Set Inuse only after the data has been loaded and then set CanBeSweepedToDisk
+            // Set Inuse=True and CanBeSweepedToDisk=False at the same time
+            // These need to be set at the same time, in case isValueAReferenceType is false
+            // and another read is checking ShouldValueBeLoadedFromDisk
             if (this.ShouldCacheValue(readMode, isValueAReferenceType))
             {
-                this.InUse = true;
-                this.CanBeSweepedToDisk = false;
+                long offset = 0;
+                long newOffset = 0;
+
+                do
+                {
+                    offset = this.valueOffset;
+                    newOffset = (offset | TVersionedItem<TValue>.InUseFlag) & (~TVersionedItem<TValue>.CanBeSweepedToDiskFlag);
+
+                } while (Interlocked.CompareExchange(ref this.valueOffset, newOffset, offset) != offset);
             }
         }
 

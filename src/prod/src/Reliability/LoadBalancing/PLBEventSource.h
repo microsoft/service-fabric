@@ -186,7 +186,7 @@ namespace Reliability
             DECLARE_STRUCTURED_TRACE(DefragmentationStatistics, DefragStatistics);
             DECLARE_STRUCTURED_TRACE(AvailableImagesFromNode, std::wstring);
             DECLARE_STRUCTURED_TRACE(UpdateNodeImages, std::wstring);
-
+            DECLARE_STRUCTURED_TRACE(InvalidAutoScaleMinCount, std::wstring);
 
             PLBEventSource(Common::TraceTaskCodes::Enum taskCode) :
                 PLB_STRUCTURED_TRACE(UpdateFailoverUnit, 7, Info, "Updating failover unit with {1} actualReplicaDiff:{2} interruptBalancing:{3}", "id", "fuDescription", "actualReplicaDiff", "interrupt"),
@@ -328,7 +328,8 @@ namespace Reliability
                 PLB_STRUCTURED_TRACE(AutoScaler, 147, Info, "{0}", "message"),
                 PLB_STRUCTURED_TRACE(DefragmentationStatistics, 148, Info, "{0}", "defragStatistics"),
                 PLB_STRUCTURED_TRACE(AvailableImagesFromNode, 149, Info, "{0}", "message"),
-                PLB_STRUCTURED_TRACE(UpdateNodeImages, 150, Info, "{0}", "message")
+                PLB_STRUCTURED_TRACE(UpdateNodeImages, 150, Info, "{0}", "message"),
+                PLB_STRUCTURED_TRACE(InvalidAutoScaleMinCount, 151, Error, "{0} : Autoscaling policy is not allowed with Min count zero", "name")
             {
 
             }

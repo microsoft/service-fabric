@@ -101,6 +101,16 @@ void ProcessProvisionContextAsyncOperationBase::OnCommitComplete(AsyncOperationS
             this->context_.ApplicationPackageCleanupPolicy);
     }
 
+    if (error.IsSuccess())
+    {
+        if (ManagementConfig::GetConfig().TriggerAppTypeCleanupOnProvisionSuccess)
+        {
+            // Trigger automatic app type cleanup for this app type name
+            Common::ActivityId activityId;
+            this->Replica.QueueAutomaticCleanupApplicationType(this->context_.TypeName.Value, activityId);
+        }
+    }
+
     this->TryComplete(operation->Parent, move(error));
 }
 

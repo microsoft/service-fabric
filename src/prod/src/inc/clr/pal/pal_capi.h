@@ -1,0 +1,150 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+#ifndef __PAL_CAPI_H__
+#define __PAL_CAPI_H__
+
+// cert store location.
+static const UINT CERT_SYSTEM_STORE_UNPROTECTED_FLAG              = 0x40000000;
+static const UINT CERT_SYSTEM_STORE_LOCATION_MASK                 = 0x00FF0000;
+static const UINT CERT_SYSTEM_STORE_LOCATION_SHIFT                = 16;
+static const UINT CERT_SYSTEM_STORE_CURRENT_USER_ID               = 1;
+static const UINT CERT_SYSTEM_STORE_LOCAL_MACHINE_ID              = 2;
+static const UINT CERT_SYSTEM_STORE_CURRENT_SERVICE_ID            = 4;
+static const UINT CERT_SYSTEM_STORE_SERVICES_ID                   = 5;
+static const UINT CERT_SYSTEM_STORE_USERS_ID                      = 6;
+static const UINT CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY_ID  = 7;
+static const UINT CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY_ID = 8;
+static const UINT CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE_ID   = 9;
+static const UINT CERT_SYSTEM_STORE_CURRENT_USER                  = ((INT) CERT_SYSTEM_STORE_CURRENT_USER_ID << (INT) CERT_SYSTEM_STORE_LOCATION_SHIFT);
+static const UINT CERT_SYSTEM_STORE_LOCAL_MACHINE                 = ((INT) CERT_SYSTEM_STORE_LOCAL_MACHINE_ID << (INT) CERT_SYSTEM_STORE_LOCATION_SHIFT);
+static const UINT CERT_SYSTEM_STORE_CURRENT_SERVICE               = ((INT) CERT_SYSTEM_STORE_CURRENT_SERVICE_ID << (INT) CERT_SYSTEM_STORE_LOCATION_SHIFT);
+static const UINT CERT_SYSTEM_STORE_SERVICES                      = ((INT) CERT_SYSTEM_STORE_SERVICES_ID << (INT) CERT_SYSTEM_STORE_LOCATION_SHIFT);
+static const UINT CERT_SYSTEM_STORE_USERS                         = ((INT) CERT_SYSTEM_STORE_USERS_ID << (INT) CERT_SYSTEM_STORE_LOCATION_SHIFT);
+static const UINT CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY     = ((INT) CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY_ID << (INT) CERT_SYSTEM_STORE_LOCATION_SHIFT);
+static const UINT CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY    = ((INT) CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY_ID << (INT) CERT_SYSTEM_STORE_LOCATION_SHIFT);
+static const UINT CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE      = ((INT) CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE_ID << (INT) CERT_SYSTEM_STORE_LOCATION_SHIFT);
+
+// cert info flags.
+static const UINT CERT_INFO_VERSION_FLAG                 = 1;
+static const UINT CERT_INFO_SERIAL_NUMBER_FLAG           = 2;
+static const UINT CERT_INFO_SIGNATURE_ALGORITHM_FLAG     = 3;
+static const UINT CERT_INFO_ISSUER_FLAG                  = 4;
+static const UINT CERT_INFO_NOT_BEFORE_FLAG              = 5;
+static const UINT CERT_INFO_NOT_AFTER_FLAG               = 6;
+static const UINT CERT_INFO_SUBJECT_FLAG                 = 7;
+static const UINT CERT_INFO_SUBJECT_PUBLIC_KEY_INFO_FLAG = 8;
+static const UINT CERT_INFO_ISSUER_UNIQUE_ID_FLAG        = 9;
+static const UINT CERT_INFO_SUBJECT_UNIQUE_ID_FLAG       = 10;
+static const UINT CERT_INFO_EXTENSION_FLAG               = 11;
+
+// cert compare flags.
+static const UINT CERT_COMPARE_MASK                   = 0xFFFF;
+static const UINT CERT_COMPARE_SHIFT                  = 16;
+static const UINT CERT_COMPARE_ANY                    = 0;
+static const UINT CERT_COMPARE_SHA1_HASH              = 1;
+static const UINT CERT_COMPARE_NAME                   = 2;
+static const UINT CERT_COMPARE_ATTR                   = 3;
+static const UINT CERT_COMPARE_MD5_HASH               = 4;
+static const UINT CERT_COMPARE_PROPERTY               = 5;
+static const UINT CERT_COMPARE_PUBLIC_KEY             = 6;
+static const UINT CERT_COMPARE_HASH                   = CERT_COMPARE_SHA1_HASH;
+static const UINT CERT_COMPARE_NAME_STR_A             = 7;
+static const UINT CERT_COMPARE_NAME_STR_W             = 8;
+static const UINT CERT_COMPARE_KEY_SPEC               = 9;
+static const UINT CERT_COMPARE_ENHKEY_USAGE           = 10;
+static const UINT CERT_COMPARE_CTL_USAGE              = CERT_COMPARE_ENHKEY_USAGE;
+static const UINT CERT_COMPARE_SUBJECT_CERT           = 11;
+static const UINT CERT_COMPARE_ISSUER_OF              = 12;
+static const UINT CERT_COMPARE_EXISTING               = 13;
+static const UINT CERT_COMPARE_SIGNATURE_HASH         = 14;
+static const UINT CERT_COMPARE_KEY_IDENTIFIER         = 15;
+static const UINT CERT_COMPARE_CERT_ID                = 16;
+static const UINT CERT_COMPARE_CROSS_CERT_DIST_POINTS = 17;
+static const UINT CERT_COMPARE_PUBKEY_MD5_HASH        = 18;
+
+// cert find flags.
+static const UINT CERT_FIND_ANY                    = ((INT) CERT_COMPARE_ANY << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_SHA1_HASH              = ((INT) CERT_COMPARE_SHA1_HASH << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_MD5_HASH               = ((INT) CERT_COMPARE_MD5_HASH << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_SIGNATURE_HASH         = ((INT) CERT_COMPARE_SIGNATURE_HASH << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_KEY_IDENTIFIER         = ((INT) CERT_COMPARE_KEY_IDENTIFIER << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_HASH                   = CERT_FIND_SHA1_HASH;
+static const UINT CERT_FIND_PROPERTY               = ((INT) CERT_COMPARE_PROPERTY << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_PUBLIC_KEY             = ((INT) CERT_COMPARE_PUBLIC_KEY << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_SUBJECT_NAME           = ((INT) CERT_COMPARE_NAME << (INT) CERT_COMPARE_SHIFT | (INT) CERT_INFO_SUBJECT_FLAG);
+static const UINT CERT_FIND_SUBJECT_ATTR           = ((INT) CERT_COMPARE_ATTR << (INT) CERT_COMPARE_SHIFT | (INT) CERT_INFO_SUBJECT_FLAG);
+static const UINT CERT_FIND_ISSUER_NAME            = ((INT) CERT_COMPARE_NAME << (INT) CERT_COMPARE_SHIFT | (INT) CERT_INFO_ISSUER_FLAG);
+static const UINT CERT_FIND_ISSUER_ATTR            = ((INT) CERT_COMPARE_ATTR << (INT) CERT_COMPARE_SHIFT | (INT) CERT_INFO_ISSUER_FLAG);
+static const UINT CERT_FIND_SUBJECT_STR_A          = ((INT) CERT_COMPARE_NAME_STR_A << (INT) CERT_COMPARE_SHIFT | (INT) CERT_INFO_SUBJECT_FLAG);
+static const UINT CERT_FIND_SUBJECT_STR_W          = ((INT) CERT_COMPARE_NAME_STR_W << (INT) CERT_COMPARE_SHIFT | (INT) CERT_INFO_SUBJECT_FLAG);
+static const UINT CERT_FIND_SUBJECT_STR            = CERT_FIND_SUBJECT_STR_W;
+static const UINT CERT_FIND_ISSUER_STR_A           = ((INT) CERT_COMPARE_NAME_STR_A << (INT) CERT_COMPARE_SHIFT | (INT) CERT_INFO_ISSUER_FLAG);
+static const UINT CERT_FIND_ISSUER_STR_W           = ((INT) CERT_COMPARE_NAME_STR_W << (INT) CERT_COMPARE_SHIFT | (INT) CERT_INFO_ISSUER_FLAG);
+static const UINT CERT_FIND_ISSUER_STR             = CERT_FIND_ISSUER_STR_W;
+static const UINT CERT_FIND_KEY_SPEC               = ((INT) CERT_COMPARE_KEY_SPEC << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_ENHKEY_USAGE           = ((INT) CERT_COMPARE_ENHKEY_USAGE << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_CTL_USAGE              = CERT_FIND_ENHKEY_USAGE;
+static const UINT CERT_FIND_SUBJECT_CERT           = ((INT) CERT_COMPARE_SUBJECT_CERT << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_ISSUER_OF              = ((INT) CERT_COMPARE_ISSUER_OF << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_EXISTING               = ((INT) CERT_COMPARE_EXISTING << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_CERT_ID                = ((INT) CERT_COMPARE_CERT_ID << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_CROSS_CERT_DIST_POINTS = ((INT) CERT_COMPARE_CROSS_CERT_DIST_POINTS << (INT) CERT_COMPARE_SHIFT);
+static const UINT CERT_FIND_PUBKEY_MD5_HASH        = ((INT) CERT_COMPARE_PUBKEY_MD5_HASH << (INT) CERT_COMPARE_SHIFT);
+
+typedef struct _CRYPTOAPI_BLOB {
+  DWORD cbData;
+  BYTE  *pbData;
+} CRYPT_INTEGER_BLOB, *PCRYPT_INTEGER_BLOB, CRYPT_UINT_BLOB, *PCRYPT_UINT_BLOB, CRYPT_OBJID_BLOB, *PCRYPT_OBJID_BLOB, CERT_NAME_BLOB, CERT_RDN_VALUE_BLOB, *PCERT_NAME_BLOB, *PCERT_RDN_VALUE_BLOB, CERT_BLOB, *PCERT_BLOB, CRL_BLOB, *PCRL_BLOB, DATA_BLOB, *PDATA_BLOB, CRYPT_DATA_BLOB, *PCRYPT_DATA_BLOB, CRYPT_HASH_BLOB, *PCRYPT_HASH_BLOB, CRYPT_DIGEST_BLOB, *PCRYPT_DIGEST_BLOB, CRYPT_DER_BLOB, PCRYPT_DER_BLOB, CRYPT_ATTR_BLOB, *PCRYPT_ATTR_BLOB;
+
+typedef struct _CRYPT_BIT_BLOB {
+  DWORD cbData;
+  BYTE  *pbData;
+  DWORD cUnusedBits;
+} CRYPT_BIT_BLOB, *PCRYPT_BIT_BLOB;
+
+typedef struct _CERT_EXTENSION {
+  LPSTR            pszObjId;
+  BOOL             fCritical;
+  CRYPT_OBJID_BLOB Value;
+} CERT_EXTENSION, *PCERT_EXTENSION;
+
+typedef struct _CRYPT_ALGORITHM_IDENTIFIER {
+  LPSTR            pszObjId;
+  CRYPT_OBJID_BLOB Parameters;
+} CRYPT_ALGORITHM_IDENTIFIER, *PCRYPT_ALGORITHM_IDENTIFIER;
+
+typedef struct _CERT_PUBLIC_KEY_INFO {
+  CRYPT_ALGORITHM_IDENTIFIER Algorithm;
+  CRYPT_BIT_BLOB             PublicKey;
+} CERT_PUBLIC_KEY_INFO, *PCERT_PUBLIC_KEY_INFO;
+
+typedef struct _CERT_INFO {
+  DWORD                      dwVersion;
+  CRYPT_INTEGER_BLOB         SerialNumber;
+  CRYPT_ALGORITHM_IDENTIFIER SignatureAlgorithm;
+  CERT_NAME_BLOB             Issuer;
+  FILETIME                   NotBefore;
+  FILETIME                   NotAfter;
+  CERT_NAME_BLOB             Subject;
+  CERT_PUBLIC_KEY_INFO       SubjectPublicKeyInfo;
+  CRYPT_BIT_BLOB             IssuerUniqueId;
+  CRYPT_BIT_BLOB             SubjectUniqueId;
+  DWORD                      cExtension;
+  PCERT_EXTENSION            rgExtension;
+} CERT_INFO, *PCERT_INFO;
+
+typedef void * HCERTSTORE;
+
+typedef struct _CERT_CONTEXT {
+  DWORD      dwCertEncodingType;
+  BYTE       *pbCertEncoded;
+  DWORD      cbCertEncoded;
+  PCERT_INFO pCertInfo;
+  HCERTSTORE hCertStore;
+} CERT_CONTEXT, *PCERT_CONTEXT;
+typedef const CERT_CONTEXT *PCCERT_CONTEXT;
+
+#endif // __PAL_CAPI_H__

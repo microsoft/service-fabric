@@ -12,19 +12,19 @@ using namespace Common;
 using namespace Management::ResourceMonitor;
 using namespace ServiceModel;
 
-ApplicationHostEvent::ApplicationHostEvent
-(
+ApplicationHostEvent::ApplicationHostEvent(
     Hosting2::CodePackageInstanceIdentifier const & codePackageInstanceIdentifier,
     std::wstring const & appName,
     ServiceModel::EntryPointType::Enum hostType,
     std::wstring const & appHostId,
-    bool isUp
-)
+    bool isUp,
+    bool isLinuxContainerIsolated)
     : codePackageInstanceIdentifier_(codePackageInstanceIdentifier),
     appName_(appName),
     hostType_(hostType),
     appHostId_(appHostId),
-    isUp_(isUp)
+    isUp_(isUp),
+    isLinuxContainerIsolated_(isLinuxContainerIsolated)
 {
 }
 
@@ -36,5 +36,6 @@ void ApplicationHostEvent::WriteTo(TextWriter & w, FormatOptions const &) const
     w.Write("MetadataInformation = {0}", appHostId_);
     w.Write("HostType = {0}", hostType_);
     w.Write("IsUp = {0}", isUp_);
+    w.Write("IsLinuxContainerIsolated = {0}", isLinuxContainerIsolated_);
     w.Write("}");
 }

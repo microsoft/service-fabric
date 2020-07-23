@@ -1848,6 +1848,10 @@ bool ProcessUpgradeContextAsyncOperationBase<TUpgradeContext, TUpgradeRequestBod
         case ErrorCodeValue::InvalidArgument:
         case ErrorCodeValue::InvalidDirectory:
         case ErrorCodeValue::PathTooLong:
+
+        // Network validation error codes
+        case ErrorCodeValue::NetworkNotFound:
+
         //
         // IB is responsible for its own cleanup on internal
         // validation errors, so don't call the application cleanup

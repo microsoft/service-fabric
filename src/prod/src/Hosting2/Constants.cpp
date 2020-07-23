@@ -28,8 +28,6 @@ GlobalWString Constants::CtrlCSenderExeName = make_global<wstring>(L"CtrlCSender
 GlobalWString Constants::SharedFolderName = make_global<wstring>(L"__shared");
 GlobalWString Constants::DebugProcessIdParameter = make_global<wstring>(L"[ProcessId]");
 GlobalWString Constants::DebugThreadIdParameter = make_global<wstring>(L"[ThreadId]");
-GlobalWString Constants::ContainerNetworkName = make_global<wstring>(L"servicefabric_network");
-
 
 //used for hosts that should be members of windows fabric administrator group
 GlobalWString Constants::WindowsFabricAdministratorsGroupAllowedUser = make_global<wstring>(L"WindowsFabricAdministratorsGroupAllowedUser_4294967295");
@@ -38,6 +36,8 @@ GlobalWString Constants::EnvironmentVariable::RuntimeConnectionAddress = make_gl
 GlobalWString Constants::EnvironmentVariable::RuntimeSslConnectionAddress = make_global<wstring>(L"Fabric_RuntimeSslConnectionAddress");
 GlobalWString Constants::EnvironmentVariable::RuntimeSslConnectionCertKey= make_global<wstring>(L"Fabric_RuntimeSslConnectionCertKey");
 GlobalWString Constants::EnvironmentVariable::RuntimeSslConnectionCertEncodedBytes = make_global<wstring>(L"Fabric_RuntimeSslConnectionCertEncodedBytes");
+GlobalWString Constants::EnvironmentVariable::RuntimeSslConnectionCertKeyFilePath = make_global<wstring>(L"Fabric_RuntimeSslConnectionCertKeyFilePath");
+GlobalWString Constants::EnvironmentVariable::RuntimeSslConnectionCertFilePath = make_global<wstring>(L"Fabric_RuntimeSslConnectionCertFilePath");
 GlobalWString Constants::EnvironmentVariable::RuntimeConnectionUseSsl = make_global<wstring>(L"Fabric_RuntimeConnectionUseSsl");
 GlobalWString Constants::EnvironmentVariable::RuntimeSslConnectionCertThumbprint = make_global<wstring>(L"Fabric_RuntimeSslConnectionCertThumbprint");
 GlobalWString Constants::EnvironmentVariable::NodeId = make_global<wstring>(L"Fabric_NodeId");
@@ -53,10 +53,10 @@ GlobalWString Constants::EnvironmentVariable::TempDir = make_global<wstring>(L"T
 GlobalWString Constants::EnvironmentVariable::DockerTempDir = make_global<wstring>(L"DOCKER_TMPDIR");
 GlobalWString Constants::WellKnownValueDelimiter = make_global<wstring>(L"@");
 GlobalWString Constants::WellKnownPartitionIdFormat = make_global<wstring>(L"@PartitionId@");
-GlobalWString Constants::EnvironmentVariable::OnPrimaryEventName = make_global<wstring>(L"Fabric_ActivateEventName");
-GlobalWString Constants::EnvironmentVariable::OnSecondaryEventName = make_global<wstring>(L"Fabric_DeactivateEventName");
-GlobalWString Constants::EnvironmentVariable::OnActivationCompletedEventName = make_global<wstring>(L"Fabric_ActivationCompletedEventName");
-GlobalWString Constants::EnvironmentVariable::OnDeactivationCompletedEventName = make_global<wstring>(L"Fabric_DeactivatingCompletedEventName");
+GlobalWString Constants::WellKnownServiceNameFormat = make_global<wstring>(L"@ServiceName@");
+GlobalWString Constants::WellKnownApplicationNameFormat = make_global<wstring>(L"@ApplicationName@");
+GlobalWString Constants::EnvironmentVariable::Epoch = make_global<wstring>(L"Fabric_Epoch");
+GlobalWString Constants::EnvironmentVariable::ReplicaName = make_global<wstring>(L"Fabric_ReplicaName");
 
 StringLiteral Constants::FabricUpgrade::MSIExecCommand = "msiexec /i \"{0}\" /l*v \"{1}\" /q IACCEPTEULA=Yes";
 StringLiteral Constants::FabricUpgrade::DISMExecCommand = "DISM.exe /Online /Add-Package /PackagePath:\"{0}\"  /Quiet /LogPath:\"{1}\"";
@@ -81,9 +81,15 @@ GlobalWString Constants::FabricUpgrade::FabricWindowsUpdateContainedFile = make_
 int const Constants::FabricUpgrade::FabricInstallerServiceDelayInSecondsBeforeRestart = 5;
 int const Constants::FabricUpgrade::FabricUpgradeFailureCountResetPeriodInDays = 1;
 StringLiteral Constants::FabricUpgrade::ErrorMessageFormat = "{0}, ErrorCode:{1}";
-GlobalWString Constants::FabricUpgrade::LinuxPackageInstallerScriptFileName = make_global<wstring>(L"startservicefabricupdater.sh");
 
 #if defined(PLATFORM_UNIX)
+GlobalWString Constants::FabricUpgrade::LinuxPackageInstallerScriptFileName = make_global<wstring>(L"startservicefabricupdater.sh");
+GlobalWString Constants::FabricUpgrade::LinuxUpgradeScriptFileName = make_global<wstring>(L"doupgrade.sh");
+GlobalWString Constants::FabricUpgrade::LinuxUpgradeScriptMetaFileNameFormat = make_global<wstring>(L"meta_doupgrade.v{0}.sh");
+const DWORD Constants::FabricUpgrade::LinuxUpgradeScript_RollbackCutoffVersion = 2;
+GlobalWString Constants::FabricUpgrade::LinuxUpgradeMetadataDirectoryName = make_global<wstring>(L"meta");
+GlobalString Constants::FabricUpgrade::MetaPayloadDefaultExtractPath = make_global<string>("/tmp/servicefabric.metapayloadout");
+
 GlobalWString Constants::FabricDeployer::ExeName = make_global<wstring>(L"FabricDeployer.sh");
 
 // TODO: figure out why passing in quotes in the arg is causing failure in Linux. We need to support spaces in paths
@@ -153,6 +159,7 @@ wstring const Constants::ConfigSectionName = L"FabricActivatorService";
 wstring const Constants::PrivateObjectNamespaceAlias = L"WindowsFabricObjectPrivateNamespace-{0FC73FB6-F925-4340-A1C1-4425BCB56B31}";
 
 wstring const Constants::FabricContainerActivatorServiceName = L"FabricContainerActivatorService";
+wstring const Constants::FabricServiceName = L"Fabric";
 
 #if defined(PLATFORM_UNIX)
 wstring const Constants::FabricContainerActivatorServiceExeName = L"FabricCAS.sh";
@@ -218,6 +225,13 @@ string const Constants::ContainersCreate = "/containers/create";
 string const Constants::ContainersStart = "/start";
 StringLiteral Constants::ContainersStop = "/containers/{0}/stop?t={1}";
 StringLiteral Constants::ContainersForceRemove = "/containers/{0}?force=1";
+
+string const Constants::NetworkSetup::OverlayNetworkBaseUrl = "http://localhost:10090";
+string const Constants::NetworkSetup::OverlayNetworkUpdateRoutes = "/sf/network/publishNetworkMapping";
+string const Constants::NetworkSetup::OverlayNetworkAttachContainer = "/sf/network/createAndattachEndpoint";
+string const Constants::NetworkSetup::OverlayNetworkDetachContainer = "/sf/endpoints/detach";
+
+wstring const Constants::CrioCgroupName = L"/crio-conmon-";
 #else
 // When using job objects, 10000 represents all available cores.
 const int32 Constants::JobObjectCpuCyclesNumber = 10000;
@@ -236,12 +250,18 @@ wstring const Constants::ContainersForceRemove = L"{0}/containers/{1}?force=1";
 wstring const Constants::VolumesCreate = L"{0}/volumes/create";
 wstring const Constants::NetworkNatConnect = L"{0}/networks/nat/connect";
 wstring const Constants::ExecStart = L"{0}/exec/{1}/start";
+
+wstring const Constants::NetworkSetup::OverlayNetworkUpdateRoutes = L"http://localhost:10090/sf/network/publishNetworkMapping";
+wstring const Constants::NetworkSetup::OverlayNetworkAttachContainer = L"http://localhost:10090/sf/network/createAndattachEndpoint";
+wstring const Constants::NetworkSetup::OverlayNetworkDetachContainer = L"http://localhost:10090/sf/endpoints/detach";
 #endif
 
 wstring const Constants::ContainersLogsUriPath = L"containers/{0}/logs?stderr=1&stdout=1&timestamps=0&tail={1}";
 string const Constants::ContentTypeJson = "application/json";
 wstring const Constants::DefaultContainerLogsTail = L"100";
 wstring const Constants::ContainerLogDriverOptionLogBasePathKey = L"logRoot";
+wstring const Constants::ContainerLogRemovalMarkerFile = L"RemoveContainerLog.txt";
+wstring const Constants::ContainerLogProcessMarkerFile = L"ProcessContainerLog.txt";
 
 GlobalWString Constants::HttpGetVerb = make_global<wstring>(L"GET");
 GlobalWString Constants::HttpPostVerb = make_global<wstring>(L"POST");
@@ -251,8 +271,10 @@ GlobalWString Constants::HttpHeadVerb = make_global<wstring>(L"HEAD");
 GlobalWString Constants::HttpOptionsVerb = make_global<wstring>(L"OPTIONS");
 GlobalWString Constants::HttpTraceVerb = make_global<wstring>(L"TRACE");
 GlobalWString Constants::HttpConnectVerb = make_global<wstring>(L"CONNECT");
-
 GlobalWString Constants::HttpContentTypeJson = make_global<wstring>(L"application/json");
+
+// This has to be in sync with the ServiceFabricServiceModel.xsd EnvironmentVariableType attribute Type
+// and FabricCAS ContainerImageDownloader Type enum.
 GlobalWString Constants::SecretsStoreRef = make_global<wstring>(L"SecretsStoreRef");
 GlobalWString Constants::Encrypted = make_global<wstring>(L"Encrypted");
 

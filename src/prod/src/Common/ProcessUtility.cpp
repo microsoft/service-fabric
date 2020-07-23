@@ -31,14 +31,31 @@ ErrorCode ProcessUtility::OpenProcess(
     DWORD dwProcessId,
     __out HandleUPtr & processHandle)
 {
+    DWORD osErrorCode = 0;
+    return OpenProcess(
+        dwDesiredAccess,
+        bInheritHandle,
+        dwProcessId,
+        processHandle,
+        osErrorCode);
+}
+
+ErrorCode ProcessUtility::OpenProcess(
+    DWORD dwDesiredAccess,
+    BOOL bInheritHandle,
+    DWORD dwProcessId,
+    __out Common::HandleUPtr & processHandle,
+    __out DWORD & osErrorCode)
+{
     HANDLE result = ::OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
 
     if (result == NULL)
     {
+        osErrorCode = ::GetLastError();
         WriteWarning(
             TraceType_ProcessUtility,
             "OpenProcess failed with {0}: DesiredAccess:{1}, InheritHandle={2}, ProcessId={3}",
-            ::GetLastError(),
+            osErrorCode,
             dwDesiredAccess,
             bInheritHandle,
             dwProcessId);
@@ -49,7 +66,7 @@ ErrorCode ProcessUtility::OpenProcess(
     {
         processHandle = make_unique<Handle>(result);
     }
-    catch(...)
+    catch (...)
     {
         ::CloseHandle(result);
         throw;
@@ -691,10 +708,14 @@ ErrorCode ProcessUtility::CreateDefaultEnvironmentBlock(__out vector<wchar_t> & 
     EnvironmentMap envMap;
     if (!Environment::GetEnvironmentMap(envMap)) { return ErrorCode(ErrorCodeValue::OperationFailed); }
 
-    auto const & configStoreDesc = FabricGlobals::Get().GetConfigStore();
-    if (!configStoreDesc.StoreEnvironmentVariableName.empty())
+    wstring configStoreEnvVarName;
+    wstring configStoreEnvVarValue;
+
+    auto error = ComProxyConfigStore::FabricGetConfigStoreEnvironmentVariable(configStoreEnvVarName, configStoreEnvVarValue);
+    if (!error.IsSuccess()) { return error; }
+    if (!configStoreEnvVarName.empty())
     {
-        envMap[configStoreDesc.StoreEnvironmentVariableName] = configStoreDesc.StoreEnvironmentVariableValue;
+        envMap[configStoreEnvVarName] = configStoreEnvVarValue;
     }
 
     Environment::ToEnvironmentBlock(envMap, envBlock);

@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--  This file contains the MA configuration for collecting ServiceFabric events. 
+      This file is provided by ServiceFabric team. Include this file in your top level MA config.
+      It is not supposed to be edited by customers. -->
+<MonitoringManagement version="1.0" timestamp="2016-12-12T00:00:00.000Z">
+  <Imports>
+    <!--Import the SF trace events file only if the traces are available on the node in the cluster.-->
+    <Import file="ServiceFabricTraceEvents.xml">
+      <Condition><![CDATA[GetEnvironmentVariable("MONITORING_SF_IS_LOG_DIRECTORY_SET") == "1"]]></Condition>
+    </Import>
+  </Imports>
+  <Events>
+    <CounterSets>
+      <!-- System Counters: this counter-set section collects the system counters for the node where service fabric is running. -->
+      <CounterSet eventName="SystemCounters" sampleRateInSeconds="30" storeType="CentralBond" retentionInDays="1" 
+           mdmMonitoringAccount="%MONITORING_MDM_ACCOUNT_NAME%" mdmNamespace="%MONITORING_MDM_NAMESPACE%">
+        <MdmDimensions>
+          <MdmDimension name="ClusterName"><![CDATA[GetEnvironmentVariable("MONITORING_TENANT")]]></MdmDimension>
+          <MdmDimension name="AppName"><![CDATA[GetEnvironmentVariable("MONITORING_APP")]]></MdmDimension>
+          <MdmDimension name="NodeName"><![CDATA[GetEnvironmentVariable("MONITORING_NODENAME")]]></MdmDimension>
+          <MdmDimension name="Role"><![CDATA[GetEnvironmentVariable("MONITORING_ROLE")]]></MdmDimension>
+          <MdmDimension name="RoleInstance"><![CDATA[GetEnvironmentVariable("MONITORING_ROLE_INSTANCE")]]></MdmDimension>
+          <MdmDimension name="DataCenter"><![CDATA[GetEnvironmentVariable("MONITORING_DATACENTER")]]></MdmDimension>
+          <MdmDimension name="DeploymentId"><![CDATA[GetEnvironmentVariable("MONITORING_DEPLOYMENT_ID")]]></MdmDimension>
+        </MdmDimensions>
+        <!-- system CPU counters -->
+        <Counter>\Processor(_Total)\% Processor Time</Counter>
+        <Counter>\System\Processor Queue Length</Counter>
+        <!-- system network counters -->
+        <Counter>\TCPv4\Connections Active</Counter>
+        <Counter>\TCPv6\Connections Active</Counter>
+        <Counter>\TCPv4\Connections Passive</Counter>
+        <Counter>\TCPv6\Connections Passive</Counter>
+        <Counter>\TCPv4\Segments Sent/sec</Counter>
+        <Counter>\TCPv6\Segments Sent/sec</Counter>
+        <Counter>\TCPv4\Segments Received/sec</Counter>
+        <Counter>\TCPv6\Segments Received/sec</Counter>
+        <Counter>\TCPv4\Segments Retransmitted/sec</Counter>
+        <Counter>\TCPv6\Segments Retransmitted/sec</Counter>
+        <Counter>\TCPv4\Connection Failures</Counter>
+        <Counter>\TCPv6\Connection Failures</Counter>
+        <Counter>\TCPv4\Connections Reset</Counter>
+        <Counter>\TCPv6\Connections Reset</Counter>
+        <!-- system memory counters -->
+        <Counter>\Memory\Available Bytes</Counter>
+        <Counter>\Memory\Pages/sec</Counter>
+        <Counter>\Memory\Page Reads/sec</Counter>
+        <Counter>\Memory\Free System Page Table Entries</Counter>
+        <Counter>\Memory\Committed Bytes</Counter>
+        <!-- system disk counters -->
+        <Counter>\PhysicalDisk(_Total)\Avg. Disk Bytes/Read</Counter>
+        <Counter>\PhysicalDisk(_Total)\Avg. Disk Bytes/Write</Counter>
+        <Counter>\PhysicalDisk(_Total)\Avg. Disk Read Queue Length</Counter>
+        <Counter>\PhysicalDisk(_Total)\Avg. Disk Write Queue Length</Counter>
+        <Counter>\PhysicalDisk(_Total)\Avg. Disk Queue Length</Counter>
+        <Counter>\PhysicalDisk(_Total)\Avg. Disk sec/Read</Counter>
+        <Counter>\PhysicalDisk(_Total)\Avg. Disk sec/Write</Counter>
+        <Counter>\PhysicalDisk(_Total)\Disk Writes/sec</Counter>
+        <Counter>\PhysicalDisk(_Total)\Disk Reads/sec</Counter>
+        <Counter>\PhysicalDisk(_Total)\Disk Write Bytes/sec</Counter>
+        <Counter>\PhysicalDisk(_Total)\Disk Read Bytes/sec</Counter>
+        <!-- ETW counters -->
+        <Counter>\Event Tracing for Windows Session(FabricTraces)\Events Lost</Counter>
+      </CounterSet>
+      <!-- DiscreteDiskCounters: This counter-set collects the discrete instances of disk counters and uploads to MDS CentralBond store. 
+           These are not sent to MDM as metrics. -->
+      <CounterSet eventName="DiscreteDiskCounters" sampleRateInSeconds="30" storeType="CentralBond" retentionInDays="1">
+        <!-- Discrete instance of physical disc counters -->
+        <Counter>\PhysicalDisk(*)\Avg. Disk Bytes/Read</Counter>
+        <Counter>\PhysicalDisk(*)\Avg. Disk Bytes/Write</Counter>
+        <Counter>\PhysicalDisk(*)\Avg. Disk Read Queue Length</Counter>
+        <Counter>\PhysicalDisk(*)\Avg. Disk Write Queue Length</Counter>
+        <Counter>\PhysicalDisk(*)\Avg. Disk Queue Length</Counter>
+        <Counter>\PhysicalDisk(*)\Avg. Disk sec/Read</Counter>
+        <Counter>\PhysicalDisk(*)\Avg. Disk sec/Write</Counter>
+        <Counter>\PhysicalDisk(*)\Disk Writes/sec</Counter>
+        <Counter>\PhysicalDisk(*)\Disk Reads/sec</Counter>
+        <Counter>\PhysicalDisk(*)\Disk Write Bytes/sec</Counter>
+        <Counter>\PhysicalDisk(*)\Disk Read Bytes/sec</Counter>
+      </CounterSet>
+      <!-- FabricCounters: this counter-set section collects the counters for service fabric specific processes. 
+           In some cases the counter instance names are in format "*_PID". Reference: https://support.microsoft.com/en-us/kb/281884
+           This is handled by adding a ProcName_* group for each fabric process.
+           This counter-set writes counters to MDS CentralBond store and they are moved to MDM via a derived event which handles the ProcName_* format. -->
+      <CounterSet eventName="FabricCounters" sampleRateInSeconds="30" storeType="CentralBond" retentionInDays="1">
+        <!-- Fabric counters -->
+        <Counter>\Process(Fabric)\% Processor Time</Counter>
+        <Counter>\Process(Fabric)\Private Bytes</Counter>
+        <Counter>\Process(Fabric)\Thread Count</Counter>
+        <Counter>\Process(Fabric)\Working Set</Counter>
+        <!-- Fabric counters with *_PID format -->
+        <Counter>\Process(Fabric_*)\% Processor Time</Counter>
+        <Counter>\Process(Fabric_*)\Private Bytes</Counter>
+        <Counter>\Process(Fabric_*)\Thread Count</Counter>
+        <Counter>\Process(Fabric_*)\Working Set</Counter>
+        <!-- FabricDCA counters -->
+        <Counter>\Process(FabricDCA)\% Processor Time</Counter>
+        <Counter>\Process(FabricDCA)\Private Bytes</Counter>
+        <Counter>\Process(FabricDCA)\Thread Count</Counter>
+        <Counter>\Process(FabricDCA)\Working Set</Counter>
+        <!-- FabricDCA counters with *_PID format -->
+        <Counter>\Process(FabricDCA_*)\% Processor Time</Counter>
+        <Counter>\Process(FabricDCA_*)\Private Bytes</Counter>
+        <Counter>\Process(FabricDCA_*)\Thread Count</Counter>
+        <Counter>\Process(FabricDCA_*)\Working Set</Counter>
+        <!-- FabricMonSvc counters -->
+        <Counter>\Process(FabricMonSvc)\% Processor Time</Counter>
+        <Counter>\Process(FabricMonSvc)\Private Bytes</Counter>
+        <Counter>\Process(FabricMonSvc)\Thread Count</Counter>
+        <Counter>\Process(FabricMonSvc)\Working Set</Counter>
+        <!-- FabricMonSvc counters with *_PID format -->
+        <Counter>\Process(FabricMonSvc_*)\% Processor Time</Counter>
+        <Counter>\Process(FabricMonSvc_*)\Private Bytes</Counter>
+        <Counter>\Process(FabricMonSvc_*)\Thread Count</Counter>
+        <Counter>\Process(FabricMonSvc_*)\Working Set</Counter>
+      </CounterSet>
+      <!-- FabricComponentCounters: this counter-set section collects a group of custom counters written by service fabric components. 
+           The instance names for these counters are written in variety of formats based on counters. Hence the (*) in place of instance name to capture all instances.
+           This counter-set writes counters to local store and they are moved to MDM via a derived event which handles the specific instance name formats. -->
+      <CounterSet eventName="FabricComponentCounters" sampleRateInSeconds="30" storeType="CentralBond" retentionInDays="1">
+        <!-- Health manager component counters -->
+        <Counter>\Service Fabric Health Manager Component(*)\Avg. Health Query Processing ms/Operation</Counter>
+        <Counter>\Service Fabric Health Manager Component(*)\Avg. Health Report Processing ms/Operation</Counter>
+        <Counter>\Service Fabric Health Manager Component(*)\Received Health Reports/sec</Counter>
+        <Counter>\Service Fabric Health Manager Component(*)\Successful Health Reports/sec</Counter>
+        <Counter>\Service Fabric Health Manager Component(*)\Dropped Health Reports/sec</Counter>
+        <Counter>\Service Fabric Health Manager Component(*)\Received Health Queries/sec</Counter>
+        <Counter>\Service Fabric Health Manager Component(*)\Successful Health Queries/sec</Counter>
+        <Counter>\Service Fabric Health Manager Component(*)\Dropped Health Queries/sec</Counter>
+        <!-- Replicator component counters -->
+        <Counter>\Service Fabric Replicator(*)\% Replication Queue Usage</Counter>
+        <!-- FM component counters -->
+        <Counter>\Service Fabric Failover Manager Component(*)\Failover Unit Commit Duration</Counter>
+        <!-- Reconfiguration Agent component counters -->
+        <Counter>\Service Fabric Reconfiguration Agent(*)\# Commit Failures</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\# FTs</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\# of Reconfiguring FTs</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\# of Replica Close Pending FTs</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\# of Replica Down Pending FTs</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\# of Replica Dropped Pending FTs</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\# of Replica Open Pending FTs</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\# of Replica Up Pending FTs</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\Avg. Entity Schedule Time ms/Entity</Counter>
+      </CounterSet>
+      <!-- AllFabricComponentCounters: this counter-set section collects all counters for all instances of fabric components and uploads to MDS (CentralBond). 
+           There is no associated derived event for this set to create MDM metrics. These are also needed for compatibility with AIMS rules that are currently running in PPL\PROD.-->
+      <CounterSet eventName="PerfCounters" sampleRateInSeconds="30" storeType="CentralBond" retentionInDays="1">
+        <Counter>\Process(Fabric)\Private Bytes</Counter>
+        <Counter>\Process(Fabric)\Thread Count</Counter>
+        <Counter>\Process(Fabric_*)\Private Bytes</Counter>
+        <Counter>\Process(Fabric_*)\Thread Count</Counter>
+        <Counter>\Service Fabric Naming Gateway(*)\*</Counter>
+        <Counter>\Service Fabric Health Manager Component(*)\*</Counter>
+        <Counter>\Service Fabric Reconfiguration Agent(*)\*</Counter>
+        <Counter>\Service Fabric Replicator(00000000-0000-0000-0000-*)\*</Counter>
+        <Counter>\Service Fabric Failover Manager Component(*)\*</Counter>
+        <Counter>\Service Fabric Load Balancing Component(*)\*</Counter>
+        <Counter>\Service Fabric Component JobQueue(*)\*</Counter>
+        <Counter>\Service Fabric Transport(*)\*</Counter>
+      </CounterSet>
+    </CounterSets>
+    <EtwProviders>
+      <EtwProvider name="Microsoft-ServiceFabric-Monitoring-Health" format="EventSource" storeType="CentralBond">
+        <!-- This section defines how the MA collects the EventSource events emitted by the MonitoringService.
+             The ID for each event must match the value emitted from the service. -->
+        <!-- HealthState events -->
+        <Event id="1" eventName="ClusterHealthState"/>
+        <Event id="2" eventName="AppHealthState"/>
+        <Event id="3" eventName="NodeHealthState"/>
+        <Event id="4" eventName="ServiceHealthState"/>
+        <Event id="5" eventName="PartitionHealthState"/>
+        <Event id="6" eventName="ReplicaHealthState"/>
+        <Event id="7" eventName="DeployedApplicationHealthState"/>
+        <Event id="8" eventName="DeployedServicePackageHealthState"/>
+        <!-- HealthEvent events -->
+        <Event id="9" eventName="ClusterHealthEvent"/>
+        <Event id="10" eventName="AppHealthEvent"/>
+        <Event id="11" eventName="NodeHealthEvent"/>
+        <Event id="12" eventName="ServiceHealthEvent"/>
+        <Event id="13" eventName="PartitionHealthEvent"/>
+        <Event id="14" eventName="ReplicaHealthEvent"/>
+        <Event id="15" eventName="DeployedApplicationHealthEvent"/>
+        <Event id="16" eventName="DeployedServicePackageHealthEvent"/>
+      </EtwProvider>
+      <!-- Events emitted by Service Fabric Actors framework -->
+      <EtwProvider name="Microsoft-ServiceFabric-Actors" format="EventSource" storeType="CentralBond">
+        <DefaultEvent eventName="ServiceFabricReliableActorEvent"/>
+      </EtwProvider>
+       <!-- Events emitted by Service Fabric Reliable Service framework -->
+      <EtwProvider name="Microsoft-ServiceFabric-Services" format="EventSource" storeType="CentralBond">
+        <DefaultEvent eventName="ServiceFabricReliableServiceEvent"/>
+      </EtwProvider>
+      <!-- Operational events emitted by Service Fabric -->
+      <EtwProvider guid="cbd93bc2-71e5-4566-b3a7-595d8eeca6e8" format="Manifest" keywordFilter="4611686018427387920" storeType="CentralBond">
+        <DefaultEvent eventName="ServiceFabricOperationalEvent" />
+      </EtwProvider>
+      <!-- Events emitted by Service Fabric Monitoring Service -->
+      <EtwProvider name="ServiceFabric-Monitoring-HealthService" format="EventSource" storeType="CentralBond">
+        <DefaultEvent eventName="ServiceFabricMonitoringServiceEvent"/>
+      </EtwProvider>
+      <EtwProvider guid="a3693192-9ed6-46d2-a981-f8226c8363bd" format="EventSource" storeType="CentralBond">
+        <Event id="0" eventName="ServiceFabricContainerConsoleEvent" />
+      </EtwProvider>
+    </EtwProviders>
+    <DerivedEvents>
+      <!-- All \Process(Fabric_ProcId) counters are mapped to \Process(Fabric) since there is only one Fabric process expected to be running on a node at any given time. -->
+      <DerivedEvent source="FabricCounters" eventName="MdmDerivedEventForFabricCounters" storeType="Local" duration="PT60S">
+        <Query>
+          <![CDATA[ 
+            let MdmAccount = GetEnvironmentVariable("MONITORING_MDM_ACCOUNT_NAME")
+            let MdmNamespace = GetEnvironmentVariable("MONITORING_MDM_NAMESPACE")
+            let CounterCategory = RegexMatch(CounterName, "^\\([^\(\)\\]+)\(([^\(\)]+)\)\\([^\\]+)$", 1)
+            let CounterInstanceName = RegexMatch(CounterName, "^\\([^\(\)\\]+)\(([^\(\)]+)\)\\([^\\]+)$", 2) 
+            let CounterInstance = RegexMatch(CounterInstanceName, "([^_]+)_*([^_]*)", 1)
+            let CounterObject = RegexMatch(CounterName, "^\\([^\(\)\\]+)\(([^\(\)]+)\)\\([^\\]+)$", 3) 
+            let CounterId = Concat("", "\\", CounterCategory, "(", CounterInstance, ")\\", CounterObject)
+            let ClusterName = GetEnvironmentVariable("MONITORING_TENANT")
+            let ApplicationName = GetEnvironmentVariable("MONITORING_APP") 
+            let NodeName = GetEnvironmentVariable("MONITORING_NODENAME")
+            let Role = GetEnvironmentVariable("MONITORING_ROLE")
+            let RoleInstance = GetEnvironmentVariable("MONITORING_ROLE_INSTANCE")
+            let DataCenter = GetEnvironmentVariable("MONITORING_DATACENTER")
+            let DeploymentId = GetEnvironmentVariable("MONITORING_DEPLOYMENT_ID")
+            let IsMetricSet = SetMdmMeasureMetric(MdmAccount, MdmNamespace, CounterId, CounterValue, 
+              "ClusterName", ClusterName, "AppName", ApplicationName, "NodeName", NodeName,
+              "Role", Role, "RoleInstance", RoleInstance, "DataCenter", DataCenter, "DeploymentId", DeploymentId)
+          ]]>
+        </Query>
+      </DerivedEvent>
+      <!-- Handles the instance name formats of the counters are replaces instance names bu "(_Total)" to create a consistent metric name. -->
+      <DerivedEvent source="FabricComponentCounters" eventName="MdmDerivedEventForFabricComponentCounters" storeType="Local" duration="PT60S">
+        <Query>
+          <![CDATA[ 
+            let MdmAccount = GetEnvironmentVariable("MONITORING_MDM_ACCOUNT_NAME")
+            let MdmNamespace = GetEnvironmentVariable("MONITORING_MDM_NAMESPACE")
+            let CounterCategory = RegexMatch(CounterName, "^\\([^\(\)\\]+)\((\(*[^\(\)]+\)*:*[^\\]*)\)\\([^\\]+)$", 1) 
+            let CounterInstance = "(_Total)"
+            let CounterObject = RegexMatch(CounterName, "^\\([^\(\)\\]+)\((\(*[^\(\)]+\)*:*[^\\]*)\)\\([^\\]+)$", 3) 
+            let CounterId = Concat("", "\\", CounterCategory, CounterInstance, "\\", CounterObject)
+            let ClusterName = GetEnvironmentVariable("MONITORING_TENANT")
+            let ApplicationName = GetEnvironmentVariable("MONITORING_APP") 
+            let NodeName = GetEnvironmentVariable("MONITORING_NODENAME")
+            let Role = GetEnvironmentVariable("MONITORING_ROLE")
+            let RoleInstance = GetEnvironmentVariable("MONITORING_ROLE_INSTANCE")
+            let DataCenter = GetEnvironmentVariable("MONITORING_DATACENTER")
+            let DeploymentId = GetEnvironmentVariable("MONITORING_DEPLOYMENT_ID")
+            let IsMetricSet = SetMdmMeasureMetric(MdmAccount, MdmNamespace, CounterId, CounterValue, 
+              "ClusterName", ClusterName, "AppName", ApplicationName, "NodeName", NodeName,
+              "Role", Role, "RoleInstance", RoleInstance, "DataCenter", DataCenter, "DeploymentId", DeploymentId)
+            let IsAggregatedMetricSet = false
+            if (CounterObject == "% Replication Queue Usage" && CounterValue >= 85)
+            {
+              IsAggregatedMetricSet = SetMdmMeasureMetric(MdmAccount, MdmNamespace, "ReplicationQueueUsageExceedsLimit", CounterValue, 
+                "ClusterName", ClusterName, "AppName", ApplicationName, "NodeName", NodeName,
+                "Role", Role, "RoleInstance", RoleInstance, "DataCenter", DataCenter, "DeploymentId", DeploymentId)
+            }
+            else if (CounterObject == "Failover Unit Commit Duration" && CounterValue >= 5000)
+            {
+              IsAggregatedMetricSet = SetMdmMeasureMetric(MdmAccount, MdmNamespace, "FailoverUnitCommitDurationExceedsLimit", CounterValue, 
+                "ClusterName", ClusterName, "AppName", ApplicationName, "NodeName", NodeName,
+                "Role", Role, "RoleInstance", RoleInstance, "DataCenter", DataCenter, "DeploymentId", DeploymentId)
+            }
+          ]]>
+        </Query>
+      </DerivedEvent>
+    </DerivedEvents>
+  </Events>
+</MonitoringManagement>

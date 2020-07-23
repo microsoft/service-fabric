@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{C448A546-80E9-43B9-950D-7939BD08FEC9}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.Dca.Storage.Dsms</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Dca.Storage.Dsms</AssemblyName>
+    <AssemblyDescription>Wrapper around dSMS storage management Api. Supported on Microsoft internal environments only.</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
+    <ProjectReference Include="..\..\..\..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\dll\AzureUploaderCommon.csproj">
+      <Project>{24F2BEFB-C57A-4C2E-99DA-3C0335410F99}</Project>
+      <Name>AzureUploaderCommon</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="$(PkgDsmsCredentialsManagement_2_9_526)\lib\net40\Microsoft.WindowsAzure.Security.CredentialsManagement.Client.dll" />
+    <Reference Include="$(PkgDsmsCredentialsManagement_2_9_526)\lib\net40\Microsoft.WindowsAzure.Security.CredentialsManagement.SecureBlob.dll" />
+    <Reference Include="$(PkgDsmsCredentialsManagement_2_9_526)\lib\net40\Microsoft.WindowsAzure.Security.CredentialsManagement.StorageHelper.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\DsmsStorageAccountFactory.cs">
+      <Link>DsmsStorageAccountFactory.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Robocopy Include="$(PkgDsmsCredentialsManagement_2_9_526)\lib\Native\*.dll">
+      <DestinationFolder>$(OutputPath)</DestinationFolder>
+    </Robocopy>
+    <Robocopy Include="$(PkgDsmsCredentialsManagement_2_9_526)\lib\Native\*.dll">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

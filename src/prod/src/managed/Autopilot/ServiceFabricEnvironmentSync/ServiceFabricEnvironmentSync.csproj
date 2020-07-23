@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <AssemblyName>ServiceFabricEnvironmentSync</AssemblyName>
+    <RootNamespace>System.Fabric.SourceInclude.Common</RootNamespace>
+    <ProjectGuid>{95A40291-88CB-4ED0-BFDC-603396D3195F}</ProjectGuid>
+    <AssemblyDescription>Service Fabric Autopilot Environment Sync Application</AssemblyDescription>
+    <AssemblyTitle>Service Fabric Autopilot Environment Sync</AssemblyTitle>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Api\src\System\Fabric\Common\FxCop.cs">
+      <Link>FxCop.cs</Link>
+    </Compile>
+    <Compile Include="CertificateManager.cs" />
+    <Compile Include="ConfigurationManager.cs" />
+    <Compile Include="EnvironmentCertificate.cs" />
+    <Compile Include="ServiceFabricEnvironmentSyncHost.cs" />
+    <Compile Include="ServiceFabricEnvironmentSync.cs" />
+    <Compile Include="StringConstants.cs" />
+    <Compile Include="..\Common\TextLogger.cs" />
+    <Compile Include="..\Common\MachineProperty.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(PkgServiceFabric_APSecretStore)\lib\ApSecretStoreInvoke.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ServiceConfig.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Start.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="$(PkgMicrosoft_Search_Autopilot)\lib\Microsoft.Search.Autopilot.dll" />
+    <Reference Include="$(PkgMicrosoft_Search_Autopilot)\lib\Microsoft.Search.Autopilot.DMCommands.dll" />
+    <Reference Include="$(PkgServiceFabric_APSecretStore)\lib\ApSecretStoreManaged.dll" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\AutopilotBootstrap\ServiceFabricEnvironmentSync" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\AutopilotBootstrap\ServiceFabricEnvironmentSync" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

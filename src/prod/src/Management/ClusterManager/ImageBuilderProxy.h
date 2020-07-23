@@ -30,6 +30,7 @@ namespace Management
             static Common::GlobalWString ApplicationTypeInfoOutputFilename;
             static Common::GlobalWString FabricUpgradeOutputDirectory;
             static Common::GlobalWString ClusterManifestOutputDirectory;
+            static Common::GlobalWString FabricOutputDirectory;
             static Common::GlobalWString FabricVersionOutputFilename;
             static Common::GlobalWString FabricUpgradeResultFilename;
             static Common::GlobalWString CleanupListFilename;            
@@ -46,6 +47,7 @@ namespace Management
             // ImageBuilder.exe command line arguments
             static Common::GlobalWString SchemaPath;
             static Common::GlobalWString WorkingDir;
+            static Common::GlobalWString CurrentClusterManifest;
             static Common::GlobalWString Operation;
             static Common::GlobalWString StoreRoot;
             static Common::GlobalWString AppName;
@@ -79,8 +81,10 @@ namespace Management
             static Common::GlobalWString CleanupComposeFiles;
             static Common::GlobalWString SingleInstanceApplicationDescriptionString;
             static Common::GlobalWString UseOpenNetworkConfig;
+            static Common::GlobalWString UseLocalNatNetworkConfig;
             static Common::GlobalWString DisableApplicationPackageCleanup;
             static Common::GlobalWString GenerationConfig;
+            static Common::GlobalWString MountPointForSettings;
 
             // ImageBuilder.exe operation values
             static Common::GlobalWString OperationBuildApplicationTypeInfo;
@@ -571,7 +575,8 @@ namespace Management
                 __out std::vector<StoreDataServicePackage> &,
                 __out DigestedApplicationDescription::CodePackageDescriptionMap &,
                 __out std::map<ServiceModelTypeName, ServiceModel::ServiceTypeDescription> &,
-                __out std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> &);
+                __out std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> &,
+                __out std::vector<std::wstring> &);
 
             Common::ErrorCode ParseServiceTemplates(
                 Common::NamingUri const & appName,

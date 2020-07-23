@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+     Microsoft Azure Service Fabric Client Configuration File. This file is used by Microsoft Azure Service Fabric Client Package 
+     on the machines where Microsoft Azure Service Fabric is not installed. If Microsoft Azure Service Fabric is installed on the 
+     machine, this file is ignored and machine wide configuration is used.
+-->
+
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Section Name="Trace/Etw">
+        <Parameter Name="Level" Value="4" />
+    </Section>
+    <!-- if ETW sessions cannot be created and/or started due to insufficient permissions, enable text tracing and disable ETW tracing -->
+    <!--
+    Trace/File Options: 
+            e - include process name in the trace file name
+            m - include module name in the trace file name
+            p - include process id in the trace file name
+            f:<MaxFilesToKeep> - maximum number of files to keep
+            sizemb:<SizeLimitInMB>:<SizeCheckIntervalInMin> - limit the file size to specified MB by checking at the specified internval
+    -->
+    <!--
+    <Section Name="Trace/File">
+        <Parameter Name="Level" Value="4" />
+        <Parameter Name="Option" Value="e,m,sizemb:128:5,p,f:8" />
+    </Section>
+    -->
+    <!-- Uncomment the section below to temporarily work around CRL accessibility issue.
+         The following setting will disable checking of certificate revocation list.
+         The risk is, FabricClient might be unknowningly talking to a server with revoked
+         certificate, while assuming the communcation is secured. Alternatives to consider:
+         1. Set up http proxy to make CRL URL accessible
+         2. use self-signed server ceritificates and verify server certificate thumbprint 
+         instead of common name on the client side.
+    -->
+    <!--
+    <Section Name="Security">
+      <Parameter Name="CrlCheckingFlag" Value="0" />
+    </Section>
+    -->
+</Settings>

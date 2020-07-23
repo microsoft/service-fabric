@@ -1,0 +1,115 @@
+<instrumentationManifest
+    xmlns="http://schemas.microsoft.com/win/2004/08/events"
+    xmlns:trace="http://schemas.microsoft.com/win/2004/08/events/trace"
+    xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://schemas.microsoft.com/win/2004/08/events eventman.xsd"
+    >
+    <instrumentation>
+        <counters
+            xmlns="http://schemas.microsoft.com/win/2005/12/counters"
+            xmlns:auto-ns1="http://schemas.microsoft.com/win/2004/08/events"
+            schemaVersion="1.1"
+            >
+            <provider callback = "custom"
+                      applicationIdentity = "KPerfCounterKernel.sys"
+                      providerType = "kernelMode"
+                      providerName = "RVD Kernel Counters Sample"
+                      providerGuid = "{6041B507-3C86-40fd-93CD-CDF762487E17}">
+
+                <counterSet guid        = "{F1930498-93EE-431d-A9A9-E48CC7BC4FCC}"
+                            uri         = "Microsoft.Rvd.Samples.Kernel.Singleton"
+                            name        = "RVD Kernel Singleton"
+                            description = "This counter set is a kernel mode singleton"
+  		            symbol       = "RVDKernelSingleton"
+                            instances   = "single"
+			    >	
+ 	            <structs>	
+        	      <struct name="RvdKernelSingleton" type="RVD_KERNEL_SINGLETON"/>
+        	    </structs>
+
+                    <counter id           = "1"
+                             uri          = "Microsoft.Rvd.Samples.Kernel.Singleton.val1"
+                             name         = "Val1"
+                             field        = "UValue1"
+                             description  = "This counter displays ULONG 1"
+                             type         = "perf_counter_rawcount"
+                             detailLevel  = "standard">
+                        <counterAttributes>
+                            <counterAttribute name = "reference" />
+                        </counterAttributes>
+
+                    </counter>
+                    <counter id           = "2"
+                             uri          = "Microsoft.Rvd.Samples.Kernel.Singleton.val2"
+                             name         = "Val2"
+                             field        = "U64Value2"
+                             description  = "This counter displays ULONGLONG 2"
+                             type         = "perf_counter_rawcount"
+                             detailLevel  = "standard">
+                    </counter>
+                    <counter id           = "3"
+                             uri          = "Microsoft.Rvd.Samples.Kernel.Singleton.val3"
+                             name         = "Val3"
+                             field        = "UValue3"
+                             description  = "This counter displays ULONG 3"
+                             type         = "perf_counter_rawcount"
+                             detailLevel  = "standard">
+                    </counter>
+
+                </counterSet>
+
+                <counterSet guid        = "{DF9175F2-20A6-4bc3-85E5-A71E14B28BB5}"
+                            uri         = "Microsoft.Rvd.Samples.Kernel.Multi"
+                            name        = "RVD Kernel Multi"
+                            description = "This counter set is a kernel mode multi instance"
+  		            symbol       = "RVDKernelMulti"
+                            instances   = "multiple"
+			    >	
+ 	            <structs>	
+        	      <struct name="RvdKernelMulti" type="RVD_KERNEL_MULTI"/>
+        	    </structs>
+
+                    <counter id           = "1"
+                             uri          = "Microsoft.Rvd.Samples.Kernel.Multi.val1"
+                             name         = "MVal1"
+                             field        = "U64Value1"
+                             description  = "This counter displays ULONGLONG 1"
+                             type         = "perf_counter_large_rawcount"
+                             detailLevel  = "standard">
+                    </counter>
+                    <counter id           = "2"
+                             uri          = "Microsoft.Rvd.Samples.Kernel.Multi.val2"
+                             name         = "MVal2"
+                             field        = "UValue2"
+                             description  = "This counter displays ULONG 2"
+                             type         = "perf_counter_rawcount"
+                             detailLevel  = "standard">
+                    </counter>
+                    <counter id           = "3"
+                             uri          = "Microsoft.Rvd.Samples.Kernel.Multi.val3"
+                             name         = "MVal3"
+                             field        = "UValue3"
+                             description  = "This counter displays ULONG 3"
+                             type         = "perf_counter_rawcount"
+                             detailLevel  = "standard">
+                    </counter>
+                    <counter id           = "4"
+                             uri          = "Microsoft.Rvd.Samples.Kernel.Multi.val4"
+                             name         = "MVal4"
+                             field        = "U64Value4"
+                             description  = "This counter displays ULONGLONG 4"
+                             type         = "perf_counter_large_rawcount"
+                             detailLevel  = "standard">
+                    </counter>
+
+                </counterSet>
+
+            </provider>
+        </counters>
+    </instrumentation>
+</instrumentationManifest>
+
+
+

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(DotnetPackagesDir)\microsoft.net.test.sdk\15.3.0\build\netcoreapp1.0\Microsoft.Net.Test.Sdk.props" Condition=" $(CurrentRuntimeIdentifier) != ''" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test_signing.props" />
+</Project>

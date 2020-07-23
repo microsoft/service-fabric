@@ -48,6 +48,8 @@ namespace FabricTest
         static std::wstring const ApplicationBuilderRunAs;
         static std::wstring const ApplicationBuilderSharedPackage;
         static std::wstring const ApplicationBuilderHealthPolicy;
+        static std::wstring const ApplicationBuilderNetwork;
+        static std::wstring const ApplicationBuilderEndpoint;
         static std::wstring const ApplicationBuilderUpload;
         static std::wstring const ApplicationBuilderDelete;
         static std::wstring const ApplicationBuilderClear;
@@ -184,6 +186,8 @@ namespace FabricTest
         bool SetRunAs(Common::StringCollection const& params);
         bool SetSharedPackage(Common::StringCollection const & params);
         bool SetHealthPolicy(Common::StringCollection const& params);
+        bool SetNetwork(Common::StringCollection const& params);
+        bool SetEndpoint(Common::StringCollection const& params);
         bool SetParameters(Common::StringCollection const& params);
         bool Clear();
 
@@ -223,6 +227,7 @@ namespace FabricTest
         std::shared_ptr<ServiceModel::ApplicationHealthPolicy> healthPolicy_;
         std::map<std::wstring, std::vector<std::wstring>> sharedPackagePolicies_;
         std::map<std::wstring, std::set<std::wstring>> containerHosts_;
+        std::map<std::wstring, ServiceModel::NetworkPoliciesDescription> networkPolicies_;
 
         static Common::ExclusiveLock applicationTypesLock_;
 		static std::map<std::wstring, ApplicationBuilder> applicationTypes_;

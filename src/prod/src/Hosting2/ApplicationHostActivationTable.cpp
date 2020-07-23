@@ -18,6 +18,7 @@ ApplicationHostActivationTable::ApplicationHostActivationTable(ComponentRoot con
     lock_(),
     map_(),
     hostIdIndex_(),
+    codePackageInstanceIdIndexMap_(),
     hosting_(hosting),
     pendingRMUpdates_(),
     ongoingRMUpdates_(),
@@ -44,17 +45,27 @@ ErrorCode ApplicationHostActivationTable::Add(
         }
 
         map_.insert(iter, make_pair(hostProxy->AppHostIsolationContext, hostProxy));
+
         try
         {
             hostIdIndex_.insert(make_pair(hostProxy->HostId, hostProxy));
+
+            if (hostProxy->HostType == ApplicationHostType::Enum::Activated_SingleCodePackage)
+            {
+                auto singlePkgAppHostProxy = static_cast<SingleCodePackageApplicationHostProxy*> (hostProxy.get());
+                codePackageInstanceIdIndexMap_.insert(make_pair(singlePkgAppHostProxy->CodePackageInstanceId.ToString(), hostProxy));
+            }
         }
         catch(...)
         {
             map_.erase(iter);
+            hostIdIndex_.erase(hostProxy->HostId);
             throw;
         }
+
         AddUpdateForRM(hostProxy, true);
     }
+
     return ErrorCode(ErrorCodeValue::Success);
 }
 
@@ -76,10 +87,37 @@ ErrorCode ApplicationHostActivationTable::Remove(
         ASSERT_IF(iter == map_.end(), "The map must contain an entry for {0}", hostIdIter->second->AppHostIsolationContext);
 
         hostProxy = hostIdIter->second;
+
         hostIdIndex_.erase(hostIdIter);
         map_.erase(iter);
 
+        if (hostProxy->HostType == ApplicationHostType::Enum::Activated_SingleCodePackage)
+        {
+            auto singlePkgAppHostProxy = static_cast<SingleCodePackageApplicationHostProxy*> (hostProxy.get());
+            codePackageInstanceIdIndexMap_.erase(singlePkgAppHostProxy->CodePackageInstanceId.ToString());
+        }
+
         AddUpdateForRM(hostProxy, false);
+    }
+
+    return ErrorCode(ErrorCodeValue::Success);
+}
+
+ErrorCode ApplicationHostActivationTable::FindApplicationHostByCodePackageInstanceId(
+    wstring const & codePackageInstanceId,
+    __out ApplicationHostProxySPtr & hostProxy)
+{
+    {
+        AcquireReadLock lock(lock_);
+        if (isClosed_) { return ErrorCode(ErrorCodeValue::ObjectClosed); }
+
+        auto codePackageInstanceIdIter = codePackageInstanceIdIndexMap_.find(codePackageInstanceId);
+        if (codePackageInstanceIdIter == codePackageInstanceIdIndexMap_.end())
+        {
+            return ErrorCode(ErrorCodeValue::NotFound);
+        }
+
+        hostProxy = codePackageInstanceIdIter->second;
     }
 
     return ErrorCode(ErrorCodeValue::Success);
@@ -162,6 +200,8 @@ void ApplicationHostActivationTable::AddUpdateForRM(ApplicationHostProxySPtr con
         //RM will monitor only single code package app hosts
         auto appHost = static_cast<SingleCodePackageApplicationHostProxy*> (appProxy.get());
         std::wstring appHostId;
+
+        bool linuxContainerIsolation = false;
         //for processes we currently do not support Linux
         if (appHost->EntryPointType == ServiceModel::EntryPointType::Exe)
         {
@@ -172,10 +212,18 @@ void ApplicationHostActivationTable::AddUpdateForRM(ApplicationHostProxySPtr con
         else if (appHost->EntryPointType == ServiceModel::EntryPointType::ContainerHost)
         {
             appHostId = appHost->HostId;
+
+            linuxContainerIsolation = appHost->GetLinuxContainerIsolation();
         }
         if (!appHostId.empty())
         {
-            pendingRMUpdates_.push_back(ApplicationHostEvent(appHost->CodePackageInstanceId, appHost->ApplicationName, appHost->EntryPointType, appHostId, isUp));
+            pendingRMUpdates_.push_back(ApplicationHostEvent(
+                appHost->CodePackageInstanceId,
+                appHost->ApplicationName,
+                appHost->EntryPointType,
+                appHostId,
+                isUp,
+                linuxContainerIsolation));
         }
     }
 }

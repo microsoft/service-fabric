@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_winfabrictest.props" />
+  <PropertyGroup>
+    <ProjectGuid>{502D0E67-76D1-4A71-94F0-C90C243F3A7C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>NativeReplicatorHttpClient</RootNamespace>
+    <AssemblyName>NativeReplicatorHttpClient</AssemblyName>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net40\Newtonsoft.Json.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="HttpClient.cs" />
+    <Compile Include="BasicWorkTest.cs" />
+    <Compile Include="FabricFaultType.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="ServicePartitionType.cs" />
+    <Compile Include="ResolvedResult.cs" />
+    <Compile Include="HttpClientAction.cs" />
+    <Compile Include="HttpClientRequest.cs" />
+    <Compile Include="WorkStatus.cs" />
+    <Compile Include="CheckWorkStatusResponse.cs" />
+    <Compile Include="DoWorkResponse.cs" />
+    <Compile Include="GetProgressResponse.cs" />
+    <Compile Include="Utilities.cs" />
+    <Content Include="FabricTransportSettings.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.FabricTransport\Microsoft.ServiceFabric.FabricTransport.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.FabricTransport.V2\Microsoft.ServiceFabric.FabricTransport.V2.csproj" />
+    <ProjectReference Include="$(SrcRoot)\test\current\source\V2ReplicatorTests\MCFTestableService\MCF.TestableService.csproj">
+      <Project>{5FB74482-0AA4-4EC3-BD73-63F06EAEC50E}</Project>
+      <Name>MCF.TestableService</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\test\current\framework\MS.Test.WinFabric.userclient\MS.Test.WinFabric.UserClient.csproj">
+      <Project>{80B88E34-1549-4C6C-B303-06A66DCEE8A7}</Project>
+      <Name>MS.Test.WinFabric.UserClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\test\current\framework\ms.test.winfabric.current\MS.Test.WinFabric.current.csproj">
+      <Name>MS.Test.WinFabric.current</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\test\current\framework\MS.Test.WinFabric.userclient\MS.Test.WinFabric.UserClient.csproj">
+      <Name>MS.Test.WinFabric.UserClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Testability\System.Fabric.Testability.csproj">
+      <Name>System.Fabric.Testability</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.dll" />
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.Remoting.dll" />
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.Wcf.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <OutputFiles Include="$(OutDir)**\*" Exclude="$(OutDir)**\*.pdb" />
+    </ItemGroup>
+    <copy SourceFiles="@(OutputFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest" SkipUnchangedFiles="false" />
+  </Target>
+</Project>

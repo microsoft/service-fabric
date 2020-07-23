@@ -144,7 +144,7 @@ namespace System.Fabric.FabricDeployer
 
         public string ErrorOutputFile { get { return values[ErrorOutputFileString]; } }
 
-        public string CurrrentVersion { get { return values[CurrentVersionString]; } }
+        public string CurrentVersion { get { return values[CurrentVersionString]; } }
 
         public FabricDeploymentSpecification DeploymentSpecification { get; set; }
 
@@ -164,11 +164,19 @@ namespace System.Fabric.FabricDeployer
 
 #if !DotNetCoreClrLinux
         public bool SkipContainerNetworkResetOnReboot { get; set; }
+
+        public bool SkipIsolatedNetworkResetOnReboot { get; set; }
 #endif
         // Properties to track state of preview features that need to lightup at runtime
         public bool EnableUnsupportedPreviewFeatures { get; set; }
 
         public bool IsSFVolumeDiskServiceEnabled { get; set; }
+
+        public bool IsolatedNetworkSetup { get; set; }
+
+        public string IsolatedNetworkName { get; set; }
+
+        public string IsolatedNetworkInterfaceName { get; set; }
 
         /// <summary>
         /// Flag that continues the DNS setup even though the Containers feature is not present.
@@ -184,6 +192,12 @@ namespace System.Fabric.FabricDeployer
                 values[ContinueIfContainersFeatureNotInstalledString] = value.ToString();
             }
         }
+
+        public bool UseContainerServiceArguments { get; set; }
+
+        public string ContainerServiceArguments { get; set; }
+
+        public bool EnableContainerServiceDebugMode { get; set; }
 
         public DeploymentParameters() : this(true) {}
 
@@ -235,13 +249,6 @@ namespace System.Fabric.FabricDeployer
                         DeploymentSpecification.SetDataRoot(this.FabricDataRoot);
                         ResolveLogRoot(isDataRootProvided);
                         DeploymentSpecification.SetLogRoot(this.FabricLogRoot);
-
-                        this.EnableCircularTraceSession = settings.EnableCircularTraceSession;
-                        DeploymentSpecification.SetEnableCircularTraceSession(this.EnableCircularTraceSession);
-
-                        // Initialize the properties used to reflect state of preview features that need to lightup at runtime
-                        this.EnableUnsupportedPreviewFeatures = settings.EnableUnsupportedPreviewFeatures;
-                        this.IsSFVolumeDiskServiceEnabled = settings.IsSFVolumeDiskServiceEnabled;
                     }
                     break;
                 case DeploymentOperations.RemoveNodeConfig:
@@ -277,6 +284,8 @@ namespace System.Fabric.FabricDeployer
                 case DeploymentOperations.DockerDnsCleanup:
                 case DeploymentOperations.ContainerNetworkSetup:
                 case DeploymentOperations.ContainerNetworkCleanup:
+                case DeploymentOperations.IsolatedNetworkSetup:
+                case DeploymentOperations.IsolatedNetworkCleanup:
                     break;
                 default:
                     throw new InvalidOperationException(String.Format("The operation {0} has no explicit deployment criteria.", operation.ToString()));
@@ -304,9 +313,18 @@ namespace System.Fabric.FabricDeployer
                 this.ContainerDnsSetup = settings.ContainerDnsSetup;
                 this.ContainerNetworkSetup = settings.ContainerNetworkSetup;
                 this.ContainerNetworkName = settings.ContainerNetworkName;
-#if !DotNetCoreClrLinux                
+#if !DotNetCoreClrLinux
                 this.SkipContainerNetworkResetOnReboot = settings.SkipContainerNetworkResetOnReboot;
-#endif                
+                this.SkipIsolatedNetworkResetOnReboot = settings.SkipIsolatedNetworkResetOnReboot;
+#endif
+                this.IsolatedNetworkSetup = settings.IsolatedNetworkSetup;
+                this.IsolatedNetworkName = settings.IsolatedNetworkName;
+                this.IsolatedNetworkInterfaceName = settings.IsolatedNetworkInterfaceName;
+                this.UseContainerServiceArguments = settings.UseContainerServiceArguments;
+                this.ContainerServiceArguments = settings.ContainerServiceArguments;
+                this.EnableContainerServiceDebugMode = settings.EnableContainerServiceDebugMode;
+
+                SetOptionalFeatureParameters(settings);
             }
             else
             {
@@ -358,9 +376,7 @@ namespace System.Fabric.FabricDeployer
                 var settings = new SetupSettings(manifest);
                 this.SkipFirewallConfiguration = settings.SkipFirewallConfiguration;
 
-                // Initialize the properties used to reflect state of preview features that need to lightup at runtime
-                this.EnableUnsupportedPreviewFeatures = settings.EnableUnsupportedPreviewFeatures;
-                this.IsSFVolumeDiskServiceEnabled = settings.IsSFVolumeDiskServiceEnabled;
+                SetOptionalFeatureParameters(settings);
             }
         }
 
@@ -430,7 +446,7 @@ namespace System.Fabric.FabricDeployer
                 }
                 catch
                 {
-                    if(!String.IsNullOrEmpty(backupFabricDataRoot) && Directory.Exists(backupFabricDataRoot))
+                    if(!string.IsNullOrEmpty(backupFabricDataRoot) && Directory.Exists(backupFabricDataRoot))
                     {
                         // Set FDR based on backup, if no value is retrievable
                         this.FabricDataRoot = backupFabricDataRoot;
@@ -443,7 +459,7 @@ namespace System.Fabric.FabricDeployer
 
                 this.DeploymentSpecification.SetDataRoot(this.FabricDataRoot); // Also sets deployment specification Log Root to [FabricDataRoot]\log
 
-                if(String.IsNullOrEmpty(this.FabricLogRoot))
+                if (string.IsNullOrEmpty(this.FabricLogRoot))
                 {
                     SetFabricLogRoot(); // Tries to get data root from environment, else pulls from deployment specification
                 }
@@ -454,6 +470,16 @@ namespace System.Fabric.FabricDeployer
                 this.FabricLogRoot = this.FabricLogRoot ?? this.DeploymentSpecification.GetLogRoot();
             }
             this.DeploymentSpecification.SetLogRoot(this.FabricLogRoot);
+        }
+
+        private void SetOptionalFeatureParameters(SetupSettings settings)
+        {
+            this.EnableCircularTraceSession = settings.EnableCircularTraceSession;
+            DeploymentSpecification.SetEnableCircularTraceSession(this.EnableCircularTraceSession);
+
+            // Initialize the properties used to reflect state of preview features that need to lightup at runtime
+            this.EnableUnsupportedPreviewFeatures = settings.EnableUnsupportedPreviewFeatures;
+            this.IsSFVolumeDiskServiceEnabled = settings.IsSFVolumeDiskServiceEnabled;
         }
 
         private void SetFabricLogRoot()

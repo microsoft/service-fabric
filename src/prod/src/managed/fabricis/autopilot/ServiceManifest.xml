@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="IS" 
+    Version="!FABRIC_VERSION!"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>A Microsoft Azure Service Fabric system service that interacts with the underlying Infrastructure.</Description>
+    <ServiceTypes>
+        <StatefulServiceType ServiceTypeName="InfrastructureServiceType" HasPersistedState="false" />
+    </ServiceTypes>
+    <CodePackage Name="Code" Version="!FABRIC_VERSION!">
+        <EntryPoint>
+            <ExeHost>
+                <Program>FabricIS.exe</Program>
+                <Arguments>-app</Arguments>
+            </ExeHost>
+        </EntryPoint>
+        <EnvironmentVariables>
+          <EnvironmentVariable Name="AppRoot" Value="UNSPECIFIED"/>
+        </EnvironmentVariables>
+    </CodePackage>
+    <ConfigPackage Name="Config" Version="!FABRIC_VERSION!" />
+    <Resources>
+      <Endpoints>
+        <Endpoint Name="ReplicatorEndpoint" Type="Internal" Protocol="tcp" />
+      </Endpoints>
+    </Resources>
+</ServiceManifest>

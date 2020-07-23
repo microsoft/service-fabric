@@ -1,0 +1,22 @@
+{
+  "Packages": [
+    {
+        "Version": "5.3.311.9590",
+        "MinVersion": "5.3.200.9494",
+        "SupportExpiryDate": "2017-02-24T00:00:00Z",
+        "TargetPackageLocation": "https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/5.3.311.9590/MicrosoftAzureServiceFabric.5.3.311.9590.cab"
+    },
+    {
+        "Version": "5.4.145.9494",
+        "MinVersion": "5.3.200.9494",
+        "SupportExpiryDate": "2017-02-24T00:00:00Z",
+        "TargetPackageLocation": "https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/5.4.145.9494/MicrosoftAzureServiceFabric.5.4.145.9494.cab",
+    },
+    {
+      "Version": "5.4.164.9494",
+      "MinVersion": "5.3.200.9494",
+      "TargetPackageLocation": "https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/5.4.164.9494/MicrosoftAzureServiceFabric.5.4.164.9494.cab",
+      "IsGoalPackage": true
+    }
+  ]
+}

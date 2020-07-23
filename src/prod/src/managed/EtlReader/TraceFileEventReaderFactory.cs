@@ -9,7 +9,11 @@ namespace Tools.EtlReader
     {
         public ITraceFileEventReader CreateTraceFileEventReader(string fileName)
         {
+#if !DotNetCoreClrLinux
             return new TraceFileEventReader(fileName);
+#else
+            return new LttngTraceFolderEventReader(fileName);
+#endif
         }
     }
 }

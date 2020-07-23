@@ -12,7 +12,15 @@
              5. Update src/build.sh with new version -->
     <ReferenceDataExtensionsNugetPackageVersion>1.4.4</ReferenceDataExtensionsNugetPackageVersion>
     <ReferenceDataExtensionsNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_Data_Extensions)</ReferenceDataExtensionsNugetPackageInstallPath>
-    <ReferenceReliableCollectionAspNetNugetPackageVersion>1.0.10-beta</ReferenceReliableCollectionAspNetNugetPackageVersion>
+    <ReferenceReliableCollectionAspNetNugetPackageVersion>1.0.11-beta</ReferenceReliableCollectionAspNetNugetPackageVersion>
     <ReferenceReliableCollectionAspNetNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_ReliableCollection_AspNet)</ReferenceReliableCollectionAspNetNugetPackageInstallPath>
+    <ReferenceMeshReliableCollectionNugetPackageVersion>1.0.0-beta</ReferenceMeshReliableCollectionNugetPackageVersion>
+    <ReferenceMeshReliableCollectionNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_Mesh_ReliableCollection)</ReferenceMeshReliableCollectionNugetPackageInstallPath>
+    <ReferenceMeshAspNetCoreDataPackageVersion>1.1.4.2-beta</ReferenceMeshAspNetCoreDataPackageVersion>
+    <ReferenceMeshDataCollectionsPackageVersion>1.1.4.2-beta</ReferenceMeshDataCollectionsPackageVersion>
+    <ReferenceMeshDataCollectionsNativePackageVersion>1.0.3-beta</ReferenceMeshDataCollectionsNativePackageVersion>
+    <ReferenceMeshAspNetCoreDataNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_Mesh_AspNetCore_Data)</ReferenceMeshAspNetCoreDataNugetPackageInstallPath>
+    <ReferenceMeshDataCollectionsNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_Mesh_Data_Collections)</ReferenceMeshDataCollectionsNugetPackageInstallPath>
+    <ReferenceMeshDataCollectionsNativeNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_Mesh_Data_Collections_Native)</ReferenceMeshDataCollectionsNativeNugetPackageInstallPath>
    </PropertyGroup>
 </Project>

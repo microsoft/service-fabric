@@ -12,6 +12,9 @@ set NamingOperationRetryTimeout 75
 set ExpectedReplicaUpgradeDuration 3600
 set ExpectedNodeFabricUpgradeDuration 3600
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 +10
 +20
 +30
@@ -155,6 +158,38 @@ setrollbackapp fabric:/MyApp V1 failurereason=Interrupted
 verifyupgradeapp fabric:/MyApp
 
 !waitforstate FM.Replica.Role.fabric:/MyApp/ServiceX.10 Primary
+
+verify
+
+################################################################################
+# TestCase 5: Application upgrade rollback should be treated as normal app upgrade
+#             and complete UD by UD if previous upgrade completed on FM side
+################################################################################
+
+upgradeapp fabric:/MyApp V3 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/MyApp upgradedomains=10_ud
+
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=10_ud,20_ud
+
+upgradeappmovenext fabric:/MyApp
+
+updateappupgrade fabric:/MyApp upgrademode=monitored failaction=rollback healthcheckretry=10 healthcheckstable=60
+
+addbehavior b1 * * UpgradeReply
+
+!waitforstate FM.App.IsUpgradeCompleted.TestApp_0 true
+
+reporthealth application appname=fabric:/MyApp healthstate=error
+queryhealth application appname=fabric:/MyApp expectedhealthstate=error
+
+setrollbackapp fabric:/MyApp V1 failurereason=HealthCheck
+
+removebehavior b1
+
+verifyupgradeapp fabric:/MyApp
 
 verify
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <ItemGroup>
+    <Robocopy Include="V2_KtlLogger_Performance_Iaas.xml">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\RunXmls\</DestinationFolder>
+    </Robocopy>
+	<Robocopy Include="V2_KtlLogger_Performance_Lab.xml">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\RunXmls\</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+</Project>

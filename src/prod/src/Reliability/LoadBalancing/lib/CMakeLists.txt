@@ -94,6 +94,8 @@ set( LINUX_SOURCES
   ../ServicePackage.cpp
   ../RGStatistics.cpp
   ../DefragStatistics.cpp
+  ../InBuildCountPerNode.cpp
+  ../ThrottlingConstraint.cpp
 )
 
 include_directories("..")

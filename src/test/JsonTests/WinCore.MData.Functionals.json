@@ -6,7 +6,7 @@
     {
       "Name": "Backup-Quick-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "rapatchi, zhol",
+      "Owners": "rapatchi, hrushib,raunakp,preethas",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -21,7 +21,7 @@
     {
       "Name": "Backup-Nano-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "rapatchi, zhol",
+      "Owners": "rapatchi, hrushib,raunakp,preethas",
       "Tags": "MData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -29,14 +29,14 @@
         "SetupTimeout": "900",
         "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
         "TaskName": "Backup-Nano-CoreCLR.test",
-        "ExecutionTimeout": "1800",
+        "ExecutionTimeout": "2160",
         "CleanupTimeout": "2100"
       }
     },
     {
       "Name": "Backup-Chained-CIT-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "rapatchi, zhol",
+      "Owners": "rapatchi, hrushib,raunakp,preethas",
       "Tags": "MData,Backup,IBAR",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -51,7 +51,7 @@
     {
       "Name": "Backup-CIT-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "rapatchi, zhol",
+      "Owners": "rapatchi, hrushib,raunakp,preethas",
       "Tags": "MData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -66,7 +66,7 @@
     {
       "Name": "DCollections-WinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "rapatchi, tyadam, yzha",
+      "Owners": "rapatchi, tyadam,preethas",
       "Tags": "MData,Collections",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -80,7 +80,7 @@
     {
       "Name": "DQueue-CIT-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "rapatchi,tyadam,yzha",
+      "Owners": "rapatchi,tyadam,preethas",
       "Tags": "MData,Collections",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -95,7 +95,7 @@
     {
       "Name": "DQueue-Faults-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "rapatchi,tyadam,yzha",
+      "Owners": "rapatchi,tyadam,preethas",
       "Tags": "MData,Collections",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -110,7 +110,7 @@
     {
       "Name": "DQueue-Stress-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "rapatchi,tyadam,yzha",
+      "Owners": "rapatchi,tyadam,preethas",
       "Tags": "MData,Collections",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -125,7 +125,7 @@
     {
       "Name": "SMFunctional-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,preethas",
+      "Owners": "zuparvez,preethas",
       "Tags": "MData,RCQ",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -140,7 +140,7 @@
     {
       "Name": "SlowCheckpoints-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "hanagar",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "Tags": "MData,Robustness",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -155,7 +155,7 @@
     {
       "Name": "ReliableQueueSlimCIT-CoreCLR",
       "Type": "V2_ScriptTest",
-      "Owners": "yzha,tyadam",
+      "Owners": "deeom,preethas",
       "Tags": "MData,Collections",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {

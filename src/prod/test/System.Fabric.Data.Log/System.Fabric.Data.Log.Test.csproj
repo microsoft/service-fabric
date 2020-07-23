@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <AssemblyName>System.Fabric.Data.Log.Test</AssemblyName>
+    <RootNamespace>System.Fabric.Data.Log.Test</RootNamespace>
+    <ProjectGuid>{A09CED6E-F099-4F13-B1B1-1AA281EA3701}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <DefineConstants>TRACE;SYSTEM_FABRIC</DefineConstants>
+    <!-- Uncomment the following line to include the performance workloads -->
+    <!-- <DefineConstants>TRACE;SYSTEM_FABRIC;INCLUDE_PERF_WORKLOADS</DefineConstants> -->
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="LogInteropUnitTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric\unit\System.Fabric.Test.csproj">
+      <Project>{6063627D-A418-4A45-986B-0A963583514D}</Project>
+      <Name>System.Fabric.Test</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj">
+      <Project>{ECDDA3CB-B09D-4056-A3A2-17C9BF681CC5}</Project>
+      <Name>Microsoft.ServiceFabric.Data.Impl</Name>
+    </ProjectReference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(AssemblyName).dll.cfg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

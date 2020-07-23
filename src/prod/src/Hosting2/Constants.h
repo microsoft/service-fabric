@@ -28,19 +28,19 @@ namespace Hosting2
         static Common::GlobalWString WindowsFabricAdministratorsGroupAllowedUser;
         static Common::GlobalWString DebugProcessIdParameter;
         static Common::GlobalWString DebugThreadIdParameter;
-
-        static Common::GlobalWString ContainerNetworkName;
         static Common::GlobalWString DockerTempDirName;
 
         static UINT64 const EndpointConfiguration_FilteringEngineBlockAllFilterWeight;
         static UINT const EndpointConfiguration_FilteringEngineEnumSize;
         static size_t const ApplicationHostTraceIdMaxLength;
-
         static int64 const DockerNanoCpuMultiplier;
 
         static const Common::WStringLiteral ContainerApiResult;
+
         static Common::GlobalWString WellKnownValueDelimiter;
         static Common::GlobalWString WellKnownPartitionIdFormat;
+        static Common::GlobalWString WellKnownServiceNameFormat;
+        static Common::GlobalWString WellKnownApplicationNameFormat;
 
         static Common::GlobalWString SecretsStoreRef;
         static Common::GlobalWString Encrypted;
@@ -53,6 +53,8 @@ namespace Hosting2
             static Common::GlobalWString RuntimeConnectionAddress;
             static Common::GlobalWString RuntimeSslConnectionAddress;
             static Common::GlobalWString RuntimeSslConnectionCertKey;
+            static Common::GlobalWString RuntimeSslConnectionCertKeyFilePath;
+            static Common::GlobalWString RuntimeSslConnectionCertFilePath;
             static Common::GlobalWString RuntimeSslConnectionCertEncodedBytes;
             static Common::GlobalWString RuntimeSslConnectionCertThumbprint;
             static Common::GlobalWString RuntimeConnectionUseSsl;
@@ -67,10 +69,8 @@ namespace Hosting2
             static Common::GlobalWString PartitionId;
             static Common::GlobalWString TempDir;
             static Common::GlobalWString DockerTempDir;
-            static Common::GlobalWString OnPrimaryEventName;
-            static Common::GlobalWString OnSecondaryEventName;
-            static Common::GlobalWString OnActivationCompletedEventName;
-            static Common::GlobalWString OnDeactivationCompletedEventName;
+            static Common::GlobalWString Epoch;
+            static Common::GlobalWString ReplicaName;
         };
 
         class FabricDeployer
@@ -80,7 +80,6 @@ namespace Hosting2
             static Common::StringLiteral ConfigUpgradeArguments;
             static Common::StringLiteral InstanceIdOnlyUpgradeArguments;
             static Common::StringLiteral ValidateAndAnalyzeArguments;
-
             static DWORD const ExitCode_RestartRequired;
             static DWORD const ExitCode_RestartNotRequired;
         };
@@ -88,7 +87,7 @@ namespace Hosting2
         class FabricSetup
         {
         public:
-            static Common::GlobalWString ExeName;
+            static Common::GlobalWString ExeName; 
             static Common::GlobalWString InstallArguments;
             static Common::GlobalWString UpgradeArguments;
             static Common::GlobalWString UndoUpgradeArguments;
@@ -104,17 +103,21 @@ namespace Hosting2
             static Common::StringLiteral DISMExecUnInstallCommand;
             static Common::GlobalWString StartFabricHostServiceCommand;
             static Common::GlobalWString StopFabricHostServiceCommand;
-
             static Common::StringLiteral TargetInformationXmlContent;
             static Common::StringLiteral CurrentInstallationElement;
             static Common::StringLiteral TargetInstallationElement;
-
             static Common::StringLiteral CurrentInstallationElementForXCopy;
             static Common::StringLiteral TargetInstallationElementForXCopy;
-
             static Common::GlobalWString TargetInformationFileName;
 
+#if defined(PLATFORM_UNIX)
             static Common::GlobalWString LinuxPackageInstallerScriptFileName;
+            static Common::GlobalWString LinuxUpgradeScriptFileName;
+            static Common::GlobalWString LinuxUpgradeScriptMetaFileNameFormat;
+            static DWORD const LinuxUpgradeScript_RollbackCutoffVersion;
+            static Common::GlobalWString LinuxUpgradeMetadataDirectoryName;
+            static Common::GlobalString MetaPayloadDefaultExtractPath;
+#endif
 
             static Common::GlobalWString FabricInstallerServiceDirectoryName;
             static Common::GlobalWString FabricInstallerServiceExeName;
@@ -124,7 +127,6 @@ namespace Hosting2
             static Common::GlobalWString FabricWindowsUpdateContainedFile;
             static const int FabricInstallerServiceDelayInSecondsBeforeRestart;
             static const int FabricUpgradeFailureCountResetPeriodInDays;
-
             static Common::StringLiteral ErrorMessageFormat;
         };
 
@@ -153,15 +155,31 @@ namespace Hosting2
             static std::wstring const MrppQueryFilterLabelKeyName;
         };
 
+        class NetworkSetup
+        {
+        public:
+#if defined(PLATFORM_UNIX)
+            static std::string const OverlayNetworkBaseUrl;
+            static std::string const OverlayNetworkUpdateRoutes;
+            static std::string const OverlayNetworkAttachContainer;
+            static std::string const OverlayNetworkDetachContainer;
+#else
+            static std::wstring const OverlayNetworkUpdateRoutes;
+            static std::wstring const OverlayNetworkAttachContainer;
+            static std::wstring const OverlayNetworkDetachContainer;
+#endif
+        };
+
         //FabricActivator constants
         static std::wstring const ActivatorConfigFileName;
         static std::wstring const ConfigSectionName;
         static std::wstring const PrivateObjectNamespaceAlias;
-
         static std::wstring const FabricContainerActivatorServiceName;
         static std::wstring const FabricContainerActivatorServiceExeName;
 
+        static std::wstring const FabricServiceName;
         static std::wstring const WorkingDirectory;
+
         //Hosted Service Parameters
         static std::wstring const HostedServiceSectionName;
         static std::wstring const HostedServiceParamExeName;
@@ -185,7 +203,6 @@ namespace Hosting2
         static std::wstring const RunasAccountName;
         static std::wstring const RunasAccountType;
         static std::wstring const RunasPassword;
-
         static std::wstring const FabricActivatorAddressEnvVariable;
 
         //Application Service Parameters
@@ -209,18 +226,22 @@ namespace Hosting2
         static Common::GlobalWString HttpOptionsVerb;
         static Common::GlobalWString HttpTraceVerb;
         static Common::GlobalWString HttpConnectVerb;
-
         static std::wstring const ContainersLogsUriPath;
         static std::string const ContentTypeJson;
         static std::wstring const DefaultContainerLogsTail;
 
         static std::wstring const ContainerLogDriverOptionLogBasePathKey;
 
+        static std::wstring const ContainerLogRemovalMarkerFile;
+        static std::wstring const ContainerLogProcessMarkerFile;
+
 #if defined(PLATFORM_UNIX)
         static std::wstring const AppRunAsAccount;
         static std::wstring const AppRunAsAccountGroup;
         static std::wstring const CgroupPrefix;
         static int32 const CgroupsCpuPeriod;
+
+        static std::wstring const CrioCgroupName;
 
         // Docker REST URI format constants
         static std::string const Containers;

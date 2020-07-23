@@ -107,6 +107,9 @@ ErrorCode HttpGatewayImpl::RegisterHandlers()
     error = RequestHandlerBase::Create<FaultsHandler>(*this, faultsHandlerSPtr_);
     if (!error.IsSuccess()) { return error; }
 
+    error = RequestHandlerBase::Create<NetworksHandler>(*this, networksHandlerSPtr_);
+    if (!error.IsSuccess()) { return error; }
+
 #if !defined(PLATFORM_UNIX)
     error = RequestHandlerBase::Create<BackupRestoreHandler>(*this, backupRestoreHandlerSPtr_);
     if (!error.IsSuccess()) { return error; }
@@ -121,7 +124,13 @@ ErrorCode HttpGatewayImpl::RegisterHandlers()
     if (!error.IsSuccess()) { return error; }
 
     error = RequestHandlerBase::Create<VolumesHandler>(*this, volumesHandlerSPtr_);
-   if (!error.IsSuccess()) { return error; }
+    if (!error.IsSuccess()) { return error; }
+
+    error = RequestHandlerBase::Create<SecretsResourceHandler>(*this, secretsResourceHandlerSPtr_);
+    if (!error.IsSuccess()) { return error; }
+
+    error = RequestHandlerBase::Create<GatewaysResourceHandler>(*this, gatewaysResourceHandlerSPtr_);
+    if (!error.IsSuccess()) { return error; }
 
     return error;
 }

@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <!--
+  To understand why this assembly is needed, please read
+   1. https://msdn.microsoft.com/en-us/library/7wd6ex19(v=vs.110).aspx
+   2. https://msdn.microsoft.com/en-us/library/dz32563a(v=vs.110).aspx
+
+   IF these pages don't exist, search for 'Redirecting assembly versions in .NET'
+
+   The build step involving AL.exe just follows the instructions in the 2nd link above
+  -->
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Policy.3.0.System.Fabric.dSTSClient</AssemblyName>
+    <AssemblyDescription>Fabric dstsClient Policy assembly</AssemblyDescription>
+    <RootNamespace>Policy.3.0.System.Fabric.dSTSClient</RootNamespace>
+    <ProjectGuid>{45af47b9-bf9b-46e2-ae20-1b57c839a8f1}</ProjectGuid>
+    <!--
+    Disable code coverage build since this project doesn't contain any code.
+    If not disabled, Magellan code coverage builds will fail with error:
+    Call to ProgIter.Initialize failed: No code in binary.  Nothing to do!
+    -->
+    <CoverageDisabled>true</CoverageDisabled>
+    <HighEntropyVA>true</HighEntropyVA>
+  </PropertyGroup>
+  
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(CONFROOT)\FabricVersions.Targets "/>
+
+  <!--
+  GetFabricVersions is needed for populating $(FabricRuntimeProductMajorVersion)
+  -->
+  <Target Name="Build" Inputs="Policy.3.0.System.Fabric.dstsClient.config" Outputs="$(OutputPath)\$(AssemblyName).dll" DependsOnTargets="GetFabricVersions">
+    <MakeDir Directories="$(OutputPath)" />
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\AL.exe /link:Policy.3.0.System.Fabric.dstsClient.config /out:$(OutputPath)\$(AssemblyName).dll /keyfile:$(WindowsPublicKey) /delay+ /platform:x64 /version:$(FabricRuntimeProductMajorVersion).0.0.0" />
+  </Target>
+  <Target Name="Binplace" AfterTargets="Build">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)\**\*" Exclude="$(OutputPath)\**\*.pdb;$(OutputPath)**\*.lib" />
+      <BinplaceFiles Include="Policy.3.0.System.Fabric.dstsClient.config" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -63,6 +63,8 @@ set( LINUX_SOURCES
     ../EntreeService.Test_TestNamespaceManagerAsyncOperation.cpp
     ../EntreeService.ProcessQueryAsyncOperation.cpp
     ../EntreeService.GetApplicationNameAsyncOperation.cpp
+    ../EntreeService.CreateNetworkAsyncOperation.cpp
+    ../EntreeService.DeleteNetworkAsyncOperation.cpp
     ../EntreeServiceProxy.cpp
     ../EntreeServiceProxy.RequestAsyncOperationBase.cpp
     ../EntreeServiceIpcChannelBase.cpp

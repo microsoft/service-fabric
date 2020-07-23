@@ -9,8 +9,8 @@ namespace Query
 {
     class QueryAddresses
     {
-    public:        
-        
+    public:
+
         static Common::GlobalWString FMAddressSegment;
         static Common::GlobalWString FMMAddressSegment;
         static Common::GlobalWString CMAddressSegment;
@@ -21,18 +21,20 @@ namespace Query
         static Common::GlobalWString TSAddressSegment;
         static Common::GlobalWString UOSAddressSegment;
         static Common::GlobalWString TestabilityAddressSegment;
+        static Common::GlobalWString GRMAddressSegment;
 
-        static Query::QueryAddressGenerator GetGateway();   
-        static Query::QueryAddressGenerator GetHosting();         
-        static Query::QueryAddressGenerator GetFM();        
-        static Query::QueryAddressGenerator GetFMM();        
+        static Query::QueryAddressGenerator GetGateway();
+        static Query::QueryAddressGenerator GetHosting();
+        static Query::QueryAddressGenerator GetFM();
+        static Query::QueryAddressGenerator GetFMM();
         static Query::QueryAddressGenerator GetCM(); 
         static Query::QueryAddressGenerator GetHM(); 
-        static Query::QueryAddressGenerator GetHMViaCM(); 
+        static Query::QueryAddressGenerator GetHMViaCM();
         static Query::QueryAddressGenerator GetRA(); 
         static Query::QueryAddressGenerator GetRM();
         static Query::QueryAddressGenerator GetTS();
         static Query::QueryAddressGenerator GetUOS();
         static Query::QueryAddressGenerator GetTestability();
+        static Query::QueryAddressGenerator GetGRM();
     };
 }

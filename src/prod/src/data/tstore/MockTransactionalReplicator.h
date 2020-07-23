@@ -30,10 +30,17 @@ namespace TStoreTests
 
         static NTSTATUS Create(
             __in KAllocator & allocator,
+            __in bool hasPersistedState,
             __out MockTransactionalReplicator::SPtr& result);
 
         //ITransactionManager APIs
         bool IsReadable();
+
+        __declspec(property(get = get_HasPersistedState)) bool HasPeristedState;
+        bool get_HasPersistedState() const override
+        {
+            return hasPersistedState_;
+        }
 
         LONG64 IncrementAndGetCommitSequenceNumber();
 
@@ -313,6 +320,7 @@ namespace TStoreTests
         void MockTransactionalReplicator::UpdateSecondaryLSN();
 
     private:
+        MockTransactionalReplicator(__in bool hasPersistedState);
 
         void AddTransaction(
             __in TxnReplicator::Transaction & transaction,
@@ -333,6 +341,8 @@ namespace TStoreTests
         FABRIC_REPLICA_ROLE role_ = FABRIC_REPLICA_ROLE_UNKNOWN;
         volatile LONG64 lastLSN_ = 0;
         bool isReadable_ = false;
+
+        bool hasPersistedState_;
 
         Data::Utilities::ConcurrentDictionary<LONG64, KSharedArray<TestTransactionContext>::SPtr>::SPtr inflightTransactionMapSPtr_;
         Data::Utilities::ReaderWriterAsyncLock::SPtr readerWriterLockSPtr_;

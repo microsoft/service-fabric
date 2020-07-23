@@ -64,7 +64,7 @@ queryhealth partition partitionid=fabric:/stateful2#0 expectedhealthstate=ok
 verify
 #Verify node up/down event
 resethealthclient
-queryhealth node nodeid=400 expectedhealthstate=error
+queryhealth node nodeid=400 expectedhealthstate=error "expecteddesc=State:Fabric node is down. For more information see: http://aka.ms/sfhealth"
 queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning "expecteddesc=State:Partition is below target replica or instance count."
 +400
 +600
@@ -84,7 +84,7 @@ resethealthclient
 queryhealth partition partitionid=fabric:/test#0 expectedhealthstate=error "expecteddesc=State:Partition is in quorum loss."
 +500
 queryhealth partition partitionid=fabric:/test#0 expectedhealthstate=ok
-queryhealth node nodeid=600 expectedhealthstate=error
+queryhealth node nodeid=600 expectedhealthstate=error "expecteddesc=State:Fabric node is down. For more information see: http://aka.ms/sfhealth"
 queryhealth node nodeid=500 expectedhealthstate=ok
 createname fabric:/test2
 createservice fabric:/test2 TestPersistedStoreServiceType y 1 1 persist
@@ -113,11 +113,11 @@ verify
 -100 removedata
 verify
 resethealthclient
-queryhealth node nodeid=100 expectedhealthstate=error
+queryhealth node nodeid=100 expectedhealthstate=error "expecteddesc=State:Fabric seed node is down. Loss of a majority of seed nodes can cause cluster failure. For more information see: http://aka.ms/sfhealth"
 #Test nodestateremoved
 addbehavior b4 * * ReportHealth
 nodestateremoved 100
-queryhealth node nodeid=100 expectedhealthstate=error
+queryhealth node nodeid=100 expectedhealthstate=error "expecteddesc=State:Fabric seed node is down. Loss of a majority of seed nodes can cause cluster failure. For more information see: http://aka.ms/sfhealth"
 -<FM.Location>
 verify 120 fm
 removebehavior b4

@@ -71,6 +71,11 @@ namespace FabricDCA
             pluginTypes[StandardPluginTypes.FileShareFolderUploader] = typeof(FileShareFolderUploader);
 #endif
 
+            // Add Syslog consumer on Linux system.
+#if DotNetCoreClrLinux
+            pluginTypes[StandardPluginTypes.SyslogConsumer] = typeof(SyslogConsumer);
+#endif
+
             // In the Windows Server environment, we don't ship any Azure plugins. So an exception will be raised
             // while JIT-compiling the method below because it references some types defined in the Azure plugins.
             // If that happens, handle the exception and move on.
@@ -106,6 +111,7 @@ namespace FabricDCA
 #if DotNetCoreClrLinux
             pluginTypes[StandardPluginTypes.AzureBlobCsvUploader] = typeof(AzureBlobCsvUploader);
             pluginTypes[StandardPluginTypes.AzureTableQueryableCsvUploader] = typeof(AzureTableQueryableCsvUploader);
+            pluginTypes[StandardPluginTypes.AzureTableOperationalEventUploader] = typeof(AzureTableOperationalEventUploader);
 #else
             pluginTypes[StandardPluginTypes.AzureBlobEtwCsvUploader] = typeof(AzureBlobEtwCsvUploader);
             pluginTypes[StandardPluginTypes.AzureTableQueryableEventUploader] = typeof(AzureTableQueryableEventUploader);

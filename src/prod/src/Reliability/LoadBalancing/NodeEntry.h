@@ -33,7 +33,9 @@ namespace Reliability
                 Common::TreeNodeIndex && upgradeDomainIndex,
                 bool isDeactivated,
                 bool isUp,
-                std::vector<std::wstring> && nodeImages = std::vector<std::wstring>());
+                std::vector<std::wstring> && nodeImages = std::vector<std::wstring>(),
+                bool isValid = true,
+                std::wstring && nodeTypeName = L"");
 
             NodeEntry(NodeEntry && other);
 
@@ -80,6 +82,19 @@ namespace Reliability
 
             __declspec (property(get = get_NodeImages)) std::vector<std::wstring> const& NodeImages;
             std::vector<std::wstring> const& get_NodeImages() const { return nodeImages_; }
+
+            __declspec (property(get = get_MaxConcurrentBuilds, put = put_MaxConcurrentBuilds)) int MaxConcurrentBuilds;
+            int get_MaxConcurrentBuilds() const { return maxConcurrentBuilds_; }
+            void put_MaxConcurrentBuilds(int value) { maxConcurrentBuilds_ = value; }
+
+            __declspec (property(get = get_IsThrottled)) bool IsThrottled;
+            bool get_IsThrottled() const { return maxConcurrentBuilds_ > 0; }
+
+            __declspec (property(get = get_IsValid, put = put_IsValid)) bool IsValid;
+            bool get_IsValid() const { return isValid_; }
+
+            __declspec (property(get = get_NodeTypeName)) std::wstring const& NodeTypeName;
+            std::wstring const& get_NodeTypeName() const { return nodeTypeName_; }
 
             int64 GetLoadLevel(size_t metricIndex) const;
             int64 GetLoadLevel(size_t metricIndex, int64 diff) const;
@@ -128,6 +143,15 @@ namespace Reliability
 
             // all container images for that node
             std::vector<std::wstring> nodeImages_;
+
+            // Maximum number of concurrent builds for this node. Used for throttling.
+            int maxConcurrentBuilds_;
+
+            // Is this node valid for this placement (not blocklisted by all services)
+            bool isValid_;
+
+            // Node type for this node
+            std::wstring nodeTypeName_;
         };
     }
 }

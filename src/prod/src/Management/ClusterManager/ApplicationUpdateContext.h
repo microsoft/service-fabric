@@ -49,10 +49,7 @@ namespace Management
             __declspec(property(get = get_UpdatedCapacities)) Reliability::ApplicationCapacityDescription const& UpdatedCapacities;
             Reliability::ApplicationCapacityDescription const& get_UpdatedCapacities() const { return updatedCapacities_; }
 
-            __declspec(property(get = get_IsCommitPending, put = put_IsCommitPending)) bool IsCommitPending;
-            bool get_IsCommitPending() const { return isCommitPending_; }
-            void put_IsCommitPending(bool isCommitPending) { isCommitPending_ = isCommitPending; }
-            void OnFailRolloutContext() override { isCommitPending_ = false; }
+            void OnFailRolloutContext() override { }
 
             virtual std::wstring const & get_Type() const;
             virtual void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
@@ -74,9 +71,6 @@ namespace Management
 
             // New values that will be written to ApplicationContext eventually
             Reliability::ApplicationCapacityDescription updatedCapacities_;
-
-            // Used for in-memory optimizations to jump directly to commit
-            bool isCommitPending_;
         };
     }
 }

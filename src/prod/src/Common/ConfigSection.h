@@ -8,13 +8,11 @@
 namespace Common
 {
     // <Settings><Section ...>
+    struct ConfigSettings;
     struct ConfigSection
     {
     public:
-        typedef std::map<std::wstring, ConfigParameter, Common::IsLessCaseInsensitiveComparer<std::wstring>> ParametersMapType;
-
         ConfigSection();
-        ConfigSection(std::wstring && name, ParametersMapType && parameters);
         ConfigSection(ConfigSection const & other);
         ConfigSection(ConfigSection && other);
 
@@ -34,8 +32,12 @@ namespace Common
         void clear();
     public:
         std::wstring Name;
-        ParametersMapType Parameters;
+        std::map<std::wstring, ConfigParameter, Common::IsLessCaseInsensitiveComparer<std::wstring>> Parameters;
 
     private:
+        friend struct ConfigSettings;
+
+        void ReadFromXml(Common::XmlReaderUPtr const &);
+        bool TryAddParameter(ConfigParameter && parameter);
     };
 }

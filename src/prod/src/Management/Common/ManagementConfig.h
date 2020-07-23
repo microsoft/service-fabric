@@ -243,7 +243,7 @@ namespace Management
         // The maximum number of health reports that an entity can have before raising concerns about the watchdog's health reporting logic.
         // Each health entity is supposed to have a relatively small number of health reports. If the report count goes above this number, there may be issues with the watchdog's implementation.
         // An entity with too many reports is flagged through a Warning health report when the entity is evaluated.
-        INTERNAL_CONFIG_ENTRY(int, L"HealthManager", MaxSuggestedNumberOfEntityHealthReports, 100, Common::ConfigEntryUpgradePolicy::Dynamic, Common::GreaterThan(0));
+        PUBLIC_CONFIG_ENTRY(int, L"HealthManager", MaxSuggestedNumberOfEntityHealthReports, 500, Common::ConfigEntryUpgradePolicy::Dynamic, Common::GreaterThan(0));
         // The maximum number of health reports that can be batched in a transaction. If an entity has more reports, delete entity could get stuck because the max replication message size is reached.
         INTERNAL_CONFIG_ENTRY(int, L"HealthManager", MaxEntityHealthReportsAllowedPerTransaction, 32000, Common::ConfigEntryUpgradePolicy::Static, Common::GreaterThan(0));
 
@@ -280,8 +280,29 @@ namespace Management
         // Cluster upgrade health evaluation policy: maximum percent of delta of unhealthy nodes in an upgrade domain allowed for the cluster to be healthy
         PUBLIC_CONFIG_ENTRY(int, L"HealthManager/ClusterUpgradeHealthPolicy", MaxPercentUpgradeDomainDeltaUnhealthyNodes, 15, Common::ConfigEntryUpgradePolicy::Static, Common::InRange<int>(0, 100));
 
-        // This configuration enables or disables the automatic cleanup of application package on successful provision.
+        // Enables or disables the automatic cleanup of application package on successful provision.
         PUBLIC_CONFIG_ENTRY(bool, L"Management", CleanupApplicationPackageOnProvisionSuccess, false, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // Enables or disables the automatic cleanup of unused application types.
+        PUBLIC_CONFIG_ENTRY(bool, L"Management", CleanupUnusedApplicationTypes, false, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // Maximum number of latest unused application types/versions to be skipped during application type cleanup.
+        PUBLIC_CONFIG_ENTRY(int, L"Management", MaxUnusedAppTypeVersionsToKeep, 3, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The cleanup interval for allowed for unregister application type during automatic application type cleanup
+        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Management", AutomaticUnprovisionInterval, Common::TimeSpan::FromMinutes(5), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // Enables or disables the periodic automatic cleanup of unused application types.
+        INTERNAL_CONFIG_ENTRY(bool, L"Management", PeriodicCleanupUnusedApplicationTypes, false, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The initial cleanup interval when the CM comes up
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Management", InitialPeriodicAppTypeCleanupInterval, Common::TimeSpan::FromMinutes(15), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The periodic cleanup interval for after the initial cleanup by CM
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Management", PeriodicAppTypeCleanupInterval, Common::TimeSpan::FromMinutes(24 * 60), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // Enables or disables the trigger of automatic app type cleanup on provision success.
+        TEST_CONFIG_ENTRY(bool, L"Management", TriggerAppTypeCleanupOnProvisionSuccess, false, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         /* Primary and secondary replication queues: limit memory to 500 MB, ignore the number of items in the queue */
         RE_INTERNAL_CONFIG_PROPERTIES(L"ClusterManager/Replication", 50, 0, 524288000, 0, 524288000);

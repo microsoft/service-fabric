@@ -1,0 +1,9 @@
+; KSocketUser.def : Declares the module parameters for the DLL.
+
+LIBRARY      "KSocketUser"
+
+EXPORTS
+; Explicit exports can go here
+QueryNumberOfTests      PRIVATE
+QueryTests              PRIVATE
+RunTest                 PRIVATE

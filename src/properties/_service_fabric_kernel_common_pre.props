@@ -1,0 +1,45 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!-- Common properties for the native projects that should be included before setting the ConfigurationType -->
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="$(KTLSRCROOT)\src\kernel\KTL.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\StatusCodes\StatusCodes.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\mc\kernel\ktleventskernel.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\logger\src\kernel\KtlLoggerKernel.vcxproj" />
+  </ItemGroup>
+
+  <PropertyGroup  Label="Configuration">
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <TargetVersion>Windows7</TargetVersion>
+    <!--KTL Paths-->
+    <KtlIncludePath>$(SrcRoot)\prod\ktl\src\inc;$(SrcRoot)\prod\ktl\src\StatusCodes\$(O);$(SrcRoot)\prod\ktl\src\mc\kernel\$(O);$(SrcRoot)\prod\ktl\src\logger\inc</KtlIncludePath>
+    <KtlKernelLib>$(BinariesBuildTypeArchDirectory)\KTL\KTL.lib</KtlKernelLib>
+    <KtlLoggerKernelLib>$(BinariesBuildTypeArchDirectory)\KtlLoggerKernel\KtlLoggerKernel.lib</KtlLoggerKernelLib>
+
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(UseRetailCrtWithDebugBuild)' == 'true'">
+      <PropertyGroup>
+        <UseDebugLibraries>false</UseDebugLibraries>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(BuildType)' == 'retail'">
+      <PropertyGroup>
+        <UseDebugLibraries>false</UseDebugLibraries>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(BuildType)' == 'debug'">
+      <PropertyGroup>
+        <UseDebugLibraries>true</UseDebugLibraries>
+      </PropertyGroup>
+    </When>
+  </Choose>
+</Project>
+
+

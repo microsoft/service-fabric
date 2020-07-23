@@ -40,6 +40,8 @@ namespace Data
             static BarrierLogRecord::SPtr CreateOneBarrierRecord(
                 __in PhysicalLogRecord & invalidPhysicalLogRecord,
                 __in KAllocator & allocator);
+
+            virtual std::wstring ToString() const override;
             
             // 
             // Stable Lsn represents the sequence number upto which there is write quorum at the point of replicating this record

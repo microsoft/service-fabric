@@ -1,0 +1,48 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set MaxApiDelayInterval 3000
+set MinApiDelayInterval 3000
+ 
++10
++20
++30
+verify
++40
++50
++60
++70
++80
+verify
+ 
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 5 persist
+verify
+ 
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 10 10Data1
+!wait
+addbehavior b1 * 40 ReplicationOperation
+addbehavior b2 * 50 ReplicationOperation
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 10 10Data1
+!wait 
+
+-80
+!pause,10
+injectfailure 50 fabric:/test1 pump.replication.delay
+injectfailure 40 fabric:/test1 pump.replication.delay
+!pause,10
+removebehavior b1
+removebehavior b2
+!pause,300
+!q

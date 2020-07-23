@@ -50,6 +50,8 @@ namespace Data
                 return isSingleOperationTransaction_;
             }
 
+            virtual std::wstring ToString() const override;
+
             //
             // Returns TRUE If the transaction consists of only 1 operation (followed by a commit)
             //

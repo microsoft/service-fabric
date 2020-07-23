@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+  <PropertyGroup>
+    <Description>Fabric Gateway Resource Manager</Description>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>FabricGRM</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>FabricGRM</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+    ..\..\src\system\fabric\FabricGRM\Program.cs;
+    ..\..\src\system\fabric\FabricGRM\FabricGatewayResourceManager.cs;
+    ..\..\src\system\fabric\FabricGRM\CommunicationListener.cs;
+    ..\..\src\system\fabric\FabricGRM\FabricGatewayResourceManagerImpl.cs;
+    ..\..\src\system\fabric\FabricGRM\Manager.cs;
+    ..\..\src\system\fabric\FabricGRM\models\GatewayDestination.cs;
+    ..\..\src\system\fabric\FabricGRM\models\GatewayResourceDescription.cs;
+    ..\..\src\system\fabric\FabricGRM\models\GatewayResourceProperties.cs;
+    ..\..\src\system\fabric\FabricGRM\models\GatewayResourceStatus.cs;
+    ..\..\src\system\fabric\FabricGRM\models\HttpConfig.cs;
+    ..\..\src\system\fabric\FabricGRM\models\HttpHostNameConfig.cs;
+    ..\..\src\system\fabric\FabricGRM\models\HttpRouteConfig.cs;
+    ..\..\src\system\fabric\FabricGRM\models\HttpRouteMatchHeader.cs;
+    ..\..\src\system\fabric\FabricGRM\models\HttpRouteMatchPath.cs;
+    ..\..\src\system\fabric\FabricGRM\models\HttpRouteMatchRule.cs;
+    ..\..\src\system\fabric\FabricGRM\models\NetworkRef.cs;
+    ..\..\src\system\fabric\FabricGRM\models\TcpConfig.cs;
+    ..\..\src\system\fabric\FabricGRM\GRMSettings.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+	  <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+    <None Update="FabricGRM.sh">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="..\..\src\system\fabric\FabricGRM\GatewayProxyApplicationPackage\ApplicationManifest.xml">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="..\..\src\system\fabric\FabricGRM\GatewayProxyApplicationPackage\Proxy\ServiceManifest.xml">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\System.Fabric.BackupRestore/System.Fabric.BackupRestore.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data\CoreCLR\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Impl\CoreCLR\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\CoreCLR\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\CoreCLR\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Standard)\Microsoft.ServiceFabric.Services.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric.BackupRestore\System.Fabric.BackupRestore.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.McgInterop.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.4.0" />
+    <PackageReference Include="System.Security.AccessControl" Version="4.4.0" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="4.4.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <Reference Condition=" '$(BuildLinux)' != 'true' "
+               Include="$(PkgWinFab_Azure_Libs)\Microsoft.WindowsAzure.ServiceRuntime.Management\Microsoft.WindowsAzure.ServiceRuntime.Management.dll" />
+    <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
+  </ItemGroup>
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

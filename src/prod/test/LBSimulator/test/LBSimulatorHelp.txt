@@ -1,0 +1,142 @@
+LBSimulator Commands
+
+Command:+
+Description: Create a node
+Usage: +<nodeId> <faultDomainId> <upgradeDomainId> [<capacities>]
+Example: +10 fd:/dc/rack upgradedomainA m1/100,m2/20
+
+Command:-
+Description: Bring down a node
+Usage: -<nodeId>
+Example: -10
+
+Command:createservice
+Description: Create new service
+Usage: createservice <serviceIndex> <isStateful> <partitionCount> <replicaCount> <affinitizedService> <blocklist> [<metrics>]
+Detail: <blocklist>: node1,node2
+        <metrics>: metric1/weight/primaryDefaultLoad/secondaryDefaultLoad,metric2/weight/primaryDefaultLoad/secondaryDefaultLoad,...
+Example: createservice 2 true 3 3 -1 50,60,70 m1/1/10/5,m2/0.5/2/1
+
+Command:deleteservice
+Description: Delete an existing service
+Usage: deleteservice <serviceIndex>
+Example: deleteservice 2
+
+Command:reportload
+Description: Report load of a metric for a failover unit
+Usage: reportload <fuIndex> <role> <metric> <load>
+Example: reportload 0 0 m1 1
+
+Command:reportbatchload
+Description: Specify the distribution of the load of a metric for a failover unit
+Usage: reportbatchload <serviceIndex> <metricName> <loadDistribution>
+Detail: <loadDistribution>: <distributionType>/<input1>/<input2>/<?input3>. u/U for uniform distribution, p/P for power law distribution
+Example: reportbatchload 0 m1 u/10/20 -> uniform distribution from 10 to 20
+
+Command:reset
+Description: Reset FM and dispose current PLB
+Usage: reset
+
+Command:loadplacement
+Description: Load placement from file
+Usage: loadplacement <fileName>
+
+Command:loadrandomplacement
+Description: Load random placement from file
+Usage: loadplacement <randplacementfile> <seed>
+Example: loadplacement placementfile.txt 123
+
+Command:loadplacementdump
+Description: Load placement dump from PLB trace
+Usage: loadplacementdump <placementdumpfile>
+
+Command:executeplacementdump
+Description: Run PLB action only for placement dump
+Usage: executeplacementdump <action>
+Available actions: creation
+
+Command:all
+Description: Show current services, nodes and failoverunits information
+Usage: all
+
+Command:services
+Description: Show current services information
+Usage: services
+
+Command:nodes
+Description: Show current nodes information
+Usage: nodes
+
+Command:gfum
+Description: Show current failover units information
+Usage: gfum [<beginFuIndex>-<endFuIndex>]
+Example: gfum
+Example: gfum 3-5
+
+Command:setplbconfig
+Description: Set PLB config to LBSimulator
+Usage: setplbconfig <configName> <value>
+Example: setplbconfig LoadBalancingEnabled false
+
+Command:getplbconfig
+Description: Get current value for a PLB config
+Usage: getplbconfig <configName>
+Example: getplbconfig LoadBalancingEnabled
+
+Command:deletereplica
+Description: Delete a replica of a failover unit
+Usage: deletereplica <fuIndex> <nodeIndex>
+Example: deletereplica 2 3
+
+Command:promotereplica
+Description: Promote a Secondary replica of a failover unit to be Primary
+Usage: promotereplica <fuIndex> <nodeIndex>
+Example: promotereplica 2 3
+
+Command:movereplica
+Description: Move a replica of a failover unit to another specified node
+Usage: movereplica <fuIndex> <sourceNodeIndex> <targetNodeIndex>
+Example: movereplica 0 1 2
+
+Command:loadplacement
+Description: Load a cluster snapshot to the simuilator
+Usage: loadplacement <filename>
+Example: loadplacement cluster.txt
+
+Command:printclusterstate
+Description: print the cluster state.By default, prints out all custom metrics. Verbose prints everything. Graphical only prints custom metrics sorted by UD.
+Usage: printclusterstate [verbose] [graphical]
+Example: printclusterstate
+
+Command:logmetrics
+Description: decide which metric to log. "all" resets to log all metrics
+Usage: logmetrics <metric1/all> [<metric2/all> ....]
+Example: logmetrics all CPUMin MaxCPUUsage
+
+Command:forceexecuteplb
+Description: Force a number of PLB Runs. Placement and constraint check are disabled by default.
+Parameters:
+    EnablePlacement - Using this parameter forces PLB refresh with placement phase enabled.
+    EnableConstraintCheck - Using this parameter forces PLB refresh with ConstraintCheck phase enabled.
+Usage: forceexecuteplb <Number of Runs> [EnablePlacement] [EnableConstraintCheck]
+Example: forceexecuteplb 1 EnableConstraintCheck
+
+Command:batchexecuteplb
+Description: Force a batch with a constant number of PLB Runs with different random seeds for a snapshot from a file.
+Placement and constraint check phases are disabled.
+Usage: batchexecuteplb <Number of Batches> <Number of Runs> <filename.txt>
+Example:batchexecuteplb 8 10 cluster.txt
+
+Command:flushtraces
+Description: Switch to a new trace file
+Usage: flushtraces
+Example:flushtraces
+
+Command:convertnodeid
+Description: Convert node id to federation node-id
+Usage: convertnodeid <high_half> <low_half>
+Example: convertnodeid 5589806428881272218 4788257179885109477
+
+Command:loadplacementfromtraces
+Description: Load placement from file which contains PLBConstruct trace in order to reconstruct PLB
+Usage: loadplacementfromtraces <fileName>

@@ -281,6 +281,8 @@ namespace Common
 
             ComposeDeploymentNotFound = (int)FABRIC_E_COMPOSE_DEPLOYMENT_NOT_FOUND,
 
+            ComposeDeploymentNotUpgrading = (int)FABRIC_E_COMPOSE_DEPLOYMENT_NOT_UPGRADING,
+
             InvalidForStatefulServices = (int)FABRIC_E_INVALID_FOR_STATEFUL_SERVICES,
 
             InvalidForStatelessServices = (int)FABRIC_E_INVALID_FOR_STATELESS_SERVICES,
@@ -291,6 +293,7 @@ namespace Common
 
             CentralSecretServiceGenericError = (int)FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC,
             SecretInvalid = (int)FABRIC_E_SECRET_INVALID,
+            SecretTypeCannotBeChanged = (int)FABRIC_E_SECRET_TYPE_CANNOT_BE_CHANGED,
             SecretVersionAlreadyExists = (int)FABRIC_E_SECRET_VERSION_ALREADY_EXISTS,
 
             InvalidUploadSessionId = (int)FABRIC_E_INVALID_UPLOAD_SESSION_ID,
@@ -314,6 +317,10 @@ namespace Common
             InvalidServiceScalingPolicy = (int)FABRIC_E_INVALID_SERVICE_SCALING_POLICY,
 
             DatabaseMigrationInProgress = (int)FABRIC_E_DATABASE_MIGRATION_IN_PROGRESS,
+            
+            NetworkNotFound = (int)FABRIC_E_NETWORK_NOT_FOUND,
+            NetworkInUse = (int)FABRIC_E_NETWORK_IN_USE,
+            EndpointNotReferenced = (int)FABRIC_E_ENDPOINT_NOT_REFERENCED,
 
             OperationNotSupported = (int)FABRIC_E_OPERATION_NOT_SUPPORTED,
 
@@ -326,7 +333,7 @@ namespace Common
             // This requires keeping this count in sync with the number of internal error codes.  If you get
             // a CIT error about this, update the following line as directed by the CIT output:
 
-            INTERNAL_ERROR_CODE_COUNT = 182, // <-- Update this number when adding new internal error codes
+            INTERNAL_ERROR_CODE_COUNT = 188, // <-- Update this number when adding new internal error codes
 
             FIRST_INTERNAL_ERROR_CODE_MINUS_ONE = (int)FABRIC_E_LAST_RESERVED_HRESULT - INTERNAL_ERROR_CODE_COUNT,
 
@@ -353,6 +360,13 @@ namespace Common
             //
             // [Start new internal error codes]
             //
+
+            NatIpAddressProviderAddressRangeExhausted,
+            ServiceHostTerminationInProgress,
+            FabricHostServicePathNotFound,
+            UpdaterServicePathNotFound,
+            IsolatedNetworkInterfaceNameNotFound,
+            OverlayNetworkResourceProviderAddressRangeExhausted,
             UpdateContextFailed,
             FSSPrimaryInDatalossRecovery,
             BackupCopierAborted,
@@ -538,7 +552,7 @@ namespace Common
             InvalidServiceTypeV1,
             StaleRequest,
             // 'AbandonedFileWriteLockFound' has been replaced with public error code CorruptedImageStoreObjectFound.
-            // This is kept so that backward compatability is not broken.
+            // This is kept so that backward compatibility is not broken.
             AbandonedFileWriteLockFound,
 
             LAST_INTERNAL_ERROR_CODE = AbandonedFileWriteLockFound

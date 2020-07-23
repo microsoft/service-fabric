@@ -135,6 +135,11 @@ namespace KtlPhysicalLogTest
         ::ContainerWithPathTest(_driveLetter, _logManagers[0]);
     }
 
+    BOOST_AUTO_TEST_CASE(OneBitLogCorruptionTest)
+    {
+        ::OneBitLogCorruptionTest(_driveLetter, _logManagers[0]);
+    }
+
     BOOST_AUTO_TEST_CASE(EnunerateStreamsTest)
     {
         ::EnunerateStreamsTest(_diskId, _logManagers[0]);

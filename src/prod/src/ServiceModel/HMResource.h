@@ -48,9 +48,9 @@ namespace ServiceModel
     {
         DECLARE_SINGLETON_RESOURCE( HMResource )
 
-        HM_RESOURCE( HealthEvaluationErrorEvent, Health_Evaluation_Error_Event )
+        HM_RESOURCE( HealthEvaluationUnhealthyEvent, Health_Evaluation_Unhealthy_Event )
         HM_RESOURCE( HealthEvaluationExpiredEvent, Health_Evaluation_Expired_Event )
-        HM_RESOURCE( HealthEvaluationUnhealthyEventPerPolicy, Health_Evaluation_Unhealthy_Event )
+        HM_RESOURCE( HealthEvaluationUnhealthyEventPerPolicy, Health_Evaluation_Unhealthy_EventPerPolicy )
         HM_RESOURCE( HealthEvaluationUnhealthyUpgradeDomainDeltaNodesCheck, Health_Evaluation_Unhealthy_UpgradeDomainDeltaNodesCheck )
         HM_RESOURCE( HealthEvaluationUnhealthyDeltaNodesCheck, Health_Evaluation_Unhealthy_DeltaNodesCheck )
         HM_RESOURCE( HealthEvaluationUnhealthyReplicasPerPolicy, Health_Evaluation_Unhealthy_Replicas )
@@ -144,6 +144,7 @@ namespace ServiceModel
         // Failover
         FAILOVER_HEALTH_RESOURCE( NodeUp, Node_Up )
         FAILOVER_HEALTH_RESOURCE( NodeDown, Node_Down )
+        FAILOVER_HEALTH_RESOURCE( SeedNodeDown, Seed_Node_Down )
         FAILOVER_HEALTH_RESOURCE( NodeDownDuringUpgrade, Node_Down_During_Upgrade )
         FAILOVER_HEALTH_RESOURCE( PartitionHealthy, Partition_Healthy )
         FAILOVER_HEALTH_RESOURCE( PartitionPlacementStuck, Partition_PlacementStuck )

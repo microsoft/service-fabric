@@ -213,6 +213,7 @@ namespace Hosting2
         __declspec(property(get=get_EventDispatcher)) EventDispatcherUPtr const & EventDispatcherObj;
         inline EventDispatcherUPtr const & get_EventDispatcher() const { return eventDispatcher_; }
 
+        __declspec(property(get = get_FabricActivatorClient)) IFabricActivatorClientSPtr const & FabricActivatorClientObj;
         inline IFabricActivatorClientSPtr const & get_FabricActivatorClient() const { return fabricActivatorClient_; }
 
         __declspec(property(get = get_LocalResourceManager)) LocalResourceManagerUPtr const & LocalResourceManagerObj;
@@ -273,6 +274,10 @@ namespace Hosting2
         __declspec(property(get = get_DnsEnvManager)) DnsServiceEnvironmentManagerUPtr const & DnsEnvManager;
         inline DnsServiceEnvironmentManagerUPtr const & get_DnsEnvManager() const { return dnsEnvManager_; }
 
+        __declspec(property(get = get_NetworkInventoryAgent, put = set_NetworkInventoryAgent)) NetworkInventoryAgentSPtr NetworkInventoryAgent;
+        NetworkInventoryAgentSPtr const HostingSubsystem::get_NetworkInventoryAgent() const { return networkInventoryAgent_; }
+        void HostingSubsystem::set_NetworkInventoryAgent(NetworkInventoryAgentSPtr value) { networkInventoryAgent_ = value; }
+
         Common::ErrorCode GetDllHostPathAndArguments(std::wstring & dllHostPath, std::wstring & dllHostArguments);
         Common::ErrorCode GetTypeHostPath(std::wstring & typeHostPath, bool useSFReplicatedStore);
 
@@ -294,10 +299,16 @@ namespace Hosting2
             ServiceModel::ServicePackageActivationContext const & activationContext,
 			__out std::wstring & serviceName) const;
 
+        bool TryGetServicePackagePublicApplicationName(
+            ServiceModel::ServicePackageIdentifier const & servicePackageId,
+            ServiceModel::ServicePackageActivationContext const & activationContext,
+            __out std::wstring & applicationName) const;
+
         std::wstring GetOrAddServicePackagePublicActivationId(
             ServiceModel::ServicePackageIdentifier const & servicePackageId,
             ServiceModel::ServicePackageActivationContext const & activationContext,
-            std::wstring const & serviceName);
+            std::wstring const & serviceName,
+            std::wstring const & applicationName);
 
         int64 GetNextSequenceNumber() const;
 
@@ -394,6 +405,8 @@ namespace Hosting2
         Api::IQueryClientPtr queryClientPtr_;
         Api::IRepairManagementClientPtr repairMgmtClientPtr_;
         Api::ISecretStoreClientPtr secretStoreClient_;
+        NetworkInventoryAgentSPtr networkInventoryAgent_;
+
         Common::RwLock hostPathInitializationLock_;
         std::wstring dllHostPath_;
         std::wstring dllHostArguments_;

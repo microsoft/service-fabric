@@ -182,7 +182,7 @@ namespace System.Fabric.Description
             ex2[0].Reserved = pin.AddBlittable(ex3);
             ex1[0].Reserved = pin.AddBlittable(ex2);
             nativeDescription[0].Reserved = pin.AddBlittable(ex1);
-            
+
             kind = NativeTypes.FABRIC_SERVICE_DESCRIPTION_KIND.FABRIC_SERVICE_DESCRIPTION_KIND_STATELESS;
             return pin.AddBlittable(nativeDescription);
         }

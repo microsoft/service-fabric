@@ -1,0 +1,97 @@
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+enableunsupportedpreviewfeatures true
+networkinventorymanager true
+cleantest
+
++10
++20
++30
+verify
+
+# Create the networks needed for the test cases
+shownetworks expectedCount=0
+
+createnetwork networkName=testNetwork1 networkAddressPrefix=10.0.0.4/22
+
+createnetwork networkName=testNetwork2 networkAddressPrefix=10.0.0.8/22
+
+shownetworks expectedCount=2
+
+
+# Test case 1: a container network policy for a service package refers to an endpoint undefined for the service package
+
+!string networkPolicies1 {"ContainerNetworkPolicies":[{"NetworkRef":"testNetwork1","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]},{"NetworkRef":"testNetwork2","EndpointBindings":[{"EndpointRef":"GatewayEndpoint2"}]}]}
+
+app.add appType1
+app.clear appType1
+app.servicepack appType1 ServicePackageA version=1.0
+app.servicetypes appType1 ServicePackageA ServiceTypeA stateless implicit
+app.codepack appType1 ServicePackageA CodePackageA types=ServiceTypeA version=1.0 entrytype=ContainerHost
+app.endpoint appType1 ServicePackageA name=GatewayEndpoint1 protocol=http type=Input
+app.network appType1 ServicePackageA jsondescription=<string.networkPolicies1>
+app.upload appType1 compress
+provisionapp appType1 ImageBuilderValidationError
+
+# Test case 2: multiple container network policies for a service package refer to the same container network
+!string networkPolicies2a {"ContainerNetworkPolicies":[{"NetworkRef":"testNetwork1","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]},{"NetworkRef":"testNetwork1","EndpointBindings":[{"EndpointRef":"GatewayEndpoint2"}]}]}
+app.add appType2a
+app.clear appType2a
+app.servicepack appType2a ServicePackageA version=1.0
+app.servicetypes appType2a ServicePackageA ServiceTypeA stateless implicit
+app.codepack appType2a ServicePackageA CodePackageA types=ServiceTypeA version=1.0 entrytype=ContainerHost
+app.endpoint appType2a ServicePackageA name=GatewayEndpoint1 protocol=http type=Input
+app.endpoint appType2a ServicePackageA name=GatewayEndpoint2 protocol=http type=Input
+app.network appType2a ServicePackageA jsondescription=<string.networkPolicies2a>
+app.upload appType2a compress
+provisionapp appType2a
+createapp fabric:/app2a appType2a 1.0 error=ImageBuilderValidationError
+
+!string networkPolicies2b {"ContainerNetworkPolicies":[{"NetworkRef":"[logicalNetwork1]","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]},{"NetworkRef":"testNetwork1","EndpointBindings":[{"EndpointRef":"GatewayEndpoint2"}]}]}
+app.add appType2b
+app.clear appType2b
+app.servicepack appType2b ServicePackageA version=1.0
+app.servicetypes appType2b ServicePackageA ServiceTypeA stateless implicit
+app.codepack appType2b ServicePackageA CodePackageA types=ServiceTypeA version=1.0 entrytype=ContainerHost
+app.endpoint appType2b ServicePackageA name=GatewayEndpoint1 protocol=http type=Input
+app.endpoint appType2b ServicePackageA name=GatewayEndpoint2 protocol=http type=Input
+app.network appType2b ServicePackageA jsondescription=<string.networkPolicies2b>
+app.parameters appType2b logicalNetwork1:fakeNetwork1
+app.upload appType2b compress
+provisionapp appType2b
+createapp fabric:/app2b appType2b 1.0 appparam=logicalNetwork1:testNetwork1 error=ImageBuilderValidationError
+
+# Test case 3:an endpoint for a service package is exposed on more than one container networks
+!string networkPolicies3a {"ContainerNetworkPolicies":[{"NetworkRef":"testNetwork1","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]},{"NetworkRef":"testNetwork2","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]}]}
+app.add appType3a
+app.clear appType3a
+app.servicepack appType3a ServicePackageA version=1.0
+app.servicetypes appType3a ServicePackageA ServiceTypeA stateless implicit
+app.codepack appType3a ServicePackageA CodePackageA types=ServiceTypeA version=1.0 entrytype=ContainerHost
+app.endpoint appType3a ServicePackageA name=GatewayEndpoint1 protocol=http type=Input
+app.network appType3a ServicePackageA jsondescription=<string.networkPolicies3a>
+app.upload appType3a compress
+provisionapp appType3a
+createapp fabric:/app3a appType3a 1.0 error=ImageBuilderValidationError
+
+!string networkPolicies3b {"ContainerNetworkPolicies":[{"NetworkRef":"[logicalNetwork1]","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]},{"NetworkRef":"testNetwork2","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]}]}
+app.add appType3b
+app.clear appType3b
+app.servicepack appType3b ServicePackageA version=1.0
+app.servicetypes appType3b ServicePackageA ServiceTypeA stateless implicit
+app.codepack appType3b ServicePackageA CodePackageA types=ServiceTypeA version=1.0 entrytype=ContainerHost
+app.endpoint appType3b ServicePackageA name=GatewayEndpoint1 protocol=http type=Input
+app.network appType3b ServicePackageA jsondescription=<string.networkPolicies3b>
+app.parameters appType3b logicalNetwork1:fakeNetwork1
+app.upload appType3b compress
+provisionapp appType3b
+createapp fabric:/app3b appType3b 1.0 appparam=logicalNetwork1:testNetwork1 error=ImageBuilderValidationError
+
+
+#verify
+
+-*
+
+!q

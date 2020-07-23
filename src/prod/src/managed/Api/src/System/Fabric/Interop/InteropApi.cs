@@ -40,6 +40,28 @@ namespace System.Fabric.Interop
             return string.Format(CultureInfo.InvariantCulture, "{0} ({1})", type, HResult);
         }
 
+        private static string GetErrorStackTrace(Exception ex)
+        {
+            if (ex == null)
+            {
+                return String.Empty;
+            }
+
+            string stackTrace = GetErrorStackTrace(ex.InnerException);
+            StringBuilder sb = new StringBuilder();
+            if (stackTrace != String.Empty)
+            {
+                sb.Append(stackTrace);
+                sb.AppendLine();
+                sb.Append("--- End of inner exception stack trace ---");
+                sb.AppendLine();
+            }
+
+            sb.Append(ex.StackTrace);
+
+            return sb.ToString();
+        }
+
         private static string CreateThreadErrorMessage(Exception ex, bool includeStackTrace = true)
         {
             const int MaxCharactersOfMessageToCopy = 512;
@@ -50,39 +72,23 @@ namespace System.Fabric.Interop
 
             ExceptionStringBuilder sb = new ExceptionStringBuilder(MaxLength);
 
-            int HResult = ex.HResult;
-            string message = ex.Message;
-            System.Type type = ex.GetType();
-
-            sb.Append(GetExceptionInfoString(type, HResult));
-            sb.AppendLine();
-
-            FabricException fabricEx = ex as FabricException;
-            if (fabricEx != null && (fabricEx.InnerException != null))
+            var exception = ex;
+            while (exception != null)
             {
-                // Add only 256 bytes of the message to prevent it from overflowing the health report
-                sb.Append(message, MaxCharactersOfMessageToCopy/2);
-                sb.AppendLine();
-
-                Exception inner = fabricEx.InnerException;
-
-                sb.Append(GetExceptionInfoString(inner.GetType(), inner.HResult));
-                sb.AppendLine();
-
-                // Outer exception + Inner exception message should be upto 512 bytes to prevent it from overflowing the health report
-                sb.Append(inner.Message, MaxCharactersOfMessageToCopy);
-            }
-            else
-            {
-                // Add only 512 bytes of the message to prevent it from overflowing the health report
-                sb.Append(message, MaxCharactersOfMessageToCopy);
+                if (exception.Message != null)
+                {
+                    sb.Append(GetExceptionInfoString(exception.GetType(), exception.HResult), MaxCharactersOfMessageToCopy);
+                    sb.AppendLine();
+                    sb.Append(exception.Message, MaxCharactersOfMessageToCopy);
+                    sb.AppendLine();
+                }
+                exception = exception.InnerException;
             }
 
             if (includeStackTrace)
             {
-                // Add the stack trace
-                sb.AppendLine();
-                sb.Append(ex.StackTrace);
+                string st = GetErrorStackTrace(ex);
+                sb.Append(st);
             }
 
             return sb.ToString();
@@ -110,6 +116,12 @@ namespace System.Fabric.Interop
 
             public void Append(string s, int maxCharacters)
             {
+                if (sb.Length > maxCharacters)
+                {
+                    //already exceeded limit
+                    return;
+                }
+
                 if ((sb.Length + s.Length) > maxCharacters)
                 {
                     this.sb.Append(s, 0, (maxCharacters - sb.Length));

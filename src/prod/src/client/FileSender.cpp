@@ -445,7 +445,8 @@ public:
             fileChunkBuffer_(),
             retryCount_(0),
             random_(),
-            cleanupDone_(false)
+            cleanupDone_(false),
+            lock_()
         {
         }
 
@@ -545,17 +546,38 @@ public:
 
         void Cleanup()
         {
-            bool expected = false;
-            auto ret = cleanupDone_.compare_exchange_strong(expected, true);
-            if (!ret)
+            // Minimal contention on this lock so shouldn't affect performance
+            AcquireExclusiveLock cleanupLock(lock_);
+            bool completeAsyncJob = false;
             {
-                WriteNoise(
-                    TraceComponent,
-                    owner_.traceId_,
-                    "{0}: Cleanup already done for {1}",
-                    operationId_,
-                    sendChunkBasedAsyncOperation_->storeRelativePath_);
-                return;
+                if (cleanupDone_)
+                {
+                    WriteNoise(
+                        TraceComponent,
+                        owner_.traceId_,
+                        "{0}: Cleanup already done for {1} sequenceNumber:{2}",
+                        operationId_,
+                        sendChunkBasedAsyncOperation_->storeRelativePath_,
+                        sequenceNumber_);
+                    return;
+                }
+                else
+                {
+                    if (initialEnqueueSucceeded_)
+                    {
+                        completeAsyncJob = true;
+                        cleanupDone_ = true;
+                    }
+                    else
+                    {
+                        // There is a possible race scenario where initialEnqueueSucceeded_ is not set since it is scheduled but not started executing callback, 
+                        // but cleanup is called by OnCompleted() on cancellation.
+                        // In that case, though rest of the cleanup is done, completeAsyncJob() is not called.
+                        // This can leave active thread behind without completion. So set the cleanupDone_ to false, so the scheduled thread can call completion later.
+                        cleanupDone_ = false;
+                        completeAsyncJob = false;
+                    }
+                }
             }
 
             if (resendChunkTimer_)
@@ -572,22 +594,23 @@ public:
                 }
             }
 
-            TimedAsyncOperation::OnCompleted();
-            operationCompletedOrCanceled_.store(true);
             if (file_.IsValid())
             {
                 file_.Close2();
+                TimedAsyncOperation::OnCompleted();
+                operationCompletedOrCanceled_.store(true);
             }
 
-            if (initialEnqueueSucceeded_)
+            if (completeAsyncJob)
             {
                 WriteNoise(
                     TraceComponent,
                     owner_.traceId_,
-                    "{0}: Async job completing for {1} activeThreads:{2}",
+                    "{0}: Async job completing for {1} activeThreads:{2} sequenceNumber:{3}",
                     operationId_,
                     sendChunkBasedAsyncOperation_->storeRelativePath_,
-                    sendChunkBasedAsyncOperation_->fileChunkJobQueue_->GetActiveThreads());
+                    sendChunkBasedAsyncOperation_->fileChunkJobQueue_->GetActiveThreads(),
+                    sequenceNumber_);
 
                 sendChunkBasedAsyncOperation_->fileChunkJobQueue_->CompleteAsyncJob();
                 initialEnqueueSucceeded_ = false;
@@ -640,9 +663,10 @@ public:
                 WriteNoise(
                     TraceComponent,
                     owner_.traceId_,
-                    "StartFileChunkProcessing: {0}: Operation already canceled for '{1}'.",
+                    "StartFileChunkProcessing: {0}: Operation already canceled for '{1}' sequenceId:{2}.",
                     operationId_,
-                    sendChunkBasedAsyncOperation_->storeRelativePath_);
+                    sendChunkBasedAsyncOperation_->storeRelativePath_,
+                    sequenceNumber_);
 
                 Cleanup();
                 return;
@@ -652,14 +676,15 @@ public:
 
             fileChunkBuffer_ = make_shared<vector<BYTE>>(bufferSize);
             auto error = ReadFileChunk(bufferSize, fileChunkBuffer_);
-            if (!error.IsSuccess())
+            if (!error.IsSuccess() && !operationCompletedOrCanceled_.load())
             {
                 WriteInfo(
                     TraceComponent,
                     owner_.traceId_,
-                    "{0}: Unable to read chunk {1}.",
+                    "{0}: Unable to read chunk {1} sequenceNumber:{2}.",
                     operationId_,
-                    error);
+                    error,
+                    sequenceNumber_);
                 this->TryComplete(thisSPtr, move(error));
                 return;
             }
@@ -674,11 +699,27 @@ public:
                 WriteNoise(
                     TraceComponent,
                     owner_.traceId_,
-                    "UploadFileChunk: {0}: Operation already canceled for '{1}'.",
+                    "UploadFileChunk: {0}: Operation already canceled for '{1}' sequenceId:{2}.",
                     operationId_,
-                    sendChunkBasedAsyncOperation_->storeRelativePath_);
+                    sendChunkBasedAsyncOperation_->storeRelativePath_,
+                    sequenceNumber_);
 
                 Cleanup();
+                return;
+            }
+
+            // Optimization: Do not send chunk for which the ack has already been received
+            if (!sendChunkBasedAsyncOperation_->IsFileChunkNeedsToBeSent(sequenceNumber_))
+            {
+                if (!operationCompletedOrCanceled_.load())
+                {
+                    TryComplete(thisSPtr, ErrorCodeValue::Success);
+                }
+                else
+                {
+                    Cleanup();
+                }
+
                 return;
             }
 
@@ -756,6 +797,12 @@ public:
             return false;
         }
 
+        Common::TimeSpan GetDelayInterval()
+        {
+            auto delayInterval = random_.Next((int)ClientConfig::GetConfig().FileChunkRetryInterval.TotalMilliseconds() - 500, (int)ClientConfig::GetConfig().FileChunkRetryInterval.TotalMilliseconds() + 500);
+            return Common::TimeSpan::FromMilliseconds(static_cast<double>(min<int64>(delayInterval, this->RemainingTime.TotalMilliseconds())));
+        }
+
         typedef function<void(AsyncOperationSPtr const &)> RetryCallback;
 
         ErrorCode TryScheduleRetry(AsyncOperationSPtr const & thisSPtr, RetryCallback const & callback)
@@ -765,8 +812,7 @@ public:
                 return ErrorCodeValue::Timeout;
             }
 
-            auto delayInterval = random_.Next((int) ClientConfig::GetConfig().FileChunkRetryInterval.TotalMilliseconds() - 250, (int) ClientConfig::GetConfig().FileChunkRetryInterval.TotalMilliseconds() + 250);
-            auto delay = Common::TimeSpan::FromMilliseconds(static_cast<double>(min<int64>(delayInterval, this->RemainingTime.TotalMilliseconds())));
+            auto delay = GetDelayInterval();
             {
                 if (retryCount_.load() >= ClientConfig::GetConfig().FileChunkRetryAttempt)
                 {
@@ -797,6 +843,10 @@ public:
 
                     resendChunkTimer_->Change(delay);
                 }
+                else
+                {
+                    Cleanup();
+                }
             }
 
             return ErrorCodeValue::Success;
@@ -818,7 +868,8 @@ public:
         shared_ptr<vector<BYTE>> fileChunkBuffer_; // file content
         Common::atomic_long retryCount_;
         Common::Random random_;
-        Common::atomic_bool cleanupDone_;
+        bool cleanupDone_; // protected by lock_
+        ExclusiveLock lock_;
     };
 
     SendChunkBasedAsyncOperation(
@@ -1138,6 +1189,20 @@ protected:
         AcquireExclusiveLock lock(pendingFileChunkSendLock_);
         pendingFileChunkSendMap_[sequenceId] = operation;
         return ErrorCodeValue::Success;
+    }
+
+    // Check if ack already received. If not return true, else false
+    bool IsFileChunkNeedsToBeSent(uint64 sequenceId)
+    {
+        if (!completedOrCanceled_.load())
+        {
+            AcquireExclusiveLock lock(pendingFileChunkSendLock_);
+            return (fileChunkAcksReceivedSet_.find(sequenceId) == fileChunkAcksReceivedSet_.end());
+        }
+        else
+        {
+            return false;
+        }
     }
 
 private:

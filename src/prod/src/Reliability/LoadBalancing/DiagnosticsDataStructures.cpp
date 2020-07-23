@@ -357,6 +357,7 @@ std::shared_ptr<IConstraintDiagnosticsData> IConstraintDiagnosticsData::MakeShar
         case IConstraint::PreferredLocation: return std::make_shared<PreferredLocationConstraintDiagnosticsData>();
         case IConstraint::ScaleoutCount: return std::make_shared<ScaleoutCountConstraintDiagnosticsData>();
         case IConstraint::ApplicationCapacity: return std::make_shared<ApplicationCapacityConstraintDiagnosticsData>();
+        case IConstraint::Throttling: return std::make_shared<ThrottlingConstraintDiagnosticsData>();
         default:
         TESTASSERT_IF(childType != IConstraint::ApplicationCapacity, "Invalid Value of IConstraint::Enum {0}", static_cast<int>(childType));
         return nullptr;

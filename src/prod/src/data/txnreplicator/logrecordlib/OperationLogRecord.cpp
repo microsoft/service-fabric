@@ -133,6 +133,19 @@ OperationLogRecord::SPtr OperationLogRecord::Create(
     return OperationLogRecord::SPtr(pointer);
 }
 
+std::wstring OperationLogRecord::ToString() const
+{
+    wstring boolean = isRedoOnly_ ? L"true" : L"false"; 
+
+    std::wstring logRecordString = Constants::CompEndlJSON;
+
+    logRecordString += L"Redo Only" + Constants::DivisionBoolJSON + boolean;
+    logRecordString += Constants::CloseJSON;;
+
+    return __super::ToString() + logRecordString;
+}
+
+
 void OperationLogRecord::UpdateApproximateDiskSize()
 {
     ApproximateSizeOnDisk = ApproximateSizeOnDisk + DiskSpaceUsed;

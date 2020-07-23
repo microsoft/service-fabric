@@ -23,7 +23,8 @@ EntryPointType(),
 ContainerEntryPoints(),
 ContainerMountedVolumes(),
 ContainerEnvironmentBlock(),
-ContainerLabels()
+ContainerLabels(),
+DisableReliableCollectionReplicationMode(false)
 {
 }
 
@@ -45,6 +46,7 @@ DebugParametersDescription const & DebugParametersDescription::operator=(DebugPa
         this->ContainerMountedVolumes = other.ContainerMountedVolumes;
         this->ContainerEnvironmentBlock = other.ContainerEnvironmentBlock;
         this->ContainerLabels = other.ContainerLabels;
+        this->DisableReliableCollectionReplicationMode = other.DisableReliableCollectionReplicationMode;
     }
     return *this;
 }
@@ -67,6 +69,7 @@ DebugParametersDescription const & DebugParametersDescription::operator=(DebugPa
         this->ContainerMountedVolumes = move(other.ContainerMountedVolumes);
         this->ContainerEnvironmentBlock = move(other.ContainerEnvironmentBlock);
         this->ContainerLabels = move(other.ContainerLabels);
+        this->DisableReliableCollectionReplicationMode = move(other.DisableReliableCollectionReplicationMode);
     }
     return *this;
 }
@@ -82,6 +85,7 @@ bool DebugParametersDescription::operator== (DebugParametersDescription const & 
         StringUtility::AreEqualCaseInsensitive(WorkingFolder, other.WorkingFolder) &&
         StringUtility::AreEqualCaseInsensitive(DebugParametersFile, other.DebugParametersFile) &&
         StringUtility::AreEqualCaseInsensitive(EnvironmentBlock, other.EnvironmentBlock) &&
+        this->DisableReliableCollectionReplicationMode == other.DisableReliableCollectionReplicationMode &&
         EntryPointType == other.EntryPointType);
     if (!equals)
     {
@@ -115,6 +119,7 @@ void DebugParametersDescription::WriteTo(TextWriter & w, FormatOptions const &) 
     w.Write("WorkingFolder = {0}, ", WorkingFolder);
     w.Write("DebugParametersFile = {0}, ", DebugParametersFile);
     w.Write("EnvironmentBlock = {0},", EnvironmentBlock);
+    w.Write("DisableReliableCollectionReplicationMode = {0}", DisableReliableCollectionReplicationMode);
     
     w.Write("ContainerEntryPoints={");
     for (auto entryPoint : this->ContainerEntryPoints)
@@ -189,6 +194,10 @@ void DebugParametersDescription::ReadFromXml(
     if (xmlReader->HasAttribute(*SchemaNames::Attribute_DebugParametersFile))
     {
         this->DebugParametersFile = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_DebugParametersFile);
+    }
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_DisableReliableCollectionReplicationMode))
+    {
+        this->DisableReliableCollectionReplicationMode = xmlReader->ReadAttributeValueAs<bool>(*SchemaNames::Attribute_DisableReliableCollectionReplicationMode);
     }
     if (xmlReader->HasAttribute(*SchemaNames::Attribute_EntryPointType))
     {
@@ -315,6 +324,11 @@ Common::ErrorCode DebugParametersDescription::WriteToXml(XmlWriterUPtr const & x
     {
         return er;
     }
+    er = xmlWriter->WriteBooleanAttribute(*SchemaNames::Attribute_DisableReliableCollectionReplicationMode, this->DisableReliableCollectionReplicationMode);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
     er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_EnvironmentBlock, this->EnvironmentBlock);
     if (!er.IsSuccess())
     {
@@ -343,6 +357,7 @@ void DebugParametersDescription::clear()
     this->ContainerEntryPoints.clear();
     this->ContainerEnvironmentBlock.clear();
     this->ContainerMountedVolumes.clear();
+    this->DisableReliableCollectionReplicationMode = false;
 }
 
 bool DebugParametersDescription::AreEqual(

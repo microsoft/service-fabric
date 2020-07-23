@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <AssemblyName>StandaloneLogCollector.Test</AssemblyName>
+    <RootNamespace>StandaloneLogCollector.Test</RootNamespace>
+    <ProjectGuid>{1CD3E4C4-C089-4A28-842E-DAAD8A0897E4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="BlobLogUploaderTest.cs" />
+    <Compile Include="DcaLogCollectorTest.cs" />
+    <Compile Include="EnvironmentVariablesTest.cs" />
+    <Compile Include="EventStampFilterTest.cs" />
+    <Compile Include="EventStampInfoTest.cs" />
+    <Compile Include="FileLogCollectorTest.cs" />
+    <Compile Include="FileMetadataFilterTest.cs" />
+    <Compile Include="FirewallInfoCollectorTest.cs" />
+    <Compile Include="LogPackageTest.cs" />
+    <Compile Include="MainWorkflowTest.cs" />
+    <Compile Include="MockUps\MockUpLogCollector.cs" />
+    <Compile Include="MockUps\MockUpLogUploader.cs" />
+    <Compile Include="ParameterDefinitionTest.cs" />
+    <Compile Include="ParameterParserTest.cs" />
+    <Compile Include="ProgramParameterDefinitionsTest.cs" />
+    <Compile Include="ProgramTest.cs" />
+    <Compile Include="RegistryLogCollectorTest.cs" />
+    <Compile Include="TaskManagerTest.cs" />
+    <Compile Include="TraceLoggerTest.cs" />
+    <Compile Include="TestUtility.cs" />
+    <Compile Include="UploadTaskTest.cs" />
+    <Compile Include="UtilityTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\tools\StandaloneLogCollector\StandaloneLogCollector.csproj">
+      <Project>{A6A37AD9-97D0-43DA-814E-1E166F155A7C}</Project>
+      <Name>StandaloneLogCollector</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\tools\TraceViewer\Microsoft.Tracing.Azure\Microsoft.Tracing.Azure.csproj">
+      <Project>{2B779692-5917-431B-AD29-CC6BCD42C3B3}</Project>
+      <Name>Microsoft.Tracing.Azure</Name>
+    </ProjectReference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(PkgWindowsAzure_Storage_5)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="NetFwTypeLib">
+      <HintPath>$(BinariesBuildTypeArchDirectory)\bin\NetFwTypeLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TestLogs\log1.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TestLogs\log2.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TestLogs\log3.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TestConfigs\MyTestClusterManifest3.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TestConfigs\MyClusterConfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\SaLogColTest" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

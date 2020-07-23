@@ -193,6 +193,52 @@ public:
         UNREFERENCED_PARAMETER(assignedIps);
         return CompletedAsyncOperation::End(operation);
     }
+
+    Common::AsyncOperationSPtr BeginManageOverlayNetworkResources(
+        std::wstring const & nodeName,
+        std::wstring const & nodeIpAddress,
+        std::wstring const & servicePackageId,
+        std::map<std::wstring, std::vector<std::wstring>> const & codePackageNetworkNames,
+        ManageOverlayNetworkAction::Enum action,
+        Common::TimeSpan timeout,
+        Common::AsyncCallback const & callback,
+        Common::AsyncOperationSPtr const & parent)
+    {
+        UNREFERENCED_PARAMETER(nodeName);
+        UNREFERENCED_PARAMETER(nodeIpAddress);
+        UNREFERENCED_PARAMETER(servicePackageId);
+        UNREFERENCED_PARAMETER(codePackageNetworkNames);
+        UNREFERENCED_PARAMETER(action);
+        UNREFERENCED_PARAMETER(timeout);
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::Success, callback, parent);
+    }
+
+    Common::ErrorCode EndManageOverlayNetworkResources(
+        Common::AsyncOperationSPtr const & operation,
+        __out std::map<std::wstring, std::map<std::wstring, std::wstring>> & assignedNetworkResources)
+    {
+        UNREFERENCED_PARAMETER(operation);
+        UNREFERENCED_PARAMETER(assignedNetworkResources);
+        return CompletedAsyncOperation::End(operation);
+    }
+
+    Common::AsyncOperationSPtr BeginUpdateRoutes(
+        Management::NetworkInventoryManager::PublishNetworkTablesRequestMessage const & networkTables,
+        Common::TimeSpan timeout,
+        Common::AsyncCallback const & callback,
+        Common::AsyncOperationSPtr const & parent)
+    {
+        UNREFERENCED_PARAMETER(networkTables);
+        UNREFERENCED_PARAMETER(timeout);
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::Success, callback, parent);
+    }
+
+    Common::ErrorCode EndUpdateRoutes(Common::AsyncOperationSPtr const & operation)
+    {
+        UNREFERENCED_PARAMETER(operation);
+        return CompletedAsyncOperation::End(operation);
+    }
+
 #if defined(PLATFORM_UNIX)
     AsyncOperationSPtr BeginDeleteApplicationFolder(
         vector<std::wstring> const & appFolders,
@@ -517,7 +563,10 @@ public:
 
     AsyncOperationSPtr BeginSetupContainerGroup(
         std::wstring const & containerGroupId,
-        std::wstring const & assignedIPAddress,
+        ServiceModel::NetworkType::Enum networkType,
+        std::wstring const & openNetworkAssignedIp,
+        std::map<std::wstring, std::wstring> const & overlayNetworkResources,
+        std::vector<std::wstring> const & dnsServers,
         std::wstring const & appfolder,
         std::wstring const & appId,
         std::wstring const & appName,
@@ -534,7 +583,10 @@ public:
     {
         UNREFERENCED_PARAMETER(timeout);
         UNREFERENCED_PARAMETER(containerGroupId);
-        UNREFERENCED_PARAMETER(assignedIPAddress);
+        UNREFERENCED_PARAMETER(networkType);
+        UNREFERENCED_PARAMETER(openNetworkAssignedIp);
+        UNREFERENCED_PARAMETER(overlayNetworkResources);
+        UNREFERENCED_PARAMETER(dnsServers);
         UNREFERENCED_PARAMETER(appfolder);
         UNREFERENCED_PARAMETER(appId);
         UNREFERENCED_PARAMETER(appName);
@@ -711,6 +763,19 @@ public:
         return ErrorCode(ErrorCodeValue::Success);
     }
 
+    ErrorCode CleanupAssignedOverlayNetworkResources(
+        std::map<std::wstring, std::vector<std::wstring>> const & codePackageNetworkNames,
+        std::wstring const & nodeName,
+        std::wstring const & nodeIpAddress,
+        std::wstring const & servicePackageId)
+    {
+        UNREFERENCED_PARAMETER(codePackageNetworkNames);
+        UNREFERENCED_PARAMETER(nodeName);
+        UNREFERENCED_PARAMETER(nodeIpAddress);
+        UNREFERENCED_PARAMETER(servicePackageId);
+        return ErrorCode(ErrorCodeValue::Success);
+    }
+
     void AbortApplicationEnvironment(std::wstring const & applicationId)
     {
         UNREFERENCED_PARAMETER(applicationId);
@@ -775,6 +840,60 @@ public:
     Common::ErrorCode EndConfigureNodeForDnsService(
         Common::AsyncOperationSPtr const & operation)
     {
+        return CompletedAsyncOperation::End(operation);
+    }
+
+    Common::AsyncOperationSPtr BeginGetNetworkDeployedPackages(
+        std::vector<std::wstring> const & servicePackageIds,
+        std::wstring const & codePackageName,
+        std::wstring const & networkName,
+        std::wstring const & nodeId,
+        std::map<std::wstring, std::wstring> const & codePackageInstanceAppHostMap,
+        Common::TimeSpan timeout,
+        Common::AsyncCallback const & callback,
+        Common::AsyncOperationSPtr const & parent)
+    {
+        UNREFERENCED_PARAMETER(servicePackageIds);
+        UNREFERENCED_PARAMETER(codePackageName);
+        UNREFERENCED_PARAMETER(networkName);
+        UNREFERENCED_PARAMETER(nodeId);
+        UNREFERENCED_PARAMETER(codePackageInstanceAppHostMap);
+        UNREFERENCED_PARAMETER(timeout);
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
+            ErrorCodeValue::Success,
+            callback,
+            parent);
+    }
+
+    Common::ErrorCode EndGetNetworkDeployedPackages(
+        Common::AsyncOperationSPtr const & operation,
+        __out std::map<std::wstring, std::map<std::wstring, std::vector<std::wstring>>> & networkReservedCodePackages,
+        __out std::map<std::wstring, std::map<std::wstring, std::wstring>> & codePackageInstanceIdentifierContainerInfoMap)
+    {
+        UNREFERENCED_PARAMETER(networkReservedCodePackages);
+        UNREFERENCED_PARAMETER(codePackageInstanceIdentifierContainerInfoMap);
+        return CompletedAsyncOperation::End(operation);
+    }
+
+    Common::AsyncOperationSPtr BeginGetDeployedNetworks(
+        ServiceModel::NetworkType::Enum networkType,
+        Common::TimeSpan timeout,
+        Common::AsyncCallback const & callback,
+        Common::AsyncOperationSPtr const & parent)
+    {
+        UNREFERENCED_PARAMETER(networkType);
+        UNREFERENCED_PARAMETER(timeout);
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
+            ErrorCodeValue::Success,
+            callback,
+            parent);
+    }
+
+    Common::ErrorCode EndGetDeployedNetworks(
+        Common::AsyncOperationSPtr const & operation,
+        __out std::vector<std::wstring> & networkNames)
+    {
+        UNREFERENCED_PARAMETER(networkNames);
         return CompletedAsyncOperation::End(operation);
     }
 

@@ -32,12 +32,13 @@ namespace ServiceModel
             __in Common::ScopedHeap & heap,
             __out FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION & fabricCredential) const;
 
-        FABRIC_FIELDS_04(AccountName, Password, IsPasswordEncrypted, Email);
+        FABRIC_FIELDS_05(AccountName, Password, IsPasswordEncrypted, Email, Type);
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
             SERIALIZABLE_PROPERTY(RepositoryCredentialsDescription::AccountNameParameter, AccountName)
             SERIALIZABLE_PROPERTY(RepositoryCredentialsDescription::PasswordParameter, Password)
             SERIALIZABLE_PROPERTY_IF(RepositoryCredentialsDescription::EmailParameter, Email, !Email.empty())
+            SERIALIZABLE_PROPERTY(RepositoryCredentialsDescription::TypeParameter, Type)
         END_JSON_SERIALIZABLE_PROPERTIES()
 
     public:
@@ -45,10 +46,12 @@ namespace ServiceModel
         std::wstring Password;
         std::wstring Email;
         bool IsPasswordEncrypted;
+        std::wstring Type;
 
         static Common::WStringLiteral const AccountNameParameter;
         static Common::WStringLiteral const PasswordParameter;
         static Common::WStringLiteral const EmailParameter;
+        static Common::WStringLiteral const TypeParameter;
 
     private:
         friend struct DigestedCodePackageDescription;

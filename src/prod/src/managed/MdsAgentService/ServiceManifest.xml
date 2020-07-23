@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="MdsAgentServicePackage" Version="6.0.20" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ServiceTypes>
+    <StatelessServiceType ServiceTypeName="FabricMdsAgentServiceType" />
+  </ServiceTypes>
+  <CodePackage Name="MdsAgentService.Code" Version="6.0.20"> 
+    <EntryPoint>
+        <ExeHost>
+          <Program>FabricMdsAgentSvc.exe</Program>
+        </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="MdsAgentService.Config" Version="6.0.20" />
+  <DataPackage Name="MdsAgent.Data" Version="6.0.20" />
+</ServiceManifest>

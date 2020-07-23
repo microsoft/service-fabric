@@ -1,0 +1,11 @@
+{
+  "Comment": "The repair task should move to Executing",
+  "Items": [
+    {
+      "Id": "3cbd5a8b-1fa9-42b0-a4b1-aba8f0ded836",
+      "Actions": [
+        "MoveToExecutingAction"
+      ]
+    }
+  ]
+}

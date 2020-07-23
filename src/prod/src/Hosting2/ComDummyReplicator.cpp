@@ -19,12 +19,18 @@ ComDummyReplicator::ComDummyReplicator(
     , ComUnknownBase()
     , traceId_(wformatString("{0}:{1}:{2}", serviceName, partitionId, replicaId))
 {
+    currentEpoch_ = {0};
     WriteNoise(TraceType, traceId_, "ctor");
 }
 
 ComDummyReplicator::~ComDummyReplicator()
 {
     WriteNoise(TraceType, traceId_, "dtor");
+}
+
+FABRIC_EPOCH ComDummyReplicator::GetCurrentEpoch()
+{
+    return currentEpoch_;
 }
 
 HRESULT ComDummyReplicator::BeginOpen(
@@ -57,11 +63,11 @@ HRESULT ComDummyReplicator::BeginChangeRole(
     /* [in] */ IFabricAsyncOperationCallback *callback,
     /* [retval][out] */ IFabricAsyncOperationContext **context)
 {
-    UNREFERENCED_PARAMETER(epoch);
     UNREFERENCED_PARAMETER(role);
 
     WriteNoise(TraceType, traceId_, "BeginChangeRole");
 
+    currentEpoch_ = *epoch;
     return ComCompletedOperationHelper::BeginCompletedComOperation(callback, context);
 }
 
@@ -79,10 +85,9 @@ HRESULT ComDummyReplicator::BeginUpdateEpoch(
     /* [in] */ IFabricAsyncOperationCallback *callback,
     /* [retval][out] */ IFabricAsyncOperationContext **context)
 {
-    UNREFERENCED_PARAMETER(epoch);
-    
     WriteNoise(TraceType, traceId_, "BeginUpdateEpoch");
 
+    currentEpoch_ = *epoch;
     return ComCompletedOperationHelper::BeginCompletedComOperation(callback, context);
 }
 

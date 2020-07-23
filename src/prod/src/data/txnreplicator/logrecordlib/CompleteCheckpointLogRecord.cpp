@@ -72,6 +72,13 @@ CompleteCheckPointLogRecord::SPtr CompleteCheckPointLogRecord::Create(
     return CompleteCheckPointLogRecord::SPtr(pointer);
 }
 
+std::wstring CompleteCheckPointLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}
+
 void CompleteCheckPointLogRecord::UpdateApproximateDiskSize()
 {
     ApproximateSizeOnDisk = ApproximateSizeOnDisk + DiskSpaceUsed;

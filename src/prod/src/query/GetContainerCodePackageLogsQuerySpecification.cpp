@@ -25,10 +25,10 @@ GetContainerCodePackageLogsQuerySpecification::GetContainerCodePackageLogsQueryS
 }
 
 ErrorCode GetContainerCodePackageLogsQuerySpecification::GetNext(
-    QuerySpecificationSPtr const & previousQuerySpecification, 
-    unordered_map<QueryNames::Enum, QueryResult> & queryResults, 
-    QueryArgumentMap & queryArgs, 
-    QuerySpecificationSPtr & nextQuery, 
+    QuerySpecificationSPtr const & previousQuerySpecification,
+    unordered_map<QueryNames::Enum, QueryResult> & queryResults,
+    QueryArgumentMap & queryArgs,
+    QuerySpecificationSPtr & nextQuery,
     Transport::MessageUPtr & replyMessage)
 {
     switch (previousQuerySpecification->QueryName)
@@ -41,7 +41,12 @@ ErrorCode GetContainerCodePackageLogsQuerySpecification::GetNext(
         case QueryNames::GetServicePartitionList:
         {
             vector<ServicePartitionQueryResult> previousQueryList;
-            queryResults[previousQuerySpecification->QueryName].MoveList<ServicePartitionQueryResult>(previousQueryList);
+            auto error = queryResults[previousQuerySpecification->QueryName].MoveList<ServicePartitionQueryResult>(previousQueryList);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+
             if (previousQueryList.empty())
             {
                 return ErrorCodeValue::PartitionNotFound;
@@ -88,7 +93,12 @@ ErrorCode GetContainerCodePackageLogsQuerySpecification::GetNext(
                 StringUtility::ToWString(ContainerInfoType::Enum::Logs));
 
             vector<ServiceReplicaQueryResult> previousQueryList;
-            queryResults[previousQuerySpecification->QueryName].MoveList<ServiceReplicaQueryResult>(previousQueryList);
+            auto error = queryResults[previousQuerySpecification->QueryName].MoveList<ServiceReplicaQueryResult>(previousQueryList);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+
             if (previousQueryList.empty())
             {
                 return ErrorCodeValue::ReplicaDoesNotExist;
@@ -106,11 +116,22 @@ ErrorCode GetContainerCodePackageLogsQuerySpecification::GetNext(
                 QueryResourceProperties::ServiceType::ServiceManifestName,
                 serviceManifestName);
 
-            ASSERT_IF(previousQueryList.size() > 1, "More than one replica found in partition");
+            auto targetNodeName = (*previousQueryList.begin()).NodeName;
+            if (previousQueryList.size() > 1) // More than one replica found in the partition, pick the primary for now.
+            {
+                for(auto const &replicaQueryResult : previousQueryList)
+                {
+                    if (replicaQueryResult.ReplicaRole == FABRIC_REPLICA_ROLE_PRIMARY)
+                    {
+                        targetNodeName = replicaQueryResult.NodeName;
+                        break;
+                    }
+                }
+            }
 
             queryArgs.Insert(
                 QueryResourceProperties::Node::Name,
-                (*previousQueryList.begin()).NodeName);
+                targetNodeName);
 
             nextQuery = QuerySpecificationStore::Get().GetSpecification(QueryNames::GetContainerInfoDeployedOnNode, queryArgs);
             break;

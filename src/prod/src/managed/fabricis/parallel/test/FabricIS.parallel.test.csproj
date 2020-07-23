@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <ProjectGuid>{BD3EADC4-6499-4EC4-BD67-18BBB34F3FF3}</ProjectGuid>
+    <RootNamespace>System.Fabric.InfrastructureService.Parallel.Test</RootNamespace>
+    <AssemblyName>FabricIS.parallel.Test</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ActionTest.cs" />
+    <Compile Include="AzureParallelInfrastructureCoordinatorTest.cs" />
+    <Compile Include="BondHelperTest.cs" />
+    <Compile Include="ConfigTenantJobMapperTest.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="CoordinatorHelperTest.cs" />
+    <Compile Include="ImpactTranslatorTest.cs" />
+    <Compile Include="JobClassifierTest.cs" />
+    <Compile Include="Json\JsonExpectedActions.cs" />
+    <Compile Include="Json\JsonExpectedTestOutput.cs" />
+    <Compile Include="Json\JsonInputRepairTasks.cs" />
+    <Compile Include="Json\JsonTestFileLoader.cs" />
+    <Compile Include="ManualTester.cs" />
+    <Compile Include="Mock\MockImpactInfo.cs" />
+    <Compile Include="Mock\MockJobStepInfo.cs" />
+    <Compile Include="Mock\MockPolicyAgentDocumentForTenant.cs" />
+    <Compile Include="Mock\MockRoleInstanceImpactedByJob.cs" />
+    <Compile Include="Mock\MockTenantJob.cs" />
+    <Compile Include="Mock\MockInfrastructureCoordinatorFactory.cs" />
+    <Compile Include="Mock\MockPolicyAgentService.cs" />
+    <Compile Include="Mock\MockRepairManager.cs" />
+    <Compile Include="Mock\MockRepairManagerFactory.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="ReconcilerTest.cs" />
+    <Compile Include="RepairTaskExecutorDataTest.cs" />
+    <Compile Include="TenantJobHelper.cs" />
+    <Compile Include="WorkflowExecutor.cs" />
+    <Compile Include="Mock\MockRepairTask.cs" />
+    <Compile Include="Workflows\WorkflowExternalRepairTaskWithFCNotRespondingTest.cs" />
+    <Compile Include="Workflows\WorkflowHIDetectionTest.cs" />
+    <Compile Include="Workflows\WorkflowExternalRepairTaskTest.cs" />
+    <Compile Include="Workflows\WorkflowRunAsyncRetryLogicTest.cs" />
+    <Compile Include="Workflows\WorkflowRunAsyncTest3.cs" />
+    <Compile Include="Workflows\WorkflowRunAsyncTest4.cs" />
+    <Compile Include="Workflows\WorkflowRunAsyncTest2.cs" />
+    <Compile Include="Workflows\WorkflowRunAsyncTest5.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\dll\FabricIS.common.csproj">
+      <Project>{b2c86537-979a-473a-b5a0-f9d1082a7e22}</Project>
+      <Name>FabricIS.common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\common\test\FabricIS.common.test.csproj">
+      <Project>{83746794-611f-439c-abf5-15df52cc9c96}</Project>
+      <Name>FabricIS.common.test</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\dll\FabricIS.parallel.csproj">
+      <Project>{edb25cbc-9aea-4629-b28d-984e7b5c3af9}</Project>
+      <Name>FabricIS.parallel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\schema\FabricIS.parallel.schema.csproj">
+      <Project>{a14cf6a8-0565-4282-806e-82d44001cfb5}</Project>
+      <Name>FabricIS.parallel.schema</Name>
+    </ProjectReference>
+    <!-- 
+    Note: Use net45 instead of portable-net45+wp80+win8+wpa81+dnxcore50 for now till CoreCLR v-team gets back to us
+    about correct usage.
+    -->
+    <Reference Include="$(PkgBond_Core_CSharp)\lib\net45\Bond.dll">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="$(PkgBond_Core_CSharp)\lib\net45\Bond.Attributes.dll">
+      <Private>True</Private>
+    </Reference>
+    <!-- 
+    TODO - migrate to 8.0.3 or later
+    FabricIS functionality has been verified with version 8.0.3 which is CoreCLR compatible and also supported on CoreXT4. 
+    But this caused CIT failures in other modules that referenced Newtonsoft.json. So, leaving this up to the 
+    CoreCLR/SF-build v-teams to handle this version upgrade across the entire code base. 
+
+    Bug: 6998835
+
+    Till then FabricIS isn't CoreCLR compatible.
+    -->
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Runtime" />
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll">
+      <!--
+      This binary needs to be explicitly copied for private cloud tests to work on http://testinfra1 by setting <Private>True</Private>
+      This copy is not necessary for official builds
+      Reason:
+      For executing private cloud test runs on http://testinfra1, we upload our dev box's local build. The dev box build does not copy
+      $(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll to the FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current
+      folder. This is because CoreXT/MSBuild detects that we have a dll with the same name present in the GAC (due to Visual Studio being installed on
+      our dev boxes). So, it skips the copying. However, on http://testinfra1 VMs which uses our uploaded local build, Visual Studio is not installed,
+      and hence this dll is not found in the GAC. Now since this dll isn't copied too, FabricIS.Test.dll fails.
+      On official build machines, Visual Studio isn't installed. So, Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll is correctly copied
+      to the required folder during the build. Hence FabricIS.Test.dll on http://testinfra1 from the official build succeeds.
+      -->
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TestFiles\*.json" />
+    <None Include="ImpactTranslation.parallel.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <!-- keeping the name None since that is the element VS creates when you add a json by default -->
+    <Copy SourceFiles="@(None)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current\TestFiles" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

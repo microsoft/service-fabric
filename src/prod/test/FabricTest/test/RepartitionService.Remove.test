@@ -105,4 +105,21 @@ updateservice fabric:/singleton Stateless removednames=Z error=InvalidArgument
 createservice fabric:/int64 CalculatorServiceType n 3 1 lowRange=0 highRange=2
 updateservice fabric:/int64 Stateless removednames=Z error=InvalidArgument
 
+#
+# Test delete service while repartition is in progress
+#
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 2 1 persist partitionnames=A,B
+verify
+
+resolve fabric:/test1 A savecuid
+resolve fabric:/test1 B savecuid
+
+getservicedescription fabric:/test1 verify partitionnames=A,B
+
+updateservice fabric:/test1 Stateful removednames=A
+
+deleteservice fabric:/test1
+verify
+
 !q

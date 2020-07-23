@@ -218,6 +218,24 @@ PartitionEntry & PartitionEntry::operator = (PartitionEntry && other)
     return *this;
 }
 
+// True if this partition has existing replica on the node.
+bool PartitionEntry::HasReplicaOnNode(NodeEntry const* node) const
+{
+    if (existingReplicas_.size() == 0)
+    {
+        return false;
+    }
+    for (auto replica : existingReplicas_)
+    {
+        if (replica->Node == node)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 PlacementReplica const* PartitionEntry::GetReplica(NodeEntry const* node) const
 {
     ASSERT_IF(node == nullptr, "Invalid node");

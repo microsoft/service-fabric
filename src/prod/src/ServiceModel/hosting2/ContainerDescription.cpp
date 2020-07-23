@@ -10,6 +10,8 @@ using namespace Common;
 using namespace ServiceModel;
 using namespace Hosting2;
 
+StringLiteral const TraceType_ContainerDescription("ContainerDescription");
+
 ContainerDescription::ContainerDescription()
     : applicationName_(),
     serviceName_(),
@@ -27,6 +29,7 @@ ContainerDescription::ContainerDescription()
     dnsServers_(),
     repositoryCredentials_(),
     healthConfig_(),
+    networkConfig_(),
     securityOptions_(),
     entryPoint_(),
     removeServiceFabricRuntimeAccess_(true),
@@ -56,7 +59,6 @@ ContainerDescription::ContainerDescription(
     std::wstring const & hostName,
     std::wstring const & deploymentFolder,
     std::wstring const & nodeWorkFolder,
-    std::wstring const & assignedIp,
     std::map<std::wstring, std::wstring> const & portBindings,
     LogConfigDescription const & logConfig,
     vector<ContainerVolumeDescription> const & volumes,
@@ -64,6 +66,7 @@ ContainerDescription::ContainerDescription(
     vector<wstring> const & dnsServers,
     RepositoryCredentialsDescription const & repositoryCredentials,
     ContainerHealthConfigDescription const & healthConfig,
+    ContainerNetworkConfigDescription const & networkConfig,
     vector<wstring> const & securityOptions,
 #if defined(PLATFORM_UNIX)
     ContainerPodDescription const & podDesc,
@@ -90,7 +93,7 @@ ContainerDescription::ContainerDescription(
     hostName_(hostName),
     deploymentFolder_(deploymentFolder),
     nodeWorkFolder_(nodeWorkFolder),
-    assignedIp_(assignedIp),
+    assignedIp_(),
     portBindings_(portBindings),
     logConfig_(logConfig),
     volumes_(volumes),
@@ -98,6 +101,7 @@ ContainerDescription::ContainerDescription(
     dnsServers_(dnsServers),
     repositoryCredentials_(repositoryCredentials),
     healthConfig_(healthConfig),
+    networkConfig_(networkConfig),
     securityOptions_(securityOptions),
     removeServiceFabricRuntimeAccess_(removeServiceFabricRuntimeAccess),
 #if defined(PLATFORM_UNIX)
@@ -127,14 +131,13 @@ void ContainerDescription::WriteTo(TextWriter & w, FormatOptions const &) const
     w.Write("DeploymentFolder = {0} ", DeploymentFolder);
     w.Write("NodeWorkingFolder = {0} ", NodeWorkFolder);
     w.Write("LogConfig = {0} ", LogConfig);
-    w.Write("AssignedIP = {0}", assignedIp_);
-    w.Write("RemoveServiceFabricRuntimeAccess = {0}", removeServiceFabricRuntimeAccess_);
+    w.Write("RemoveServiceFabricRuntimeAccess = {0} ", removeServiceFabricRuntimeAccess_);
 #if defined(PLATFORM_UNIX)
-    w.Write("ContainerPodDescription = {0}", podDescription_);
+    w.Write("ContainerPodDescription = {0} ", podDescription_);
 #endif
     w.Write("GroupContainerName = {0} ", groupContainerName_);
-    w.Write("UseDefaultRepositoryCredentials = {0}", UseDefaultRepositoryCredentials);
-    w.Write("UseTokenAuthenticationCredentials = {0}", UseTokenAuthenticationCredentials);
+    w.Write("UseDefaultRepositoryCredentials = {0} ", UseDefaultRepositoryCredentials);
+    w.Write("UseTokenAuthenticationCredentials = {0} ", UseTokenAuthenticationCredentials);
     w.Write("AutoRemove = {0} ", autoRemove_);
     w.Write("RunInteractive = {0} ", runInteractive_);
     w.Write("IsContainerRoot = {0} ", isContainerRoot_);
@@ -142,6 +145,7 @@ void ContainerDescription::WriteTo(TextWriter & w, FormatOptions const &) const
     w.Write("CodePackageName = {0} ", codePackageName_);
     w.Write("ServicePackageActivationId = {0} ", servicePackageActivationId_);
     w.Write("PartitionId = {0} ", partitionId_);
+    w.Write("Container Network Config = {0} ", networkConfig_);
     w.Write("}");
 }
 
@@ -226,6 +230,8 @@ ErrorCode ContainerDescription::ToPublicApi(
     auto fabricContainerDescEx2 = heap.AddItem<FABRIC_CONTAINER_DESCRIPTION_EX2>();
     fabricContainerDescEx2->UseTokenAuthenticationCredentials = this->UseTokenAuthenticationCredentials;
 
+    auto fabricContainerDescEx3 = heap.AddItem<FABRIC_CONTAINER_DESCRIPTION_EX3>();
+
     auto labels = heap.AddItem<FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST>();
     error = PublicApiHelper::ToPublicApiList<
         ContainerLabelDescription,
@@ -246,9 +252,23 @@ ErrorCode ContainerDescription::ToPublicApi(
     }
     fabricContainerDescEx1->BindMounts = bindMounts.GetRawPointer();
 
+    auto containerNetworkConfig = heap.AddItem<FABRIC_CONTAINER_NETWORK_CONFIG_DESCRIPTION>();
+    error = this->NetworkConfig.ToPublicApi(heap, *containerNetworkConfig);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+    fabricContainerDescEx3->ContainerNetworkConfigDescription = containerNetworkConfig.GetRawPointer();
+
     fabricContainerDescription.Reserved = fabricContainerDescEx1.GetRawPointer();
     fabricContainerDescEx1->Reserved = fabricContainerDescEx2.GetRawPointer();
-    fabricContainerDescEx2->Reserved = nullptr;
+    fabricContainerDescEx2->Reserved = fabricContainerDescEx3.GetRawPointer();
+    fabricContainerDescEx3->Reserved = nullptr;
 
     return ErrorCode::Success();
 }
+
+ContainerDescription::~ContainerDescription()
+{
+    WriteInfo(TraceType_ContainerDescription, "Destructing ContainerDescription.");
+};

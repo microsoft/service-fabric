@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="BRS" 
+    ManifestVersion="Current" 
+    RolloutVersion="1.0" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>A Microsoft Service Fabric system service that facilitates Backup and Restore.</Description>
+    <DigestedServiceTypes RolloutVersion="1.0">
+        <ServiceTypes>
+            <StatefulServiceType ServiceTypeName="BackupRestoreServiceType" HasPersistedState="true" />
+        </ServiceTypes>
+    </DigestedServiceTypes>
+    <DigestedCodePackage RolloutVersion="1.0">
+        <CodePackage Name="Code" Version="Current">
+            <SetupEntryPoint>
+                <ExeHost>
+                    <Program>FabricBRSSetup.exe</Program>
+                </ExeHost>
+            </SetupEntryPoint>
+            <EntryPoint>
+                <ExeHost>
+                    <Program>FabricBRS.exe</Program>
+                </ExeHost>
+            </EntryPoint>
+        </CodePackage>
+        <!--
+        The name "BRSSetup" is referenced in the application manifest (App.1.0.xml). FabricBRSSetup.exe needs to run
+        under LocalSystem account context to accomplish port ACLing.
+
+        EntryPointType="Setup" implcitly refers to the  SetupEntryPoint xml element above. Please see the foll. for more
+        - https://azure.microsoft.com/en-us/documentation/articles/service-fabric-application-model/
+        - https://azure.microsoft.com/en-us/documentation/articles/service-fabric-application-runas-security/
+        -->
+        <RunAsPolicy CodePackageRef="Code" UserRef="BRSSetup" EntryPointType="Setup"/>
+    </DigestedCodePackage>
+    <DigestedResources RolloutVersion="1.0">
+      <DigestedEndpoints>
+        <DigestedEndpoint>
+          <Endpoint Name="RestEndpoint" Type="Internal" Protocol="tcp" />
+        </DigestedEndpoint>
+      </DigestedEndpoints>
+    </DigestedResources>
+  <Diagnostics />
+</ServicePackage>

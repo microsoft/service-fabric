@@ -24,6 +24,8 @@ namespace Client
     using namespace Management::UpgradeOrchestrationService;
     using namespace Management::CentralSecretService;
     using namespace Management::ResourceManager;
+    using namespace Management::NetworkInventoryManager;
+    using namespace Management::GatewayResourceManager;
     using namespace Reliability;
     using namespace SystemServices;
     using namespace Naming;
@@ -158,32 +160,35 @@ namespace Client
 
     void FabricClientImpl::InitializeConnectionManager(INamingMessageProcessorSPtr const &namingMessageProcessorSPtr)
     {
-        // ClientConnectionManager must be available for applying security settings
-        // before the client is opened.
-        //
-        auto tempClientConnectionManager = make_shared<ClientConnectionManager>(
-            this->TraceContext,
-            make_unique<FabricClientInternalSettingsHolder>(*this),
-            move(gatewayAddresses_),
-            namingMessageProcessorSPtr,
-            *this);
+       // ClientConnectionManager must be available for applying security settings
+       // before the client is opened.
+       //
+       auto tempClientConnectionManager = make_shared<ClientConnectionManager>(
+          this->TraceContext,
+          make_unique<FabricClientInternalSettingsHolder>(*this),
+          move(gatewayAddresses_),
+          namingMessageProcessorSPtr,
+          *this);
 
-        clientConnectionManager_.swap(tempClientConnectionManager);
+          clientConnectionManager_.swap(tempClientConnectionManager);
     }
 
     void FabricClientImpl::InitializeTraceContextFromSettings()
     {
-        if (!settings_->ClientFriendlyName.empty())
-        {
-            WriteInfo(
-                Constants::FabricClientSource,
-                traceContext_,
-                "Updating client trace context with friendly name '{0}'",
-                settings_->ClientFriendlyName);
+       if (!settings_->ClientFriendlyName.empty())
+       {
+          // create a unique identifier that includes friendly name to eliminate potential naming collisions across clients...
+          wstring uniqueName = wformatString("{0}_{1}", settings_->ClientFriendlyName, traceContext_);
 
-            // Guarded by EnsureOpened()
-            traceContext_ = settings_->ClientFriendlyName;
-        }
+          WriteInfo(
+               Constants::FabricClientSource,
+               traceContext_,
+               "Prepending client trace context ID with user-supplied friendly name '{0}'", 
+               settings_->ClientFriendlyName);
+
+          // Guarded by EnsureOpened()
+          traceContext_ = move(uniqueName);
+       }
     }
 
     ErrorCode FabricClientImpl::InitializeSecurity()
@@ -325,7 +330,7 @@ namespace Client
             {
                 WriteWarning(
                     Constants::FabricClientSource,
-                    TraceContext,
+					this->TraceContext,
                     "Open failed due to {0}: state = {1}",
                     error,
                     State);
@@ -1499,7 +1504,7 @@ namespace Client
         queryDescription.NodeNameFilter = nodeNameFilter;
         QueryPagingDescription pagingDescription;
         pagingDescription.ContinuationToken = continuationToken;
-        queryDescription.QueryPagingDescriptionUPtr = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryDescription.PagingDescription = make_unique<QueryPagingDescription>(move(pagingDescription));
 
         return this->BeginGetNodeList(
             move(queryDescription),
@@ -1523,7 +1528,7 @@ namespace Client
         queryDescription.NodeStatusFilter = nodeStatusFilter;
         QueryPagingDescription pagingDescription;
         pagingDescription.ContinuationToken = continuationToken;
-        queryDescription.QueryPagingDescriptionUPtr = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryDescription.PagingDescription = make_unique<QueryPagingDescription>(move(pagingDescription));
 
         return this->BeginGetNodeList(
             move(queryDescription),
@@ -1922,11 +1927,9 @@ namespace Client
                 serviceQueryDescription.ServiceTypeNameFilter);
         }
 
-        if (!serviceQueryDescription.ContinuationToken.empty())
+        if (serviceQueryDescription.PagingDescription != nullptr)
         {
-            argMap.Insert(
-                QueryResourceProperties::QueryMetadata::ContinuationToken,
-                serviceQueryDescription.ContinuationToken);
+            serviceQueryDescription.PagingDescription->SetQueryArguments(argMap);
         }
 
         if (SystemServiceApplicationNameHelper::IsSystemServiceApplicationName(serviceQueryDescription.ApplicationName))
@@ -1937,7 +1940,6 @@ namespace Client
                 timeout,
                 callback,
                 parent);
-
         }
         else
         {
@@ -1995,7 +1997,6 @@ namespace Client
             timeout,
             callback,
             parent);
-
     }
 
     ErrorCode FabricClientImpl::EndGetServiceGroupMemberList(
@@ -2234,7 +2235,6 @@ namespace Client
             timeout,
             callback,
             parent);
-
     }
 
     ErrorCode FabricClientImpl::EndGetDeployedServicePackageList(
@@ -2617,7 +2617,6 @@ namespace Client
         auto error = this->EndInternalQuery(operation, queryResult);
         return error;
     }
-
 
     AsyncOperationSPtr FabricClientImpl::BeginGetDeployedCodePackageList(
         wstring const &nodeName,
@@ -3456,6 +3455,47 @@ namespace Client
         return queryResult.MoveItem<ComposeDeploymentUpgradeProgress>(result);
     }
 
+    AsyncOperationSPtr FabricClientImpl::BeginRollbackComposeDeployment(
+        wstring const & deploymentName,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        ClientServerRequestMessageUPtr message;
+        auto error = EnsureOpened();
+        if (!error.IsSuccess())
+        {
+            return AsyncOperation::CreateAndStart<ForwardToServiceAsyncOperation>(
+                *this,
+                move(message),
+                NamingUri(),
+                timeout,
+                callback,
+                parent,
+                move(error));
+        }
+
+        ActivityId activityId;
+        Trace.BeginRollbackComposeDeployment(traceContext_, activityId, deploymentName);
+
+        message = ContainerOperationTcpMessage::GetRollbackComposeDeploymentMessage(
+            deploymentName,
+            activityId);
+
+        return AsyncOperation::CreateAndStart<ForwardToServiceAsyncOperation>(
+            *this,
+            move(message),
+            NamingUri(),
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndRollbackComposeDeployment(AsyncOperationSPtr const &operation)
+    {
+        ClientServerReplyMessageUPtr reply;
+        return ForwardToServiceAsyncOperation::End(operation, reply);
+    }
 
     AsyncOperationSPtr FabricClientImpl::BeginCreateOrUpdateApplicationResource(
         ModelV2::ApplicationDescription && description,
@@ -3567,11 +3607,11 @@ namespace Client
                 serviceQueryDescription.ServiceNameFilter.ToString());
         }
 
-        if (!serviceQueryDescription.ContinuationToken.empty())
+        if (!serviceQueryDescription.PagingDescription->ContinuationToken.empty())
         {
             argMap.Insert(
                 QueryResourceProperties::QueryMetadata::ContinuationToken,
-                serviceQueryDescription.ContinuationToken);
+                serviceQueryDescription.PagingDescription->ContinuationToken);
         }
 
         return this->BeginInternalQuery(
@@ -3620,7 +3660,7 @@ namespace Client
                 StringUtility::ToWString(description.ReplicaId));
         }
 
-        description.QueryPagingDescriptionObject.SetQueryArguments(argMap);
+        description.PagingDescription.SetQueryArguments(argMap);
 
         return this->BeginInternalQuery(
             QueryNames::ToString(QueryNames::GetReplicaResourceList),
@@ -3993,7 +4033,6 @@ namespace Client
         ClientServerReplyMessageUPtr reply;
         return ForwardToServiceAsyncOperation::End(operation, reply);
     }
-
 
     AsyncOperationSPtr FabricClientImpl::BeginDeleteApplication(
         DeleteApplicationDescription const & description,
@@ -5237,7 +5276,6 @@ namespace Client
         return error;
     }
 
-
     AsyncOperationSPtr FabricClientImpl::BeginGetNodeTransitionProgress(
         Common::Guid const & operationId,
         TimeSpan const timeout,
@@ -5308,7 +5346,6 @@ namespace Client
 
         return error;
     }
-
 
     AsyncOperationSPtr FabricClientImpl::BeginMoveNextFabricUpgradeDomain(
         IUpgradeProgressResultPtr const &progressPtr,
@@ -5418,6 +5455,34 @@ namespace Client
             return err;
         }
         return queryResult.MoveItem(clusterManifest);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetClusterVersion(
+        TimeSpan const timeout,
+        AsyncCallback const &callback,
+        AsyncOperationSPtr const &parent)
+    {
+        QueryArgumentMap argMap;
+
+        return BeginInternalQuery(
+            QueryNames::ToString(QueryNames::GetClusterVersion),
+            argMap,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndGetClusterVersion(
+        AsyncOperationSPtr const &operation,
+        __inout std::wstring &clusterVersion)
+    {
+        QueryResult queryResult;
+        auto err = EndInternalQuery(operation, queryResult);
+        if (!err.IsSuccess())
+        {
+            return err;
+        }
+        return queryResult.MoveItem(clusterVersion);
     }
 
     AsyncOperationSPtr FabricClientImpl::BeginResetPartitionLoad(
@@ -5821,17 +5886,29 @@ namespace Client
         __out SecretsDescription & result)
     {
         ClientServerReplyMessageUPtr reply;
-        auto error = ForwardToServiceAsyncOperation::End(operation, reply);
 
-        if (error.IsSuccess())
+        if (dynamic_cast<CompletedAsyncOperation*>(operation.get()) != NULL)
         {
-            if (!reply->GetBody<SecretsDescription>(result))
-            {
-                error = ErrorCode::FromNtStatus(reply->GetStatus());
-            }
+            return CompletedAsyncOperation::End(operation);
         }
+        else if (dynamic_cast<ForwardToServiceAsyncOperation*>(operation.get()) != NULL)
+        {
+            auto error = ForwardToServiceAsyncOperation::End(operation, reply);
 
-        return error;
+            if (error.IsSuccess())
+            {
+                if (!reply->GetBody<SecretsDescription>(result))
+                {
+                    error = ErrorCode::FromNtStatus(reply->GetStatus());
+                }
+            }
+
+            return error;
+        }
+        else
+        {
+            Assert::CodingError("ISecretStoreClient.EndGetSecrets(): Unknown operation passed in.");
+        }
     }
 
     AsyncOperationSPtr FabricClientImpl::BeginSetSecrets(
@@ -5877,20 +5954,31 @@ namespace Client
 
     ErrorCode FabricClientImpl::EndSetSecrets(
         AsyncOperationSPtr const & operation,
-        __out SecretReferencesDescription & result)
+        __out SecretsDescription & result)
     {
-        ClientServerReplyMessageUPtr reply;
-        auto error = ForwardToServiceAsyncOperation::End(operation, reply);
-
-        if (error.IsSuccess())
+        if (dynamic_cast<CompletedAsyncOperation*>(operation.get()) != NULL)
         {
-            if (!reply->GetBody<SecretReferencesDescription>(result))
-            {
-                error = ErrorCode::FromNtStatus(reply->GetStatus());
-            }
+            return CompletedAsyncOperation::End(operation);
         }
+        else if (dynamic_cast<ForwardToServiceAsyncOperation*>(operation.get()) != NULL)
+        {
+            ClientServerReplyMessageUPtr reply;
+            auto error = ForwardToServiceAsyncOperation::End(operation, reply);
 
-        return error;
+            if (error.IsSuccess())
+            {
+                if (!reply->GetBody<SecretsDescription>(result))
+                {
+                    error = ErrorCode::FromNtStatus(reply->GetStatus());
+                }
+            }
+
+            return error;
+        }
+        else
+        {
+            Assert::CodingError("ISecretStoreClient.EndSetSecrets(): Unknown operation passed in.");
+        }
     }
 
     AsyncOperationSPtr FabricClientImpl::BeginRemoveSecrets(
@@ -5938,18 +6026,99 @@ namespace Client
         AsyncOperationSPtr const & operation,
         __out SecretReferencesDescription & result)
     {
-        ClientServerReplyMessageUPtr reply;
-        auto error = ForwardToServiceAsyncOperation::End(operation, reply);
-
-        if (error.IsSuccess())
+        if (dynamic_cast<CompletedAsyncOperation*>(operation.get()) != NULL)
         {
-            if (reply->GetBody<SecretReferencesDescription>(result))
+            return CompletedAsyncOperation::End(operation);
+        }
+        else if (dynamic_cast<ForwardToServiceAsyncOperation*>(operation.get()) != NULL)
+        {
+            ClientServerReplyMessageUPtr reply;
+            auto error = ForwardToServiceAsyncOperation::End(operation, reply);
+
+            if (error.IsSuccess())
             {
-                error = ErrorCode::FromNtStatus(reply->GetStatus());
+                if (reply->GetBody<SecretReferencesDescription>(result))
+                {
+                    error = ErrorCode::FromNtStatus(reply->GetStatus());
+                }
             }
+
+            return error;
+        }
+        else
+        {
+            Assert::CodingError("ISecretStoreClient.EndRemoveSecrets(): Unknown operation passed in.");
+        }
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetSecretVersions(
+        SecretReferencesDescription & secretReferencesDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        ErrorCode error = ErrorCode::Success();
+
+        error = secretReferencesDescription.Validate();
+        if (!error.IsSuccess())
+        {
+            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
+                error,
+                callback,
+                parent);
         }
 
-        return error;
+        error = EnsureOpened();
+        if (!error.IsSuccess())
+        {
+            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
+                error,
+                callback,
+                parent);
+        }
+
+        ClientServerRequestMessageUPtr messageUPtr =
+            CentralSecretServiceMessage::CreateRequestMessage(
+                CentralSecretServiceMessage::GetSecretVersionsAction,
+                make_unique<SecretReferencesDescription>(secretReferencesDescription));
+
+        return AsyncOperation::CreateAndStart<ForwardToServiceAsyncOperation>(
+            *this,
+            move(messageUPtr),
+            NamingUri::RootNamingUri,
+            timeout,
+            callback,
+            parent,
+            move(error));
+    }
+
+    ErrorCode FabricClientImpl::EndGetSecretVersions(
+        AsyncOperationSPtr const & operation,
+        __out SecretReferencesDescription & result)
+    {
+        if (dynamic_cast<CompletedAsyncOperation*>(operation.get()) != NULL)
+        {
+            return CompletedAsyncOperation::End(operation);
+        }
+        else if (dynamic_cast<ForwardToServiceAsyncOperation*>(operation.get()) != NULL)
+        {
+            ClientServerReplyMessageUPtr reply;
+            auto error = ForwardToServiceAsyncOperation::End(operation, reply);
+
+            if (error.IsSuccess())
+            {
+                if (reply->GetBody<SecretReferencesDescription>(result))
+                {
+                    error = ErrorCode::FromNtStatus(reply->GetStatus());
+                }
+            }
+
+            return error;
+        }
+        else
+        {
+            Assert::CodingError("ISecretStoreClient.EndGetSecretVersions(): Unknown operation passed in.");
+        }
     }
 
 #pragma endregion
@@ -6432,6 +6601,279 @@ namespace Client
         return error;
     }
 
+#pragma endregion
+
+#pragma region INetworkManagementClient methods
+
+    AsyncOperationSPtr FabricClientImpl::BeginCreateNetwork(
+        ModelV2::NetworkResourceDescription const &description,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        ClientServerRequestMessageUPtr message;
+        auto error = EnsureOpened();
+        if (error.IsSuccess())
+        {
+            auto body = Common::make_unique<CreateNetworkMessageBody>(description);
+            message = NamingTcpMessage::GetCreateNetwork(std::move(body));
+
+            Trace.BeginCreateNetwork(traceContext_, message->ActivityId, description.Name);
+        }
+
+        return AsyncOperation::CreateAndStart<RequestReplyAsyncOperation>(
+            *this,
+            NamingUri::RootNamingUri,
+            move(message),
+            timeout,
+            callback,
+            parent,
+            move(error));
+    }
+
+    ErrorCode FabricClientImpl::EndCreateNetwork(
+        AsyncOperationSPtr const &operation)
+    {
+        ClientServerReplyMessageUPtr reply;
+        return RequestReplyAsyncOperation::End(operation, reply);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginDeleteNetwork(
+        DeleteNetworkDescription const &deleteDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        ClientServerRequestMessageUPtr message;
+        auto error = EnsureOpened();
+        if (error.IsSuccess())
+        {
+            auto body = Common::make_unique<DeleteNetworkMessageBody>(deleteDescription);
+            message = NamingTcpMessage::GetDeleteNetwork(std::move(body));
+
+            Trace.BeginDeleteNetwork(traceContext_, message->ActivityId, deleteDescription.NetworkName);
+        }
+
+        return AsyncOperation::CreateAndStart<RequestReplyAsyncOperation>(
+            *this,
+            NamingUri::RootNamingUri,
+            move(message),
+            timeout,
+            callback,
+            parent,
+            move(error));
+    }
+
+    ErrorCode FabricClientImpl::EndDeleteNetwork(
+        AsyncOperationSPtr const &operation)
+    {
+        ClientServerReplyMessageUPtr reply;
+        return RequestReplyAsyncOperation::End(operation, reply);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetNetworkList(
+        NetworkQueryDescription const &queryDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        QueryArgumentMap argMap;
+
+        queryDescription.GetQueryArgumentMap(argMap);
+
+        return this->BeginInternalQuery(
+            QueryNames::ToString(QueryNames::GetNetworkList),
+            argMap,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndGetNetworkList(
+        AsyncOperationSPtr const &operation,
+        __inout vector<ModelV2::NetworkResourceDescriptionQueryResult> &networkList,
+        __inout PagingStatusUPtr &pagingStatus)
+    {
+        QueryResult queryResult;
+        auto error = this->EndInternalQuery(operation, queryResult);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        pagingStatus = queryResult.MovePagingStatus();
+        return queryResult.MoveList<ModelV2::NetworkResourceDescriptionQueryResult>(networkList);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetNetworkApplicationList(
+        NetworkApplicationQueryDescription const &queryDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        QueryArgumentMap argMap;
+
+        queryDescription.GetQueryArgumentMap(argMap);
+
+        return this->BeginInternalQuery(
+            QueryNames::ToString(QueryNames::GetNetworkApplicationList),
+            argMap,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndGetNetworkApplicationList(
+        AsyncOperationSPtr const &operation,
+        __inout vector<NetworkApplicationQueryResult> &networkApplicationList,
+        __inout PagingStatusUPtr &pagingStatus)
+    {
+        QueryResult queryResult;
+        auto error = this->EndInternalQuery(operation, queryResult);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        pagingStatus = queryResult.MovePagingStatus();
+        return queryResult.MoveList<NetworkApplicationQueryResult>(networkApplicationList);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetNetworkNodeList(
+        NetworkNodeQueryDescription const &queryDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        QueryArgumentMap argMap;
+
+        queryDescription.GetQueryArgumentMap(argMap);
+
+        return this->BeginInternalQuery(
+            QueryNames::ToString(QueryNames::GetNetworkNodeList),
+            argMap,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndGetNetworkNodeList(
+        AsyncOperationSPtr const &operation,
+        __inout vector<NetworkNodeQueryResult> &networkNodeList,
+        __inout PagingStatusUPtr &pagingStatus)
+    {
+        QueryResult queryResult;
+        auto error = this->EndInternalQuery(operation, queryResult);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        pagingStatus = queryResult.MovePagingStatus();
+        return queryResult.MoveList<NetworkNodeQueryResult>(networkNodeList);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetApplicationNetworkList(
+        ApplicationNetworkQueryDescription const &queryDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        QueryArgumentMap argMap;
+
+        queryDescription.GetQueryArgumentMap(argMap);
+
+        return this->BeginInternalQuery(
+            QueryNames::ToString(QueryNames::GetApplicationNetworkList),
+            argMap,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndGetApplicationNetworkList(
+        AsyncOperationSPtr const &operation,
+        __inout vector<ApplicationNetworkQueryResult> &applicationNetworkList,
+        __inout PagingStatusUPtr &pagingStatus)
+    {
+        QueryResult queryResult;
+        auto error = this->EndInternalQuery(operation, queryResult);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        pagingStatus = queryResult.MovePagingStatus();
+        return queryResult.MoveList<ApplicationNetworkQueryResult>(applicationNetworkList);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetDeployedNetworkList(
+        DeployedNetworkQueryDescription const &queryDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        QueryArgumentMap argMap;
+
+        queryDescription.GetQueryArgumentMap(argMap);
+
+        return this->BeginInternalQuery(
+            QueryNames::ToString(QueryNames::GetDeployedNetworkList),
+            argMap,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndGetDeployedNetworkList(
+        AsyncOperationSPtr const &operation,
+        __inout vector<DeployedNetworkQueryResult> &deployedNetworkList,
+        __inout PagingStatusUPtr &pagingStatus)
+    {
+        QueryResult queryResult;
+        auto error = this->EndInternalQuery(operation, queryResult);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        pagingStatus = queryResult.MovePagingStatus();
+        return queryResult.MoveList<DeployedNetworkQueryResult>(deployedNetworkList);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetDeployedNetworkCodePackageList(
+        DeployedNetworkCodePackageQueryDescription const &queryDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        QueryArgumentMap argMap;
+
+        queryDescription.GetQueryArgumentMap(argMap);
+
+        return this->BeginInternalQuery(
+            QueryNames::ToString(QueryNames::GetDeployedNetworkCodePackageList),
+            argMap,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndGetDeployedNetworkCodePackageList(
+        AsyncOperationSPtr const &operation,
+        __inout vector<DeployedNetworkCodePackageQueryResult> &deployedNetworkCodePackageList,
+        __inout PagingStatusUPtr &pagingStatus)
+    {
+        QueryResult queryResult;
+        auto error = this->EndInternalQuery(operation, queryResult);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        pagingStatus = queryResult.MovePagingStatus();
+        return queryResult.MoveList<DeployedNetworkCodePackageQueryResult>(deployedNetworkCodePackageList);
+    }
 #pragma endregion
 
 #pragma region IPropertyManagementClient methods
@@ -8341,9 +8783,9 @@ namespace Client
 
         auto filterSPtr = make_shared<ChaosEventsFilter>(getChaosEventsDescription.FilterSPtr->StartTimeUtc, getChaosEventsDescription.FilterSPtr->EndTimeUtc);
         auto pagingDescriptionSPtr = make_shared<QueryPagingDescription>();
-        wstring continuationToken(getChaosEventsDescription.QueryPagingDescriptionSPtr->ContinuationToken);
+        wstring continuationToken(getChaosEventsDescription.PagingDescription->ContinuationToken);
         pagingDescriptionSPtr->ContinuationToken = move(continuationToken);
-        pagingDescriptionSPtr->MaxResults = getChaosEventsDescription.QueryPagingDescriptionSPtr->MaxResults;
+        pagingDescriptionSPtr->MaxResults = getChaosEventsDescription.PagingDescription->MaxResults;
         wstring clientType(getChaosEventsDescription.ClientType);
 
         GetChaosEventsDescription chaosEventsDescription(filterSPtr, pagingDescriptionSPtr, clientType);
@@ -9846,6 +10288,119 @@ namespace Client
 
 #pragma endregion
 
+#pragma region IGatewayResourceManager client methods
+
+    AsyncOperationSPtr FabricClientImpl::BeginCreateOrUpdateGatewayResource(
+        wstring && descriptionStr,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+    {
+        ClientServerRequestMessageUPtr message;
+        auto error = EnsureOpened();
+        if (error.IsSuccess())
+        {
+            message = GatewayResourceManagerTcpMessage::GetCreateGatewayResource(Common::make_unique<CreateGatewayResourceMessageBody>(move(descriptionStr)));
+            Trace.BeginCreateOrUpdateGatewayResource(traceContext_, message->ActivityId);
+        }
+
+        return AsyncOperation::CreateAndStart<ForwardToServiceAsyncOperation>(
+            *this,
+            move(message),
+            NamingUri::RootNamingUri,
+            timeout,
+            callback,
+            parent,
+            move(error));
+    }
+
+    ErrorCode FabricClientImpl::EndCreateOrUpdateGatewayResource(
+        AsyncOperationSPtr const &operation,
+        __out std::wstring & descriptionStr)
+    {
+        ClientServerReplyMessageUPtr reply;
+        auto error = ForwardToServiceAsyncOperation::End(operation, reply);
+        if (error.IsSuccess())
+        {
+            CreateGatewayResourceMessageBody body;
+            if (!reply->GetBody<CreateGatewayResourceMessageBody>(body))
+            {
+                error = ErrorCode::FromNtStatus(reply->GetStatus());
+            }
+            else
+            {
+                descriptionStr = body.TakeDescription();
+            }
+        }
+
+        return error;
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginGetGatewayResourceList(
+        ServiceModel::ModelV2::GatewayResourceQueryDescription && gatewayQueryDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+    {
+        QueryArgumentMap argMap;
+        // Inserts values into argMap based on data in queryDescription
+        gatewayQueryDescription.GetQueryArgumentMap(argMap);
+
+        return this->BeginInternalQuery(
+            QueryNames::ToString(QueryNames::GetGatewayResourceList),
+            argMap,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode FabricClientImpl::EndGetGatewayResourceList(
+        AsyncOperationSPtr const & operation,
+        vector<wstring> & list,
+        ServiceModel::PagingStatusUPtr & pagingStatus)
+    {
+        QueryResult queryResult;
+        ErrorCode error = this->EndInternalQuery(operation, queryResult);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        pagingStatus = queryResult.MovePagingStatus();
+        return queryResult.MoveList<wstring>(list);
+    }
+
+    AsyncOperationSPtr FabricClientImpl::BeginDeleteGatewayResource(
+        wstring const & name,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const &parent)
+    {
+        ClientServerRequestMessageUPtr message;
+        auto error = EnsureOpened();
+        if (error.IsSuccess())
+        {
+            message = GatewayResourceManagerTcpMessage::GetDeleteGatewayResource(Common::make_unique<DeleteGatewayResourceMessageBody>(name));
+            Trace.BeginDeleteGatewayResource(traceContext_, message->ActivityId, name);
+        }
+
+        return AsyncOperation::CreateAndStart<ForwardToServiceAsyncOperation>(
+            *this,
+            move(message),
+            NamingUri::RootNamingUri,
+            timeout,
+            callback,
+            parent,
+            move(error));
+    }
+
+    ErrorCode FabricClientImpl::EndDeleteGatewayResource(AsyncOperationSPtr const &operation)
+    {
+        ClientServerReplyMessageUPtr reply;
+        return ForwardToServiceAsyncOperation::End(operation, reply);
+    }
+#pragma endregion
+
     //
     // ITestClient methods.
     //
@@ -10228,7 +10783,6 @@ namespace Client
         return error;
     }
 
-
     AsyncOperationSPtr FabricClientImpl::BeginInternalDeleteSystemService(
         NamingUri const & name,
         ActivityId const & activityId,
@@ -10608,7 +11162,6 @@ namespace Client
                 "Can't update KeepAliveInterval to {0} as the client is already opening/opened",
                 keepAliveIntervalInSeconds);
             return ErrorCode(ErrorCodeValue::InvalidState);
-
         }
 
         // Mark the settings as stale to let other users know that they should get the latest value
@@ -11263,7 +11816,6 @@ namespace Client
                     gateway,
                     error,
                     handlerError);
-
             }
         }
     }
@@ -11341,29 +11893,26 @@ namespace Client
         bool isContainerHost = ContainerEnvironment::IsContainerHost();
         if (isContainerHost)
         {
-            wstring networkingMode = ContainerEnvironment::GetContainerNetworkingMode();
-            bool isMultiIp = StringUtility::AreEqualCaseInsensitive(networkingMode, NetworkType::EnumToString(NetworkType::Open));
-
-            if (!isMultiIp)
+            if (!NetworkType::IsMultiNetwork(ContainerEnvironment::GetContainerNetworkingMode()))
             {
-                map<wstring, vector<wstring>> gatewayAddressPerAdapter;
-                auto error = IpUtility::GetGatewaysPerAdapter(gatewayAddressPerAdapter);
+                    map<wstring, vector<wstring>> gatewayAddressPerAdapter;
+                    auto error = IpUtility::GetGatewaysPerAdapter(gatewayAddressPerAdapter);
 
-                ASSERT_IF(!error.IsSuccess(), "Getting HOST IP failed - {0}", error);
-                ASSERT_IF(gatewayAddressPerAdapter.size() != 1, "Found more than one adapter in container");
+                    ASSERT_IF(!error.IsSuccess(), "Getting HOST IP failed - {0}", error);
+                    ASSERT_IF(gatewayAddressPerAdapter.size() > 1, "Found more than one adapter in container");
 
-                USHORT port = TcpTransportUtility::ParsePortString(config_->ClientConnectionAddress);
-                return TcpTransportUtility::ConstructAddressString(gatewayAddressPerAdapter.begin()->second[0], port);
+                    USHORT port = TcpTransportUtility::ParsePortString(config_->ClientConnectionAddress);
+                    return TcpTransportUtility::ConstructAddressString(gatewayAddressPerAdapter.begin()->second[0], port);
+                }
+                else
+                {
+                    return config_->ClientConnectionAddress;
+                }
             }
             else
             {
                 return config_->ClientConnectionAddress;
             }
-        }
-        else
-        {
-            return config_->ClientConnectionAddress;
-        }
 #else
         return config_->ClientConnectionAddress;
 #endif

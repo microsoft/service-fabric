@@ -26,6 +26,24 @@ namespace Reliability
             , capacityDescription_(appCapacity)
             , resourceGovernanceDescription_(spRGDescription)
             , codePackageContainersImages_(cpContainersImages)
+            , networks_()
+        {}
+
+        CreateApplicationRequestMessageBody(
+            Common::NamingUri const & appName,
+            ServiceModel::ApplicationIdentifier const & appId,
+            uint64 instanceId,
+            ApplicationCapacityDescription const & appCapacity,
+            ServiceModel::ServicePackageResourceGovernanceMap const& spRGDescription,
+            ServiceModel::CodePackageContainersImagesMap const& cpContainersImages,
+            std::vector<std::wstring> const & networks)
+            : applicationName_(appName)
+            , applicationId_(appId)
+            , instanceId_(instanceId)
+            , capacityDescription_(appCapacity)
+            , resourceGovernanceDescription_(spRGDescription)
+            , codePackageContainersImages_(cpContainersImages)
+            , networks_(networks)
         {}
 
         __declspec(property(get = get_ApplicationName, put = put_ApplicationName)) Common::NamingUri & ApplicationName;
@@ -54,28 +72,35 @@ namespace Reliability
         ServiceModel::CodePackageContainersImagesMap const& get_CodePackageContainersImages() const { return  codePackageContainersImages_; }
         void put_CodePackageContainersImages(ServiceModel::CodePackageContainersImagesMap const& desc) { codePackageContainersImages_ = desc; }
 
+        __declspec(property(get = get_Networks, put = put_Networks)) std::vector<std::wstring> const & Networks;
+        std::vector<std::wstring> const & get_Networks() const { return networks_; }
+        void put_Networks(std::vector<std::wstring> const & networks) { networks_ = networks; }
+
         void WriteTo(Common::TextWriter& w, Common::FormatOptions const&) const
         {
-            w.WriteLine("Name={0} InstanceId={1} Capacity={2}", 
+            w.WriteLine("Name={0} InstanceId={1} Capacity={2} NetworkCount={3}",
                 applicationName_,
                 instanceId_,
-                capacityDescription_);
+                capacityDescription_,
+                networks_.size());
         }
 
-        FABRIC_FIELDS_06(
+        FABRIC_FIELDS_07(
             applicationName_,
             applicationId_,
             instanceId_,
             capacityDescription_,
             resourceGovernanceDescription_,
-            codePackageContainersImages_);
+            codePackageContainersImages_,
+            networks_);
 
     private:
         Common::NamingUri applicationName_;
         ServiceModel::ApplicationIdentifier applicationId_;
         uint64 instanceId_;
-        ApplicationCapacityDescription capacityDescription_;
+        ApplicationCapacityDescription capacityDescription_;        
         ServiceModel::ServicePackageResourceGovernanceMap resourceGovernanceDescription_;
         ServiceModel::CodePackageContainersImagesMap codePackageContainersImages_;
+        std::vector<std::wstring> networks_;
     };
 }

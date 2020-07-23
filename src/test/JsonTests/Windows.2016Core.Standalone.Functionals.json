@@ -5,7 +5,7 @@
     {
       "Name": "SA_Onebox",
       "Type": "PowershellTest",
-      "Owners": "menchi,alsantam",
+      "Owners": "jkochhar,alsantam",
       "ResourcesRequired": "Server:1;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -57,7 +57,7 @@
     {
       "Name": "SA_AddNode",
       "Type": "PowershellTest",
-      "Owners": "maburlik,menchi,alsantam",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:4;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",

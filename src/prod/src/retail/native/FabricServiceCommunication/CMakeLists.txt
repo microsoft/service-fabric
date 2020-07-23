@@ -43,6 +43,7 @@ target_link_libraries(
   ${lib_StoreRepairPolicy}
   ${lib_Replication}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}

@@ -61,6 +61,7 @@ namespace ResourceMonitor
     private:
 
         std::map<std::wstring, ResourceDescription> hostsToMonitor_;
+        std::map<Common::Guid, ResourceDescription> partitionsToMonitor_;
         // Used to send resource measure requests to fabric host
         std::unique_ptr<Transport::IpcClient> fabricHostClient_;
         // ID of application host where this service is running.

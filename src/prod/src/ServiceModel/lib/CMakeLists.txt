@@ -20,6 +20,8 @@ set( LINUX_SOURCES
     ../applicationloadmetricinformation.cpp
     ../ApplicationManifestDescription.cpp
     ../ApplicationNameQueryResult.cpp
+    ../ApplicationNetworkQueryDescription.cpp
+    ../ApplicationNetworkQueryResult.cpp
     ../ApplicationPackageDescription.cpp
     ../ApplicationPackageReference.cpp
     ../ApplicationPoliciesDescription.cpp
@@ -65,10 +67,8 @@ set( LINUX_SOURCES
     ../ConfigPackageDescription.cpp
     ../ConfigPackagePoliciesDescription.cpp
     ../ConfigPackageSettingDescription.cpp
-    ../ConfigSettingsDescription.cpp
     ../ComposeDeploymentUpgradeDescription.cpp
     ../ComposeDeploymentUpgradeProgress.cpp
-    ../ConfigOverrideDescription.cpp
     ../ComposeDeploymentUpgradeState.cpp
     ../Constants.cpp
     ../ComposeDeploymentStatusQueryDescription.cpp
@@ -81,6 +81,8 @@ set( LINUX_SOURCES
     ../ContainerHealthConfigDescription.cpp
     ../ContainerCertificateDescription.cpp
     ../ContainerGroupDeploymentUtility.cpp
+    ../ContainerNetworkPolicyDescription.cpp
+    ../ContainerNetworkPolicyEndpointBindingDescription.cpp
     ../ContainerPoliciesDescription.cpp
     ../ContainerInfoArgMap.cpp
     ../ContainerInfoArgs.cpp
@@ -92,6 +94,7 @@ set( LINUX_SOURCES
     ../DefaultRunAsPolicyDescription.cpp
     ../DefaultServiceDescription.cpp
     ../DeleteApplicationDescription.cpp
+    ../DeleteNetworkDescription.cpp
     ../DeleteServiceDescription.cpp
     ../DeleteSingleInstanceDeploymentDescription.cpp
     ../DeltaNodesCheckHealthEvaluation.cpp
@@ -109,6 +112,10 @@ set( LINUX_SOURCES
     ../DeployedApplicationQueryResult.cpp
     ../DeployedApplicationsHealthEvaluation.cpp
     ../DeployedCodePackageQueryResult.cpp
+    ../DeployedNetworkCodePackageQueryDescription.cpp
+    ../DeployedNetworkCodePackageQueryResult.cpp
+    ../DeployedNetworkQueryDescription.cpp
+    ../DeployedNetworkQueryResult.cpp
     ../DeployedServiceManifestQueryResult.cpp
     ../DeployedServicePackageAggregatedHealthState.cpp
     ../DeployedServicePackageEntityHealthInformation.cpp
@@ -199,6 +206,13 @@ set( LINUX_SOURCES
     ../LogConfigDescription.cpp
     ../modelV2/ApplicationDescription.cpp
     ../modelV2/ContainerCodePackageDescription.cpp
+    ../modelV2/AddRemoveReplicaScalingMechanism.cpp
+    ../modelV2/AutoScalingMechanism.cpp
+    ../modelV2/AutoScalingMetric.cpp
+    ../modelV2/AutoScalingPolicy.cpp
+    ../modelV2/AutoScalingResourceMetric.cpp
+    ../modelV2/AutoScalingTrigger.cpp
+    ../modelV2/AverageLoadScalingTrigger.cpp
     ../modelV2/CodePackageInstanceView.cpp
     ../modelV2/CodePackageResourceDescription.cpp
     ../modelV2/ContainerLabel.cpp
@@ -207,6 +221,7 @@ set( LINUX_SOURCES
     ../modelV2/ImageRegistryCredential.cpp
     ../modelV2/ContainerServiceDescription.cpp
     ../modelV2/ApplicationDescriptionQueryResult.cpp
+    ../modelV2/NetworkResourceDescriptionQueryResult.cpp
     ../modelV2/ServiceReplicaDescription.cpp
     ../modelV2/ContainerServiceQueryResult.cpp
     ../modelV2/DiagnosticsSinkKind.cpp
@@ -215,6 +230,7 @@ set( LINUX_SOURCES
     ../modelV2/DiagnosticsRef.cpp
     ../modelV2/AzureInternalMonitoringPipelineSinkDescription.cpp
     ../modelV2/NetworkRef.cpp
+    ../modelV2/EndpointRef.cpp
     ../modelV2/ReliableCollectionsRefs.cpp
     ../modelV2/ResourceDescription.cpp
     ../modelV2/SettingDescription.cpp
@@ -225,7 +241,29 @@ set( LINUX_SOURCES
     ../modelV2/ApplicationScopedVolume.cpp
     ../modelV2/VolumeQueryDescription.cpp
     ../modelV2/VolumeQueryResult.cpp
+    ../modelV2/SettingDescription.cpp
+    ../modelV2/NetworkResourceDescription.cpp
+    ../modelV2/GatewayResourceDescription.cpp
+    ../modelV2/GatewayDestination.cpp
+    ../modelV2/GatewayResourceTcpConfig.cpp
+    ../modelV2/GatewayResourceHttpConfig.cpp
+    ../modelV2/HttpHeaderMatchType.cpp
+    ../modelV2/HttpHostNameConfig.cpp
+    ../modelV2/HttpPathMatchType.cpp
+    ../modelV2/HttpRouteConfig.cpp
+    ../modelV2/HttpRouteMatchHeader.cpp
+    ../modelV2/HttpRouteMatchPath.cpp
+    ../modelV2/HttpRouteMatchRule.cpp
+    ../modelV2/GatewayResourceQueryDescription.cpp
     ../MonitoredUpgradeFailureAction.cpp
+    ../NetworkDescription.cpp
+    ../NetworkPoliciesDescription.cpp
+    ../NetworkQueryDescription.cpp
+    ../NetworkApplicationQueryDescription.cpp
+    ../NetworkApplicationQueryResult.cpp
+    ../NetworkNodeQueryDescription.cpp
+    ../NetworkNodeQueryResult.cpp
+    ../NetworkInformation.cpp
     ../NetworkType.cpp
     ../NetworkConfigDescription.cpp
     ../NodeAggregatedHealthState.cpp
@@ -419,6 +457,8 @@ set( LINUX_SOURCES
     ../hosting2/ServiceTypeInstanceIdentifier.cpp
     ../hosting2/CodePackageInstanceIdentifier.cpp
     ../hosting2/ContainerDescription.cpp
+    ../hosting2/ContainerNetworkConfigDescription.cpp
+    ../hosting2/ContainerUpdateRoutesRequest.cpp
     ../hosting2/ContainerImageDescription.cpp
     ../hosting2/ContainerPodDescription.cpp
     ../hosting2/ProcessDebugParameters.cpp

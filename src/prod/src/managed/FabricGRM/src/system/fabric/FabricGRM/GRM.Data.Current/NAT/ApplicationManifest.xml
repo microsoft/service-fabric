@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest ApplicationTypeName="GatewayProxyApplicationType" ApplicationTypeVersion="1.0"
+  xmlns="http://schemas.microsoft.com/2011/01/fabric"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <Parameters>
+        <Parameter Name="Gateway_Listen_Network" DefaultValue="" />
+        <Parameter Name="Gateway_Config" DefaultValue="" />
+        <Parameter Name="Gateway_Proxy_Container_Name" DefaultValue="microsoft/service-fabric-reverse-proxy:0.20.0" />
+        <Parameter Name="Gateway_Proxy_Instance_Count" DefaultValue="1" />
+        <Parameter Name="Gateway_Resolver_Instance_Count" DefaultValue="-1" />
+        <Parameter Name="Gateway_Resolver_Uses_Dynamic_Port" DefaultValue="true"/>
+        <Parameter Name="Gateway_Proxy_CPUCores" DefaultValue="1" />
+
+        <Parameter Name="SF_ClientCertCommonName" DefaultValue="" />
+        <Parameter Name="SF_ClientCertIssuerThumbprints" DefaultValue="" />
+        <Parameter Name="SF_ClusterCertCommonNames" DefaultValue="" />
+        <Parameter Name="SF_ClusterCertIssuerThumbprints" DefaultValue="" />
+
+        <Parameter Name="internalNetwork" DefaultValue="Open" />
+        <Parameter Name="externalNetwork" DefaultValue="Other" />
+
+        <Parameter Name="HostPort0" DefaultValue="0" />
+        <Parameter Name="HostPort1" DefaultValue="0" />
+        <Parameter Name="HostPort2" DefaultValue="0" />
+        <Parameter Name="HostPort3" DefaultValue="0" />
+        <Parameter Name="HostPort4" DefaultValue="0" />
+        <Parameter Name="HostPort5" DefaultValue="0" />
+        <Parameter Name="HostPort6" DefaultValue="0" />
+        <Parameter Name="HostPort7" DefaultValue="0" />
+        <Parameter Name="HostPort8" DefaultValue="0" />
+        <Parameter Name="HostPort9" DefaultValue="0" />
+    </Parameters>
+
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="Proxy" ServiceManifestVersion="1.0"/>
+
+        <ResourceOverrides>
+            <Endpoints>
+                <Endpoint Name="GatewayProxyEndpoint" Port="[HostPort0]" Protocol="http" />
+                <Endpoint Name="GatewayProxyEndpoint1" Port="[HostPort1]" />
+                <Endpoint Name="GatewayProxyEndpoint2" Port="[HostPort2]" />
+                <Endpoint Name="GatewayProxyEndpoint3" Port="[HostPort3]" />
+                <Endpoint Name="GatewayProxyEndpoint4" Port="[HostPort4]" />
+                <Endpoint Name="GatewayProxyEndpoint5" Port="[HostPort5]" />
+                <Endpoint Name="GatewayProxyEndpoint6" Port="[HostPort6]" />
+                <Endpoint Name="GatewayProxyEndpoint7" Port="[HostPort7]" />
+                <Endpoint Name="GatewayProxyEndpoint8" Port="[HostPort8]" />
+                <Endpoint Name="GatewayProxyEndpoint9" Port="[HostPort9]" />
+            </Endpoints>
+        </ResourceOverrides>
+
+        <EnvironmentOverrides CodePackageRef="GatewayProxyService.Code">
+            <EnvironmentVariable Name="Gateway_Listen_Network" Value="[Gateway_Listen_Network]"/>
+            <EnvironmentVariable Name="Gateway_Config" Value="[Gateway_Config]"/>
+            <EnvironmentVariable Name="Gateway_Resolver_Uses_Dynamic_Port" Value="[Gateway_Resolver_Uses_Dynamic_Port]"/>
+
+            <EnvironmentVariable Name="SF_ClientCertCommonName" Value="[SF_ClientCertCommonName]"/>
+            <EnvironmentVariable Name="SF_ClientCertIssuerThumbprints" Value="[SF_ClientCertIssuerThumbprints]"/>
+            <EnvironmentVariable Name="SF_ClusterCertCommonNames" Value="[SF_ClusterCertCommonNames]"/>
+            <EnvironmentVariable Name="SF_ClusterCertIssuerThumbprints" Value="[SF_ClusterCertIssuerThumbprints]"/>
+        </EnvironmentOverrides>
+
+        <Policies>
+            <ContainerHostPolicies CodePackageRef="GatewayProxyService.Code" Isolation="hyperv">
+                <PortBinding EndpointRef="GatewayProxyEndpoint" ContainerPort="56789"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint1" ContainerPort="56790"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint2" ContainerPort="56791"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint3" ContainerPort="56792"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint4" ContainerPort="56793"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint5" ContainerPort="56794"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint6" ContainerPort="56795"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint7" ContainerPort="56796"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint8" ContainerPort="56797"/>
+                <PortBinding EndpointRef="GatewayProxyEndpoint9" ContainerPort="56798"/>
+
+                <ImageOverrides>
+                    <Image Name="[Gateway_Proxy_Container_Name]" />
+                </ImageOverrides>
+            </ContainerHostPolicies>
+            <ResourceGovernancePolicy CodePackageRef="GatewayProxyService.Code" MemoryInMB="512" CpuShares="100"/>
+            <ServicePackageResourceGovernancePolicy CpuCores="[Gateway_Proxy_CPUCores]"/>
+            <NetworkPolicies>
+                <ContainerNetworkPolicy NetworkRef="[externalNetwork]">
+                    <EndpointBinding EndpointRef="GatewayProxyEndpoint"/>
+                </ContainerNetworkPolicy>
+            </NetworkPolicies>
+
+            <ServicePackageContainerPolicy Hostname="NodeOnSF" Isolation="hyperv" />
+        </Policies>
+    </ServiceManifestImport>
+
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="Resolver" ServiceManifestVersion="1.0"/>
+
+        <EnvironmentOverrides CodePackageRef="Code">
+            <EnvironmentVariable Name="Gateway_Listen_Network" Value="[Gateway_Listen_Network]"/>
+            <EnvironmentVariable Name="Gateway_Config" Value="[Gateway_Config]"/>
+            <EnvironmentVariable Name="Gateway_Resolver_Uses_Dynamic_Port" Value="[Gateway_Resolver_Uses_Dynamic_Port]"/>
+        </EnvironmentOverrides>
+    </ServiceManifestImport>
+
+    <DefaultServices>
+        <Service Name="GatewayProxyService">
+            <StatelessService ServiceTypeName="GatewayProxyServiceType" InstanceCount="[Gateway_Proxy_Instance_Count]">
+                <SingletonPartition />
+            </StatelessService>
+        </Service>
+
+        <Service Name="GatewayResolverService">
+            <StatelessService ServiceTypeName="GatewayResolverServiceType" InstanceCount="[Gateway_Resolver_Instance_Count]">
+                <SingletonPartition />
+            </StatelessService>
+        </Service>
+    </DefaultServices>
+</ApplicationManifest>

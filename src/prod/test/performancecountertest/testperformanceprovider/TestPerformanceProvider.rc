@@ -1,0 +1,19 @@
+#include "fabricverp.h"
+#include "resource.h"
+
+#define VER_FILETYPE                VFT_APP
+#define VER_FILESUBTYPE             VFT2_UNKNOWN
+#define VER_FILEDESCRIPTION_STR     "TestPerformanceProvider"
+#define VER_INTERNALNAME_STR        "TestPerformanceProvider.exe"
+#define VER_ORIGINALFILENAME_STR    "TestPerformanceProvider.exe"
+
+#include "WFTestPerf.rc"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+//
+// Include resource file for all of the components that are linked to this EXE.
+// 
+// Example: #include <Reliability\resource.rc>
+// 

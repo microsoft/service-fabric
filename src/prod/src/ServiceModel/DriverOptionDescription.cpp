@@ -12,7 +12,8 @@ using namespace ServiceModel;
 DriverOptionDescription::DriverOptionDescription()
     : Name(),
     Value(),
-    IsEncrypted(L"false")
+    IsEncrypted(L"false"),
+    Type(L"PlainText")
 {
 }
 
@@ -20,7 +21,8 @@ bool DriverOptionDescription::operator== (DriverOptionDescription const & other)
 {
     return (StringUtility::AreEqualCaseInsensitive(Name, other.Name) &&
         StringUtility::AreEqualCaseInsensitive(Value, other.Value) &&
-        StringUtility::AreEqualCaseInsensitive(IsEncrypted, other.IsEncrypted));
+        StringUtility::AreEqualCaseInsensitive(IsEncrypted, other.IsEncrypted) &&
+        StringUtility::AreEqualCaseInsensitive(Type, other.Type));
 }
 
 bool DriverOptionDescription::operator!= (DriverOptionDescription const & other) const
@@ -34,6 +36,7 @@ void DriverOptionDescription::WriteTo(TextWriter & w, FormatOptions const &) con
     w.Write("Name = {0}, ", Name);
     w.Write("Value = {0}, ", Value);
     w.Write("IsEncrypted = {0}, ", IsEncrypted);
+    w.Write("Type = {0} ", Type);
     w.Write("}");
 }
 
@@ -46,10 +49,15 @@ void DriverOptionDescription::ReadFromXml(
 
     this->Name = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Name);
     this->Value = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Value);
-
+    
     if (xmlReader->HasAttribute(*SchemaNames::Attribute_IsEncrypted))
     {
         this->IsEncrypted = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_IsEncrypted);
+    }
+
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_Type))
+    {
+        this->Type = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Type);
     }
 
     // Read the rest of the empty element
@@ -78,6 +86,11 @@ Common::ErrorCode DriverOptionDescription::WriteToXml(XmlWriterUPtr const & xmlW
     {
         return er;
     }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Type, this->Type);
+    if(!er.IsSuccess())
+    {
+        return er;
+    }
     //</DriverOption>
     return xmlWriter->WriteEndElement();
 }
@@ -87,6 +100,7 @@ void DriverOptionDescription::clear()
     this->Name.clear();
     this->Value.clear();
     this->IsEncrypted.clear();
+    this->Type.clear();
 }
 
 ErrorCode DriverOptionDescription::ToPublicApi(
@@ -105,7 +119,10 @@ ErrorCode DriverOptionDescription::ToPublicApi(
         fabricDriverOptionDesc.IsEncrypted = false;
     }
 
-    fabricDriverOptionDesc.Reserved = nullptr;
+    auto ex1 = heap.AddItem<FABRIC_CONTAINER_DRIVER_OPTION_DESCRIPTION_EX1>();
+    ex1->Type = heap.AddString(this->Type);
+
+    fabricDriverOptionDesc.Reserved = ex1.GetRawPointer();
 
     return ErrorCode::Success();
 }

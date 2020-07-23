@@ -33,7 +33,7 @@ namespace ServiceModel
         std::wstring ContentChecksum;
         RolloutVersion RolloutVersionValue;
         ConfigPackageDescription ConfigPackage;
-        ConfigOverrideDescription ConfigOverrides;
+        Common::ConfigOverrideDescription ConfigOverrides;
         DebugParametersDescription DebugParameters;
         bool IsShared;
 

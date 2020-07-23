@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{24F2BEFB-C57A-4C2E-99DA-3C0335410F99}</ProjectGuid>
+    <RootNamespace>AzureUploaderCommon</RootNamespace>
+    <AssemblyName>AzureUploaderCommon</AssemblyName>
+    <AssemblyDescription>DCA's Azure consumers' common types</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\AzureConstants.cs">
+      <Link>AzureConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\AzureUtility.cs">
+      <Link>AzureUtility.cs</Link>
+    </Compile>
+    <Compile Include="$(SRCROOT)\prod\src\managed\infrastructurewrapper\azurewrapper\AzureRegistryStore.cs" />
+    <Compile Include="..\ConnectionStringParser.cs">
+      <Link>ConnectionStringParser.cs</Link>
+    </Compile>
+    <Compile Include="..\StorageConnection.cs">
+      <Link>StorageConnection.cs</Link>
+    </Compile>
+    <Compile Include="_friends.cs" />
+    <Compile Include="..\MaxRetriesException.cs">
+      <Link>MaxRetriesException.cs</Link>
+    </Compile>
+    <Compile Include="..\ProtectedAccountKeyHelper.cs">
+      <Link>ProtectedAccountKeyHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\IProtectedAccountKeyPlatform.cs">
+      <Link>IProtectedAccountKeyPlatform.cs</Link>
+    </Compile>
+    <Compile Include="..\ProtectedAccountKeyPlatformWindows.cs">
+      <Link>ProtectedAccountKeyPlatformWindows.cs</Link>
+    </Compile>
+    <Compile Include="..\StorageAccountFactory.cs">
+      <Link>StorageAccountFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\CloudStorageAccountFactory.cs">
+      <Link>CloudStorageAccountFactory.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
+    <ProjectReference Include="..\..\..\..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\system.fabric.dca\dll\System.Fabric.Dca.csproj">
+      <Project>{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}</Project>
+      <Name>System.Fabric.Dca</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

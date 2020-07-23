@@ -1,0 +1,74 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"> 
+
+   <!--Defaults-->
+   <PropertyGroup>
+        <UseAwait Condition="'$(CLRSupport)' != 'true'">/await</UseAwait>
+   </PropertyGroup>
+   <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DisableSpecificWarnings></DisableSpecificWarnings>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <ExceptionHandling>sync</ExceptionHandling>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <UseFullPaths>true</UseFullPaths>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>$(CRuntimeLibrary)</RuntimeLibrary>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        CONDITION_HANDLING=1;
+        WIN32_LEAN_AND_MEAN=1;
+        _DISABLE_DEPRECATE_STATIC_CPPLIB;
+        STRSAFE_LIB;
+        _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS;
+        _USE_DECLSPECS_FOR_SAL=1;
+        KTL_USER_MODE=1;
+        KTL_MIXED_STL_ATL;
+        JET_VERSION=0x0602;
+        _APISET_MINCORE_VERSION=0x0102; 
+        _APISET_MINWIN_VERSION=0x0103;
+        _APISET_WINDOWS_VERSION=0x601;
+      </PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories)
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_minwin)\priv_sdk\inc\dbg;
+        $(KM_IncludePath);
+        $(KtlIncludePath);
+        $(RepoRoot)\.config\.inc;
+        $(SrcRoot)\prod\src;
+        $(SrcRoot)\prod\shared;
+        $(SrcRoot)\prod\src\idl\public\$(O);
+        $(SrcRoot)\prod\src\idl\internal\$(O);
+        $(SrcRoot)\prod\shared\ktlwf\com\inc;
+        $(SrcRoot)\prod\shared\ktlwf\ktlwf\inc;
+        $(SrcRoot)\prod\shared\serialization\inc;
+        $(SrcRoot)\prod\src\data\statuscodes\lib\$(O);
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions>$(UseAwait) /d2guardspecload %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!--Override for debug with retail runtime configuration-->
+  <ItemDefinitionGroup Condition="'$(UseRetailCrtWithDebugBuild)' == 'true'">
+    <ClCompile>
+      <UndefinePreprocessorDefinitions>
+        %(UndefinePreprocessorDefinitions);
+        DBG;
+        _DEBUG;
+      </UndefinePreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

@@ -462,7 +462,7 @@ namespace Common
             {
                 if (asyncJobs_)
                 {
-                    Trace.WriteNoise("JobQueue", name_, "leaving Process(), thread {0}", crtThread);
+                    Trace.WriteInfo("JobQueue", name_, "leaving Process(), thread {0}", crtThread);
                 }
                 else
                 {

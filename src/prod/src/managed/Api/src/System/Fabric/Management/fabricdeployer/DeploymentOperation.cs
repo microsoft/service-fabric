@@ -44,7 +44,9 @@ namespace System.Fabric.FabricDeployer
                         || parameters.Operation == DeploymentOperations.DockerDnsSetup
                         || parameters.Operation == DeploymentOperations.DockerDnsCleanup
                         || parameters.Operation == DeploymentOperations.ContainerNetworkSetup
-                        || parameters.Operation == DeploymentOperations.ContainerNetworkCleanup) // Some operations may not require FDR
+                        || parameters.Operation == DeploymentOperations.ContainerNetworkCleanup
+                        || parameters.Operation == DeploymentOperations.IsolatedNetworkSetup
+                        || parameters.Operation == DeploymentOperations.IsolatedNetworkCleanup) // Some operations may not require FDR
                     {
                         try
                         {
@@ -159,6 +161,14 @@ namespace System.Fabric.FabricDeployer
 
                 case DeploymentOperations.ContainerNetworkCleanup:
                     operation = new ContainerNetworkCleanupOperation();
+                    break;
+
+                case DeploymentOperations.IsolatedNetworkSetup:
+                    operation = new IsolatedNetworkSetupOperation();
+                    break;
+
+                case DeploymentOperations.IsolatedNetworkCleanup:
+                    operation = new IsolatedNetworkCleanupOperation();
                     break;
 #endif
                 default:

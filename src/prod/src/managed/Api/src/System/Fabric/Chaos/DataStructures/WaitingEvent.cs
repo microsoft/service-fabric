@@ -94,6 +94,8 @@ namespace System.Fabric.Chaos.DataStructures
                 {
                     reasonToSendBack = reasonToSendBack.Substring(0, ChaosConstants.StringLengthLimit);
                 }
+
+                reasonToSendBack = ChaosUtility.MakeLengthNotMultipleOfFour(reasonToSendBack);
             }
             else
             {

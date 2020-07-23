@@ -1,0 +1,226 @@
+{
+  "Properties": {
+    "Security": {
+      "$id": "1",
+      "ClusterCredentialType": "None",
+      "ServerCredentialType": "None"
+    },
+    "NodeTypes": [
+      {
+        "Name": "ComputeNode",
+        "PlacementProperties": {
+          "SKU": "EX-DL380G9H-MSF-026891-81.9TB-APP-REVA",
+          "Role": "Compute"
+        },
+        "ClientConnectionEndpointPort": 8010,
+        "HttpGatewayEndpointPort": 8011,
+        "ReverseProxyEndpointPort": 8012,
+        "LeaseDriverEndpointPort": 8013,
+        "ClusterConnectionEndpointPort": 8014,
+        "ServiceConnectionEndpointPort": 8015,
+        "ApplicationPorts": {
+          "StartPort": 8016,
+          "EndPort": 8020
+        },
+        "IsPrimary": false
+      },
+      {
+        "Name": "LargeComputeNode",
+        "PlacementProperties": {
+          "SKU": "EX-C1040WF-MSF-023141-83.8TB-G5.0-BALANCED-REVA",
+          "Role": "Compute"
+        },
+        "ClientConnectionEndpointPort": 8010,
+        "HttpGatewayEndpointPort": 8011,
+        "ReverseProxyEndpointPort": 8012,
+        "LeaseDriverEndpointPort": 8013,
+        "ClusterConnectionEndpointPort": 8014,
+        "ServiceConnectionEndpointPort": 8015,
+        "ApplicationPorts": {
+          "StartPort": 8016,
+          "EndPort": 8020
+        },
+        "IsPrimary": false
+      },
+      {
+        "Name": "ManagementNode",
+        "PlacementProperties": {
+          "SKU": "EX-DL380G9H-MSF-026891-81.9TB-APP-REVA",
+          "Role": "Management"
+        },
+        "ClientConnectionEndpointPort": 8010,
+        "HttpGatewayEndpointPort": 8011,
+        "ReverseProxyEndpointPort": 8012,
+        "LeaseDriverEndpointPort": 8013,
+        "ClusterConnectionEndpointPort": 8014,
+        "ServiceConnectionEndpointPort": 8015,
+        "ApplicationPorts": {
+          "StartPort": 8016,
+          "EndPort": 8020
+        },
+        "IsPrimary": true
+      }
+    ],
+    "AddonFeatures": [],
+    "FabricSettings": [
+      {
+        "Name": "Setup",
+        "Parameters": [
+          {
+            "Name": "FabricDataRoot",
+            "Value": "D:\\GriffinB2\\SF\\Data"
+          },
+          {
+            "Name": "FabricLogRoot",
+            "Value": "D:\\GriffinB2\\SF\\Log"
+          }
+        ]
+      },
+      {
+        "Name": "Diagnostics",
+        "Parameters": [
+          {
+            "Name": "EnableTelemetry",
+            "Value": "False"
+          }
+        ]
+      },
+      {
+        "Name": "FabricHost",
+        "Parameters": [
+          {
+            "Name": "EnableServiceFabricAutomaticUpdates",
+            "Value": "False"
+          }
+        ]
+      },
+      {
+        "Name": "Management",
+        "Parameters": [
+          {
+            "Name": "ImageStoreConnectionString",
+            "Value": "fabric:ImageStore"
+          }
+        ]
+      }
+    ],
+    "EnableTelemetry": false,
+    "DiagnosticsStore": {
+      "StoreType": "AzureStorage",
+      "DataDeletionAgeInDays": 7,
+      "Connectionstring": "xxx",
+      "IsEncrypted": false
+    },
+    "FabricClusterAutoupgradeEnabled": false
+  },
+  "Nodes": [
+    {
+      "NodeName": "CY1PR00MB0076",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "CY1PR00MB0076",
+      "FaultDomain": "fd:/CLNAMPR00CY001/CYS01F01C03-BJ317-L/CY1PR00MB0076",
+      "UpgradeDomain": "UD_3"
+    },
+    {
+      "NodeName": "CO2PR00MB0071",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "CO2PR00MB0071",
+      "FaultDomain": "fd:/CLNAMPR00CO001/CO2F01C01-DB125-L/CO2PR00MB0071",
+      "UpgradeDomain": "UD_2"
+    },
+    {
+      "NodeName": "BN3PR00MB0065",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "BN3PR00MB0065",
+      "FaultDomain": "fd:/CLNAMPR00BN001/BN3F01C02-CY223-L/BN3PR00MB0065",
+      "UpgradeDomain": "UD_1"
+    },
+    {
+      "NodeName": "CO2PR00MB0070",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "CO2PR00MB0070",
+      "FaultDomain": "fd:/CLNAMPR00CO001/CO2F01C01-DB125-L/CO2PR00MB0070",
+      "UpgradeDomain": "UD_2"
+    },
+    {
+      "NodeName": "BN3PR00MB0068",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "BN3PR00MB0068",
+      "FaultDomain": "fd:/CLNAMPR00BN001/BN3F01C02-CY223-L/BN3PR00MB0068",
+      "UpgradeDomain": "UD_1"
+    },
+    {
+      "NodeName": "SN2PR00MB0077",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "SN2PR00MB0077",
+      "FaultDomain": "fd:/CLNAMPR00SN001/SN2F01C05-DI525/SN2PR00MB0077",
+      "UpgradeDomain": "UD_4"
+    },
+    {
+      "NodeName": "CY1PR00MB0075",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "CY1PR00MB0075",
+      "FaultDomain": "fd:/CLNAMPR00CY001/CYS01F01C03-BJ317-L/CY1PR00MB0075",
+      "UpgradeDomain": "UD_3"
+    },
+    {
+      "NodeName": "CY1PR00MB0073",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "CY1PR00MB0073",
+      "FaultDomain": "fd:/CLNAMPR00CY001/CYS01F01C03-BJ317-L/CY1PR00MB0073",
+      "UpgradeDomain": "UD_3"
+    },
+    {
+      "NodeName": "CY1PR00MB0074",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "CY1PR00MB0074",
+      "FaultDomain": "fd:/CLNAMPR00CY001/CYS01F01C03-BJ317-L/CY1PR00MB0074",
+      "UpgradeDomain": "UD_3"
+    },
+    {
+      "NodeName": "CO2PR00MB0069",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "CO2PR00MB0069",
+      "FaultDomain": "fd:/CLNAMPR00CO001/CO2F01C01-DB125-L/CO2PR00MB0069",
+      "UpgradeDomain": "UD_2"
+    },
+    {
+      "NodeName": "SN2PR00MB0079",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "SN2PR00MB0079",
+      "FaultDomain": "fd:/CLNAMPR00SN001/SN2F01C05-DI525/SN2PR00MB0079",
+      "UpgradeDomain": "UD_4"
+    },
+    {
+      "NodeName": "BN3PR00MB0067",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "BN3PR00MB0067",
+      "FaultDomain": "fd:/CLNAMPR00BN001/BN3F01C02-CY223-L/BN3PR00MB0067",
+      "UpgradeDomain": "UD_1"
+    },
+    {
+      "NodeName": "BN3PR00MB0066",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "BN3PR00MB0066",
+      "FaultDomain": "fd:/CLNAMPR00BN001/BN3F01C02-CY223-L/BN3PR00MB0066",
+      "UpgradeDomain": "UD_1"
+    },
+    {
+      "NodeName": "SN2PR00MB0080",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "SN2PR00MB0080",
+      "FaultDomain": "fd:/CLNAMPR00SN001/SN2F01C05-DI525/SN2PR00MB0080",
+      "UpgradeDomain": "UD_4"
+    },
+    {
+      "NodeName": "CO2PR00MB0072",
+      "NodeTypeRef": "ManagementNode",
+      "IPAddress": "CO2PR00MB0072",
+      "FaultDomain": "fd:/CLNAMPR00CO001/CO2F01C01-DB125-L/CO2PR00MB0072",
+      "UpgradeDomain": "UD_2"
+    }
+  ],
+  "ApiVersion": "08-2017",
+  "Name": "NAMPRD00_SDFV2",
+  "ClusterConfigurationVersion": "1.0.0"
+}

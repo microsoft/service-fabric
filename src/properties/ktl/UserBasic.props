@@ -1,0 +1,16 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <!--Standard user mode imports-->
+  <Import Project="$(SRCROOT)\properties\ktl\imports\KtlUserImports.props" />
+  <!-- CPP imports have been now added -->
+
+  <!--Post-CPP overrides-->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions)
+        _DISABLE_DEPRECATE_STATIC_CPPLIB;
+      </PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

@@ -1286,7 +1286,13 @@ void ServiceTypeStateManager::OnDisableTimerCallback(ServiceTypeInstanceIdentifi
 
         this->RaiseServiceTypeDisabledEvent_CallerHoldsLock(entry);
 
-        healthSequence = SequenceNumber::GetNext();        
+        WriteInfo(
+            TraceType,
+            Root.TraceId,
+            "HostingServiceTypeDisabled ServiceTypeInstanceId: {0}.",
+            serviceTypeInstanceId);
+
+        healthSequence = SequenceNumber::GetNext();
     }    
 
     this->ReportServiceTypeHealth(

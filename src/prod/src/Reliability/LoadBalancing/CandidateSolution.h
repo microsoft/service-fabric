@@ -114,6 +114,9 @@ namespace Reliability
             __declspec (property(get=get_PartitionPlacements)) PartitionPlacement const& PartitionPlacements;
             PartitionPlacement const& get_PartitionPlacements() const { return partitionPlacements_; }
 
+            __declspec (property(get = get_InBuildCountsPerNode)) InBuildCountPerNode const& InBuildCountsPerNode;
+            InBuildCountPerNode const& get_InBuildCountsPerNode() const { return inBuildCountsPerNode_; }
+
             __declspec(property(get = get_ServicePackagePlacement)) ServicePackagePlacement const& ServicePackagePlacements;
             ServicePackagePlacement const& get_ServicePackagePlacement() const { return servicePackagePlacements_; }
 
@@ -150,6 +153,12 @@ namespace Reliability
             SearchInsight& get_SolutionSearchInsight() { return solutionSearchInsight_; }
             void set_SolutionSearchInsight(SearchInsight&& value) { solutionSearchInsight_ = move(value); }
             bool HasSearchInsight() const { return solutionSearchInsight_.HasInsight; }
+
+            // Get reserved load on a node from this object.
+            int64 GetApplicationReservedLoad(NodeEntry const* node, size_t capacityIndex) const
+            {
+                return ((LoadEntry const&)applicationReservedLoads_[node]).Values[capacityIndex];
+            }
 
             Movement & GetMovement(size_t index)  { return index < creations_.size() ? creations_[index] : migrations_[index - creations_.size()]; }
 
@@ -195,6 +204,9 @@ namespace Reliability
 
             // partition entry mapping to replica placements
             PartitionPlacement partitionPlacements_;
+
+            // Node to InBuild replica count mapping
+            InBuildCountPerNode inBuildCountsPerNode_;
 
             // partition entry mapping to replica placements
             ApplicationPlacement applicationPlacements_;

@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest ApplicationTypeName="HWContainerType"
+                     ApplicationTypeVersion="1.0.0"
+                     xmlns="http://schemas.microsoft.com/2011/01/fabric"
+                     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Parameters>
+    <Parameter Name="MinReplicaSetSize" DefaultValue="2" />
+    <Parameter Name="PartitionCount" DefaultValue="1" />
+    <Parameter Name="TargetReplicaSetSize" DefaultValue="2" />
+    <Parameter Name="ContainerRepositoryPassword" DefaultValue="" />
+  </Parameters>
+  <!-- Import the ServiceManifest from the ServicePackage. The ServiceManifestName and ServiceManifestVersion 
+       should match the Name and Version attributes of the ServiceManifest element defined in the 
+       ServiceManifest.xml file. -->
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="HWServicePkg" ServiceManifestVersion="1.0.0" />
+    <ConfigOverrides />
+      <Policies>
+        <ServiceFabricRuntimeAccessPolicy UseServiceFabricReplicatedStore="true" />
+        <ContainerHostPolicies CodePackageRef="Code" Isolation="default">
+          <RepositoryCredentials AccountName="sftestcontainerreg" Password="[ContainerRepositoryPassword]" />
+          <Volume Source="MyVol_@PartitionId393d4d7b-69cd-4561-9052-29f3685bf629@" Destination="c:\data\" Driver="sfvolumedisk" IsReadOnly="false">
+            <DriverOption Name="servicePartitionId" Value="@PartitionId393d4d7b-69cd-4561-9052-29f3685bf629@"/>
+            <DriverOption Name="sizeDisk" Value="1GB"/>
+            <DriverOption Name="fileSystem" Value="NTFS"/>
+          </Volume>
+          <PortBinding ContainerPort="8089" EndpointRef="HWServiceTypeEndpoint"/>
+        </ContainerHostPolicies>
+      </Policies>
+  </ServiceManifestImport>
+  <DefaultServices>
+    <!-- The section below creates instances of service types, when an instance of this 
+         application type is created. You can also create one or more instances of service type using the 
+         ServiceFabric PowerShell module.
+         
+         The attribute ServiceTypeName below must match the name defined in the imported ServiceManifest.xml file. -->
+    <Service Name="HWService" ServicePackageActivationMode="ExclusiveProcess">
+      <StatefulService ServiceTypeName="HWServiceType" TargetReplicaSetSize="[TargetReplicaSetSize]" MinReplicaSetSize="[MinReplicaSetSize]">
+        <UniformInt64Partition PartitionCount="[PartitionCount]" LowKey="-9223372036854775808" HighKey="9223372036854775807" />
+      </StatefulService>
+    </Service>
+  </DefaultServices>
+</ApplicationManifest>

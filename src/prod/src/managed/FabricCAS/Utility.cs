@@ -5,16 +5,19 @@
 
 namespace Hosting.ContainerActivatorService
 {
+    using Microsoft.ServiceFabric.ContainerServiceClient;
     using System;
     using System.Fabric;
     using System.Fabric.Common;
     using System.Fabric.Common.Tracing;
+    using System.Text;
     using System.Threading.Tasks;
 
     internal static class Utility
     {
         internal static string FabricCodePath { get; private set; }
         internal static string FabricLogRoot { get; private set; }
+        internal static string FabricDataRoot { get; private set; }
 
         internal static void InitializeTracing()
         {
@@ -22,6 +25,7 @@ namespace Hosting.ContainerActivatorService
 
             FabricCodePath = FabricEnvironment.GetCodePath();
             FabricLogRoot = FabricEnvironment.GetLogRoot();
+            FabricDataRoot = FabricEnvironment.GetLogRoot();
         }
 
         internal static string GetDecryptedValue(string encryptedValue)
@@ -30,14 +34,14 @@ namespace Hosting.ContainerActivatorService
             return AccountHelper.SecureStringToString(decryptedValue);
         }
 
-        internal static Task ExecuteWithRetriesAsync(
+        internal static Task ExecuteWithRetryOnTimeoutAsync(
             Func<TimeSpan, Task> func,
             string operationTag,
             string traceType,
             TimeSpan innerTimeout,
             TimeSpan totalTimeout)
         {
-            return ExecuteWithRetriesAsync(
+            return ExecuteWithRetryOnTimeoutAsync(
                 new Func <TimeSpan, Task <object>>(
                     async (timeout) =>
                     {
@@ -50,7 +54,7 @@ namespace Hosting.ContainerActivatorService
                 totalTimeout);
         }
 
-        internal static async Task<TResult> ExecuteWithRetriesAsync<TResult>(
+        internal static async Task<TResult> ExecuteWithRetryOnTimeoutAsync<TResult>(
             Func<TimeSpan, Task<TResult>> func,
             string operationTag,
             string traceType,
@@ -60,7 +64,7 @@ namespace Hosting.ContainerActivatorService
             var retryCount = 0;
             var operationId = Guid.NewGuid();
             var timeoutHelper = new TimeoutHelper(totalTimeout);
-            var effectiveTimeout = innerTimeout;
+            var effectiveTimeout = HostingConfig.Config.DisableDockerRequestRetry ? totalTimeout : innerTimeout;
 
             while (true)
             {
@@ -82,7 +86,8 @@ namespace Hosting.ContainerActivatorService
                 }
                 catch (FabricException ex)
                 {
-                    if(timeoutHelper.HasTimedOut || 
+                    if(HostingConfig.Config.DisableDockerRequestRetry || 
+                       timeoutHelper.HasTimedOut || 
                        ex.ErrorCode != FabricErrorCode.OperationTimedOut)
                     {
                         throw;
@@ -98,11 +103,88 @@ namespace Hosting.ContainerActivatorService
                     operationId,
                     retryCount);
 
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                await Task.Delay(TimeSpan.FromSeconds(5));
 
                 effectiveTimeout = TimeSpan.FromTicks(
                     Math.Min(timeoutHelper.RemainingTime.Ticks, innerTimeout.Ticks));
             }
+        }
+
+        internal static async Task CleanupOnErrorAsync(
+            string traceType,
+            bool autoRemove,
+            bool isContainerRoot,
+            string cgroupName,
+            string containerName,
+            string applicationId,
+            IContainerActivatorService activatorService,
+            TimeoutHelper timeoutHelper,
+            FabricException originalEx)
+        {
+            HostingTrace.Source.WriteWarning(
+                traceType,
+                "CleanupOnErrorAsync(): Deactivating Container='{0}', AppId={1}.",
+                containerName,
+                applicationId);
+
+            try
+            {
+                var deactivationArg = new ContainerDeactivationArgs()
+                {
+                    ContainerName = containerName,
+                    ConfiguredForAutoRemove = autoRemove,
+                    IsContainerRoot = isContainerRoot,
+                    CgroupName = cgroupName,
+                    IsGracefulDeactivation = false
+                };
+
+                await Utility.ExecuteWithRetryOnTimeoutAsync(
+                    (operationTimeout) =>
+                    {
+                        return activatorService.DeactivateContainerAsync(
+                            deactivationArg,
+                            operationTimeout);
+                    },
+                    $"CleanupOnErrorAsync_DeactivateContainerAsync_{containerName}",
+                    traceType,
+                    HostingConfig.Config.DockerRequestTimeout,
+                    timeoutHelper.RemainingTime);
+            }
+            catch (FabricException)
+            {
+                // Ignore.
+            }
+
+            throw originalEx;
+        }
+
+        internal static string BuildErrorMessage(
+            string containerName,
+            string applicationId,
+            string applicationName,
+            Exception ex)
+        {
+            var errBuilder = new StringBuilder();
+
+            errBuilder.AppendFormat(
+                "ContainerName={0}, ApplicationId={1}, ApplicationName={2}.",
+                containerName,
+                applicationId,
+                applicationName);
+
+            if (ex is ContainerApiException containerApiEx)
+            {
+                errBuilder.AppendFormat(
+                     " DockerRequest returned StatusCode={0} with ResponseBody={1}.",
+                    containerApiEx.StatusCode,
+                    containerApiEx.ResponseBody);
+            }
+            else
+            {
+                errBuilder.Append(ex.ToString());
+            }
+
+            return errBuilder.ToString();
         }
     }
 }

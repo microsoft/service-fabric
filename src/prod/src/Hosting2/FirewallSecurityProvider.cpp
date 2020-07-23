@@ -16,6 +16,9 @@ using namespace Microsoft::WRL;
 
 StringLiteral const TraceFirewallSecurityProvider("FirewallSecurityProvider");
 
+const std::wstring LocalNatPolicyName = L"Local_Nat_As_Open";
+const std::wstring LocalNatPolicyDescription = L"Dev scenario rule for NAT network for emulating Open Network.";
+
 LONG FirewallSecurityProvider::allProfiles_[] = { NET_FW_PROFILE2_DOMAIN, NET_FW_PROFILE2_PRIVATE, NET_FW_PROFILE2_PUBLIC };
 
 #if defined(PLATFORM_UNIX)
@@ -203,6 +206,31 @@ ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicy(
     vector<LONG> ports,
     uint64 nodeInstanceId)
 {
+#ifdef PLATFORM_UNIX
+    return ConfigurePortFirewallPolicyInternal(policyName, ports, nodeInstanceId, true);
+#else
+    //Initalize COM before accessing Firewall api
+    auto error = FirewallSecurityProviderHelper::InitializeCOM();
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    error = ConfigurePortFirewallPolicyInternal(policyName, ports, nodeInstanceId, true);
+
+    FirewallSecurityProviderHelper::UninitializeCOM();
+
+    return error;
+#endif
+}
+
+//This method should perform synchronous operations and COM should be initialize before.
+ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicyInternal(
+    wstring const & policyName,
+    vector<LONG> ports,
+    uint64 nodeInstanceId,
+    bool isComInitialized)
+{
     if (this->State.Value != FabricComponentState::Opened)
     {
         WriteInfo(
@@ -283,6 +311,8 @@ ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicy(
     }
     return ErrorCode::FromHResult(hr);
 #else
+
+    ASSERT_IF(!isComInitialized, "COM should be initialized");
 
     ComPtr<INetFwPolicy2> fwPolicy;
     ComPtr<INetFwRules> pFwRules;
@@ -397,6 +427,7 @@ ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicy(
                 "Failed to get current profile types, hresult {0}", hr);
         }
     }
+
     return ErrorCode::FromHResult(hr);
 #endif    
 }
@@ -486,16 +517,158 @@ HRESULT FirewallSecurityProvider::AddRule(
     }
     return hr;
 }
-#endif
+
+ErrorCode FirewallSecurityProvider::AddLocalNatFirewallRule(
+    wstring const & localAddress,
+    wstring const & remoteAddress)
+{
+    if (!HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+    {
+        WriteWarning(TraceFirewallSecurityProvider,
+            "LocalNatIpProviderEnabled must be true to AddLocalNatFirewallRule.");
+        return ErrorCodeValue::OperationFailed;
+    }
+    //Add firewall rule for container to host communication
+    auto error = FirewallSecurityProviderHelper::InitializeCOM();
+    if (error.IsSuccess())
+    {
+        Microsoft::WRL::ComPtr<INetFwPolicy2> fwPolicy;
+        Microsoft::WRL::ComPtr<INetFwRules> pFwRules;
+        error = FirewallSecurityProviderHelper::GetRules(&fwPolicy, &pFwRules);
+        if (error.IsSuccess())
+        {
+            auto hr = FirewallSecurityProvider::AddRuleWithLocalAddress(
+                                            pFwRules,
+                                            LocalNatPolicyName,
+                                            LocalNatPolicyDescription,
+                                            localAddress,
+                                            remoteAddress,
+                                            false);
+            return ErrorCode::FromHResult(hr);
+        }
+
+        FirewallSecurityProviderHelper::UninitializeCOM();
+    }
+    return error;
+}
+
+HRESULT FirewallSecurityProvider::AddRuleWithLocalAddress(
+    ComPtr<INetFwRules> pFwRules,
+    wstring const & policyName,
+    wstring const & ruleDescription,
+    wstring const & localAddress,
+    wstring const & remoteAddress,
+    bool outgoing)
+{
+    HRESULT hr = S_OK;
+    ComPtr<INetFwRule> pFwRule = nullptr;
+
+    hr = CoCreateInstance(
+        __uuidof(NetFwRule),
+        NULL,
+        CLSCTX_INPROC_SERVER,
+        __uuidof(INetFwRule),
+        (void**)&pFwRule);
+    if (SUCCEEDED(hr))
+    {
+
+        // Populate the Firewall Rule object
+        pFwRule->put_Name((BSTR)policyName.c_str());
+        pFwRule->put_Description((BSTR)ruleDescription.c_str());
+        pFwRule->put_ApplicationName(nullptr);
+        if (outgoing)
+        {
+            pFwRule->put_Direction(NET_FW_RULE_DIR_OUT);
+        }
+        else
+        {
+            pFwRule->put_Direction(NET_FW_RULE_DIR_IN);
+        }
+        pFwRule->put_Grouping((BSTR)FirewallSecurityProviderHelper::firewallGroup_.c_str());
+        pFwRule->put_Action(NET_FW_ACTION_ALLOW);
+        pFwRule->put_Enabled(VARIANT_TRUE);
+        pFwRule->put_LocalAddresses((BSTR)localAddress.c_str());
+        pFwRule->put_RemoteAddresses((BSTR)remoteAddress.c_str());
+
+
+        // Add the Firewall Rule
+        hr = pFwRules->Add(pFwRule.Get());
+        if (FAILED(hr))
+        {
+            WriteWarning(
+                TraceFirewallSecurityProvider,
+                "Failed to add firewall rule, hresult {0}", hr);
+        }
+    }
+    else
+    {
+        WriteWarning(
+            TraceFirewallSecurityProvider,
+            "Failed to create firewall rule instance, hresult {0}", hr);
+    }
+    return hr;
+}
+
+ErrorCode FirewallSecurityProvider::RemoveLocalNatFirewallRule()
+{
+    if (!HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+    {
+        WriteWarning(TraceFirewallSecurityProvider,
+            "LocalNatIpProviderEnabled must be true to RemoveLocalNatFirewallRule.");
+        return ErrorCodeValue::OperationFailed;
+    } 
+    auto error = FirewallSecurityProviderHelper::InitializeCOM();
+    if (error.IsSuccess())
+    {
+        Microsoft::WRL::ComPtr<INetFwPolicy2> fwPolicy;
+        Microsoft::WRL::ComPtr<INetFwRules> pFwRules;
+        error = FirewallSecurityProviderHelper::GetRules(&fwPolicy, &pFwRules);
+        if (error.IsSuccess())
+        {
+            HRESULT hr = S_OK;
+
+            WriteInfo(TraceFirewallSecurityProvider,
+                "Removing rule {0}", LocalNatPolicyName);
+
+            hr = pFwRules->Remove((BSTR)LocalNatPolicyName.c_str());
+            return ErrorCode::FromHResult(hr);
+        }
+        FirewallSecurityProviderHelper::UninitializeCOM();
+    }
+    return error;
+}
+#endif // defined(PLATFORM_UNIX)
 
 ErrorCode FirewallSecurityProvider::RemoveFirewallRule(
     wstring const & policyName,
     vector<LONG> const& ports,
     uint64 nodeInstanceId)
 {
-#if defined(PLATFORM_UNIX)
-    return CleanupRulesForAllProfiles(policyName, ports, nodeInstanceId);
+#ifdef PLATFORM_UNIX
+    return RemoveFirewallRuleInternal(policyName, ports, nodeInstanceId, true);
 #else
+    //Initalize COM before accessing Firewall api
+    auto error = FirewallSecurityProviderHelper::InitializeCOM();
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    error = RemoveFirewallRuleInternal(policyName, ports, nodeInstanceId, true);
+
+    FirewallSecurityProviderHelper::UninitializeCOM();
+
+    return error;
+#endif
+}
+
+//This method should perform synchronous operations and COM should be initialize before.
+ErrorCode FirewallSecurityProvider::RemoveFirewallRuleInternal(
+    wstring const & policyName,
+    vector<LONG> const& ports,
+    uint64 nodeInstanceId,
+    bool isComInitialized)
+{
     if (this->State.Value != FabricComponentState::Opened)
     {
         WriteInfo(
@@ -506,15 +679,17 @@ ErrorCode FirewallSecurityProvider::RemoveFirewallRule(
         return ErrorCode(ErrorCodeValue::OperationFailed);
     }
 
+#if defined(PLATFORM_UNIX)
+    return CleanupRulesForAllProfiles(policyName, ports, nodeInstanceId);
+#else
+
+    ASSERT_IF(!isComInitialized, "COM should be initialized");
+
     ComPtr<INetFwPolicy2> fwPolicy;
     ComPtr<INetFwRules> pFwRules;
 
     auto error = FirewallSecurityProviderHelper::GetRules(&fwPolicy, &pFwRules);
-    if (!error.IsSuccess())
-    {
-        return error;
-    }
-    else
+    if (error.IsSuccess())
     {
         error = CleanupRulesForAllProfiles(policyName, pFwRules, ports, nodeInstanceId);
         WriteTrace(
@@ -522,8 +697,9 @@ ErrorCode FirewallSecurityProvider::RemoveFirewallRule(
             TraceFirewallSecurityProvider,
             Root.TraceId,
             "Removing firewall rules for policy {0} returned error {1} nodeInstanceId {2}", policyName, error, nodeInstanceId);
-        return error;
     }
+
+    return error;
 #endif    
 }
 

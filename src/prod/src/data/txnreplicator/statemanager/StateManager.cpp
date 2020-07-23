@@ -22,6 +22,7 @@ NTSTATUS StateManager::Create(
     __in IStatefulPartition & partition,
     __in IStateProvider2Factory & stateProviderFactory,
     __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in bool hasPersistedState,
     __in KAllocator& allocator,
     __out SPtr & result) noexcept
 {
@@ -30,7 +31,8 @@ NTSTATUS StateManager::Create(
         runtimeFolders, 
         partition, 
         stateProviderFactory,
-        transactionalReplicatorConfig);
+        transactionalReplicatorConfig,
+        hasPersistedState);
     if (result == nullptr)
     {
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -1448,7 +1450,7 @@ Awaitable<NTSTATUS> StateManager::PerformCheckpointAsync(
 
     try
     {
-        co_await checkpointManagerSPtr_->PerformCheckpointAsync(*metadataManagerSPtr_, cancellationToken);
+        co_await checkpointManagerSPtr_->PerformCheckpointAsync(*metadataManagerSPtr_, cancellationToken, hasPersistedState_);
     }
     catch (Exception & e)
     {
@@ -2988,6 +2990,14 @@ Task StateManager::OnServiceOpenAsync() noexcept
         openParametersSPtr_->CleanupRestore);
 
     SetDeferredCloseBehavior();
+    
+    if (hasPersistedState_ == false)
+    {
+        // Nothing to recover
+        openParametersSPtr_ = nullptr;
+        CompleteOpen(status);
+        co_return;
+    }
 
     // Recover State Manager Checkpoint.
     try
@@ -5027,8 +5037,13 @@ void StateManager::AddChildrenToList(
 KString::CSPtr StateManager::CreateStateProviderWorkDirectory(__in FABRIC_STATE_PROVIDER_ID stateProviderId)
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-
     KString::CSPtr stateProviderWorkDirectory = GetStateProviderWorkDirectory(stateProviderId);
+
+    if (hasPersistedState_ == false)
+    {
+        // Returning path in case volatile state provider really needs it
+        return stateProviderWorkDirectory;
+    }
 
     // #11908559: Once we have the serialization mode configuration plumbed through, we can check if SerailiationMode == Managed (v1).
     // If so we do not need to check if we need to upgrade the folder structure.
@@ -5862,7 +5877,8 @@ FAILABLE StateManager::StateManager(
     __in IRuntimeFolders & runtimeFolders,
     __in IStatefulPartition & partition,
     __in IStateProvider2Factory & stateProviderFactory,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig) noexcept
+    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in bool hasPersistedState) noexcept
     : KAsyncServiceBase()
     , KWeakRefType<StateManager>()
     , PartitionedReplicaTraceComponent(traceId)
@@ -5874,12 +5890,18 @@ FAILABLE StateManager::StateManager(
     , apiDispatcher_(ApiDispatcher::Create(traceId, stateProviderFactory, GetThisAllocator()))
     , transactionalReplicatorConfig_(transactionalReplicatorConfig)
     , serializationMode_(static_cast<SerializationMode::Enum>(transactionalReplicatorConfig->SerializationVersion))
+    , hasPersistedState_(hasPersistedState)
 {
-    NTSTATUS status = Helper::CreateFolder(*workDirectoryPath_);
-    if (NT_SUCCESS(status) == false)
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (hasPersistedState)
     {
-        SetConstructorStatus(status);
-        return;
+        status = Helper::CreateFolder(*workDirectoryPath_);
+        if (NT_SUCCESS(status) == false)
+        {
+            SetConstructorStatus(status);
+            return;
+        }
     }
 
     if (NT_SUCCESS(copyProgressArray_.Status()) == false)
@@ -5903,6 +5925,7 @@ FAILABLE StateManager::StateManager(
         serializationMode_,
         GetThisAllocator(),
         checkpointManagerSPtr_);
+
     if (NT_SUCCESS(status) == false)
     {
         SetConstructorStatus(status);

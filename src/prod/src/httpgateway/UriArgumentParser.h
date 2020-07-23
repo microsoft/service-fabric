@@ -32,6 +32,8 @@ namespace HttpGateway
         Common::ErrorCode TryGetNodeStatusFilter(
             __out DWORD& nodeStatus);
 
+        Common::ErrorCode TryGetCodePackageName(__out std::wstring & codePackageName);
+
         Common::ErrorCode TryGetContinuationToken(__out std::wstring & continuationToken);
 
         Common::ErrorCode TryGetMaxResults(
@@ -57,6 +59,9 @@ namespace HttpGateway
 
         Common::ErrorCode TryGetServiceTypeName(
             __out std::wstring & serviceTypeName);
+
+        Common::ErrorCode TryGetServiceManifestName(
+            __out std::wstring & serviceManifestName);
 
         Common::ErrorCode TryGetMode(
             __out std::wstring &marker);
@@ -166,8 +171,17 @@ namespace HttpGateway
         Common::ErrorCode TryGetVolumeName(
             __out std::wstring & volumeName);
 
+        Common::ErrorCode TryGetGatewayName(
+            __out std::wstring & gatewayName);
+
         Common::ErrorCode TryGetAbsoluteServiceName(
             __out Common::NamingUri &name);
+
+        Common::ErrorCode TryGetNetworkName(
+            __out std::wstring & networkName);
+
+        Common::ErrorCode TryGetNetworkStatusFilter(
+            __out DWORD & networkStatusFilter);
 
     private:
         Common::ErrorCode TryGetPathId(

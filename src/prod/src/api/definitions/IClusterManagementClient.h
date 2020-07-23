@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 namespace Api
 {
@@ -15,7 +15,7 @@ namespace Api
         virtual Common::AsyncOperationSPtr BeginDeactivateNode(
             std::wstring const &nodeName,
             FABRIC_NODE_DEACTIVATION_INTENT const deactivationIntent,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndDeactivateNode(
@@ -23,7 +23,7 @@ namespace Api
 
         virtual Common::AsyncOperationSPtr BeginActivateNode(
             std::wstring const &nodeName,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndActivateNode(
@@ -32,7 +32,7 @@ namespace Api
         virtual Common::AsyncOperationSPtr BeginDeactivateNodesBatch(
             std::map<Federation::NodeId, Reliability::NodeDeactivationIntent::Enum> const &,
             std::wstring const & batchId,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndDeactivateNodesBatch(
@@ -40,7 +40,7 @@ namespace Api
 
         virtual Common::AsyncOperationSPtr BeginRemoveNodeDeactivations(
             std::wstring const & batchId,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndRemoveNodeDeactivations(
@@ -48,7 +48,7 @@ namespace Api
 
         virtual Common::AsyncOperationSPtr BeginGetNodeDeactivationStatus(
             std::wstring const & batchId,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndGetNodeDeactivationStatus(
@@ -57,14 +57,14 @@ namespace Api
 
         virtual Common::AsyncOperationSPtr BeginNodeStateRemoved(
             std::wstring const &nodeName,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndNodeStateRemoved(
             Common::AsyncOperationSPtr const &operation) = 0;
 
         virtual Common::AsyncOperationSPtr BeginRecoverPartitions(
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndRecoverPartitions(
@@ -72,7 +72,7 @@ namespace Api
 
         virtual Common::AsyncOperationSPtr BeginRecoverPartition(
             Common::Guid partitionId,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndRecoverPartition(
@@ -80,14 +80,14 @@ namespace Api
 
         virtual Common::AsyncOperationSPtr BeginRecoverServicePartitions(
             std::wstring const& serviceName,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndRecoverServicePartitions(
             Common::AsyncOperationSPtr const &operation) = 0;
 
         virtual Common::AsyncOperationSPtr BeginRecoverSystemPartitions(
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndRecoverSystemPartitions(
@@ -148,7 +148,7 @@ namespace Api
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndMoveNextFabricUpgradeDomain2(
             Common::AsyncOperationSPtr const &operation) = 0;
-        
+
        virtual Common::AsyncOperationSPtr BeginUnprovisionFabric(
             Common::FabricCodeVersion const &codeVersion,
             Common::FabricConfigVersion const &configVersion,
@@ -164,6 +164,14 @@ namespace Api
             Common::AsyncCallback const &callback,
             Common::AsyncOperationSPtr const &parent) = 0;
         virtual Common::ErrorCode EndGetClusterManifest(
+            Common::AsyncOperationSPtr const &operation,
+            __inout std::wstring &result) = 0;
+
+        virtual Common::AsyncOperationSPtr BeginGetClusterVersion(
+            Common::TimeSpan const timeoutMilliseconds,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent) = 0;
+        virtual Common::ErrorCode EndGetClusterVersion(
             Common::AsyncOperationSPtr const &operation,
             __inout std::wstring &result) = 0;
 
@@ -211,7 +219,7 @@ namespace Api
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const &) = 0;
-        
+
         virtual Common::ErrorCode EndGetTransportBehaviorList(
             Common::AsyncOperationSPtr const &,
             __inout std::vector<std::wstring>& result) = 0;
@@ -221,10 +229,10 @@ namespace Api
             std::wstring const & instanceId,
             bool restart,
             bool createFabricDump,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const &) = 0;
-        
+
         virtual Common::ErrorCode EndStopNode(
             Common::AsyncOperationSPtr const &) = 0;
 
@@ -234,10 +242,10 @@ namespace Api
             std::wstring const & serviceManifestName,
             std::wstring const & codePackageName,
             std::wstring const & instanceId,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const &) = 0;
-        
+
         virtual Common::ErrorCode EndRestartDeployedCodePackage(Common::AsyncOperationSPtr const &) = 0;
 
         virtual Common::AsyncOperationSPtr BeginStartNode(
@@ -245,10 +253,10 @@ namespace Api
             uint64 instanceId,
             std::wstring const & ipAddressOrFQDN,
             ULONG clusterConnectionPort,
-            Common::TimeSpan const timeout, 
+            Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const &) = 0;
-                
+
         virtual Common::ErrorCode EndStartNode(
             Common::AsyncOperationSPtr const &) = 0;
 

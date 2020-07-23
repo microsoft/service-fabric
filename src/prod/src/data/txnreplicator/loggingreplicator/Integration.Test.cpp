@@ -265,6 +265,7 @@ namespace LoggingReplicatorTests
             *copyContext,
             *copyStageBuffers,
             currentConfig,
+            true,
             allocator);
     }
 
@@ -1946,6 +1947,7 @@ namespace LoggingReplicatorTests
                 *copyContext, 
                 *copyStageBuffers,
                 config,
+                true,
                 allocator);
 
             OperationData::CSPtr op1;
@@ -2087,6 +2089,7 @@ namespace LoggingReplicatorTests
                 *copyContext,
                 *copyStageBuffers,
                 config,
+                true,
                 allocator);
 
             primary->StateManager->Reuse();
@@ -2250,6 +2253,7 @@ namespace LoggingReplicatorTests
                 *copyContext,
                 *copyStageBuffers,
                 config,
+                true,
                 allocator);
 
             // reuse the primary state manager so the validation will be run again for all the records being received in the secondary side
@@ -2385,6 +2389,7 @@ namespace LoggingReplicatorTests
                 *copyContext,
                 *copyStageBuffers,
                 config,
+                true,
                 allocator);
 
             p2->StateManager->Reuse();
@@ -2549,6 +2554,7 @@ namespace LoggingReplicatorTests
                 *copyContext,
                 *copyStageBuffers,
                 config,
+                true,
                 allocator);
 
             // reuse the primary state manager so the validation will be run again for all the records being received in the secondary side
@@ -2721,6 +2727,7 @@ namespace LoggingReplicatorTests
                 *copyContext,
                 *copyStageBuffers,
                 config,
+                true,
                 allocator);
 
             // reuse the primary state manager so the validation will be run again for all the records being received in the secondary side
@@ -2889,6 +2896,7 @@ namespace LoggingReplicatorTests
                 *copyContext,
                 *copyStageBuffers,
                 config,
+                true,
                 allocator);
 
             // reuse the primary state manager so the validation will be run again for all the records being received in the secondary side
@@ -4009,7 +4017,11 @@ namespace LoggingReplicatorTests
             
             TestReplica::SPtr replica = TestReplica::Create(pId_, *invalidLogRecords_, true, nullptr, *apiFaultUtility_, allocator);
             primaryTestReplica_ = replica;
-            replica->Initialize(seed);
+            TRANSACTIONAL_REPLICATOR_SETTINGS settings = { 0 };
+            settings.Flags = FABRIC_TRANSACTIONAL_REPLICATOR_MAX_STREAM_SIZE_MB | FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_LOG_FOR_LOWER_DISK_USAGE;
+            settings.MaxStreamSizeInMB = 1024;
+            settings.OptimizeLogForLowerDiskUsage = false;
+            replica->Initialize(seed, false, true, true, &settings);
 
             replica->TestLogTruncationManager->SetIndex(TestLogTruncationManager::OperationProbability::Yes);
     

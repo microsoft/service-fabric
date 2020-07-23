@@ -96,7 +96,6 @@ namespace System.Fabric.ImageStore
             this.XStoreType = Type.GetType(xstoreTypeName, true);
             object[] argImageStore = new object[] { imageStoreUri, localRoot };
             this.XStore = Activator.CreateInstance(this.XStoreType, argImageStore);
-
         }
 
         /// <summary>
@@ -109,6 +108,8 @@ namespace System.Fabric.ImageStore
         /// <param name="acquireSourceReaderLock">Indicates whether to acquire reader lock.</param>
         public void UploadContent(string remoteDestination, string localSource, TimeSpan timeout, CopyFlag copyFlag, bool acquireSourceReaderLock)
         {
+            CheckForReservedImageStoreFolders(remoteDestination);
+
             MethodInfo uploadContentMethodInfo = this.XStoreType.GetMethod(
                 "UploadContent", 
                 new[] { typeof(string), typeof(string), typeof(TimeSpan), typeof(CopyFlag), typeof(bool) });
@@ -127,6 +128,8 @@ namespace System.Fabric.ImageStore
 
         public void UploadContent(string remoteDestination, string localSource, IImageStoreProgressHandler handler, TimeSpan timeout, CopyFlag copyFlag, bool acquireSourceReaderLock)
         {
+            CheckForReservedImageStoreFolders(remoteDestination);
+
             MethodInfo uploadContentMethodInfo = this.XStoreType.GetMethod(
                 "UploadContent",
                 new[] { typeof(string), typeof(string), typeof(IImageStoreProgressHandler), typeof(TimeSpan), typeof(CopyFlag), typeof(bool) });
@@ -473,6 +476,16 @@ namespace System.Fabric.ImageStore
             {
                 this.DeleteContent(remoteLocation, timeout);
             });
+        }
+
+        private void CheckForReservedImageStoreFolders(string remoteDestination)
+        {
+            remoteDestination = remoteDestination.TrimEnd('\\');
+            if (string.Compare(remoteDestination, Constants.StoreFolder, true) == 0 ||
+                string.Compare(remoteDestination, Constants.WindowsFabricStoreFolder, true) == 0)
+            {
+                throw new FabricImageBuilderReservedDirectoryException(string.Format(StringResources.Error_InvalidReservedImageStoreOperation, remoteDestination));
+            }
         }
     }
 }

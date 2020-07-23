@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(OacrDisabled)' != 'true'">
+    <!-- This is needed to correctly set the OACRCSC correctly.
+	     Else it defaults to $(MsBuildToolsPath) -->
+    <_OacrCscToolPath>$(MsBuildToolsPath)\Roslyn</_OacrCscToolPath>
+	<CscToolPath>$(MsBuildToolsPath)\Roslyn</CscToolPath>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(OacrDisabled)' == 'true'">
+    <!-- This is needed to correctly set the OACRCSC correctly.
+     Else it defaults to $(MsBuildToolsPath) -->
+    <CscToolPath>$(SRCROOT)\properties</CscToolPath>
+    <CscToolExe>RunCsc.cmd</CscToolExe>
+  </PropertyGroup>
+</Project>

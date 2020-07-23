@@ -1,0 +1,656 @@
+{
+  "Default": {
+    "RunLocally": "true",
+      "TestExecutionParameters": {
+          "SetupType": "XCopy"
+      }    
+  },
+  "Tests": [
+        {
+      "Name": "KtlAwaitableUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam,richhas",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KtlAwaitable",
+          }
+        },
+
+    {
+      "Name": "KAllocationBitmapUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KtlUser",
+      "TestExecutionParameters": {
+        "TaskName": "KAllocationBitmap",
+      }
+    },
+
+    {
+      "Name": "KBitmapUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KBitmap",
+      }
+    },
+
+    {
+      "Name": "KBlockFileUser.dll",
+      "Type": "KUserTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KBlockFile",
+      }
+    },
+
+    {
+      "Name": "KBufferUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KBuffer",
+      }
+    },
+
+    {
+      "Name": "KCheckSumUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KCheckSum",
+      }
+    },
+
+    {
+      "Name": "KDelegateUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KDelegate",
+      }
+    },
+
+    {
+      "Name": "KHashTableUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KHashTable",
+        "ExecutionTimeout": "7200"
+      }
+    },
+
+    {
+      "Name": "KInvariantUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KInvariant",
+      }
+    },
+
+    {
+      "Name": "KIoBufferUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KIOBuffer",
+      }
+    },
+
+    {
+      "Name": "KNetFaultInjectorUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KNetFaultInjector",
+      }
+    },
+
+    {
+      "Name": "KNetworkEndpointUser.dll",
+      "Type": "KUserTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KNetworkEndpoint",
+      }
+    },
+
+    {
+      "Name": "KNodeTableUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KNodeTable",
+      }
+    },
+
+    {
+      "Name": "KRegistryUser.dll",
+      "Type": "KUserTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KRegistry",
+      }
+    },
+
+    {
+      "Name": "KRTTUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KRTT",
+      }
+    },
+
+    {
+      "Name": "KSerialUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KSerial",
+      }
+    },
+
+    {
+      "Name": "KStreamUser.dll",
+      "Type": "KUserTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KStream",
+      }
+    },
+
+    {
+      "Name": "KStringViewUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KStringView",
+      }
+    },
+
+    {
+      "Name": "KTaskUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KTask",
+      }
+    },
+
+    {
+      "Name": "KThreadUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KThread",
+      }
+    },
+
+    {
+      "Name": "KUriUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KUri",
+      }
+    },
+
+    {
+      "Name": "KVariantUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KVariant",
+      }
+    },
+
+    {
+      "Name": "KVolumeNamespaceUser.dll",
+      "Type": "KUserTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KVolumeNamespace",
+      }
+    },
+
+    {
+      "Name": "KWeakRefUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KWeakRef",
+      }
+    },
+
+    {
+      "Name": "KWStringUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "KWString",
+      }
+    },
+
+    {
+      "Name": "ProcessAffinityUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL",
+      "TestExecutionParameters": {
+        "TaskName": "ProcessAffinity",
+      }
+    },
+
+    {
+      "Name": "KAsyncContextUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL, LongRun",
+      "TestExecutionParameters": {
+        "TaskName": "KAsyncContext",
+      }
+    },
+
+    {
+      "Name": "KAsyncQueueUser.dll",
+      "Type": "KUserTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL, LongRun",
+      "TestExecutionParameters": {
+        "TaskName": "KAsyncQueue",
+      }
+    },
+
+    {
+      "Name": "KHttpUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL, LongRun",
+      "TestExecutionParameters": {
+        "TaskName": "KHttp",
+      }
+    },
+
+    {
+      "Name": "KMemChannelUser.dll",
+      "Type": "KUserTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL, LongRun",
+      "TestExecutionParameters": {
+        "TaskName": "KMemChannel",
+      }
+    },
+
+    {
+      "Name": "KPerfCounterUser.dll",
+      "Type": "KUserTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL, LongRun",
+      "TestExecutionParameters": {
+        "TaskName": "KPerfCounter",
+      }
+    },
+
+    {
+      "Name": "KThreadPoolUser.dll",
+      "Type": "KUserTest_Isolated",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL, LongRun",
+      "TestExecutionParameters": {
+        "TaskName": "KThreadPool",
+      }
+    },
+
+    {
+      "Name": "KTLCommonUser.dll",
+      "Type": "KUserTest_Isolated",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL, LongRun",
+      "TestExecutionParameters": {
+        "TaskName": "KTLCommon",
+      }
+    },
+
+    {
+      "Name": "RvdLoggerUser.dll",
+      "Type": "KUserTest_Isolated",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin, KTL, LongRun",
+
+      "TestExecutionParameters": {
+        "TaskName": "RvdLogger",
+        "ExecutionTimeout": "7200"
+      }
+    },
+
+
+
+    {
+      "Name": "KAllocationBitmapKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KAllocationBitmap",
+      }
+    },
+
+    {
+      "Name": "KBitmapKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KBitmap",
+      }
+    },
+
+    {
+      "Name": "KBlockFileKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KBlockFile",
+      }
+    },
+
+    {
+      "Name": "KBufferKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KBuffer",
+      }
+    },
+
+    {
+      "Name": "KCheckSumKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KCheckSum",
+      }
+    },
+
+    {
+      "Name": "KDelegateKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KDelegate",
+      }
+    },
+
+    {
+      "Name": "KHashTableKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KHashTable",
+        "ExecutionTimeout": "7200"
+      }
+    },
+
+    {
+      "Name": "KInvariantKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KInvariant",
+      }
+    },
+
+    {
+      "Name": "KIOBufferKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KIOBuffer",
+      }
+    },
+
+    {
+      "Name": "KNetFaultInjectorKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KNetFaultInjector",
+      }
+    },
+
+    {
+      "Name": "KNetworkEndpointKernel.sys",
+      "Type": "KKernelTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KNetworkEndpoint",
+      }
+    },
+
+    {
+      "Name": "KNodeTableKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KNodeTable",
+      }
+    },
+
+    {
+      "Name": "KRegistryKernel.sys",
+      "Type": "KKernelTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KRegistry",
+      }
+    },
+
+    {
+      "Name": "KRTTKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KRTT",
+      }
+    },
+
+    {
+      "Name": "KSerialKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KSerial",
+      }
+    },
+
+    {
+      "Name": "KStringViewKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KStringView",
+      },
+    },
+
+    {
+      "Name": "KTaskKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KTask",
+      }
+    },
+
+    {
+      "Name": "KThreadKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KThread",
+      }
+    },
+
+    {
+      "Name": "KUriKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KUri",
+      }
+    },
+
+    {
+      "Name": "KVariantKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KVariant",
+      }
+    },
+
+    {
+      "Name": "KVolumeNamespaceKernel.sys",
+      "Type": "KKernelTest_Sequential",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KVolumeNamespace",
+      }
+    },
+
+    {
+      "Name": "KWeakRefKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KWeakRef",
+      }
+    },
+
+    {
+      "Name": "KWStringKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KWString",
+      }
+    },
+
+    {
+      "Name": "KAsyncContextKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KAsyncContext",
+      }
+    },
+
+    {
+      "Name": "KAsyncQueueKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KAsyncQueue",
+      }
+    },
+
+    {
+      "Name": "KMemChannelKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KMemChannel",
+      }
+    },
+
+    {
+      "Name": "KPerfCounterKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KPerfCounter",
+      }
+    },
+
+    {
+      "Name": "KThreadPoolKernel.sys",
+      "Type": "KKernelTest_Isolated",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KThreadPool",
+      }
+    },
+
+    {
+      "Name": "KTLCommonKernel.sys",
+      "Type": "KKernelTest",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "KTLCommon",
+      }
+    },
+
+    {
+      "Name": "RvdLoggerKernel.sys",
+      "Type": "KKernelTest_Isolated",
+      "Owners": "alanwar,tyadam",
+      "Tags": "KTL, Admin",
+      "TestExecutionParameters": {
+        "TaskName": "RvdLogger",
+        "ExecutionTimeout": "7200"
+      }
+    }
+  ]
+}

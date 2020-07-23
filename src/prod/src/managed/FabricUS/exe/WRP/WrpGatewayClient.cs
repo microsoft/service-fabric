@@ -164,12 +164,56 @@ namespace System.Fabric.UpgradeService
                         {
                             Trace.WriteInfo(
                                 TraceType,
-                                "Certificate found: StoreName {0}, StoreLocation {1}, FindType {2}, FindValue {3}",
+                                "Certificates found: StoreName {0}, StoreLocation {1}, FindType {2}, FindValue {3}, Count {4}",
                                 storeName,
                                 storeLocation,
                                 findType,
-                                value);
-                            certificates.Add(certCollections[0]);
+                                value,
+                                certCollections.Count);
+
+                            for (int i = 0; i < certCollections.Count; ++i)
+                            {
+                                Trace.WriteInfo(
+                                    TraceType,
+                                    "Certificate[{0}]: Thumbprint {1}, NotBefore {2}, NotAfter {3}, Subject {4}",
+                                    i,                                    
+                                    certCollections[i].Thumbprint,
+                                    certCollections[i].NotBefore,
+                                    certCollections[i].NotAfter,
+                                    certCollections[i].Subject);
+                            }
+
+                            // Select a cert that is not expired and is the newest created.
+                            // This should make it predictible if certificate is compromised and it needs to be replaced with a newer one.
+                            var now = DateTime.UtcNow;
+                            var selectedCert = certCollections.Cast<X509Certificate2>()
+                                .Where(c => c.NotBefore <= now && now <= c.NotAfter)
+                                .OrderByDescending(c => c.NotBefore)
+                                .FirstOrDefault();
+
+                            if (selectedCert != null)
+                            {
+                                Trace.WriteInfo(
+                                    TraceType,
+                                    "Selected certificate: Thumbprint {0}, NotBefore {1}, NotAfter {2}, Subject {3}",
+                                    selectedCert.Thumbprint,
+                                    selectedCert.NotBefore,
+                                    selectedCert.NotAfter,
+                                    selectedCert.Subject);
+
+                                certificates.Add(selectedCert);
+                            }
+                            else
+                            {
+                                Trace.WriteInfo(
+                                    TraceType,
+                                    "No valid certificate found: StoreName {0}, StoreLocation {1}, FindType {2}, FindValue {3}, Count {4}",
+                                    storeName,
+                                    storeLocation,
+                                    findType,
+                                    value,
+                                    certCollections.Count);
+                            }
                         }
                         else
                         {
@@ -200,6 +244,6 @@ namespace System.Fabric.UpgradeService
 
             return certificates;
         }
-#endregion
-        }
+        #endregion
     }
+}

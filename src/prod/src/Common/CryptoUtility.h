@@ -128,6 +128,11 @@ namespace Common
             wstring const & keyContainerName,
             _Out_ SecureString & key);
 
+        static Common::ErrorCode CryptoUtility::GenerateExportableKey(
+            wstring const & keyContainerName,
+            bool fMachineKeyset,
+            _Out_ SecureString & key);
+
         static Common::ErrorCode CryptoUtility::CreateCertFromKey(
             ByteBuffer const & buffer,
             wstring const & key,
@@ -144,6 +149,12 @@ namespace Common
 
         static Common::ErrorCode CreateSelfSignedCertificate(
             std::wstring const & subjectName,
+            std::wstring const & keyContainerName,
+            bool fMachineKeyset,
+            _Out_ Common::CertContextUPtr & cert);
+
+        static Common::ErrorCode CreateSelfSignedCertificate(
+            std::wstring const & subjectName,
             _Out_ Common::CertContextUPtr & cert);
 
         static Common::ErrorCode CreateSelfSignedCertificate(
@@ -156,6 +167,14 @@ namespace Common
             const std::vector<std::wstring> *subjectAltNames,
             DateTime expiration,
             std::wstring const & keyContainerName,
+            _Out_ CertContextUPtr & cert);
+
+        static Common::ErrorCode CreateSelfSignedCertificate(
+            std::wstring const & subjectName,
+            const std::vector<std::wstring> *subjectAltNames,
+            DateTime expiration,
+            std::wstring const & keyContainerName,
+            bool fMachineKeyset,
             _Out_ CertContextUPtr & cert);
 
         static Common::ErrorCode CreateSelfSignedCertificate(

@@ -1,0 +1,23 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "FederationRandomTest",
+      "Type": "RandomTest",
+      "Owners": "zhol,jefchen",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "Federation",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_89_FederationRandom_1M_SecON.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Federation",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "Federation",
+        "CleanupTimeout": "2100"
+      }
+    },
+  ]
+}

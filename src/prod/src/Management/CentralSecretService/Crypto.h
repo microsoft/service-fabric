@@ -6,18 +6,18 @@
 
 namespace Management
 {
-	namespace CentralSecretService
-	{
-		class Crypto
-		{
-		public:
-			Crypto();
+     namespace CentralSecretService
+    {
+        class Crypto
+        {
+        public:
+            Crypto();
 
-			ErrorCode Encrypt(std::wstring const & text, std::wstring & encryptedText);
-			ErrorCode Decrypt(std::wstring const & encryptedText, SecureString & decryptedText);
+            ErrorCode Encrypt(std::wstring const & text, std::wstring & encryptedText) const;
+            ErrorCode Decrypt(std::wstring const & encryptedText, SecureString & decryptedText) const;
 
-		private:
-			CertContextUPtr certContext_;
-		};
-	}
+        private:
+            CertContextUPtr certContext_;
+        };
+    }
 }

@@ -13,9 +13,9 @@ namespace HttpGateway
         DENY_COPY(FabricClientWrapper)
 
     public:
-        
+
         static Common::ErrorCode CreateFabricClient(
-            __in Common::FabricNodeConfigSPtr &config, 
+            __in Common::FabricNodeConfigSPtr &config,
             __out FabricClientWrapperSPtr &,
             __in Transport::RoleMask::Enum role = Transport::RoleMask::None);
 
@@ -31,11 +31,14 @@ namespace HttpGateway
         __declspec(property(get=get_HealthClient)) Api::IHealthClientPtr &HealthClient;
         __declspec(property(get=get_ClusterMgmtClient)) Api::IClusterManagementClientPtr &ClusterMgmtClient;
         __declspec(property(get=get_FaultMgmtClient)) Api::IFaultManagementClientPtr &FaultMgmtClient;
+        __declspec(property(get = get_SecretStoreClient)) Api::ISecretStoreClientPtr &SecretStoreClient;
         __declspec(property(get=get_TvsMgmtClient)) Api::IInternalTokenValidationServiceClientPtr &TvsClient;
         __declspec(property(get=get_InfrastructureClient)) Api::IInfrastructureServiceClientPtr &InfrastructureClient;
         __declspec(property(get=get_RepairMgmtClient)) Api::IRepairManagementClientPtr &RepairMgmtClient;
         __declspec(property(get=get_TestMgmtClient)) Api::ITestManagementClientPtr &TestMgmtClient;
         __declspec(property(get=get_PropertyMgmtClient)) Api::IPropertyManagementClientPtr &PropertyMgmtClient;
+        __declspec(property(get = get_NetworkMgmtClient)) Api::INetworkManagementClientPtr &NetworkMgmtClient;
+        __declspec(property(get = get_GatewayResourceManagerClient)) Api::IGatewayResourceManagerClientPtr &GatewayResourceManagerClient;
         __declspec(property(get = get_ClientRole)) Transport::RoleMask::Enum ClientRole;
 
 
@@ -49,11 +52,14 @@ namespace HttpGateway
         Api::IHealthClientPtr const& get_HealthClient() const{ return healthClientPtr_; }
         Api::IClusterManagementClientPtr const& get_ClusterMgmtClient() const{ return clusterMgmtClientPtr_; }
         Api::IFaultManagementClientPtr const& get_FaultMgmtClient() const { return faultMgmtClientPtr_; }
+        Api::ISecretStoreClientPtr const& get_SecretStoreClient() const { return secretStoreClientPtr_; }
         Api::IInternalTokenValidationServiceClientPtr const& get_TvsMgmtClient() const{ return tvsClientPtr_; }
         Api::IInfrastructureServiceClientPtr const& get_InfrastructureClient() const{ return infraSvcClientPtr_; }
         Api::IRepairManagementClientPtr const& get_RepairMgmtClient() const{ return repairMgmtClientPtr_; };
         Api::ITestManagementClientPtr const& get_TestMgmtClient() const{ return testMgmtClientPtr_; };
         Api::IPropertyManagementClientPtr const& get_PropertyMgmtClient() const{ return propertyMgmtClientPtr_; };
+        Api::INetworkManagementClientPtr const& get_NetworkMgmtClient() const { return networkMgmtClientPtr_; };
+        Api::IGatewayResourceManagerClientPtr const& get_GatewayResourceManagerClient() const { return gatewayResourceManagerClientPtr_; };
         Transport::RoleMask::Enum get_ClientRole() { return role_; }
 
     private:
@@ -75,13 +81,17 @@ namespace HttpGateway
         Api::IHealthClientPtr healthClientPtr_;
         Api::IClusterManagementClientPtr clusterMgmtClientPtr_;
         Api::IFaultManagementClientPtr faultMgmtClientPtr_;
+        Api::ISecretStoreClientPtr secretStoreClientPtr_;
         Api::IInternalTokenValidationServiceClientPtr tvsClientPtr_;
         Api::IInfrastructureServiceClientPtr infraSvcClientPtr_;
         Api::IRepairManagementClientPtr repairMgmtClientPtr_;
         Api::ITestManagementClientPtr testMgmtClientPtr_;
         Api::IClientSettingsPtr settingsClientPtr_;
         Api::IPropertyManagementClientPtr propertyMgmtClientPtr_;
-        
+        Api::INetworkManagementClientPtr networkMgmtClientPtr_;
+
+        Api::IGatewayResourceManagerClientPtr gatewayResourceManagerClientPtr_;
+
         Transport::RoleMask::Enum role_;
     };
 }

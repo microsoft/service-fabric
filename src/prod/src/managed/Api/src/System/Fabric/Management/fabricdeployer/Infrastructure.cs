@@ -5,14 +5,16 @@
 
 namespace System.Fabric.Management.FabricDeployer
 {
+    using Microsoft.Win32;
     using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Fabric.Common;
-using System.Fabric.Management.ServiceModel;
-using System.Fabric.Strings;
-using System.Globalization;
-using System.Linq;
+    using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Fabric.Common;
+    using System.Fabric.FabricDeployer;
+    using System.Fabric.Management.ServiceModel;
+    using System.Fabric.Strings;
+    using System.Globalization;
+    using System.Linq;
 
     internal abstract class Infrastructure
     {
@@ -53,9 +55,13 @@ using System.Linq;
             {
                 return new ServerInfrastructure(cmInfrastructure, infrastructureNodes, nameToNodeTypeMap);
             }
-            else if (cmInfrastructure.Item is ClusterManifestTypeInfrastructureWindowsAzure || cmInfrastructure.Item is ClusterManifestTypeInfrastructureWindowsAzureStaticTopology)
+            else if (cmInfrastructure.Item is ClusterManifestTypeInfrastructureWindowsAzure)
             {
                 return new AzureInfrastructure(cmInfrastructure, infrastructureNodes, nameToNodeTypeMap);
+            }
+            else if (cmInfrastructure.Item is ClusterManifestTypeInfrastructureWindowsAzureStaticTopology)
+            {
+                return new AzureInfrastructure(cmInfrastructure, infrastructureNodes, nameToNodeTypeMap, GetDynamicTopologyKindIntValue());
             }
             else if (cmInfrastructure.Item is ClusterManifestTypeInfrastructurePaaS)
             {
@@ -74,5 +80,20 @@ using System.Linq;
         #endregion Public Functions
 
         protected List<InfrastructureNodeType> nodes;
+
+        private static int GetDynamicTopologyKindIntValue()
+        {
+            using (RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(FabricConstants.FabricRegistryKeyPath))
+            {
+                if (registryKey == null)
+                {
+                    return 0;
+                }
+
+                int value = (int)registryKey.GetValue(Fabric.FabricDeployer.Constants.Registry.DynamicTopologyKindValue, 0);
+
+                return value;
+            }
+        }
     }
 }

@@ -36,6 +36,9 @@ install(
     ${FABRIC_SYSTEM_APP_SRC_DIR}/CSS.Manifest.Current.xml
     ${FABRIC_SYSTEM_APP_SRC_DIR}/CSS.Package.1.0.xml
     
+    ${FABRIC_SYSTEM_APP_SRC_DIR}/GRM.Manifest.Current.xml
+    ${FABRIC_SYSTEM_APP_SRC_DIR}/GRM.Package.1.0.xml
+
     DESTINATION ${TEST_OUTPUT_DIR}/${FABRIC_SYSTEM_APP_DST_DIR}
 )
 

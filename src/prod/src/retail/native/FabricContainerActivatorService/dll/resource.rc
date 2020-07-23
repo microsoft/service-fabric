@@ -1,0 +1,24 @@
+//------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+//------------------------------------------------------------
+
+//
+// File: resource.rc
+//
+// Resource file for FabricContainerManager DLL. This resource file defines 
+// binary level information.
+//
+
+#include "fabricverp.h"
+#include "resource.h"
+
+#define VER_FILETYPE                VFT_DLL
+#define VER_FILESUBTYPE             VFT2_UNKNOWN
+#define VER_FILEDESCRIPTION_STR     "Microsoft Azure Service Fabric Container Activator Service"
+#define VER_INTERNALNAME_STR        "FabricContainerActivatorService.dll"
+#define VER_ORIGINALFILENAME_STR    "FabricContainerActivatorService.dll"
+
+#include "common.ver"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)

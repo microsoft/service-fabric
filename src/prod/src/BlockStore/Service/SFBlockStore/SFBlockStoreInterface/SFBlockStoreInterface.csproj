@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{E78DC744-617B-4B96-B9A8-69BDAFF8E94A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>SFBlockStoreInterface</RootNamespace>
+    <AssemblyName>SFBlockStoreInterface</AssemblyName>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <OutputType>library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+
+    <!--
+
+    ** Uncomment to build against the assemblies built as part of the repo build **
+
+    <ProjectReference Include="..\..\..\..\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+
+    <ProjectReference Include="..\..\..\..\managed\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj">
+      <Project>{0454FA10-771F-4734-BB4F-00AAC3B7D56E}</Project>
+      <Name>Microsoft.ServiceFabric.Data</Name>
+    </ProjectReference>
+
+    <ProjectReference Include="..\..\..\..\managed\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj">
+      <Project>{6244C9FE-DC97-4783-A63E-94CE833196B4}</Project>
+      <Name>Microsoft.ServiceFabric.Data.Interfaces</Name>
+    </ProjectReference>
+   
+    <ProjectReference Include="..\..\..\..\managed\Microsoft.ServiceFabric.Services\Microsoft.ServiceFabric.Services.csproj">
+      <Project>{B0BF315B-A85E-4BC3-83A0-294C0C5A25A8}</Project>
+      <Name>Microsoft.ServiceFabric.Services</Name>
+    </ProjectReference>
+
+        <ProjectReference Include="..\..\..\..\managed\Microsoft.ServiceFabric.Services.Remoting\Microsoft.ServiceFabric.Services.Remoting.csproj">
+      <Project>{C1036FAB-C4A2-4812-949E-E5E47CC74CC3}</Project>
+      <Name>Microsoft.ServiceFabric.Services.Remoting</Name>
+    </ProjectReference>
+    -->
+
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Fabric">
+      <HintPath>$(NugetMachineInstallRoot)\Microsoft.ServiceFabric.5.6.220\lib\net45\System.Fabric.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ServiceFabric.Data" >
+      <HintPath>$(NugetMachineInstallRoot)\Microsoft.ServiceFabric.Data.2.6.220\lib\net45\Microsoft.ServiceFabric.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ServiceFabric.Data.Interfaces" >
+      <HintPath>$(NugetMachineInstallRoot)\Microsoft.ServiceFabric.Data.2.6.220\lib\net45\Microsoft.ServiceFabric.Data.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ServiceFabric.Internal" >
+      <HintPath>$(NugetMachineInstallRoot)\Microsoft.ServiceFabric.5.6.220\lib\net45\Microsoft.ServiceFabric.Internal.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ServiceFabric.Services" >
+      <HintPath>$(NugetMachineInstallRoot)\Microsoft.ServiceFabric.Services.2.6.220\lib\net45\Microsoft.ServiceFabric.Services.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ServiceFabric.Services.Remoting" >
+      <HintPath>$(NugetMachineInstallRoot)\Microsoft.ServiceFabric.Services.Remoting.2.6.220\lib\net45\Microsoft.ServiceFabric.Services.Remoting.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BSInterface.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+
+  <!-- This will copy the files to the bin folder from where they can be picked up for packaging and signing -->
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <SymbolFiles Include="$(OutputPath)**\SFBlockStoreInterface.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

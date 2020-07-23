@@ -102,7 +102,6 @@ namespace Query
                     return L"InvokeContainerApiOnNode";
                 case QueryNames::GetTestCommandList:
                     return L"GetTestCommandList";
-
                 case QueryNames::GetRepairList:
                     return L"GetRepairList";
                 case QueryNames::GetClusterLoadInformation:
@@ -177,6 +176,22 @@ namespace Query
                     return L"GetApplicationUnhealthyEvaluation";
                 case QueryNames::GetVolumeResourceList:
                     return L"GetVolumeResourceList";
+                case QueryNames::GetClusterVersion:
+                    return L"GetClusterVersion";
+                case QueryNames::GetNetworkList:
+                    return L"GetNetworkList";
+                case QueryNames::GetNetworkApplicationList:
+                    return L"GetNetworkApplicationList";
+                case QueryNames::GetNetworkNodeList:
+                    return L"GetNetworkNodeList";
+                case QueryNames::GetApplicationNetworkList:
+                    return L"GetApplicationNetworkList";
+                case QueryNames::GetDeployedNetworkList:
+                    return L"GetDeployedNetworkList";
+                case QueryNames::GetDeployedNetworkCodePackageList:
+                    return L"GetDeployedNetworkCodePackageList";
+                case QueryNames::GetGatewayResourceList:
+                    return L"GetGatewayResourceList";
                 default:
                     return wformatString("Unknown QueryNames::Enum value {0}", static_cast<int>(val));
             }

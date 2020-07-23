@@ -347,3 +347,7 @@ public:
 
     virtual NTSTATUS
     CreateUpdateReservationContext(__out AsyncReservationContext::SPtr& Context) = 0;        
+
+    virtual NTSTATUS
+    SetTruncationCompletionEvent(__in_opt KAsyncEvent* const EventToSignal) = 0;
+    

@@ -13,17 +13,18 @@ namespace System.Fabric.BackupRestore
     internal class BackupScheduler
     {
         private readonly BackupTimer _periodicTimer;
-        private readonly BackupRescheduleTimer _rescheduleTimer;
+        private readonly RescheduleTimer _rescheduleTimer;
         private readonly Action _timerCallback;
         private int _syncPoint;         // This is used to synchronize the timer stop
         private bool _isStopped;
         private readonly BackupMetadata _backupMetadataObj;
+        private const string BackupRescheduleTimerTraceType = "BackupRescheduleTimer";
 
         internal BackupScheduler(BackupMetadata backupMetadata, Action timerCallack)
         {
             this._backupMetadataObj = backupMetadata;
             this._periodicTimer = new BackupTimer(backupMetadata, TimerCallback);
-            this._rescheduleTimer = new BackupRescheduleTimer(TimerCallback);
+            this._rescheduleTimer = new RescheduleTimer(TimerCallback, BackupRescheduleTimerTraceType);
             this._timerCallback = timerCallack;
         }
 

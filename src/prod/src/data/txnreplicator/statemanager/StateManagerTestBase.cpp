@@ -22,22 +22,35 @@ TestTransactionManager::SPtr StateManagerTestBase::CreateReplica(
     auto internalSettings = TRInternalSettings::Create(
         move(this->CreateNativeTRSettings()),
         make_shared<TransactionalReplicatorConfig>());
-    return CreateReplica(traceId, runtimeFolders, partition, internalSettings);
+    return CreateReplica(traceId, runtimeFolders, partition, internalSettings, true);
+}
+
+TestTransactionManager::SPtr StateManagerTestBase::CreateVolatileReplica(
+    __in PartitionedReplicaId const& traceId,
+    __in IRuntimeFolders & runtimeFolders,
+    __in IStatefulPartition& partition)
+{
+    auto internalSettings = TRInternalSettings::Create(
+        move(this->CreateNativeTRSettings()),
+        make_shared<TransactionalReplicatorConfig>());
+    return CreateReplica(traceId, runtimeFolders, partition, internalSettings, false);
 }
 
 TestTransactionManager::SPtr StateManagerTestBase::CreateReplica(
     __in PartitionedReplicaId const& traceId, 
     __in IRuntimeFolders & runtimeFolders, 
     __in IStatefulPartition& partition,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
+    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in bool hasPersistedState)
 {
     auto txnReplicator = TestTransactionManager::Create(GetAllocator());
-    auto testReplicator = MockLoggingReplicator::Create(GetAllocator());
+    auto testReplicator = MockLoggingReplicator::Create(hasPersistedState, GetAllocator());
     auto testStateManager = CreateStateManager(
         traceId,
         runtimeFolders,
         partition,
-        transactionalReplicatorConfig);
+        transactionalReplicatorConfig,
+        hasPersistedState);
 
     testStateManager->Initialize(*txnReplicator, *testReplicator);
     testReplicator->Initialize(*testStateManager);
@@ -50,7 +63,8 @@ StateManager::SPtr StateManagerTestBase::CreateStateManager(
     __in PartitionedReplicaId const & traceId,
     __in IRuntimeFolders & runtimeFolders, 
     __in IStatefulPartition & partition,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
+    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in bool hasPersistedState)
 {
     StateManager::SPtr stateManagerSPtr = nullptr;
     NTSTATUS status = StateManager::Create(
@@ -59,6 +73,7 @@ StateManager::SPtr StateManagerTestBase::CreateStateManager(
         partition,
         *stateProviderFactorySPtr_,
         transactionalReplicatorConfig,
+        hasPersistedState,
         underlyingSystem_->PagedAllocator(),
         stateManagerSPtr);
 
@@ -600,11 +615,17 @@ TxnReplicator::TransactionalReplicatorSettingsUPtr StateManagerTestBase::CreateN
     return txnReplicatorSettingsUPtr;
 }
 
-StateManagerTestBase::StateManagerTestBase() : StateManagerTestBase(TRInternalSettings::Create(move(this->CreateNativeTRSettings()), make_shared<TransactionalReplicatorConfig>()))
+StateManagerTestBase::StateManagerTestBase() : StateManagerTestBase(TRInternalSettings::Create(move(this->CreateNativeTRSettings()), make_shared<TransactionalReplicatorConfig>()), true)
 {
 }
 
-StateManagerTestBase::StateManagerTestBase(__in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
+StateManagerTestBase::StateManagerTestBase(__in bool hasPersistedState) : StateManagerTestBase(TRInternalSettings::Create(move(this->CreateNativeTRSettings()), make_shared<TransactionalReplicatorConfig>()), hasPersistedState)
+{
+}
+
+StateManagerTestBase::StateManagerTestBase(
+    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in bool hasPersistedState)
 {
     underlyingSystem_ = TestHelper::CreateKtlSystem();
     underlyingSystem_->SetDefaultSystemThreadPoolUsage(FALSE);
@@ -625,7 +646,8 @@ StateManagerTestBase::StateManagerTestBase(__in TxnReplicator::TRInternalSetting
         *partitionedReplicaIdCSPtr_,
         *runtimeFolders_,
         *partitionSPtr_,
-        transactionalReplicatorConfig);
+        transactionalReplicatorConfig,
+        hasPersistedState);
 }
 
 StateManagerTestBase::~StateManagerTestBase()

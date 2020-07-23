@@ -1,0 +1,91 @@
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+enableunsupportedpreviewfeatures true
+networkinventorymanager true
+cleantest
+
++10
++20
++30
+verify
+
+shownetworks expectedCount=0
+
+# Test case 1: Create a container network and then delete it
+createnetwork networkName=testNetwork1 networkAddressPrefix=10.0.0.4/22
+
+deletenetwork networkName=testNetwork1
+
+shownetworks expectedCount=0
+
+# Test case 2: Create a container network that already exists
+createnetwork networkName=testNetwork2 networkAddressPrefix=10.0.0.4/22
+
+createnetwork networkName=testNetwork2 networkAddressPrefix=10.0.0.4/22 error=NameAlreadyExists
+
+shownetworks expectedCount=1
+
+# Test case 3: Create container networks with names that only differ in case (currently network names are case sensitive)
+createnetwork networkName=testNetwork3 networkAddressPrefix=10.0.0.4/22
+
+createnetwork networkName=TestNetwork3 networkAddressPrefix=10.0.0.4/22
+
+shownetworks expectedCount=3
+
+# Test case 4: Create container networks with invalid network address prefixes
+createnetwork networkName=testNetwork4a networkAddressPrefix=10.0.0.4 error=InvalidAddress
+
+#createnetwork networkName=testNetwork4b networkAddressPrefix=10.0.0.4/33 error=InvalidAddress
+
+shownetworks expectedCount=3
+
+# Test case 5: Delete a container network that does not exist
+deletenetwork networkName=testNetwork5 error=NetworkNotFound
+
+shownetworks expectedCount=3
+
+# Test case 6: Multiple creations and deletions with failover
+gfum
+
+createnetwork networkName=testNetwork6a networkAddressPrefix=10.0.0.4/22
+createnetwork networkName=testNetwork6b networkAddressPrefix=10.2.0.4/22
+createnetwork networkName=testNetwork6c networkAddressPrefix=10.4.0.4/22
+createnetwork networkName=testNetwork6d networkAddressPrefix=10.6.0.4/22
+createnetwork networkName=testNetwork6e networkAddressPrefix=10.8.0.4/22
+createnetwork networkName=testNetwork6f networkAddressPrefix=10.10.0.4/22
+createnetwork networkName=testNetwork6g networkAddressPrefix=10.12.0.4/22
+createnetwork networkName=testNetwork6h networkAddressPrefix=10.14.0.4/22
+createnetwork networkName=testNetwork6i networkAddressPrefix=10.16.0.4/22
+
+killfmservice primaryOnly
+verify
+gfum
+
+shownetworks expectedCount=12
+
+deletenetwork networkName=testNetwork6c
+deletenetwork networkName=testNetwork6g
+
+shownetworks expectedCount=10
+
+getnetwork networkName=testNetwork1 networkExists=false
+getnetwork networkName=testNetwork2 networkExists=true
+#getnetwork networkName=testNetwork3 networkExists=true
+#getnetwork networkName=TestNetwork3 networkExists=true
+getnetwork networkName=testNetwork4a networkExists=false
+getnetwork networkName=testNetwork5 networkExists=false
+getnetwork networkName=testNetwork6a networkExists=true
+getnetwork networkName=testNetwork6b networkExists=true
+getnetwork networkName=testNetwork6c networkExists=false
+getnetwork networkName=testNetwork6d networkExists=true
+getnetwork networkName=testNetwork6e networkExists=true
+getnetwork networkName=testNetwork6f networkExists=true
+getnetwork networkName=testNetwork6g networkExists=false
+getnetwork networkName=testNetwork6h networkExists=true
+getnetwork networkName=testNetwork6i networkExists=true
+
+-*
+
+!q

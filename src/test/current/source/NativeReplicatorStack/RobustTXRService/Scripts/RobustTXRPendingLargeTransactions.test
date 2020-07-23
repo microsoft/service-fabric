@@ -1,0 +1,30 @@
+var NumberOfTransactions 5000
+var MinDataPerTransactionInKb 1000
+var MaxDataPerTransactionInKb 10000
+var SkipTransactionCompletionRatio 1
+var ReplicaSetSize 3
+var numWorkloads 1
+
+load SetupRobustTestCluster.test
+
+load DeployRobustTXRApplication.test
+
+var appName fabric:/robustnativee2e
+createapp <var.appName> RobustTXRPendingApp appParameters={"DiagnosticsConnectionString":"xstore:DefaultEndpointsProtocol=https;AccountName=shrek;AccountKey=<var.accountKey>","CrashDumpContainerName":"<var.dumpContainerName>"}
+verify
+
+client.newclient ROBUSTE2E_1 KvsPerformanceTest.V2Client,KvsService.Test parameters=serviceName:fabric:/robustnativee2e/service
+client.starttask ROBUSTE2E_1 RobustE2EWorkload1 StartNativeV2E2EWorkload parameters={"NumberOfTransactions":"<var.NumberOfTransactions>","MinDataPerTransactionInKb":"<var.MinDataPerTransactionInKb>","MaxDataPerTransactionInKb":"<var.MaxDataPerTransactionInKb>","SkipTransactionCompletionRatio":"<var.SkipTransactionCompletionRatio>","ReplicaSetSize":"<var.ReplicaSetSize>","numWorkloads":"<var.numWorkloads>"}
+client.waittask taskIds=RobustE2EWorkload1 timeout=21600
+
+# run another variant of the test with 0.5 skip commit ratio
+var SkipTransactionCompletionRatio 0.5
+deleteapp <var.appName>
+createapp <var.appName> RobustTXRPendingApp appParameters={"DiagnosticsConnectionString":"xstore:DefaultEndpointsProtocol=https;AccountName=shrek;AccountKey=<var.accountKey>","CrashDumpContainerName":"<var.dumpContainerName>"}
+verify
+
+client.newclient ROBUSTE2E_2 KvsPerformanceTest.V2Client,KvsService.Test parameters=serviceName:fabric:/robustnativee2e/service
+client.starttask ROBUSTE2E_2 RobustE2EWorkload2 StartNativeV2E2EWorkload parameters={"NumberOfTransactions":"<var.NumberOfTransactions>","MinDataPerTransactionInKb":"<var.MinDataPerTransactionInKb>","MaxDataPerTransactionInKb":"<var.MaxDataPerTransactionInKb>","SkipTransactionCompletionRatio":"<var.SkipTransactionCompletionRatio>","ReplicaSetSize":"<var.ReplicaSetSize>","numWorkloads":"<var.numWorkloads>"}
+client.waittask taskIds=RobustE2EWorkload2 timeout=21600
+
+quit

@@ -1,0 +1,15 @@
+//
+// Version resources
+//
+
+#include "..\..\..\..\fabricverp.h"
+
+#define VER_FILETYPE                    VFT_DLL
+#define VER_FILESUBTYPE                 VFT2_UNKNOWN
+#define VER_FILEDESCRIPTION_STR         "Fabric Powershell cmdlets"
+#define VER_INTERNALNAME_STR            "Microsoft.ServiceFabric.Powershell.dll"
+#define VER_ORIGINALFILENAME_STR        "Microsoft.ServiceFabric.Powershell.dll"
+#include <common.ver>
+
+// Don't change the id of this icon, the applications main icon needs to be
+// the lowest icon id for it to work consistently across all platforms

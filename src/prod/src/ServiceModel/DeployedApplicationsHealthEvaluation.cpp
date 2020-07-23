@@ -95,7 +95,6 @@ void DeployedApplicationsHealthEvaluation::SetDescription()
 {
     size_t unhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1}% ({2}/{3}), MaxPercentUnhealthyDeployedApplications={4}%.",
         HMResource::GetResources().HealthEvaluationUnhealthyDeployedApplicationsPerPolicy,
         GetUnhealthyPercent(unhealthyCount, totalCount_),
         unhealthyCount,

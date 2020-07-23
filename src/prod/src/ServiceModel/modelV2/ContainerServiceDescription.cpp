@@ -39,6 +39,7 @@ ErrorCode ContainerServiceProperties::TryValidate(wstring const &traceId) const
 
     ErrorCode error;
     unordered_set<wstring> codePackageNames;
+    unordered_set<wstring> endpointNames;
     for (auto const &codePackage : codePackages_)
     {
         error = codePackage.TryValidate(traceId);
@@ -48,9 +49,46 @@ ErrorCode ContainerServiceProperties::TryValidate(wstring const &traceId) const
         }
 
         auto result = codePackageNames.insert(codePackage.Name);
+        std::vector<ServiceModel::ModelV2::ContainerEndpointDescription> endpointRefs = codePackage.EndpointRefs;
+        for (const auto & endpoint : endpointRefs)
+        {
+            result = endpointNames.insert(endpoint.Name);
+        }
+
         if (!result.second)
         {
             return ErrorCode(ErrorCodeValue::InvalidArgument, wformatString(GET_MODELV2_RC(CodePackageNameNotUnique), traceId, codePackage.Name));
+        }
+    }
+
+    unordered_set<wstring> endpointsReferencedByNetwork;
+    for (auto const &networkRef : networkRefs_)
+    {
+        std::vector<ServiceModel::ModelV2::EndpointRef> endpointRefs = networkRef.Endpoints;
+        for (auto & endpointRef : endpointRefs)
+        {
+            auto result = endpointsReferencedByNetwork.insert(endpointRef.Name);
+        }
+    }
+
+    if (endpointNames.size() != endpointsReferencedByNetwork.size())
+    {
+        for(auto const & endpoint : endpointNames)
+        {
+            unordered_set<wstring>::const_iterator got = endpointsReferencedByNetwork.find(endpoint);
+            if (got == endpointsReferencedByNetwork.end())
+            {
+                return ErrorCode(ErrorCodeValue::EndpointNotReferenced, wformatString(GET_MODELV2_RC(EndpointNotReferenced), traceId, endpoint));
+            }
+        }
+    }
+
+    for (auto const &autoScalingPolicy : autoScalingPolicies_)
+    {
+        error = autoScalingPolicy.TryValidate(traceId);
+        if (!error.IsSuccess())
+        {
+            return error;
         }
     }
 

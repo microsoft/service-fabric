@@ -67,6 +67,8 @@ namespace Data
                 return invalidInformationLogRecord_;
             }
 
+            std::wstring ToString() const;
+
         private:
 
             static LogRecord::SPtr InvalidLogRecord(__in KAllocator & allocator);

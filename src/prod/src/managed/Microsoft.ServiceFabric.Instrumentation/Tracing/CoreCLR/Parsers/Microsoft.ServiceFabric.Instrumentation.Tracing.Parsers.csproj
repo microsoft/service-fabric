@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>1d41ebfe-4dfa-43d4-9d4c-c3fa8999d763</ProjectGuid>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootNamespace>Microsoft.ServiceFabric.Instrumentation.Tracing.Parsers</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Instrumentation.Tracing.Parsers</AssemblyName>
+    <AssemblyTitle>Service Fabric Tracing Parser Assembly</AssemblyTitle>
+    <OutputType>library</OutputType>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Parsers\EventStoreTraceRecordParser.cs" />
+    <Compile Include="..\..\Parsers\HostingTraceRecordParser.cs" />
+    <Compile Include="..\..\Parsers\QueryStoreTraceRecordParser.cs" />
+
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

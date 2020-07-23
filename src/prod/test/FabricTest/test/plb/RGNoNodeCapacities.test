@@ -26,6 +26,9 @@ set IsSingletonReplicaMoveAllowedDuringUpgrade false
 set DeactivationGraceInterval 0
 set DeactivationFailedRetryIntervalRange to 0
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 # TestCase1 - when LRM is in test mode
 # Do not check for available resources and do not enforce RG on the nodes
 # This is to be able to execute the test on any machine, regardless 

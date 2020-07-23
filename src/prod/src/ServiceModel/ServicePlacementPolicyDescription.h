@@ -26,6 +26,8 @@ namespace ServiceModel
         bool operator == (ServicePlacementPolicyDescription const & other) const;
         bool operator != (ServicePlacementPolicyDescription const & other) const;
 
+        Common::ErrorCode Equals(ServicePlacementPolicyDescription const & other) const;
+
         __declspec (property(get=get_DomainName)) std::wstring const& DomainName;
         std::wstring const& get_DomainName() const { return domainName_; }
 

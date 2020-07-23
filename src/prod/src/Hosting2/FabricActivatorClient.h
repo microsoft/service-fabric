@@ -18,6 +18,7 @@ namespace Hosting2
             std::wstring const & nodeId,
             std::wstring const & fabricBinFolder,
             uint64 nodeInstanceId);
+
         virtual ~FabricActivatorClient();
 
         __declspec(property(get=get_Client)) Transport::IpcClient & Client;
@@ -225,7 +226,10 @@ namespace Hosting2
 
         Common::AsyncOperationSPtr BeginSetupContainerGroup(
             std::wstring const & containerGroupId,
-            std::wstring const & assignedIPAddress,
+            ServiceModel::NetworkType::Enum networkType,
+            std::wstring const & openNetworkAssignedIp,
+            std::map<std::wstring, std::wstring> const & overlayNetworkResources,
+            std::vector<std::wstring> const & dnsServers,
             std::wstring const & appfolder,
             std::wstring const & appId,
             std::wstring const & appName,
@@ -253,6 +257,27 @@ namespace Hosting2
         Common::ErrorCode EndAssignIpAddresses(
             Common::AsyncOperationSPtr const &,
             __out std::vector<std::wstring> & assignedIps) override;
+
+        Common::AsyncOperationSPtr BeginManageOverlayNetworkResources(
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & servicePackageId,
+            std::map<wstring, std::vector<std::wstring>> const & codePackageNetworkNames,
+            ManageOverlayNetworkAction::Enum action,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) override;
+        Common::ErrorCode EndManageOverlayNetworkResources(
+            Common::AsyncOperationSPtr const &,
+            __out std::map<wstring, std::map<std::wstring, std::wstring>> & assignedNetworkResources) override;
+
+        Common::AsyncOperationSPtr BeginUpdateRoutes(
+            Management::NetworkInventoryManager::PublishNetworkTablesRequestMessage const & networkTables,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) override;
+        Common::ErrorCode EndUpdateRoutes(
+            Common::AsyncOperationSPtr const &) override;
 
         Common::AsyncOperationSPtr BeginDeleteContainerImages(
             std::vector<std::wstring> const & imageNames,
@@ -320,6 +345,12 @@ namespace Hosting2
         Common::ErrorCode CleanupAssignedIPs(
             std::wstring const & servicePackageId) override;
 
+        Common::ErrorCode FabricActivatorClient::CleanupAssignedOverlayNetworkResources(
+            std::map<std::wstring, std::vector<std::wstring>> const & codePackageNetworkNames,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & servicePackageId) override;
+
         void AbortApplicationEnvironment(std::wstring const & applicationId) override;
 
         void AbortProcess(std::wstring const & appServiceId) override;
@@ -344,6 +375,29 @@ namespace Hosting2
             Common::AsyncOperationSPtr const &) override;
         Common::ErrorCode EndConfigureNodeForDnsService(
             Common::AsyncOperationSPtr const &) override;
+
+        Common::AsyncOperationSPtr BeginGetNetworkDeployedPackages(
+            std::vector<std::wstring> const & servicePackageIds,
+            std::wstring const & codePackageName,
+            std::wstring const & networkName,
+            std::wstring const & nodeId,
+            std::map<std::wstring, std::wstring> const & codePackageInstanceAppHostMap,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) override;
+        Common::ErrorCode EndGetNetworkDeployedPackages(
+            Common::AsyncOperationSPtr const &,
+            __out std::map<std::wstring, std::map<std::wstring, std::vector<std::wstring>>> &,
+            __out std::map<std::wstring, std::map<std::wstring, std::wstring>> &) override;
+
+        Common::AsyncOperationSPtr BeginGetDeployedNetworks(
+            ServiceModel::NetworkType::Enum networkType,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) override;
+        Common::ErrorCode EndGetDeployedNetworks(
+            Common::AsyncOperationSPtr const &,
+            __out std::vector<std::wstring> &) override;
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -370,10 +424,14 @@ namespace Hosting2
         void ProcessApplicationServiceTerminatedRequest(__in Transport::Message &, __in Transport::IpcReceiverContextUPtr & context);
         void ProcessContainerHealthCheckStatusChangeRequest(__in Transport::Message &, __in Transport::IpcReceiverContextUPtr & context);
         void ProcessDockerProcessTerminatedRequest(__in Transport::Message &, __in Transport::IpcReceiverContextUPtr & context);
+        void ProcessGetOverlayNetworkDefinitionRequest(__in Transport::Message & message, __in Transport::IpcReceiverContextUPtr & context);
+        void ProcessDeleteOverlayNetworkDefinitionRequest(__in Transport::Message & message, __in Transport::IpcReceiverContextUPtr & context);
+        void ProcessPublishNetworkTablesRequest(__in Transport::Message & message, __in Transport::IpcReceiverContextUPtr & context);
 
         Transport::MessageUPtr CreateUnregisterClientRequest();
 
         void UnregisterFabricActivatorClient();
+
     private:
 
         HostingSubsystem & hosting_;
@@ -387,7 +445,6 @@ namespace Hosting2
         Common::Event containerRootDiedEvent_;
         uint64 nodeInstanceId_;
 
-
         class OpenAsyncOperation;
         class CloseAsyncOperation;
         class BaseActivatorAsyncOperation;
@@ -400,6 +457,10 @@ namespace Hosting2
         class CleanupSecurityPrincipalsAsyncOperation;
         class CleanupApplicationLocalGroupsAsyncOperation;
         class AssignIpAddressesAsyncOperation;
+        class ManageOverlayNetworkResourcesAsyncOperation;
+        class UpdateOverlayNetworkRoutesAsyncOperation;
+        class GetNetworkDeployedPackagesAsyncOperation;
+        class GetDeployedNetworksAsyncOperation;
 #if defined(PLATFORM_UNIX)
         class DeleteApplicationFoldersAsyncOperation;
 #endif
@@ -419,5 +480,22 @@ namespace Hosting2
         class ConfigureContainerGroupAsyncOperation;
         class ConfigureEndpointCertificateAndFirewallPolicyAsyncOperation;
         class GetImagesAsyncOperation;
+
+        class AppInfo
+        {
+        public: 
+            AppInfo(
+                wstring appFolder, 
+                wstring appId,
+                wstring appName)
+                : appFolder_(appFolder),
+                appId_(appId),
+                appName_(appName)
+            {}
+
+            wstring appFolder_;
+            wstring appId_;
+            wstring appName_;
+        };
     };
 }

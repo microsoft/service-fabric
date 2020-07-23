@@ -1,0 +1,8 @@
+[Version]
+Signature="$WINDOWS NT$"
+
+[KAsyncQueueKernel.NT.Wdf]
+KmdfService = KAsyncQueueKernel, KmUnit_Service_kmdfInst
+
+[KmUnit_Service_kmdfInst]
+KmdfLibraryVersion = 1.9

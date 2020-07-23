@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Data>
+    <Table Id="Test">
+        <ParameterTypes>
+            <ParameterType Name="Parameters" Array="true">String</ParameterType>
+        </ParameterTypes>
+        <Row Name="Test">
+            <Parameter Name="Parameters">
+              <Value>BasicDiskLoggerTest:C</Value>
+              <Value>RvdLoggerAliasTests:C</Value>
+              <Value>DiskLogStreamAsyncIoTests:C,30</Value>
+              <Value>DiskLoggerStructureVerifyTests:C</Value>
+              <Value>RvdLoggerRecoveryTests:C,300,150,120</Value>
+          </Parameter>
+        </Row>
+    </Table>
+</Data>

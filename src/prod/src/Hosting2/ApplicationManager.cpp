@@ -415,6 +415,14 @@ private:
         {
             if (downloadStatus.FailureCount > (ULONG)HostingConfig::GetConfig().ServiceTypeDisableFailureThreshold)
             {
+                WriteInfo(
+                    TraceType,
+                    owner_.Root.TraceId,
+                    "Disabling ServiceType for Application: {0}, ServiceTypeInstanceId: {1}, DownloadStatusId: {2}",
+                    applicationName_,
+                    serviceTypeInstanceId_,
+                    downloadStatus.Id);
+
                 owner_.hosting_.FabricRuntimeManagerObj->ServiceTypeStateManagerObj->Disable(
                     serviceTypeInstanceId_,
                     applicationName_,
@@ -453,6 +461,14 @@ private:
             if ((!error.IsError(ErrorCodeValue::HostingApplicationVersionMismatch)) &&
                 (activationStatus.FailureCount > (ULONG)HostingConfig::GetConfig().ServiceTypeDisableFailureThreshold))
             {
+                WriteInfo(
+                    TraceType,
+                    owner_.Root.TraceId,
+                    "Disabling ServiceType for Application: {0}, ServiceTypeInstanceId: {1}, ActivationStatusId: {2}",
+                    applicationName_,
+                    serviceTypeInstanceId_,
+                    activationStatus.Id);
+
                 owner_.hosting_.FabricRuntimeManagerObj->ServiceTypeStateManagerObj->Disable(
                     serviceTypeInstanceId_,
                     applicationName_,
@@ -540,6 +556,14 @@ private:
         {
             if (downloadStatus.FailureCount > (ULONG)HostingConfig::GetConfig().ServiceTypeDisableFailureThreshold)
             {
+                WriteInfo(
+                    TraceType,
+                    owner_.Root.TraceId,
+                    "Disabling ServiceType for Application: {0}, ServiceTypeInstanceId: {1}, DownloadStatusId: {2}",
+                    applicationName_,
+                    serviceTypeInstanceId_,
+                    downloadStatus.Id);
+
                 owner_.hosting_.FabricRuntimeManagerObj->ServiceTypeStateManagerObj->Disable(
                     serviceTypeInstanceId_,
                     applicationName_,
@@ -581,6 +605,14 @@ private:
             if ((!error.IsError(ErrorCodeValue::HostingServicePackageVersionMismatch)) &&
                 (activationStatus.FailureCount > (ULONG)HostingConfig::GetConfig().ServiceTypeDisableFailureThreshold))
             {
+                WriteInfo(
+                    TraceType,
+                    owner_.Root.TraceId,
+                    "Disabling ServiceType for Application: {0}, ServiceTypeInstanceId: {1}, ActivationStatusId: {2}",
+                    applicationName_,
+                    serviceTypeInstanceId_,
+                    activationStatus.Id);
+
                 owner_.hosting_.FabricRuntimeManagerObj->ServiceTypeStateManagerObj->Disable(
                     serviceTypeInstanceId_,
                     applicationName_,

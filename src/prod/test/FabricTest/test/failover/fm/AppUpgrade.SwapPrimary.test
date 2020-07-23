@@ -14,6 +14,9 @@ set DummyPLBEnabled true
 set UpgradeStatusPollInterval 5
 set UserReplicaRestartWaitDuration 9999
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 +10 ud=UD1
 +20 ud=UD2
 +30 ud=UD3

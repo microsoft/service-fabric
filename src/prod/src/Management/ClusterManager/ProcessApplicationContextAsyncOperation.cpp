@@ -187,7 +187,8 @@ void ProcessApplicationContextAsyncOperation::SendCreateApplicationRequestToFM(
             context_.PackageInstance,
             context_.ApplicationCapacity,
             appDescription_.ResourceGovernanceDescriptions,
-            appDescription_.CodePackageContainersImages);
+            appDescription_.CodePackageContainersImages,
+            appDescription_.Networks);
 
         auto request = RSMessage::GetCreateApplicationRequest().CreateMessage(body);
 
@@ -258,7 +259,8 @@ void ProcessApplicationContextAsyncOperation::OnRequestToFMComplete(
             error);
 
         // let RolloutManager retry logic handle retry if there is capacity in the cluster
-        if (!error.IsError(ErrorCodeValue::InsufficientClusterCapacity))
+        if (!error.IsError(ErrorCodeValue::NetworkNotFound) &&
+            !error.IsError(ErrorCodeValue::InsufficientClusterCapacity))
         {
             error = ErrorCodeValue::OperationCanceled;
         }

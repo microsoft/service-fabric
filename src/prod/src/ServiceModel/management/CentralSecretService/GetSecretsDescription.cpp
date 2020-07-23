@@ -14,12 +14,12 @@ using namespace std;
 using namespace Management::CentralSecretService;
 
 GetSecretsDescription::GetSecretsDescription()
-	: SecretReferencesDescription(),
-	includeValue_() {}
+    : SecretReferencesDescription(),
+    includeValue_() {}
 
 GetSecretsDescription::GetSecretsDescription(std::vector<SecretReference> const & secretReferences, bool includeValue)
-	: SecretReferencesDescription(move(secretReferences))
-	, includeValue_(includeValue) {}
+    : SecretReferencesDescription(move(secretReferences))
+    , includeValue_(includeValue) {}
 
 GetSecretsDescription::~GetSecretsDescription()
 {
@@ -27,12 +27,12 @@ GetSecretsDescription::~GetSecretsDescription()
 
 Common::ErrorCode GetSecretsDescription::FromPublicApi(__in FABRIC_SECRET_REFERENCE_LIST const * secretReferenceList, __in BOOLEAN includeValue)
 {
-	this->includeValue_ = includeValue == 0 ? false : true;
-	return SecretReferencesDescription::FromPublicApi(secretReferenceList);
+    this->includeValue_ = includeValue == 0 ? false : true;
+    return SecretReferencesDescription::FromPublicApi(secretReferenceList);
 }
 
 Common::ErrorCode GetSecretsDescription::ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_SECRET_REFERENCE_LIST & secretReferenceList, __out BOOLEAN & includeValue) const
 {
-	includeValue = this->includeValue_ ? 1 : 0;
-	return SecretReferencesDescription::ToPublicApi(heap, secretReferenceList);
+    includeValue = this->includeValue_ ? 1 : 0;
+    return SecretReferencesDescription::ToPublicApi(heap, secretReferenceList);
 }

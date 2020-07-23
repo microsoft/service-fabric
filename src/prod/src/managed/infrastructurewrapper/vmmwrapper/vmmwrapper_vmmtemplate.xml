@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+<ovf:Envelope xmlns:vmmst="http://www.microsoft.com/schema/vmmst" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" vmmst:schemaVersion="3.0" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
+  <ovf:References>
+    <ovf:File ovf:id="vmmwindowsfabric.cr" ovf:href="vmmwindowsfabric.cr" ovf:size="34686430" vmmst:resourceName="vmmwindowsfabric.cr" vmmst:resourceFamilyName="" vmmst:resourceRelease="" vmmst:resourceDescription="" vmmst:resourceURI="\\vmmwinfab.overlay1.nttest.microsoft.com\MSSCVMMLibrary\ApplicationFrameworks\vmmwindowsfabric.cr" />
+    <ovf:File ovf:id="WindowsFabric.WIN8.X64.EN.WF3392.2013.04.10.vhd" ovf:href="WindowsFabric.WIN8.X64.EN.WF3392.2013.04.10.vhd" ovf:size="25895926272" vmmst:resourceName="WindowsFabric.WIN8.X64.EN.WF3392.2013.04.10.vhd" vmmst:resourceFamilyName="" vmmst:resourceRelease="" vmmst:resourceDescription="" vmmst:resourceURI="\\vmmwinfab.overlay1.nttest.microsoft.com\MSSCVMMLibrary\VHDs\WindowsFabric.WIN8.X64.EN.WF3392.2013.04.10.vhd" />
+  </ovf:References>
+  <ovf:DiskSection>
+    <ovf:Info>Virtual disks used in the package</ovf:Info>
+    <ovf:Disk ovf:diskId="WindowsFabric.WIN8.X64.EN.WF3392.2013.04.10.vhd" ovf:fileRef="WindowsFabric.WIN8.X64.EN.WF3392.2013.04.10.vhd" ovf:capacity="137438953472" ovf:capacityAllocationUnits="bytes" ovf:format="http://www.microsoft.com/technet/virtualserver/downloads/vhdspec.mspx" vmmst:diskType="DynamicallyExpanding" />
+  </ovf:DiskSection>
+  <ovf:NetworkSection>
+    <ovf:Info>Logical networks used in the package</ovf:Info>
+    <ovf:Network ovf:name="corp">
+      <ovf:Description />
+    </ovf:Network>
+  </ovf:NetworkSection>
+  <ovf:Section xsi:type="vmmst:RunAsAccountSection_Type">
+    <ovf:Info>Run As accounts used in the package</ovf:Info>
+    <vmmst:RunAsAccount vmmst:name="admuser">
+      <vmmst:Description />
+    </vmmst:RunAsAccount>
+    <vmmst:RunAsAccount vmmst:name="NT AUTHORITY\System" />
+  </ovf:Section>
+  <ovf:VirtualSystemCollection ovf:id="mixuvmmtemplate" vmmst:resourceRelease="new" vmmst:priority="Normal" vmmst:useAsPattern="false">
+    <ovf:Info>Single Computer Tier Pattern</ovf:Info>
+    <ovf:ProductSection ovf:class="vmmCustomProperties">
+      <ovf:Info>Custom properties</ovf:Info>
+      <ovf:Property ovf:key="CMLocation" ovf:type="string" ovf:value=".\ClusterManifest.xml">
+        <ovf:Description />
+      </ovf:Property>
+    </ovf:ProductSection>
+    <ovf:ProductSection ovf:class="vmmGlobalSettings">
+      <ovf:Info>Service template globals settings</ovf:Info>
+    </ovf:ProductSection>
+    <ovf:VirtualSystem ovf:id="SingleTier1" vmmst:costCenter="" vmmst:quotaPoints="1" vmmst:tag="(none)" vmmst:servicingOrder="1" vmmst:deploymentOrder="1">
+      <ovf:Info />
+      <ovf:Name>SingleTier1</ovf:Name>
+      <ovf:Section xsi:type="vmmst:MachineTierSection_Type">
+        <ovf:Info>Scale out machine tier details</ovf:Info>
+        <vmmst:Description>Computer Tier for this service</vmmst:Description>
+        <vmmst:DefaultInstanceCount>4</vmmst:DefaultInstanceCount>
+        <vmmst:MinimumInstanceCount>3</vmmst:MinimumInstanceCount>
+        <vmmst:MaximumInstanceCount>5</vmmst:MaximumInstanceCount>
+        <vmmst:NumberOfUpgradeDomains>2</vmmst:NumberOfUpgradeDomains>
+        <vmmst:BlockAutomaticMigration>false</vmmst:BlockAutomaticMigration>
+      </ovf:Section>
+      <ovf:VirtualHardwareSection>
+        <ovf:Info>Hardware description</ovf:Info>
+        <ovf:System>
+          <vssd:ElementName>Virtual Hardware</vssd:ElementName>
+          <vssd:InstanceID>c5587b11-421b-4447-81ea-b93fc41850b0</vssd:InstanceID>
+          <vssd:VirtualSystemType>vmm-3</vssd:VirtualSystemType>
+        </ovf:System>
+        <ovf:Item>
+          <rasd:Address>0</rasd:Address>
+          <rasd:ElementName>IDE Controller</rasd:ElementName>
+          <rasd:InstanceID>0</rasd:InstanceID>
+          <rasd:ResourceType>5</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Address>1</rasd:Address>
+          <rasd:ElementName>IDE Controller</rasd:ElementName>
+          <rasd:InstanceID>1</rasd:InstanceID>
+          <rasd:ResourceType>5</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:ElementName>Memory</rasd:ElementName>
+          <rasd:InstanceID>2</rasd:InstanceID>
+          <rasd:ResourceType>4</rasd:ResourceType>
+          <rasd:VirtualQuantity>2048</rasd:VirtualQuantity>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:ElementName>Video Adapter</rasd:ElementName>
+          <rasd:InstanceID>3</rasd:InstanceID>
+          <rasd:ResourceType>24</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:ElementName>Processor</rasd:ElementName>
+          <rasd:InstanceID>4</rasd:InstanceID>
+          <rasd:Limit>100</rasd:Limit>
+          <rasd:Reservation>0</rasd:Reservation>
+          <rasd:ResourceType>3</rasd:ResourceType>
+          <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+          <rasd:Weight>100</rasd:Weight>
+          <vmmst:LimitCPUID>false</vmmst:LimitCPUID>
+          <vmmst:LimitProcessorFeatures>false</vmmst:LimitProcessorFeatures>
+          <vmmst:ExpectedCPUUtilization>20</vmmst:ExpectedCPUUtilization>
+          <!--1-processor 3.60 GHz Xeon (2 MB L2 cache)-->
+          <vmmst:BenchmarkProcessorType>b0957fcd95e34d7e899330a280f7207b</vmmst:BenchmarkProcessorType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Connection>corp</rasd:Connection>
+          <rasd:ElementName>Network Adapter</rasd:ElementName>
+          <rasd:InstanceID>5</rasd:InstanceID>
+          <rasd:ResourceSubType>Emulated</rasd:ResourceSubType>
+          <rasd:ResourceType>10</rasd:ResourceType>
+          <vmmst:StaticMacAddress>false</vmmst:StaticMacAddress>
+          <vmmst:IPv4AddressType>Dynamic</vmmst:IPv4AddressType>
+          <vmmst:IPv6AddressType>Dynamic</vmmst:IPv6AddressType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Address>0</rasd:Address>
+          <rasd:ElementName>COM Port</rasd:ElementName>
+          <rasd:InstanceID>6</rasd:InstanceID>
+          <rasd:ResourceType>21</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Address>1</rasd:Address>
+          <rasd:ElementName>COM Port</rasd:ElementName>
+          <rasd:InstanceID>7</rasd:InstanceID>
+          <rasd:ResourceType>21</rasd:ResourceType>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:Address>0</rasd:Address>
+          <rasd:ElementName>Disk Drive</rasd:ElementName>
+          <rasd:HostResource>ovf:/disk/WindowsFabric.WIN8.X64.EN.WF3392.2013.04.10.vhd</rasd:HostResource>
+          <rasd:InstanceID>8</rasd:InstanceID>
+          <rasd:Parent>0</rasd:Parent>
+          <rasd:ResourceType>17</rasd:ResourceType>
+          <vmmst:CreateNewDisk>false</vmmst:CreateNewDisk>
+          <vmmst:VolumeType>BootAndSystem</vmmst:VolumeType>
+          <vmmst:Shared>false</vmmst:Shared>
+        </ovf:Item>
+        <ovf:Item>
+          <rasd:ElementName>Floppy Drive</rasd:ElementName>
+          <rasd:InstanceID>9</rasd:InstanceID>
+          <rasd:ResourceType>14</rasd:ResourceType>
+        </ovf:Item>
+        <vmmst:HighlyAvailable>false</vmmst:HighlyAvailable>
+        <vmmst:DRProtectionRequired>false</vmmst:DRProtectionRequired>
+        <vmmst:NumLockEnabled>false</vmmst:NumLockEnabled>
+        <vmmst:DiskIO>0</vmmst:DiskIO>
+        <vmmst:NetworkUtilization>0</vmmst:NetworkUtilization>
+        <vmmst:NumaIsolationRequired>false</vmmst:NumaIsolationRequired>
+      </ovf:VirtualHardwareSection>
+      <ovf:OperatingSystemSection ovf:id="0">
+        <ovf:Info>Guest operating system</ovf:Info>
+        <!--64-bit edition of Windows Server 2012 Datacenter-->
+        <vmmst:OperatingSystemId>ff0fe0a6716644d38a0c379195e2f9bb</vmmst:OperatingSystemId>
+      </ovf:OperatingSystemSection>
+      <ovf:Section xsi:type="vmmst:ApplicationSection_Type">
+        <ovf:Info>Applications deployed on virtual machine</ovf:Info>
+        <vmmst:CompatibleOperatingSystems>
+          <vmmst:OperatingSystemId>ff0fe0a6716644d38a0c379195e2f9bb</vmmst:OperatingSystemId>
+          <vmmst:OperatingSystemId>6d5fa36c8f2a4a9dae8fbab30f9694f9</vmmst:OperatingSystemId>
+          <vmmst:OperatingSystemId>a6c16ae7b95843fbb6f2c5caa17db257</vmmst:OperatingSystemId>
+        </vmmst:CompatibleOperatingSystems>
+        <vmmst:ApplicationProfileCompatibilityType>General</vmmst:ApplicationProfileCompatibilityType>
+        <vmmst:ScriptCommand vmmst:scriptType="PreInstall">
+          <vmmst:Executable>cmd.exe</vmmst:Executable>
+          <vmmst:Parameters>/q /c VMMWrapper.exe .\ClusterManifest.xml</vmmst:Parameters>
+          <vmmst:CustomResourceRef>ovf:/file/vmmwindowsfabric.cr</vmmst:CustomResourceRef>
+          <vmmst:RunAsAccountRef>NT AUTHORITY\System</vmmst:RunAsAccountRef>
+          <vmmst:TimeoutSeconds>900</vmmst:TimeoutSeconds>
+          <vmmst:PersistStandardOutputPath>c:\logs\wrapperinstalloutput.log</vmmst:PersistStandardOutputPath>
+          <vmmst:PersistStandardErrorPath>c:\logs\wrapperinstallerror.log</vmmst:PersistStandardErrorPath>
+          <vmmst:ExitCodeRegex>[1-9][0-9]*</vmmst:ExitCodeRegex>
+          <vmmst:ErrorPolicy>WarnAndContinueOnMatch</vmmst:ErrorPolicy>
+          <vmmst:RebootExitCodeRegex>{1641}|{3010}|{3011}</vmmst:RebootExitCodeRegex>
+          <vmmst:RestartScriptOnExitCodeReboot>false</vmmst:RestartScriptOnExitCodeReboot>
+          <vmmst:AlwaysReboot>false</vmmst:AlwaysReboot>
+          <vmmst:StandardInput>@ServiceVMComputerNames@</vmmst:StandardInput>
+          <vmmst:RestartOnRetry>false</vmmst:RestartOnRetry>
+          <vmmst:DeploymentOrder>3</vmmst:DeploymentOrder>
+        </vmmst:ScriptCommand>
+        <vmmst:ScriptCommand vmmst:scriptType="PreInstall">
+          <vmmst:Executable>cmd.exe</vmmst:Executable>
+          <vmmst:Parameters>/q /c vcredist_x64.exe /q /norestart</vmmst:Parameters>
+          <vmmst:CustomResourceRef>ovf:/file/vmmwindowsfabric.cr</vmmst:CustomResourceRef>
+          <vmmst:RunAsAccountRef>NT AUTHORITY\System</vmmst:RunAsAccountRef>
+          <vmmst:TimeoutSeconds>120</vmmst:TimeoutSeconds>
+          <vmmst:PersistStandardOutputPath>c:\logs\redistOutput.log</vmmst:PersistStandardOutputPath>
+          <vmmst:PersistStandardErrorPath>c:\logs\redistError.log</vmmst:PersistStandardErrorPath>
+          <vmmst:StandardErrorRegex>.+</vmmst:StandardErrorRegex>
+          <vmmst:ExitCodeRegex>[1-9][0-9]*</vmmst:ExitCodeRegex>
+          <vmmst:ErrorPolicy>WarnAndContinueOnMatch</vmmst:ErrorPolicy>
+          <vmmst:RebootExitCodeRegex>{1641}|{3010}|{3011}</vmmst:RebootExitCodeRegex>
+          <vmmst:RestartScriptOnExitCodeReboot>false</vmmst:RestartScriptOnExitCodeReboot>
+          <vmmst:AlwaysReboot>false</vmmst:AlwaysReboot>
+          <vmmst:RestartOnRetry>false</vmmst:RestartOnRetry>
+          <vmmst:DeploymentOrder>2</vmmst:DeploymentOrder>
+        </vmmst:ScriptCommand>
+        <vmmst:ScriptCommand vmmst:scriptType="OnDeleteRest">
+          <vmmst:Executable>cmd.exe</vmmst:Executable>
+          <vmmst:Parameters>/q /c VMMWrapper.exe Remove</vmmst:Parameters>
+          <vmmst:CustomResourceRef>ovf:/file/vmmwindowsfabric.cr</vmmst:CustomResourceRef>
+          <vmmst:RunAsAccountRef>NT AUTHORITY\System</vmmst:RunAsAccountRef>
+          <vmmst:TimeoutSeconds>900</vmmst:TimeoutSeconds>
+          <vmmst:PersistStandardOutputPath>c:\logs\wrapperremoveoutput.log</vmmst:PersistStandardOutputPath>
+          <vmmst:PersistStandardErrorPath>c:\logs\wrapperremoveerror.log</vmmst:PersistStandardErrorPath>
+          <vmmst:StandardErrorRegex>.+</vmmst:StandardErrorRegex>
+          <vmmst:ExitCodeRegex>[1-9][0-9]*</vmmst:ExitCodeRegex>
+          <vmmst:ErrorPolicy>FailOnMatch</vmmst:ErrorPolicy>
+          <vmmst:RestartScriptOnExitCodeReboot>false</vmmst:RestartScriptOnExitCodeReboot>
+          <vmmst:AlwaysReboot>false</vmmst:AlwaysReboot>
+          <vmmst:RestartOnRetry>false</vmmst:RestartOnRetry>
+          <vmmst:DeploymentOrder>1</vmmst:DeploymentOrder>
+        </vmmst:ScriptCommand>
+        <vmmst:ScriptCommand vmmst:scriptType="PreInstall">
+          <vmmst:Executable>cmd.exe</vmmst:Executable>
+          <vmmst:Parameters>/q /c net localgroup administrators overlay1\admuser /add</vmmst:Parameters>
+          <vmmst:RunAsAccountRef>NT AUTHORITY\System</vmmst:RunAsAccountRef>
+          <vmmst:TimeoutSeconds>120</vmmst:TimeoutSeconds>
+          <vmmst:WorkingDirectory />
+          <vmmst:PersistStandardOutputPath>c:\logs\AddUserOutput.log</vmmst:PersistStandardOutputPath>
+          <vmmst:PersistStandardErrorPath>c:\logs\adduserError.log</vmmst:PersistStandardErrorPath>
+          <vmmst:StandardErrorRegex>.+</vmmst:StandardErrorRegex>
+          <vmmst:StandardOutputRegex />
+          <vmmst:ExitCodeRegex>[1-9][0-9]*</vmmst:ExitCodeRegex>
+          <vmmst:ErrorPolicy>WarnAndContinueOnMatch</vmmst:ErrorPolicy>
+          <vmmst:RebootExitCodeRegex>{1641}|{3010}|{3011}</vmmst:RebootExitCodeRegex>
+          <vmmst:RestartScriptOnExitCodeReboot>false</vmmst:RestartScriptOnExitCodeReboot>
+          <vmmst:AlwaysReboot>false</vmmst:AlwaysReboot>
+          <vmmst:RestartOnRetry>false</vmmst:RestartOnRetry>
+          <vmmst:DeploymentOrder>1</vmmst:DeploymentOrder>
+        </vmmst:ScriptCommand>
+      </ovf:Section>
+      <ovf:Section xsi:type="vmmst:OperatingSystemUnattendedInstallSection_Type">
+        <ovf:Info>Operating system unattended installation details</ovf:Info>
+        <vmmst:ComputerName>mixuVMM###</vmmst:ComputerName>
+        <vmmst:TimeZone>4</vmmst:TimeZone>
+        <vmmst:GuiRunOnce />
+        <vmmst:LocalAdminRunAsAccountRef>admuser</vmmst:LocalAdminRunAsAccountRef>
+        <vmmst:JoinDomain>overlay1.nttest.microsoft.com</vmmst:JoinDomain>
+        <vmmst:DomainAdminRunAsAccountRef>admuser</vmmst:DomainAdminRunAsAccountRef>
+        <vmmst:OSType>Windows</vmmst:OSType>
+      </ovf:Section>
+    </ovf:VirtualSystem>
+  </ovf:VirtualSystemCollection>
+</ovf:Envelope>

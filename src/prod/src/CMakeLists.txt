@@ -30,3 +30,4 @@ if (CLANG_VERSION_STRING VERSION_GREATER 3.9)
 add_subdirectory(data)
 endif()
 
+#add_subdirectory(BlockStore)

@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <AssemblyName>Microsoft.ServiceFabric.Powershell.Functional.Test</AssemblyName>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <RootNamespace>Microsoft.ServiceFabric.Powershell.Test</RootNamespace>
+    <ProjectGuid>{239EBE92-0BE8-473C-9F7D-20B482E69543}</ProjectGuid>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(BinariesBuildTypeArchDirectory)\inc\ServiceFabricGeneratedServiceModel.cs" />
+    <Compile Include="ApplicationManagementTests.cs" />
+    <Compile Include="ClusterManagementTests.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="TestCommon.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric\scenarios\System.Fabric.Scenarios.Test.csproj">
+      <Project>{075393B5-BF67-4E0D-AEE6-2D7A16C40275}</Project>
+      <Name>System.Fabric.Scenarios.Test</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric\unit\System.Fabric.Test.csproj">
+      <Project>{6063627D-A418-4A45-986B-0A963583514D}</Project>
+      <Name>System.Fabric.Test</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\generated\generated.csproj">
+      <Project>{e4088b2e-1379-4502-9eca-4e08b891a04e}</Project>
+      <Name>generated</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <Reference Include="System.Management" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext_4_5_4)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

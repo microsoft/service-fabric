@@ -18,6 +18,8 @@ namespace Hosting2
     public: // the singleton
         static ContainerRuntimeHandler* GetSingleton();
 
+        static bool GetPodIdFromName(string const & name, string &id);
+
     private:
         static ContainerRuntimeHandler *ContainerRuntimeHandlerSingleton;
         static Common::RwLock SingletonObjectLock;
@@ -120,8 +122,6 @@ namespace Hosting2
         static std::map<string, PodSandboxInfo> PodSandboxTbl;
         static std::map<string, ContainerInfo> ContainerTbl;
 
-        static bool GetPodIdFromName(string const & name, string &id);
-
         static bool GetContainerIdFromName(string const & name, string &id);
 
         static void PutPodSandboxInfo(string const &name, string const &id, string const &apphostid, string const &nodeid, string const &logdirectory);
@@ -177,8 +177,10 @@ namespace Hosting2
                 std::wstring const & cgparent,
                 std::wstring const & hostname,
                 std::wstring const & logdirectory,
+                ServiceModel::NetworkType::Enum networkType,
                 bool isdnsserviceenabled,
                 std::wstring const & dnssearchoptions,
+                std::vector<std::wstring> const & dnsServers,
                 std::vector<std::tuple<std::wstring,int,int,int>> portmappings,
                 std::wstring const & traceid,
                 Common::TimeSpan const timeout,
@@ -335,8 +337,10 @@ namespace Hosting2
                                                               std::string const & cgparent,
                                                               std::string const & hostname,
                                                               std::string const & logdirectory,
+                                                              ServiceModel::NetworkType::Enum networkType,
                                                               bool isdnsserviceenabled,
                                                               std::string const & dnssearchoptions,
+                                                              vector<string> & dnsServers,
                                                               std::vector<std::tuple<std::string,int,int,int>> const &portmappings);
         static runtime::ContainerConfig* genContainerConfig(std::string const &name, std::string const &imgname,
                                                             vector<string> const & cmds, vector<string> const & args,
@@ -344,6 +348,8 @@ namespace Hosting2
                                                             vector<tuple<string, string, bool>> const & mounts,
                                                             vector<pair<string, string>> const & labels,
                                                             string const & workdir, string const & logpath, bool interactive);
+
+        static void printPodSandboxConfig(runtime::PodSandboxConfig* podSandboxConfig);
 
     private:
         std::shared_ptr<grpc::Channel> rpcChannel_;

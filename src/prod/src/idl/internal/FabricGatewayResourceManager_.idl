@@ -1,0 +1,119 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricTypes_.idl";
+
+//
+// Forward Declarations
+//
+
+interface IFabricGatewayResourceManager;
+interface IFabricGatewayResourceManagerAgent;
+
+[
+    uuid(943556f0-d940-4fd2-bda1-364533bd5475),
+    version(1.0),
+]
+library FabricGateResourceManagerLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricGatewayResourceManager;
+    interface IFabricGatewayResourceManagerAgent;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(2407ced2-3530-4944-915e-d56e9392cd5b),
+        noncreatable
+    ]
+    coclass FabricGatewayResourceManagerAgent
+    {
+        [default] interface IFabricGatewayResourceManagerAgent;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(4654be0c-c778-46cb-94da-1084950291a4),
+        dllname("FabricGatewayResourceManager.dll")
+    ]
+    module FabricGatewayResourceManager {
+        [entry("CreateFabricGatewayResourceManagerAgent")] HRESULT CreateFabricGatewayResourceManagerAgent(
+            [in] REFIID riid,
+            [out, retval] void ** FabricGatewayResourceManagerAgent);
+    }
+
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(bf9b93a9-5b74-4a28-b205-edf387adf3db)]
+interface IFabricGatewayResourceManager : IUnknown
+{
+    [] HRESULT BeginCreateOrUpdateGatewayResource(
+        [in] LPCWSTR gatewayResourceDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    
+    [] HRESULT EndCreateOrUpdateGatewayResource(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    
+    [] HRESULT BeginGetGatewayResourceList(
+        [in] LPCWSTR gatewayResourceName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    
+    [] HRESULT EndGetGatewayResourceList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringListResult ** result);
+
+    
+    [] HRESULT BeginDeleteGatewayResource(
+        [in] LPCWSTR gatewayResourceName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    
+    [] HRESULT EndDeleteGatewayResource(
+        [in] IFabricAsyncOperationContext * context);      
+}
+
+[object, local, uuid(029614d9-928a-489d-8eaf-c09f44028f46)]
+interface IFabricGatewayResourceManagerAgent : IUnknown
+{
+    [] HRESULT RegisterGatewayResourceManager(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID,
+        [in] IFabricGatewayResourceManager *,
+        [out, retval] IFabricStringResult ** serviceAddress);
+
+    [] HRESULT UnregisterGatewayResourceManager(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID);
+}

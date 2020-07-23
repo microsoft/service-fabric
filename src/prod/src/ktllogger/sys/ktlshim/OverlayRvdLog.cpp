@@ -166,8 +166,8 @@ OverlayLog::AsyncCreateLogStreamContextOverlay::FSMContinue(
             }
             
             _FSCreateOperation->SetGlobalContext(up_cast<KAsyncGlobalContext, ServiceWrapper::GlobalContext>(globalContext));
-			
-			
+            
+            
             Status = _OverlayStreamFS->CreateSyncWaitContext(_SingleAccessWaitContext); 
             if (! NT_SUCCESS(Status))
             {
@@ -426,7 +426,7 @@ OverlayLog::CreateAsyncCreateLogStreamContext(
         return(status);
     }
     KFinally([&] { ReleaseRequestRef(); });
-	
+    
     context = _new(GetThisAllocationTag(), GetThisAllocator()) AsyncCreateLogStreamContextOverlay(*this);
     if (context == nullptr)
     {
@@ -721,7 +721,7 @@ OverlayLog::CreateAsyncDeleteLogStreamContext(
         return(status);
     }
     KFinally([&] { ReleaseRequestRef(); });
-	
+    
     context = _new(GetThisAllocationTag(), GetThisAllocator()) AsyncDeleteLogStreamContextOverlay(*this);
     if (context == nullptr)
     {
@@ -1004,7 +1004,7 @@ OverlayLog::CreateAsyncOpenLogStreamContext(
         return(status);
     }
     KFinally([&] { ReleaseRequestRef(); });
-	
+    
     context = _new(GetThisAllocationTag(), GetThisAllocator()) AsyncOpenLogStreamContextOverlay(*this);
     if (context == nullptr)
     {
@@ -1217,7 +1217,7 @@ OverlayLog::CreateAsyncCloseLogStreamContext(
         return(status);
     }
     KFinally([&] { ReleaseRequestRef(); });
-	
+    
     context = _new(GetThisAllocationTag(), GetThisAllocator()) AsyncCloseLogStreamContextOverlay(*this);
     if (context == nullptr)
     {
@@ -1281,7 +1281,7 @@ OverlayLog::AsyncEnumerateStreamsContextOverlay::FSMContinue(
             ULONG resultCount, streamCount;
             RvdLogStreamId* streamIds;
             static GUID const checkpointStreamGuid = {0xc9dc46e5, 0xb669, 0x4a25, {0xa9, 0xe2, 0xd, 0xff, 0x3d, 0x95, 0xc1, 0x63}};
-			RvdLogStreamId checkpointStreamId(checkpointStreamGuid);
+            RvdLogStreamId checkpointStreamId(checkpointStreamGuid);
 
             do
             {
@@ -1424,7 +1424,7 @@ OverlayLog::CreateAsyncEnumerateStreamsContext(
         return(status);
     }
     KFinally([&] { ReleaseRequestRef(); });
-	
+    
     context = _new(GetThisAllocationTag(), GetThisAllocator()) AsyncEnumerateStreamsContextOverlay(*this);
     if (context == nullptr)
     {
@@ -1454,10 +1454,10 @@ OverlayLog::QueryLogType(__out KWString& LogType)
     NTSTATUS status = TryAcquireRequestRef();
     if (!NT_SUCCESS(status))
     {
-		KInvariant(FALSE);
+        KInvariant(FALSE);
         return;
     }
-	
+    
     KFinally([&] { ReleaseRequestRef(); });
     _BaseLogContainer->QueryLogType(LogType);
 }
@@ -1468,10 +1468,10 @@ OverlayLog::QueryLogId(__out KGuid& DiskId, __out RvdLogId& LogId)
     NTSTATUS status = TryAcquireRequestRef();
     if (!NT_SUCCESS(status))
     {
-		KInvariant(FALSE);
+        KInvariant(FALSE);
         return;
     }
-	
+    
     _BaseLogContainer->QueryLogId(DiskId,
                                  LogId);
 }
@@ -1484,10 +1484,10 @@ OverlayLog::QuerySpaceInformation(
     NTSTATUS status = TryAcquireRequestRef();
     if (!NT_SUCCESS(status))
     {
-		KInvariant(FALSE);
+        KInvariant(FALSE);
         return;
     }
-	
+    
     // TODO: De-Staging ?
     _BaseLogContainer->QuerySpaceInformation(TotalSpace,
                                              FreeSpace);
@@ -1499,10 +1499,10 @@ OverlayLog::QueryReservedSpace()
     NTSTATUS status = TryAcquireRequestRef();
     if (!NT_SUCCESS(status))
     {
-		KInvariant(FALSE);
+        KInvariant(FALSE);
         return(0);
     }
-	
+    
     // TODO: De-Staging ?
     return(_BaseLogContainer->QueryReservedSpace());
 }
@@ -1513,10 +1513,10 @@ OverlayLog::QueryCurrentReservation()
     NTSTATUS status = TryAcquireRequestRef();
     if (!NT_SUCCESS(status))
     {
-		KInvariant(FALSE);
+        KInvariant(FALSE);
         return(0);
     }
-	
+    
     // TODO: De-Staging ?
     return(_BaseLogContainer->QueryCurrentReservation());
 }
@@ -1527,10 +1527,10 @@ OverlayLog::QueryCacheSize(__out_opt LONGLONG* const ReadCacheSizeLimit, __out_o
     NTSTATUS status = TryAcquireRequestRef();
     if (!NT_SUCCESS(status))
     {
-		KInvariant(FALSE);
+        KInvariant(FALSE);
         return;
     }
-	
+    
     _BaseLogContainer->QueryCacheSize(ReadCacheSizeLimit,
                                      ReadCacheUsage);
 }
@@ -1541,10 +1541,10 @@ OverlayLog::SetCacheSize(__in LONGLONG CacheSizeLimit)
     NTSTATUS status = TryAcquireRequestRef();
     if (!NT_SUCCESS(status))
     {
-		KInvariant(FALSE);
+        KInvariant(FALSE);
         return;
     }
-	
+    
     // TODO: De-Staging ?
     _BaseLogContainer->SetCacheSize(CacheSizeLimit);
 }
@@ -1625,3 +1625,14 @@ OverlayLog::QueryUserRecordSystemMetadataOverhead()
 {
     return _BaseLogContainer->QueryUserRecordSystemMetadataOverhead();
 }
+
+VOID
+OverlayLog::QueryLsnRangeInformation(
+    __out LONGLONG& LowestLsn,
+    __out LONGLONG& HighestLsn,
+    __out RvdLogStreamId& LowestLsnStreamId
+    )
+{
+    return _BaseLogContainer->QueryLsnRangeInformation(LowestLsn, HighestLsn, LowestLsnStreamId);
+}
+

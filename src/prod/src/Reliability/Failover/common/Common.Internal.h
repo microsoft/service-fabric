@@ -78,6 +78,22 @@
 #include "Reliability/Failover/common/PartitionNotificationMessageBody.h"
 #include "Reliability/Failover/common/AvailableContainerImagesMessageBody.h"
 
+#include "Management/NetworkInventoryManager/common/NetworkInventoryManagerConfig.h"
+#include "Management/NetworkInventoryManager/common/NIMMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkErrorCodeResponseMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkDefinition.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkAllocationEntry.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkAllocationRequestMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkAllocationResponseMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkCreateRequestMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkCreateResponseMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkRemoveRequestMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkEnumerateRequestMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMNetworkEnumerateResponseMessage.h"
+#include "Management/NetworkInventoryManager/common/NIMPublishNetworkTablesRequestMessageBody.h"
+#include "Management/NetworkInventoryManager/common/NIMPublishNetworkTablesRequestMessage.h"
+
+
 //Common job item root interface
 #include "Reliability/Failover/common/IMessageMetadata.h"
 #include "Reliability/Failover/common/IMessageHandler.h"

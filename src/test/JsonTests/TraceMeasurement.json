@@ -1,0 +1,25 @@
+{
+   "Default": {
+    "RunLocally": "true"
+  },
+  "Tests": [
+    {
+      "Name": "TraceMetricsReadWriteDict",
+      "Type": "V2_ScriptTest",
+      "Owners": "vipind",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "TaskName": "TraceMetricsReadWriteDict.test"
+      }
+    },
+    {
+      "Name": "TraceMetricsDeployApp",
+      "Type": "V2_ScriptTest",
+      "Owners": "vipind",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "TaskName": "TraceMetricsDeployApp.test"
+      }
+    }            
+  ]
+}

@@ -4,7 +4,9 @@
 
   <!-- Linux build system env properties -->
   <PropertyGroup Condition="$(BuildLinux) == 'true'">
-    <NetStandardCliLocation>/usr/share/dotnet/</NetStandardCliLocation>
+    <NetStandardCliLocation Condition="('$(SfDotnetType)' == 'STANDARD') or ('$(SfDotnetType)' == '')">/usr/share/dotnet/</NetStandardCliLocation>
+    <NetStandardCliLocation Condition="'$(SfDotnetType)' == 'RHDOTNET20'">/opt/rh/rh-dotnet20/root/usr/lib64/dotnet/</NetStandardCliLocation>
+    <NetStandardCliLocation Condition="'$(SfDotnetType)' == 'RHDOTNET21'">/opt/rh/rh-dotnet21/root/usr/lib64/dotnet/</NetStandardCliLocation>
     <NetStandardSdkVersion>2.0.3</NetStandardSdkVersion>
     <CscToolExe>RunCsc.sh</CscToolExe>
     <!-- Unify NetStandardImplicitPackageVersion in linux and windows : RDBug #12679665 -->

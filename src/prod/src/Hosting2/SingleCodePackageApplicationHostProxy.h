@@ -95,6 +95,7 @@ namespace Hosting2
 
         std::wstring GetUniqueContainerName();
 
+        virtual bool GetLinuxContainerIsolation() override;
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -115,7 +116,21 @@ namespace Hosting2
 
     private:
         Common::ErrorCode GetProcessDescription(__out ProcessDescriptionUPtr & processDescription);
-        Common::ErrorCode GetAssignedIPAddress(__out wstring & assignedIP);
+
+        Common::ErrorCode GetContainerNetworkConfigDescription(
+            __out ContainerNetworkConfigDescription & networkConfig,
+            __out wstring & assignedIpAddresses);
+
+        Common::ErrorCode GetAssignedNetworkResources(
+            __out wstring & openNetworkAssignedIpAddress,
+            __out std::map<std::wstring, std::wstring> & overlayNetworkResources,
+            __out wstring & assignedIpAddresses);
+
+        Common::ErrorCode GetContainerDnsServerConfiguration(
+            ContainerNetworkConfigDescription const & networkConfig,
+            __out vector<wstring> & dnsServers);
+
+        std::wstring GetUniqueName();
         void NotifyTermination();
         std::wstring GetContainerGroupId();
         std::wstring GetServiceName();
@@ -123,6 +138,8 @@ namespace Hosting2
         bool ShouldNotify();
 
     private:
+        class GetProcessAndContainerDescriptionAsyncOperation;
+
         class OpenAsyncOperation;
         friend class OpenAsyncOperation;
 
@@ -137,6 +154,7 @@ namespace Hosting2
         CodePackageActivationId const codePackageActivationId_;
         CodePackageInstanceSPtr const codePackageInstance_;
         CodePackageRuntimeInformationSPtr codePackageRuntimeInformation_;
+        ContainerNetworkConfigDescription networkConfig_;
 
         //
         // This flag is set to true after codePackageInstance_ has been

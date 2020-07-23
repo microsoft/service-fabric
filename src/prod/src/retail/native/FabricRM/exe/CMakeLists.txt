@@ -17,7 +17,7 @@ set_target_properties(${exe_FabricRM} PROPERTIES
 add_custom_target(CopyFabricRM ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/RM.Code.Current
     COMMAND ${CMAKE_COMMAND} -E copy ${TEST_OUTPUT_DIR}/${exe_FabricRM} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe
-    COMMAND strip ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe
+    COMMAND ${CMAKE_STRIP} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe
     DEPENDS ${exe_FabricRM}
 )
 
@@ -48,6 +48,7 @@ target_link_libraries(${exe_FabricRM}
   ${lib_Replication}
   ${lib_TransactionalReplicator}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}

@@ -16,7 +16,7 @@ namespace System.Fabric.UpgradeService
 
     internal sealed class PaasCoordinator : IUpgradeCoordinator
     {
-        private const string ApiVersion = "6.2";
+        private const string ApiVersion = "6.5";
 
         private static readonly TraceType TraceType = new TraceType("PaasCoordinator");
         private IList<IUpgradeCoordinator> coordinators;
@@ -59,8 +59,7 @@ namespace System.Fabric.UpgradeService
             IStatefulServicePartition partition)
         {
             var baseUrlStr = configStore.ReadUnencryptedString(configSectionName, Constants.ConfigurationSection.BaseUrl);
-            var clusterId = configStore.ReadUnencryptedString(Constants.ConfigurationSection.PaasSectionName, Constants.ConfigurationSection.ClusterId);
-            var primaryNodeTypes = GetPrimaryNodeTypes(configStore, configSectionName);
+            var clusterId = configStore.ReadUnencryptedString(Constants.ConfigurationSection.PaasSectionName, Constants.ConfigurationSection.ClusterId);            
 
             // Error checking
             baseUrlStr.ThrowIfNullOrWhiteSpace("baseUrlStr");
@@ -99,11 +98,10 @@ namespace System.Fabric.UpgradeService
                     new ClusterCommandProcessor(
                         configStore,
                         configSectionName,
-                        fabricClientWrapper, 
-                        new CommandParameterGenerator(fabricClientWrapper),  
-                        new NodeStatusManager(kvsStore, configStore, configSectionName),
-                        JsonSerializer.Create(WrpGatewayClient.SerializerSettings), 
-                        primaryNodeTypes)
+                        fabricClientWrapper,
+                        new CommandParameterGenerator(fabricClientWrapper),
+                        new NodeStatusManager(kvsStore, configStore, configSectionName, new ExceptionHandlingPolicy(Constants.PaasCoordinator.ClusterCommandProcessorHealthProperty, ResourceCoordinator.TaskName, configStore, configSectionName, partition)),
+                        JsonSerializer.Create(WrpGatewayClient.SerializerSettings))
                 },
                 {
                     ResourceType.ApplicationType,
@@ -134,25 +132,8 @@ namespace System.Fabric.UpgradeService
 
                 new StreamChannelCoordinator(
                     new WrpStreamChannel(wrpStreamChannelUri, clusterId, configStore, configSectionName), 
-                    new ExceptionHandlingPolicy(Constants.PaasCoordinator.SFRPStreamChannelHealthProperty, StreamChannelCoordinator.TaskName, configStore, configSectionName, partition))
+                    new ExceptionHandlingPolicy(Constants.PaasCoordinator.SFRPStreamChannelHealthProperty, ResourceCoordinator.TaskName, configStore, configSectionName, partition))
             };            
-        }
-
-        internal static IEnumerable<string> GetPrimaryNodeTypes(IConfigStore configStore, string configSectionName)
-        {
-            var value = configStore.ReadUnencryptedString(configSectionName, Constants.ConfigurationSection.PrimaryNodeTypes);
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return new List<string>();
-            }
-
-            var primaryNodeTypes = value.Split(Constants.PrimaryNodeTypesDelimiters.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-            if (primaryNodeTypes == null || !primaryNodeTypes.Any())
-            {
-                return new List<string>();
-            }
-
-            return new List<string>(primaryNodeTypes);
-        }
+        }        
     }
 }

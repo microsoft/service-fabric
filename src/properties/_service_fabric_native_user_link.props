@@ -1,0 +1,38 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- 
+        Use UUID.LIB from WindowsSDK. The aggregate SDK package contains the lib from WindowsWDK 
+        that is compiled with /GL. This forces the linker to restart with /LTCG option.
+     -->
+    <UuidLib>$(NugetMachineInstallRoot)\WindowsSdk.Corext.10.0.10586\Lib\10.0.10586.0\um\x64\uuid.lib</UuidLib>
+    <Link_AdditionalOptions>/highentropyva /NODEFAULTLIB:LIBCMT /time /VERBOSE:INCR</Link_AdditionalOptions>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup Condition="'$(BuildType)' == 'debug' AND (('$(UseFastLink)' == 'true') OR ('$(BuildingInsideVisualStudio)' == 'true'))">
+    <Link>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
+      <OptimizeReferences>false</OptimizeReferences>
+      <Profile>false</Profile>
+      <SetChecksum>false</SetChecksum>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 
+    Enable incremental link in vs or with UseFastLink = true as full testing has not been done with it 
+
+    Also disable incremental link for managed c++ projects
+  -->
+  <PropertyGroup Condition="'$(BuildType)' == 'debug' AND '$(CLRSupport)' != 'true' AND (('$(UseFastLink)' == 'true') OR ('$(BuildingInsideVisualStudio)' == 'true'))">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <Link>
+      <CreateHotPatchableImage>X64Image</CreateHotPatchableImage>
+      <SpecifySectionAttributes>.idata,R</SpecifySectionAttributes>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <AdditionalOptions>%(AdditionalOptions) $(Link_AdditionalOptions) /guard:cf /d2:-guardspecload</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

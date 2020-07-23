@@ -109,3 +109,8 @@ private:
     wchar_t NextChar();
     void ResetValueAccumulator();
 };
+
+#if defined(PLATFORM_UNIX)
+NTSTATUS KtlTraceRegister();
+VOID KtlTraceUnregister();
+#endif

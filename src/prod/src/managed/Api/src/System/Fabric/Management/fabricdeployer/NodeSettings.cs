@@ -144,6 +144,8 @@ namespace System.Fabric.FabricDeployer
             AddOptionalEndPoint(parameters, FabricValidatorConstants.ParameterNames.BackupRestoreServiceReplicatorAddress, endpoints.BackupRestoreServiceReplicatorEndpoint);
             AddOptionalEndPoint(parameters, FabricValidatorConstants.ParameterNames.UpgradeOrchestrationServiceReplicatorAddress, endpoints.UpgradeOrchestrationServiceReplicatorEndpoint);
             AddOptionalEndPoint(parameters, FabricValidatorConstants.ParameterNames.CentralSecretServiceReplicatorAddress, endpoints.CentralSecretServiceReplicatorEndpoint);
+            AddOptionalEndPoint(parameters, FabricValidatorConstants.ParameterNames.EventStoreServiceReplicatorAddress, endpoints.EventStoreServiceReplicatorEndpoint);
+            AddOptionalEndPoint(parameters, FabricValidatorConstants.ParameterNames.GatewayResourceManagerReplicatorAddress, endpoints.GatewayResourceManagerReplicatorEndpoint);
             if (endpoints.ApplicationEndpoints != null)
             {
                 AddEndPoint(parameters, FabricValidatorConstants.ParameterNames.StartApplicationPortRange, endpoints.ApplicationEndpoints.StartPort.ToString(CultureInfo.InvariantCulture));

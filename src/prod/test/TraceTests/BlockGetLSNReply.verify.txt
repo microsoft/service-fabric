@@ -1,0 +1,8 @@
+###Partition 29184ac1-ce59-4c2b-a80a-8f02973f2f35 time range 7/23/2014 4:22:36 AM-7/23/2014 4:27:23 AM
+Partition stuck in reconfiguration for at least ###00:04:10.3150000
+Checking primary on node 50
+Primary is stuck in Phase1_GetLSN for at least ###00:04:10.2520000
+Primary is still waiting for GetLSN result from 40
+Primary get LSN from 40 not completed.
+Failed Task: GetRemoteLSN(P2PReceiveReply[*3])
+

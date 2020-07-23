@@ -88,7 +88,7 @@
     {
       "Name": "TPCCCIT",
       "Type": "V2_ScriptTest",
-      "Owners": "preethas, hanagar, tyadam, richhas",
+      "Owners": "preethas, tyadam, richhas",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -102,7 +102,7 @@
     {
       "Name": "TPCC1-Day1-Partition",
       "Type": "V2_ScriptTest",
-      "Owners": "preethas, hanagar, tyadam, richhas",
+      "Owners": "preethas, tyadam, richhas",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupType": "XCopy",

@@ -5,6 +5,7 @@
 
 using System.Fabric.BackupRestore.DataStructures;
 using System.Fabric.Common;
+using System.Globalization;
 using System.Linq;
 using System.Timers;
 
@@ -14,20 +15,16 @@ namespace System.Fabric.BackupRestore
     {
         private readonly BackupPolicy policy;
         private readonly BackupMetadata backupMetadata;
-        private readonly Timer backupTimer;
-        private readonly Action timerCallback;
         private static readonly Random Random = new Random();
         private int jitter;
         private const string TraceType = "BackupTimer";
-        private bool timerEnabledOnce;
+        private BRSTimer backupTimer;
         
         internal BackupTimer(BackupMetadata metadata, Action timerCallback)
         {
             this.policy = metadata.Policy;
             this.backupMetadata = metadata;
-            this.backupTimer = new Timer {AutoReset = false};
-            this.backupTimer.Elapsed += BackupTimerElapsed;
-            this.timerCallback = timerCallback;
+            backupTimer = new BRSTimer(timerCallback);
 
             if (metadata.Policy.PolicyType == BackupPolicyType.ScheduleBased)
             {
@@ -81,16 +78,12 @@ namespace System.Fabric.BackupRestore
             // Store the jitter used so that it can be used to calculate the last recovery point time
             this.backupMetadata.JitterInMillisUsedInLastBackup = jitterInMillis;
 
-            this.backupTimer.Interval = dueTime * 1000 + jitterInMillis;
+            double intervalInMilliSeconds = dueTime * 1000 + jitterInMillis;
 
-            AppTrace.TraceSource.WriteInfo(TraceType, "{0} Scheduling backup timer for interval {1}", this.backupMetadata.PartitionId, this.backupTimer.Interval);
-            Console.WriteLine("Scheduling backup timer for interval {0}", this.backupTimer.Interval);
+            AppTrace.TraceSource.WriteInfo(TraceType, "{0} Scheduling backup timer for interval {1}", this.backupMetadata.PartitionId, intervalInMilliSeconds);
+            Console.WriteLine("Scheduling backup timer for interval {0}", intervalInMilliSeconds);
 
-            if (!this.timerEnabledOnce)
-            {
-                this.backupTimer.Start();
-                this.timerEnabledOnce = true;
-            }
+            this.backupTimer.ArmTimer(intervalInMilliSeconds);
         }
 
         internal TimeSpan GetNextScheduledRunTimeForTest(DateTime currentDateTime, bool postFailedReschedule)
@@ -125,8 +118,8 @@ namespace System.Fabric.BackupRestore
             }
             catch (Exception) { }
 
-            var jitterInSeconds = String.IsNullOrEmpty(jitterInSecondsString) ? BackupRestoreContants.JitterInBackupsDefault : int.Parse(jitterInSecondsString);
-            this.jitter = jitterInSeconds*1000;
+            var jitterInSeconds = String.IsNullOrEmpty(jitterInSecondsString) ? BackupRestoreContants.JitterInBackupsDefault : int.Parse(jitterInSecondsString, CultureInfo.InvariantCulture);
+            this.jitter = Math.Abs(jitterInSeconds) *1000;
         }
 
         private TimeSpan GetTimeSinceLastBackup(DateTime currenDateTime)
@@ -254,11 +247,6 @@ namespace System.Fabric.BackupRestore
             }
 
             return false;
-        }
-
-        private void BackupTimerElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
-        {
-            this.timerCallback();
         }
 
         private TimeSpan GetNextScheduledRunTime(DateTime currentDateTime, bool postFailedReschedule)

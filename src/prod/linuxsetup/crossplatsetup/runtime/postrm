@@ -42,6 +42,9 @@ elif [ $DISTROINSTALLER = "RPM" ]; then
     done
 fi
 
+sfConfigurationPath=/etc/servicefabric
+sfInstalledMobyConfigPath=${sfConfigurationPath}/SfInstalledMoby
+
 if [ "$IsRemove" == "true" ]; then
     echo "Removing access to block devices"
     for i in `lsblk -l | cut -d' ' -f1 |grep -v NAME`
@@ -68,6 +71,21 @@ if [ "$IsRemove" == "true" ]; then
     do
         sudo groupdel $THIS         > /dev/null 2>&1
     done
+
+    # Clean Moby if SF is responsible for this package and if no packages depend on Moby packages
+    if [ $(apt-cache rdepends moby-engine | sed -e '1,/Reverse Depends:/d' | wc -l) -eq 0 ] \
+        && [ $(apt-cache rdepends moby-cli | sed -e '1,/Reverse Depends:/d' | wc -l) -eq 0 ] \
+        && [ -f ${sfInstalledMobyConfigPath} ] \
+        && [ $(cat ${sfInstalledMobyConfigPath}) -eq 1 ]; then
+            echo "servicefabric installed 'moby-engine' and/or 'moby-cli' so marking these packages as auto such that next 'apt autoremove -y' will remove these packages."
+            echo "To undo this, run 'apt-mark manual moby-engine moby-cli'."
+            apt-mark auto moby-engine moby-cli
+    fi
+
+    if [ -d ${sfConfigurationPath} ]; then
+        echo "Deleting servicefabric configuration directory ${sfConfigurationPath}"
+        rm -rf ${sfConfigurationPath}
+    fi
 fi
 
 exit 0

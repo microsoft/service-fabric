@@ -4,112 +4,163 @@
 // ------------------------------------------------------------
 
 #include <iostream>
+#include <errno.h>
+#include <new>
+#include <mutex>
 #include <lttng/lttng.h>
 #include <babeltrace/ctf/iterator.h>
 #include <babeltrace/iterator.h>
+#include <babeltrace/trace-handle.h>
+#include <babeltrace/ctf/events.h>
+#include <evntprov.h>
+#include "lttngreader.h"
 #include "lttngreader_util.h"
 
-// TODO - remove just for debugging
-#include <cstdio>
+std::mutex add_traces_recursive_mtx;
 
 // initializes the trace processing by creating context, associating a folder and getting the iterator for the trace events.
 // returns the trace handle id
-extern "C" int initialize_trace_processing(const char* trace_folder_path, struct bt_context **ctx, bt_ctf_iter **ctf_iter, const bool seek_timestamp, const uint64_t timestamp_filetime)
+extern "C" LttngReaderStatusCode initialize_trace_processing(const char* trace_folder_path, uint64_t start_time_epoch, uint64_t end_time_epoch, LTTngTraceHandle &trace_handle)
 {
     // creating context
-    *ctx = bt_context_create();
+    trace_handle.ctx = bt_context_create();
 
-    // adding trace to context
-    int t_handle_id = bt_context_add_traces_recursive(*ctx, trace_folder_path, "ctf", NULL);
+    // adding trace to context from provided path (locking since bt_context_add_traces_recursive is not thread-safe )
+    add_traces_recursive_mtx.lock();
+        trace_handle.id = bt_context_add_traces_recursive(trace_handle.ctx, trace_folder_path, "ctf", NULL);
+    add_traces_recursive_mtx.unlock();
 
-    if (t_handle_id < 0)
+    if (trace_handle.id < 0)
     {
-        return t_handle_id;
+        return LttngReaderStatusCode::FAILED_TO_LOAD_TRACES;
     }
 
-    // starting reading traces from beginning
-    if (!seek_timestamp)
-    {
-        // getting iterator for trace
-        *ctf_iter =  bt_ctf_iter_create(*ctx, NULL, NULL);
-    }
-    else
-    {
-        // getting iterator at a timestamp
-        bt_iter_pos iter_pos;
-        iter_pos.type = BT_SEEK_TIME;
+    // cleaning iterator for initialization
+    trace_handle.ctf_iter = NULL;
+    trace_handle.last_iter_pos = NULL;
 
-        // DCA's code is in Windows' filetime so we need to convert it first to epoch.
-        iter_pos.u.seek_time = timestamp_filetime; //get_epoch_from_filetime(timestamp_filetime);
+    // allocating memory for reading events
+    // this memory holds the data of the current event being read.
+    // it needs to be allocated so managed code is able to read the event and decoded it.
+    // It was previously a global variable in the stack but it is allocated for thread safety.
+    trace_handle.data_buffer = new (std::nothrow) unsigned char[MAX_LTTNG_EVENT_DATA_SIZE];
 
-        *ctf_iter = bt_ctf_iter_create(*ctx, &iter_pos, NULL);
+    if (trace_handle.data_buffer == NULL)
+    {
+        return LttngReaderStatusCode::NOT_ENOUGH_MEM;
     }
 
-    if (ctf_iter == NULL)
-    {
-        std::cerr << "Unable to create iterator. A iterator may already exist for the context" << std::endl;
-        return -1;
-    }
-
-    return t_handle_id;
+    return initialize_trace(trace_handle, start_time_epoch, end_time_epoch);
 }
 
 // cleans up by destroying the iterators, removing the trace from the context and freeing the context.
-extern "C" int finalize_trace_processing(struct bt_context *ctx, bt_ctf_iter *ctf_iter)
+extern "C" void finalize_trace_processing(LTTngTraceHandle &trace_handle)
 {
     // destroying iterators
-    if (ctf_iter != NULL)
+    if (trace_handle.ctf_iter != NULL)
     {
-        bt_ctf_iter_destroy(ctf_iter);
+        bt_ctf_iter_destroy(trace_handle.ctf_iter);
     }
 
     // freeing context
-    bt_context_put(ctx);
+    bt_context_put(trace_handle.ctx);
 
-    return 0;
+    if (trace_handle.data_buffer != NULL)
+    {
+        delete [] trace_handle.data_buffer;
+        trace_handle.data_buffer = NULL;
+    }
 }
 
-extern "C" int read_next_event(PEVENT_RECORD eventRecord, wchar_t *unstructured_event_text, char *taskname_eventname, bt_ctf_iter *ctf_iter, uint64_t &timestamp_epoch, bool &is_unstructured)
+extern "C" LttngReaderStatusCode read_next_event(LTTngTraceHandle &trace_handle, PEVENT_RECORD eventRecord, wchar_t *unstructured_event_text, char *taskname_eventname, uint64_t &timestamp_epoch, bool &is_unstructured)
 {
-    int err;
-
     // reading event
-    bt_ctf_event *event = bt_ctf_iter_read_event(ctf_iter);
+    if (trace_handle.ctf_iter == NULL)
+    {
+        return LttngReaderStatusCode::INVALID_CTF_ITERATOR;
+    }
+
+    bt_ctf_event *event = bt_ctf_iter_read_event(trace_handle.ctf_iter);
 
     if (event == NULL)
     {
-        return -2;
+        return LttngReaderStatusCode::END_OF_TRACE;
     }
+
+    LttngReaderEventReadStatusCode event_read_err;
 
     // deciding whether it is an unstructured trace or structured
     if (strncmp("service_fabric:tracepoint_structured", bt_ctf_event_name(event), 36))
     {
         is_unstructured = true;
-        err = read_unstructured_event(event, timestamp_epoch, unstructured_event_text, taskname_eventname);
+        event_read_err = read_unstructured_event(event, timestamp_epoch, unstructured_event_text, taskname_eventname);
     }
     else
     {
         is_unstructured = false;
-        err = read_structured_event(event, eventRecord, timestamp_epoch);
+        event_read_err = read_structured_event(event, eventRecord, timestamp_epoch, trace_handle.data_buffer);
     }
 
-    if (err != 0)
+    // trying to move iterator even if event_read_err is not success code.
+    // all current error codes returned by either read_structured_event and read_unstructured_event are recoverable
+    int err_babeltrace = bt_iter_next(bt_ctf_get_iter(trace_handle.ctf_iter));
+
+    if (err_babeltrace < 0)
     {
-        return err;
+        return LttngReaderStatusCode::FAILED_TO_MOVE_ITERATOR;
     }
 
-    // moving iterator to next trace event (returns 0 on success)
-    return bt_iter_next(bt_ctf_get_iter(ctf_iter));
+    if (event_read_err != LttngReaderEventReadStatusCode::SUCCESS)
+    {
+        return LttngReaderStatusCode::FAILED_TO_READ_EVENT;
+    }
+
+    return LttngReaderStatusCode::SUCCESS;
 }
 
-extern "C" bool get_active_lttng_session_path(const char* session_name_startswith, char *output_active_session_path, size_t active_session_buffer_size)
+extern "C" LttngReaderStatusCode set_start_end_time(LTTngTraceHandle &trace_handle, uint64_t start_time_epoch, uint64_t end_time_epoch)
+{
+    bt_iter_pos *start_pos = create_bt_iter_pos(start_time_epoch);
+    bt_iter_pos *end_pos = create_bt_iter_pos(end_time_epoch);
+
+    // first destroy previous iterator
+    if (trace_handle.ctf_iter != NULL)
+    {
+        bt_ctf_iter_destroy(trace_handle.ctf_iter);
+        trace_handle.ctf_iter = NULL;
+    }
+
+    // destroy stored last position
+    if (trace_handle.last_iter_pos != NULL)
+    {
+        bt_iter_free_pos(trace_handle.last_iter_pos);
+        trace_handle.last_iter_pos = NULL;
+    }
+
+    // create new iterator
+    trace_handle.ctf_iter = bt_ctf_iter_create(trace_handle.ctx, start_pos, end_pos);
+
+    // start_pos is not needed after initialization (** end_pos is neeed **)
+    bt_iter_free_pos(start_pos);
+
+    // end_pos needs to be stored since it is used internally by babeltrace
+    trace_handle.last_iter_pos = end_pos;
+
+    if(trace_handle.ctf_iter == NULL)
+    {
+        return LttngReaderStatusCode::INVALID_CTF_ITERATOR;
+    }
+
+    return LttngReaderStatusCode::SUCCESS;
+}
+
+extern "C" LttngReaderStatusCode get_active_lttng_session_path(const char* session_name_startswith, char *output_active_session_path, size_t active_session_buffer_size)
 {
     struct lttng_session *sessions;
 
     if (session_name_startswith == NULL)
     {
-        std::cerr << "Error - NULL session name when trying to find active sessions." << std::endl;
-        return false;
+        return LttngReaderStatusCode::INVALID_ARGUMENT;
     }
 
     // getting list of all existing lttng sessions.
@@ -117,7 +168,7 @@ extern "C" bool get_active_lttng_session_path(const char* session_name_startswit
 
     if (num_sessions <= 0)
     {
-        return false;
+        LttngReaderStatusCode::NO_LTTNG_SESSION_FOUND;
     }
 
     size_t startswith_size = strlen(session_name_startswith);
@@ -131,11 +182,17 @@ extern "C" bool get_active_lttng_session_path(const char* session_name_startswit
             // checking whether the path fits in the buffer provided.
             if (sessions[i].path != NULL && strlen(sessions[i].path) < active_session_buffer_size)
             {
-                strcpy(output_active_session_path, sessions[i].path);
-                return true;
+                strcpy(output_active_session_path, sessions[i].path);                
+                free(sessions);
+
+                return LttngReaderStatusCode::SUCCESS;
+            }
+            else {
+                free(sessions);
+                return LttngReaderStatusCode::INVALID_BUFFER_SIZE;
             }
         }
     }
 
-    return false;
+    return LttngReaderStatusCode::NO_LTTNG_SESSION_FOUND;
 }

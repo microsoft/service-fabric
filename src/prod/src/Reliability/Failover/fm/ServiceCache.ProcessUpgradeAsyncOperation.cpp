@@ -111,36 +111,50 @@ void ServiceCache::ProcessUpgradeAsyncOperation::OnStart(AsyncOperationSPtr cons
     {
         ApplicationInfoSPtr newAppInfo = nullptr;
 
-        if (requestBody_.IsRollback && !lockedAppInfo->Upgrade)
+        //if some RG settings are changing we need plb safety checks
+        bool isPLBSafetyCheckNeeded = lockedAppInfo->IsPLBSafetyCheckNeeded(requestBody_.Specification.UpgradedRGSettings);
+
+        UpgradeDescription description(move(const_cast<ServiceModel::ApplicationUpgradeSpecification &>(requestBody_.Specification)));
+        ApplicationUpgradeUPtr newUpgrade = make_unique<ApplicationUpgrade>(
+            move(description),
+            requestBody_.UpgradeReplicaSetCheckTimeout,
+            upgradeDomains,
+            requestBody_.SequenceNumber,
+            requestBody_.IsRollback,
+            !isPLBSafetyCheckNeeded,
+            FailoverConfig::GetConfig().PlbSafetyCheckTimeLimit);
+
+        ApplicationUpgradeUPtr newRollback =
+            ((requestBody_.IsRollback && lockedAppInfo->Upgrade) ? make_unique<ApplicationUpgrade>(*lockedAppInfo->Upgrade) : nullptr);
+
+        newAppInfo = make_shared<ApplicationInfo>(*lockedAppInfo, move(newUpgrade), move(newRollback));
+
+        newAppInfo->Upgrade->GetProgress(replyBody_);
+
+        if (Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
         {
-            serviceCache_.fm_.WriteInfo(
-                FailoverManager::TraceApplicationUpgrade, lockedAppInfo->IdString,
-                "No upgrade found to be rolled back: {0}", requestBody_);
+            // Reference the new networks requested
+            for (auto networkName : requestBody_.Specification.Networks)
+            {
+                ManualResetEvent completedEvent(false);
 
-            newAppInfo = make_shared<ApplicationInfo>(*lockedAppInfo, instanceId_);
-            isNewUpgrade = false;
-        }
-        else
-        {
-            //if some RG settings are changing we need plb safety checks
-            bool isPLBSafetyCheckNeeded = lockedAppInfo->IsPLBSafetyCheckNeeded(requestBody_.Specification.UpgradedRGSettings);
+                serviceCache_.fm_.NIS.BeginNetworkAssociation(
+                    networkName,
+                    lockedAppInfo->ApplicationName.ToString(),
+                    [this, &completedEvent, &error](AsyncOperationSPtr const & contextSPtr) mutable -> void
+                {
+                    error = serviceCache_.fm_.NIS.EndNetworkAssociation(contextSPtr);
+                    completedEvent.Set();
+                },
+                    thisSPtr);
 
-            UpgradeDescription description(move(const_cast<ServiceModel::ApplicationUpgradeSpecification &>(requestBody_.Specification)));
-            ApplicationUpgradeUPtr newUpgrade = make_unique<ApplicationUpgrade>(
-                move(description),
-                requestBody_.UpgradeReplicaSetCheckTimeout,
-                upgradeDomains,
-                requestBody_.SequenceNumber,
-                requestBody_.IsRollback,
-                !isPLBSafetyCheckNeeded,
-                FailoverConfig::GetConfig().PlbSafetyCheckTimeLimit);
-
-            ApplicationUpgradeUPtr newRollback =
-                (requestBody_.IsRollback ? make_unique<ApplicationUpgrade>(*lockedAppInfo->Upgrade) : nullptr);
-
-            newAppInfo = make_shared<ApplicationInfo>(*lockedAppInfo, move(newUpgrade), move(newRollback));
-
-            newAppInfo->Upgrade->GetProgress(replyBody_);
+                completedEvent.WaitOne();
+                if (!error.IsSuccess())
+                {
+                    TryComplete(thisSPtr, error.ReadValue());
+                    return;
+                }
+            }
         }
 
         serviceCache_.BeginUpdateApplication(

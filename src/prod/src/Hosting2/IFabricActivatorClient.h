@@ -210,6 +210,27 @@ namespace Hosting2
             Common::AsyncOperationSPtr const &,
             __out std::vector<std::wstring> & assignedIps) = 0;
 
+        virtual Common::AsyncOperationSPtr BeginManageOverlayNetworkResources(
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & servicePackageId,
+            std::map<wstring, std::vector<std::wstring>> const & codePackageNetworkNames,
+            ManageOverlayNetworkAction::Enum action,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndManageOverlayNetworkResources(
+            Common::AsyncOperationSPtr const &,
+            __out std::map<wstring, std::map<std::wstring, std::wstring>> & assignedNetworkResources) = 0;
+
+        virtual Common::AsyncOperationSPtr BeginUpdateRoutes(
+            Management::NetworkInventoryManager::PublishNetworkTablesRequestMessage const & networkTables,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndUpdateRoutes(
+            Common::AsyncOperationSPtr const &) = 0;
+
         virtual Common::AsyncOperationSPtr BeginConfigureContainerCertificateExport(
             std::map<std::wstring, std::vector<ServiceModel::ContainerCertificateDescription>> const & certificateRef,
             std::wstring workDirectoryPath,
@@ -230,15 +251,18 @@ namespace Hosting2
         virtual Common::ErrorCode EndCleanupContainerCertificateExport(
             Common::AsyncOperationSPtr const &) = 0;
 
-        virtual Common::AsyncOperationSPtr BeginSetupContainerGroup(
-            std::wstring const & containerGroupId,
-            std::wstring const & assignedIPAddress,
-            std::wstring const & appfolder,
-            std::wstring const & appId,
-            std::wstring const & appName,
-            std::wstring const & partitionId,
-            std::wstring const & servicePackageActivationId,
-            ServiceModel::ServicePackageResourceGovernanceDescription const & spRg,
+       virtual Common::AsyncOperationSPtr BeginSetupContainerGroup(
+           std::wstring const & containerGroupId,
+           ServiceModel::NetworkType::Enum networkType,
+           std::wstring const & openNetworkAssignedIp,
+           std::map<std::wstring, std::wstring> const & overlayNetworkResources,
+           std::vector<std::wstring> const & dnsServers,
+           std::wstring const & appfolder,
+           std::wstring const & appId,
+           std::wstring const & appName,
+           std::wstring const & partitionId,
+           std::wstring const & servicePackageActivationId,
+           ServiceModel::ServicePackageResourceGovernanceDescription const & spRg,
 #if defined(PLATFORM_UNIX)
             ContainerPodDescription const & podDescription,
 #endif
@@ -266,6 +290,12 @@ namespace Hosting2
             std::vector<LONG> const & firewallPorts) = 0;
 
         virtual Common::ErrorCode CleanupAssignedIPs(
+            std::wstring const & servicePackageId) = 0;
+
+        virtual Common::ErrorCode CleanupAssignedOverlayNetworkResources(
+            std::map<std::wstring, std::vector<std::wstring>> const & codePackageNetworkNames,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
             std::wstring const & servicePackageId) = 0;
 
         virtual Common::AsyncOperationSPtr BeginDeleteContainerImages(
@@ -319,5 +349,28 @@ namespace Hosting2
             Common::AsyncOperationSPtr const &) = 0;
         virtual Common::ErrorCode EndConfigureNodeForDnsService(
             Common::AsyncOperationSPtr const &) = 0;
+
+        virtual Common::AsyncOperationSPtr BeginGetNetworkDeployedPackages(
+            std::vector<std::wstring> const &,
+            std::wstring const &,
+            std::wstring const &,
+            std::wstring const &,
+            std::map<std::wstring, std::wstring> const &,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndGetNetworkDeployedPackages(
+            Common::AsyncOperationSPtr const &,
+            __out std::map<std::wstring, std::map<std::wstring, std::vector<std::wstring>>> &,
+            __out std::map<std::wstring, std::map<std::wstring, std::wstring>> &) = 0;
+
+        virtual Common::AsyncOperationSPtr BeginGetDeployedNetworks(
+            ServiceModel::NetworkType::Enum,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndGetDeployedNetworks(
+            Common::AsyncOperationSPtr const &,
+            __out std::vector<std::wstring> &) = 0;
     };
 }

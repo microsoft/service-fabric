@@ -1,6 +1,5 @@
 {
   "Default": {
-    "IsCit": "true",
     "RunLocally": "true"
   },
     "Tests": [
@@ -85,12 +84,12 @@
         },
 
         {
-            "Name": "KIOBufferUserTests.exe",
+            "Name": "KIoBufferUserTests.exe",
             "Type": "Linux.KConsTest",
             "Owners": "alanwar,tyadam",
             "Tags": "Admin, KTL",
             "TestExecutionParameters": {
-                "TaskName": "KIOBufferUserTests"
+            "TaskName": "KIoBufferUserTests"
             }
         },
 
@@ -271,16 +270,6 @@
             "Tags": "Admin, KTL, LongRun",
             "TestExecutionParameters": {
                 "TaskName": "KtlCommonUserTests"
-            }
-        },
-
-        {
-            "Name": "KDeferredCallUserTests.exe",
-            "Type": "Linux.KConsTest",
-            "Owners": "alanwar,tyadam",
-            "Tags": "Admin, KTL",
-            "TestExecutionParameters": {
-                "TaskName": "KDeferredCallUserTests"
             }
         }
 

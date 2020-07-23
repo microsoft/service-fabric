@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="TestApplicationType" ApplicationTypeVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Description>Test Application</Description>
+
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="TestServices" ServiceManifestVersion="1.0" />
+    <ConfigOverrides />
+  </ServiceManifestImport>
+
+  <ServiceTemplates>
+    <StatefulServiceGroup ServiceTypeName="TestServiceGroupType1" TargetReplicaSetSize="8" MinReplicaSetSize="3">
+      <SingletonPartition/>
+      <Members>
+        <Member ServiceTypeName="TestServiceType1" Name="M1">
+        </Member>
+        <Member ServiceTypeName="TestServiceType2" Name="M2">
+        </Member>
+      </Members>
+    </StatefulServiceGroup>
+  </ServiceTemplates>
+
+  <DefaultServices>
+    <ServiceGroup Name="DefaultServiceGroup1">
+      <StatefulServiceGroup ServiceTypeName="TestServiceGroupType1" TargetReplicaSetSize="11" MinReplicaSetSize="6">
+        <SingletonPartition/>
+        <Members>
+          <Member Name="A" ServiceTypeName="TestServiceType1">
+            <LoadMetrics>
+              <LoadMetric Name="M1" PrimaryDefaultLoad="1" SecondaryDefaultLoad="10" Weight="Low"/>
+            </LoadMetrics>
+          </Member>
+          <Member Name="B" ServiceTypeName="TestServiceType2">
+            <LoadMetrics>
+              <LoadMetric Name="M1" PrimaryDefaultLoad="3" SecondaryDefaultLoad="30" Weight="High" />
+            </LoadMetrics>
+          </Member>
+          <Member Name="C" ServiceTypeName="TestServiceType2">
+            <LoadMetrics>
+              <LoadMetric Name="M2" PrimaryDefaultLoad="17" SecondaryDefaultLoad="170" Weight="Medium" />
+            </LoadMetrics>
+          </Member>
+        </Members>
+      </StatefulServiceGroup>
+    </ServiceGroup>
+
+    <ServiceGroup Name="DefaultServiceGroup2">
+      <StatefulServiceGroup ServiceTypeName="TestServiceGroupType2" TargetReplicaSetSize="4" MinReplicaSetSize="2">
+        <SingletonPartition/>
+        <LoadMetrics>
+          <LoadMetric Name="M1" PrimaryDefaultLoad="55" SecondaryDefaultLoad="550" Weight="Medium" />
+        </LoadMetrics>
+        <Members>
+          <Member Name="A" ServiceTypeName="TestServiceType1">
+            <LoadMetrics>
+              <LoadMetric Name="M1" PrimaryDefaultLoad="1" SecondaryDefaultLoad="10" Weight="Low" />
+            </LoadMetrics>
+          </Member>
+          <Member Name="B" ServiceTypeName="TestServiceType2">
+            <LoadMetrics>
+              <LoadMetric Name="M1" PrimaryDefaultLoad="3" SecondaryDefaultLoad="30" Weight="High" />
+            </LoadMetrics>
+          </Member>
+        </Members>
+      </StatefulServiceGroup>
+    </ServiceGroup>
+
+  </DefaultServices>
+
+</ApplicationManifest>

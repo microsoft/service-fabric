@@ -130,14 +130,13 @@ void UpgradeDomainDeltaNodesCheckHealthEvaluation::SetDescription()
 {
     size_t currentUnhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1} {2}% ({3}/{4}) - {5}% ({6}/{7}), MaxPercentUpgradeDomainDeltaUnhealthyNodes={8}%.",
         HMResource::GetResources().HealthEvaluationUnhealthyUpgradeDomainDeltaNodesCheck,
         upgradeDomainName_,
-        GetUnhealthyPercent(baselineErrorCount_, baselineTotalCount_),
-        baselineErrorCount_,
-        baselineTotalCount_,
         GetUnhealthyPercent(currentUnhealthyCount, totalCount_),
         currentUnhealthyCount,
         totalCount_,
+        GetUnhealthyPercent(baselineErrorCount_, baselineTotalCount_),
+        baselineErrorCount_,
+        baselineTotalCount_,
         maxPercentUpgradeDomainDeltaUnhealthyNodes_);
 }

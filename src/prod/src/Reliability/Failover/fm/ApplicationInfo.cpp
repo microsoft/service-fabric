@@ -92,7 +92,8 @@ ApplicationInfo::ApplicationInfo(
       updateId_(other.updateId_),
       capacityDescription_(other.capacityDescription_),
       resourceGovernanceDescription_(other.resourceGovernanceDescription_),
-      codePackageContainersImages_(other.codePackageContainersImages_)
+      codePackageContainersImages_(other.codePackageContainersImages_),
+      networks_(other.networks_)
 {
     instanceId_ = (upgrade_ ? upgrade_->Description.InstanceId : other.instanceId_);
 }

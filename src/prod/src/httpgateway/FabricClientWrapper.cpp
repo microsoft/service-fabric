@@ -72,6 +72,9 @@ ErrorCode FabricClientWrapper::Initialize(__in FabricNodeConfigSPtr &config)
     error = factoryPtr->CreateFaultManagementClient(faultMgmtClientPtr_);
     if (!error.IsSuccess()) { return error; }
 
+    error = factoryPtr->CreateSecretStoreClient(secretStoreClientPtr_);
+    if (!error.IsSuccess()) { return error; }
+
     error = factoryPtr->CreateInternalTokenValidationServiceClient(tvsClientPtr_);
     if (!error.IsSuccess()) { return error; }
 
@@ -90,6 +93,12 @@ ErrorCode FabricClientWrapper::Initialize(__in FabricNodeConfigSPtr &config)
     error = factoryPtr->CreatePropertyManagementClient(propertyMgmtClientPtr_);
     if (!error.IsSuccess()) { return error; }
 
+    error = factoryPtr->CreateNetworkManagementClient(networkMgmtClientPtr_);
+    if (!error.IsSuccess()) { return error; }
+
+    error = factoryPtr->CreateGatewayResourceManagerClient(gatewayResourceManagerClientPtr_);
+    if (!error.IsSuccess()) { return error; }
+
     FabricClientSettings settings = settingsClientPtr_->GetSettings();
 
     auto healthReportSendInterval = HttpGatewayConfig::GetConfig().HttpGatewayHealthReportSendInterval;
@@ -102,5 +111,3 @@ ErrorCode FabricClientWrapper::SetSecurity(Transport::SecuritySettings && settin
 {
     return settingsClientPtr_->SetSecurity(move(settings));
 }
-
-

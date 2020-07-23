@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceDefinition name="WindowsFabricWACluster" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition" schemaVersion="2015-04.2.6">
+  <WorkerRole name="WindowsFabricRole" vmsize="Small">
+    <Imports>     
+      <Import moduleName="WindowsFabric"/> 
+    </Imports>
+    <LocalResources>
+      <LocalStorage name="WinFabRoot" cleanOnRoleRecycle="false" sizeInMB="25000" />
+    </LocalResources>
+    <Endpoints>                           
+      <InputEndpoint name="ClientConnectionAddress" protocol="tcp" port="19000" />
+      <InputEndpoint name="HttpGatewayListenAddress" protocol="http" port="19007" />
+      <InternalEndpoint name="LeaseAgentAddress" protocol="tcp" port="19001" />
+      <InternalEndpoint name="NodeAddress" protocol="tcp" port="9001" />
+      <InternalEndpoint name="ApplicationPorts" protocol="tcp">
+        <FixedPortRange min="30001" max="36000" />
+      </InternalEndpoint>    
+    </Endpoints>
+    
+    <ConfigurationSettings>
+      <!-- This setting specifies location of bootstrap cluster manifest. It could be '_default_' when the cluster manifest in plugin directory will be used. It could also be a XStore blob location. -->
+      <!-- The bootstrap cluster manifest will only be used for initial node configuration on a VM with no Windows Fabric installation, including a fresh VM and a VM whose OS disk has just been replaced. -->
+      <Setting name="WindowsFabric.ClusterManifestLocation"/>
+      <!-- This setting needs to match the port range specified in the 'ApplicationPorts' endpoint in service definition -->
+      <Setting name="WindowsFabric.ApplicationPortCount"/>
+
+      <!-- This setting specifies the portion of port range defined by endpoint ApplicationPorts that will be used for ephemeral ports. -->
+      <!-- The last WindowsFabric.EphemeralPortCount ports of the port range will be used for ephemeral ports and the remaining will be used for Windows Fabric application ports. -->
+      <!-- If the setting is not specified, by default the second half of the port range will be used for ephemeral ports. -->
+      <Setting name="WindowsFabric.EphemeralPortCount" />
+      <!-- This specifies the retry interval for WindowsFabric deployment on each node-->
+      <Setting name="WindowsFabric.DeploymentRetryIntervalSeconds"/>
+      <!-- This specifies the trace level for the WindowsFabric AzureWrapper service text logs. -->
+      <!-- The logs are in C:\WFRoot\WindowsFabricDeployment -->
+      <!-- Valid values for this setting are 'info', 'warning', 'error' (Case insensitive) -->
+      <Setting name="WindowsFabric.TextLogTraceLevel"/>
+    </ConfigurationSettings>
+    <Runtime executionContext="elevated" />
+  </WorkerRole>
+</ServiceDefinition>

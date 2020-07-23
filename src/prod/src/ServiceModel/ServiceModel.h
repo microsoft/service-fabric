@@ -62,8 +62,7 @@
 //
 // ServiceModel public header files
 //
-#include "ServiceModel/ConfigOverrideDescription.h"
-#include "ServiceModel/ConfigSettingsDescription.h"
+
 #include "ServiceModel/Priority.h"
 #include "ServiceModel/ProgressUnitType.h"
 #include "ServiceModel/ProgressUnit.h"
@@ -172,6 +171,9 @@
 #include "ServiceModel/DeleteSingleInstanceDeploymentDescription.h"
 #include "ServiceModel/ServiceManifestDescription.h"
 #include "ServiceModel/ServiceFabricRuntimeAccessDescription.h"
+#include "ServiceModel/ContainerNetworkPolicyEndpointBindingDescription.h"
+#include "ServiceModel/ContainerNetworkPolicyDescription.h"
+#include "ServiceModel/NetworkPoliciesDescription.h"
 #include "ServiceModel/ServicePackageDescription.h"
 #include "ServiceModel/ResourceOverridesDescription.h"
 #include "ServiceModel/ServiceManifestImportDescription.h"
@@ -356,6 +358,7 @@
 #include "ServiceModel/ClusterHealthStatisticsFilter.h"
 #include "ServiceModel/QueryMetadataQueryResult.h"
 #include "ServiceModel/FileXmlSettingsStore.h"
+#include "ServiceModel/NetworkDescription.h"
 #include "ServiceModel/ApplicationDescriptionWrapper.h"
 #include "ServiceModel/ApplicationUpdateDescriptionWrapper.h"
 #include "ServiceModel/MonitoredUpgradeFailureAction.h"
@@ -415,6 +418,13 @@
 #include "ServiceModel/ServiceGroupFromTemplateDescription.h"
 #include "ServiceModel/ServiceFromTemplateDescription.h"
 #include "ServiceModel/HealthState.h"
+#include "ServiceModel/NetworkApplicationQueryResult.h"
+#include "ServiceModel/NetworkNodeQueryResult.h"
+#include "ServiceModel/ApplicationNetworkQueryResult.h"
+#include "ServiceModel/NetworkInformation.h"
+#include "ServiceModel/DeleteNetworkDescription.h"
+#include "ServiceModel/DeployedNetworkQueryResult.h"
+#include "ServiceModel/DeployedNetworkCodePackageQueryResult.h"
 
 //
 // Internal Query objects
@@ -485,7 +495,6 @@
 #include "ServiceModel/reliability/failover/UpgradeProgress.h"
 #include "ServiceModel/reliability/failover/ReplicaLifeCycleState.h"
 
-
 //
 // Replication Types.
 //
@@ -518,7 +527,6 @@
 #include "ServiceModel/data/txnreplicator/SLConfigValues.h"
 #include "ServiceModel/data/txnreplicator/KtlLoggerSharedLogSettings.h"
 #include "ServiceModel/data/txnreplicator/KvsSystemServiceConfig.h"
-
 
 //
 // management Types
@@ -575,6 +583,7 @@
 #include "modelV2/ApplicationScopedVolumeCreationParameters.h"
 #include "modelV2/ApplicationScopedVolume.h"
 #include "modelV2/IndependentVolumeRef.h"
+#include "modelV2/EndpointRef.h"
 #include "modelV2/NetworkRef.h"
 #include "modelV2/SettingDescription.h"
 #include "modelV2/CodePackageInstanceView.h"
@@ -582,10 +591,33 @@
 #include "modelV2/CodePackageResourceDescription.h"
 #include "modelV2/ReliableCollectionsRefs.h"
 #include "modelV2/ContainerCodePackageDescription.h"
+#include "modelV2/AutoScalingMechanismKind.h"
+#include "modelV2/AutoScalingMechanism.h"
+#include "modelV2/AddRemoveReplicaScalingMechanism.h"
+#include "modelV2/AutoScalingMetricKind.h"
+#include "modelV2/AutoScalingMetric.h"
+#include "modelV2/AutoScalingResourceMetric.h"
+#include "modelV2/AutoScalingTriggerKind.h"
+#include "modelV2/AutoScalingTrigger.h"
+#include "modelV2/AverageLoadScalingTrigger.h"
+#include "modelV2/AutoScalingPolicy.h"
 #include "modelV2/ServicePropertiesBase.h"
 #include "modelV2/ContainerServiceDescription.h"
 #include "modelV2/ApplicationDescription.h"
 #include "modelV2/ServiceReplicaDescription.h"
+#include "modelV2/NetworkResourceDescription.h"
+#include "modelV2/GatewayDestination.h"
+#include "modelV2/HttpHeaderMatchType.h"
+#include "modelV2/HttpPathMatchType.h"
+#include "modelV2/HttpRouteMatchPath.h"
+#include "modelV2/HttpRouteMatchHeader.h"
+#include "modelV2/HttpRouteMatchRule.h"
+#include "modelV2/HttpRouteConfig.h"
+#include "modelV2/HttpHostNameConfig.h"
+#include "modelV2/GatewayResourceStatus.h"
+#include "modelV2/GatewayResourceTcpConfig.h"
+#include "modelV2/GatewayResourceHttpConfig.h"
+#include "modelV2/GatewayResourceDescription.h"
 
 #include "ServiceModel/ComposeDeploymentUpgradeProgress.h"
 #include "ServiceModel/ContainerGroupDeploymentUtility.h"
@@ -601,8 +633,10 @@
 #include "ServiceModel/SingleInstanceDeploymentQueryResult.h"
 #include "ServiceModel/modelV2/ApplicationDescriptionQueryResult.h"
 #include "ServiceModel/modelV2/ContainerServiceQueryResult.h"
+#include "ServiceModel/modelV2/NetworkResourceDescriptionQueryResult.h"
 #include "ServiceModel/modelV2/VolumeQueryDescription.h"
 #include "ServiceModel/modelV2/VolumeQueryResult.h"
+#include "ServiceModel/modelV2/GatewayResourceQueryDescription.h"
 #include "ServiceModel/ReplicaResourceQueryResult.h"
 #include "ServiceModel/ContainerInfoData.h"
 #include "ServiceModel/ContainerInfoArgs.h"
@@ -628,7 +662,6 @@
 #include "ServiceModel/ComposeDeploymentStatusQueryDescription.h"
 #include "ServiceModel/SingleInstanceDeploymentQueryDescription.h"
 #include "ServiceModel/ServiceHealthQueryDescription.h"
-#include "ServiceModel/ServiceQueryDescription.h"
 #include "ServiceModel/PartitionHealthQueryDescription.h"
 #include "ServiceModel/ReplicaHealthQueryDescription.h"
 #include "ServiceModel/ReplicasResourceQueryDescription.h"
@@ -638,7 +671,13 @@
 #include "ServiceModel/DeployedApplicationQueryDescription.h"
 #include "ServiceModel/ApplicationQueryDescription.h"
 #include "ServiceModel/NodeQueryDescription.h"
-
+#include "ServiceModel/ServiceQueryDescription.h"
+#include "ServiceModel/NetworkQueryDescription.h"
+#include "ServiceModel/NetworkApplicationQueryDescription.h"
+#include "ServiceModel/NetworkNodeQueryDescription.h"
+#include "ServiceModel/ApplicationNetworkQueryDescription.h"
+#include "ServiceModel/DeployedNetworkQueryDescription.h"
+#include "ServiceModel/DeployedNetworkCodePackageQueryDescription.h"
 
 //
 // FileStoreService Types.
@@ -720,7 +759,6 @@
 //
 #include "ServiceModel/ServiceGroup/ServiceGroupConstants.h"
 #include "ServiceModel/ServiceGroup/Utility.h"
-
 
 // TokenValidationService Types.
 //
@@ -821,6 +859,12 @@
 #include "ServiceModel/management/CentralSecretService/SecretResourceMetadata.h"
 
 //
+// GatewayResourceManager Types.
+//
+#include "ServiceModel/management/GatewayResourceManager/CreateGatewayResourceMessageBody.h"
+#include "ServiceModel/management/GatewayResourceManager/DeleteGatewayResourceMessageBody.h"
+
+//
 //  Chaos types
 //
 #include "ServiceModel/management/FaultAnalysisService/Chaos/EventContextMap.h"
@@ -886,6 +930,8 @@
 #if defined(PLATFORM_UNIX)
 #include "ServiceModel/hosting2/ContainerPodDescription.h"
 #endif
+#include "ServiceModel/hosting2/ContainerNetworkConfigDescription.h"
+#include "ServiceModel/hosting2/ContainerUpdateRoutesRequest.h"
 #include "ServiceModel/hosting2/ContainerDescription.h"
 #include "ServiceModel/hosting2/ProcessDebugParameters.h"
 #include "ServiceModel/hosting2/ProcessDescription.h"

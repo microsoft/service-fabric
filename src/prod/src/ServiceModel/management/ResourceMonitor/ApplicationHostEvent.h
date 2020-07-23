@@ -14,10 +14,19 @@ namespace Management
         public:
 
             ApplicationHostEvent() = default;
-            ApplicationHostEvent(Hosting2::CodePackageInstanceIdentifier const & codePackageInstanceIdentifier,std::wstring const & appName, ServiceModel::EntryPointType::Enum hostType, std::wstring const & appHostId, bool isUp);
+            ApplicationHostEvent(
+                Hosting2::CodePackageInstanceIdentifier const & codePackageInstanceIdentifier,
+                std::wstring const & appName,
+                ServiceModel::EntryPointType::Enum hostType,
+                std::wstring const & appHostId,
+                bool isUp,
+                bool isLinuxContainerIsolated = false);
 
             __declspec(property(get=get_CodePackageInstanceIdentifier)) Hosting2::CodePackageInstanceIdentifier const & CodePackageInstanceIdentifier;
             Hosting2::CodePackageInstanceIdentifier const &  get_CodePackageInstanceIdentifier() const { return codePackageInstanceIdentifier_; }
+
+            __declspec(property(get = get_PartitionId)) Common::Guid const & PartitionId;
+            Common::Guid const & get_PartitionId() const { return codePackageInstanceIdentifier_.ServicePackageInstanceId.ActivationContext.ActivationGuid; }
 
             __declspec(property(get = get_ApplicationName)) std::wstring const & AppName;
             std::wstring const & get_ApplicationName() const { return appName_; }
@@ -31,9 +40,12 @@ namespace Management
             __declspec(property(get=get_IsUp)) bool IsUp;
             bool get_IsUp() const { return isUp_; }
 
+            __declspec(property(get = get_IsLinuxContainerIsolated)) bool IsLinuxContainerIsolated;
+            bool get_IsLinuxContainerIsolated() const { return isLinuxContainerIsolated_; }
+
             void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
-            FABRIC_FIELDS_05(codePackageInstanceIdentifier_,appName_, hostType_, appHostId_, isUp_);
+            FABRIC_FIELDS_06(codePackageInstanceIdentifier_,appName_, hostType_, appHostId_, isUp_, isLinuxContainerIsolated_);
 
         private:
             Hosting2::CodePackageInstanceIdentifier codePackageInstanceIdentifier_;
@@ -41,6 +53,7 @@ namespace Management
             ServiceModel::EntryPointType::Enum hostType_;
             std::wstring appHostId_;
             bool isUp_;
+            bool isLinuxContainerIsolated_;
         };
     }
 }

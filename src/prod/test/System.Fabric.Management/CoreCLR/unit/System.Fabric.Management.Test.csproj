@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_mstest.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>e1ccd7e6-1c1a-4423-8c48-a64e1c1c7b6b</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyName>System.Fabric.Management.Test</AssemblyName>
+    <RootNamespace>System.Fabric.Management.Test</RootNamespace>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\unit\ImageBuilderTestContext.cs" />
+    <Compile Include="..\..\unit\ImageStoreTypeAttribute.cs" />
+    <Compile Include="..\..\unit\TestUtility.cs" />
+    <Compile Include="..\..\unit\XStoreImageStore.Test.cs" />
+    <!-- Copied keyvaultwrapper from fullclr KeyValueWrapper.dll -->
+    <Compile Include="KeyVaultWrapper.cs" />
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\managed\Api\CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.1.18" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.1.18" />
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="2.3.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.0" />
+    <PackageReference Include="System.Security.Cryptography.X509Certificates" Version="4.3.2" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsLinux)' == true ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+  </ItemGroup>
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test.targets" />
+</Project>

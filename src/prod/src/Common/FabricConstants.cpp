@@ -25,6 +25,11 @@ GlobalWString FabricConstants::EnableCircularTraceSessionRegKeyName = make_globa
 GlobalWString FabricConstants::EnableUnsupportedPreviewFeaturesRegKeyName = make_global<wstring>(L"EnableUnsupportedPreviewFeatures");
 GlobalWString FabricConstants::IsSFVolumeDiskServiceEnabledRegKeyName = make_global<wstring>(L"IsSFVolumeDiskServiceEnabled");
 GlobalWString FabricConstants::UseFabricInstallerSvcKeyName = make_global<wstring>(L"UseFabricInstallerSvc");
+GlobalWString FabricConstants::FabricHostServicePathRegKeyName = make_global<wstring>(L"FabricHostServicePath");
+GlobalWString FabricConstants::UpdaterServicePathRegKeyName = make_global<wstring>(L"UpdaterServicePath");
+#if defined(PLATFORM_UNIX)
+GlobalWString FabricConstants::SfInstalledMobyRegKeyName = make_global<wstring>(L"SfInstalledMoby");
+#endif
 
 GlobalWString FabricConstants::AppsFolderName = make_global<wstring>(L"_App");
 // Current cluster manifest name
@@ -48,3 +53,6 @@ DWORD FabricConstants::MaxFileSize = 1073741824;
 
 // DnsService related constants
 GlobalWString FabricConstants::FabricDnsServerIPAddressRegKeyName = make_global<wstring>(L"FabricDnsServerIPAddress");
+
+// Isolated network constants
+GlobalWString FabricConstants::FabricIsolatedNetworkInterfaceRegKeyName = make_global<wstring>(L"FabricIsolatedNetworkInterfaceName");

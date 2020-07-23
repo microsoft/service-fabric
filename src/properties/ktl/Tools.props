@@ -1,0 +1,51 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <!--Standard user mode imports-->
+  <Import Project="$(SRCROOT)\properties\ktl\imports\KtlUserImports.props" />
+  <!-- CPP imports have been now added -->
+
+  <!--Post-CPP overrides-->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions)
+        _DISABLE_DEPRECATE_STATIC_CPPLIB;
+      </PreprocessorDefinitions>
+      <RuntimeLibrary Condition="'$(BuildType)' == 'debug'">MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(BuildType)' == 'retail'">MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+        advapi32.lib;
+        crypt32.lib;
+        kernel32.lib;
+        ntdll.lib;
+        shlwapi.lib;
+        ws2_32.lib;
+        iphlpapi.lib;
+        secur32.lib;
+        ole32.lib;
+        uuid.lib;
+        user32.lib;
+        resutils.lib;
+        rpcrt4.lib;
+        rpcns4.lib;
+        Schannel.lib;
+        oleaut32.lib;
+        netapi32.lib;
+        mpr.lib;
+        winmm.lib;
+        version.lib;
+        Psapi.lib;
+        Wbemuuid.lib;
+        winhttp.lib;
+        httpapi.lib;
+        websocket.lib;
+        winhttp.lib;
+        httpapi.lib;
+        websocket.lib;
+        legacy_stdio_definitions.lib;
+      </AdditionalDependencies>
+    </Link>  
+  </ItemDefinitionGroup>
+</Project>

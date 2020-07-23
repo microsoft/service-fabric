@@ -1,0 +1,22 @@
+#include "fabricverp.h"
+
+#define VER_FILETYPE                VFT_DRV
+#define VER_FILESUBTYPE             VFT2_DRV_SYSTEM
+#define VER_FILEDESCRIPTION_STR     "Service Fabric Block Store Device Driver"
+#define VER_INTERNALNAME_STR        "SFBDMiniport.sys"
+#define VER_ORIGINALFILENAME_STR    "SFBDMiniport.sys"
+
+#define IDS_SERVICE_DISPLAY_NAME                    ( 101 )
+#define IDS_SERVICE_DESCRIPTION                     ( 102 )
+
+STRINGTABLE
+BEGIN
+	IDS_SERVICE_DISPLAY_NAME		"Service Fabric Block Store Miniport"
+	IDS_SERVICE_DESCRIPTION			"Service Fabric Block Store Miniport Driver"
+END
+
+
+#include "common.ver"
+#include "Microsoft-ServiceFabric-BlockStoreMiniportEvents.rc"
+
+

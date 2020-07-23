@@ -2988,9 +2988,6 @@ namespace LogTests
     ktl::Awaitable<void> LogTestBase::ReadWriteCloseRaceWorker(
         __in ILogicalLog& logicalLog,
         __in int maxSize,
-        __in ILogicalLog::SPtr logicalLogs[],
-        __in int numLogicalLogs,
-        __inout volatile LONGLONG & amountWritten,
         __inout volatile ULONGLONG & numTruncates,
         __in int fileSize,
         __in int taskId,
@@ -2999,6 +2996,8 @@ namespace LogTests
         LONGLONG bytes = 0;
         Common::Random rnd;
         NTSTATUS status;
+        ILogicalLog::SPtr thisLogicalLog = &logicalLog;
+        LONGLONG amountWritten = 0;
 
         KFinally([taskId, &bytes] { TestCommon::TestSession::WriteInfo(TraceComponent, "Exit task {0} bytes {1}", taskId, bytes); });
 
@@ -3022,7 +3021,7 @@ namespace LogTests
             }
             
             bytes += toWrite;
-            InterlockedAdd64(&amountWritten, max(toWrite, 4 * 1024)); // small writes will still reserve 4k
+            amountWritten +=  max(toWrite, 4 * 1024); // small writes will still reserve 4k
 
             status = co_await logicalLog.FlushWithMarkerAsync(CancellationToken::None);
             if (status == K_STATUS_API_CLOSED)
@@ -3036,24 +3035,19 @@ namespace LogTests
                 KInvariant(FALSE);
             }
 
-            LONGLONG snapAmountWritten;
-            while ((snapAmountWritten = amountWritten) >= (fileSize / 2))
+            if (amountWritten >= (fileSize / 2))
             {
-                LONGLONG trySwap = InterlockedCompareExchange64(&amountWritten, 0, snapAmountWritten);
-                if (trySwap == snapAmountWritten)
-                {
-                    ULONGLONG currentTruncateIteration = InterlockedIncrement64((volatile LONGLONG*) &numTruncates);
+                ULONGLONG currentTruncateIteration = InterlockedIncrement64((volatile LONGLONG*) &numTruncates);
 
-                    status = co_await TruncateLogicalLogs(logicalLogs, numLogicalLogs);
-                    if (!NT_SUCCESS(status))
-                    {
-                        TestCommon::TestSession::WriteInfo(TraceComponent, "Task {0} TruncateLogicalLogs iteration {1} failure {2}", taskId, currentTruncateIteration, status);
-                        KInvariant(FALSE);
-                    }
-                    else
-                    {
-                        TestCommon::TestSession::WriteInfo(TraceComponent, "Task {0} TruncateLogicalLogs iteration {1} success.", taskId, currentTruncateIteration);
-                    }
+                status = co_await TruncateLogicalLogs(&thisLogicalLog, 1);
+                if (!NT_SUCCESS(status))
+                {
+                    TestCommon::TestSession::WriteInfo(TraceComponent, "Task {0} TruncateLogicalLogs iteration {1} failure {2}", taskId, currentTruncateIteration, status);
+                    KInvariant(FALSE);
+                }
+                else
+                {
+                    TestCommon::TestSession::WriteInfo(TraceComponent, "Task {0} TruncateLogicalLogs iteration {1} success.", taskId, currentTruncateIteration);
                 }
             }
 
@@ -3146,7 +3140,6 @@ namespace LogTests
         }
 
         const int fileSize = 1024 * 1024 * 100; // todo: define this in a single place
-        volatile LONGLONG amountWritten = 0;
         volatile ULONGLONG numTruncates = 0;
         for (int i = 0; i < NumAwaitables; i++)
         {
@@ -3156,9 +3149,6 @@ namespace LogTests
             awaitables[i] = ReadWriteCloseRaceWorker(
                 *log,
                 MaxLogBlockSize,
-                logicalLogs,
-                NumAwaitables,
-                amountWritten,
                 numTruncates,
                 fileSize,
                 i,

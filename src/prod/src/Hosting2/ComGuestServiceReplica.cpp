@@ -32,6 +32,8 @@ ComGuestServiceReplica::ComGuestServiceReplica(
     , isDeactivationInProgress_(false)
     , eventRegistrationHandle_(0)
     , serviceTraceInfo_(BuildTraceInfo(serviceTypeName, serviceName, partitionId, replicaId))
+    , dummyReplicator_()
+    , partitionName_()
 {
 }
 
@@ -56,7 +58,15 @@ HRESULT ComGuestServiceReplica::BeginOpen(
     ASSERT_IF(FAILED(hr), "Partition must implement IFabricStatefulServicePartition2");
 
     partition_.SetAndAddRef(partition2);
+    FABRIC_SERVICE_PARTITION_INFORMATION const * partitionInfo;
+    hr = partition_->GetPartitionInfo(&partitionInfo);
+    ASSERT_IF(FAILED(hr), "Unable to get partition information");
 
+    if (partitionInfo->Kind == FABRIC_SERVICE_PARTITION_KIND_NAMED)
+    {
+        FABRIC_NAMED_PARTITION_INFORMATION * namedPartitionInfo = (FABRIC_NAMED_PARTITION_INFORMATION *)partitionInfo->Value;
+        partitionName_= namedPartitionInfo->Name;
+    }
     return ComCompletedOperationHelper::BeginCompletedComOperation(callback, context);
 }
 
@@ -69,15 +79,13 @@ HRESULT ComGuestServiceReplica::EndOpen(
     HRESULT hr = ComCompletedOperationHelper::EndCompletedComOperation(context);
     if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
 
-    auto dummyReplicator = 
-        make_com<ComDummyReplicator, IFabricReplicator>(
+    dummyReplicator_ = 
+        make_com<ComDummyReplicator>(
             serviceName_, 
             partitionId_, 
             replicaId_);
 
-    *replicator = dummyReplicator.DetachNoRelease();
-
-    return S_OK;
+    return dummyReplicator_->QueryInterface(IID_IFabricReplicator, (void**)(replicator));
 }
 
 HRESULT ComGuestServiceReplica::BeginChangeRole(
@@ -102,8 +110,31 @@ HRESULT ComGuestServiceReplica::BeginChangeRole(
     if (newRole == FABRIC_REPLICA_ROLE_PRIMARY)
     {
         isActivationInProgress_ = true;
+        EnvironmentMap envMap;
+        ScopedHeap heap;
+        FABRIC_STRING_MAP environment = {};
+
+        auto epoch = dummyReplicator_->GetCurrentEpoch();
+        envMap[Constants::EnvironmentVariable::Epoch] = Common::wformatString(L"{0}:{1}", epoch.DataLossNumber, epoch.ConfigurationNumber);
+
+        if (!partitionName_.empty())
+        {
+            envMap[Constants::EnvironmentVariable::ReplicaName] = partitionName_;
+        }
+
+        auto error = PublicApiHelper::ToPublicApiStringMap(heap, envMap, environment);
+        if (!error.IsSuccess())
+        {
+            WriteNoise(
+                TraceType, 
+                "BeginChangeRole: Getting Epoch failed. {0}", 
+                error);
+
+            return ComUtility::OnPublicApiReturn(error.ToHResult());
+        }
+
         hr = typeHost_.ActivationManager->BeginActivateCodePackagesAndWaitForEvent(
-            nullptr /* custom environment */,
+            &environment /* custom environment */,
             HostingConfig::GetConfig().ActivationTimeout.Milliseconds,
             callback,
             context);
@@ -261,7 +292,7 @@ void ComGuestServiceReplica::OnActivatedCodePackageTerminated(
 {
     WriteWarning(
         TraceType,
-        "OnActivatedCodePackageTerminated: {0}. {1}",
+        "OnActivatedCodePackageTerminated - Reporting FaultTransient: {0}. {1}",
         serviceTraceInfo_,
         eventDesc);
 

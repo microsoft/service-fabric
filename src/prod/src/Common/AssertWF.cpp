@@ -4,7 +4,6 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
-#include "FabricGlobals.h"
 
 using namespace std;
 using namespace Common;
@@ -36,6 +35,11 @@ Assert::DisableTestAssertInThisScope::DisableTestAssertInThisScope()
 Assert::DisableTestAssertInThisScope::~DisableTestAssertInThisScope()
 {
     set_TestAssertEnabled(saved_);
+}
+
+void Assert::SetCrashLeasingApplicationCallback(void(*callback) (void))
+{
+    ::FabricSetCrashLeasingApplicationCallback((void*)callback);
 }
 
 bool * Assert::static_TestAssertEnabled()
@@ -134,11 +138,24 @@ void Assert::DoFailFast(string const & message)
 {
     // Compilers we use have thread safe static initialization.
     static LONG hasFailFastBeenInvoked = 0;
-
-    FabricGlobals::Get().GetCrashLeasingApplicationCallback().Invoke();
+    void * crashLeasingApplicationPtr = nullptr;
+    ::FabricGetCrashLeasingApplicationCallback(&crashLeasingApplicationPtr);
+    if (crashLeasingApplicationPtr)
+    {
+        void (*crashLeasingApplicationCallback) ();
+        crashLeasingApplicationCallback = (void(*) (void)) crashLeasingApplicationPtr;
+        (*crashLeasingApplicationCallback)();
+    }
 
     string failFastMessage = message;
-    auto stackTraceMessage = TryCaptureStackTrace();
+    wstring stackTraceMessage = L"Stack trace capture disabled. Enable using StackTraceCaptureEnabled configuration";
+
+    if (Assert::IsStackTraceCaptureEnabled())
+    {
+        Common::StackTrace currentStack;
+        currentStack.CaptureCurrentPosition();
+        stackTraceMessage = currentStack.ToString();
+    }
 
     GeneralEventSource eventSource;
     eventSource.Assert(failFastMessage, stackTraceMessage);
@@ -170,20 +187,6 @@ void Assert::DoFailFast(string const & message)
 
         ::RaiseFailFastException(NULL, NULL, 1);
     }
-}
-
-wstring Assert::TryCaptureStackTrace()
-{
-    wstring stackTraceMessage = L"Stack trace capture disabled. Enable using StackTraceCaptureEnabled configuration";
-
-    if (Assert::IsStackTraceCaptureEnabled())
-    {
-        Common::StackTrace currentStack;
-        currentStack.CaptureCurrentPosition();
-        stackTraceMessage = currentStack.ToString();
-    }
-
-    return stackTraceMessage;
 }
 
 void Assert::CodingError(

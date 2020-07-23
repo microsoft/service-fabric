@@ -19,9 +19,10 @@ namespace System.Fabric.Store
         /// Default constructor for primary
         /// </summary>
         /// <param name="value"></param>
+        /// <param name="valueSize"></param>
         /// <param name="canBeSweepedToDisk"></param>
-        public TUpdatedItem(TValue value, bool canBeSweepedToDisk)
-            : this(TStoreConstants.UninitializedVersionSequenceNumber, value, canBeSweepedToDisk)
+        public TUpdatedItem(TValue value, int valueSize, bool canBeSweepedToDisk)
+            : this(TStoreConstants.UninitializedVersionSequenceNumber, value, valueSize, canBeSweepedToDisk)
         {
         }
 
@@ -30,13 +31,14 @@ namespace System.Fabric.Store
         /// </summary>
         /// <param name="versionSequenceNumber">Version sequence number.</param>
         /// <param name="value">Value for the versioned item.</param>
+        /// <param name="valueSize">Value size for the versioned item.</param>
         /// <param name="canBeSweepedToDisk"></param>
-        public TUpdatedItem(long versionSequenceNumber, TValue value, bool canBeSweepedToDisk)
+        public TUpdatedItem(long versionSequenceNumber, TValue value, int valueSize, bool canBeSweepedToDisk)
         {
             this.VersionSequenceNumber = versionSequenceNumber;
             this.Value = value;
             this.CanBeSweepedToDisk = canBeSweepedToDisk;
-            this.ValueSize = -1;
+            this.ValueSize = valueSize;
             this.InUse = true;
         }
 

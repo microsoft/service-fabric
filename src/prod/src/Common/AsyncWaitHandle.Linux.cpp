@@ -142,10 +142,10 @@ ErrorCode AsyncWaitHandle<ManualReset>::TryAddWaitOperation(AsyncOperationSPtr c
             if (!fdCtx_)
             {
                 fdCtx_ = evtLoop_->RegisterFd(
-                    eventFd_,
-                    EPOLLIN,
-                    true, 
-                    [this] (int fd, uint evts) { EventFdReadCallback(fd, evts); });
+                            eventFd_,
+                            EPOLLIN,
+                            true, 
+                            [this] (int fd, uint evts) { EventFdReadCallback(fd, evts); });
             }
 
             err = evtLoop_->Activate(fdCtx_);
@@ -190,6 +190,7 @@ void AsyncWaitHandle<ManualReset>::EventFdReadCallback(int fd, uint evts)
                 auto err = errno;
                 __super::WriteInfo(TraceType, "WaitAsyncOperation: read failed: {0}", err);
             }
+
         }
 
         opsToComplete = TryStartComplete_MutexHeld();

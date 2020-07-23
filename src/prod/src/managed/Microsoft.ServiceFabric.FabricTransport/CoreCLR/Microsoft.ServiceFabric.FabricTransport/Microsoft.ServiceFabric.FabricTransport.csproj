@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Microsoft.ServiceFabric.FabricTransport Library</Description>
+    <DefineConstants>$(DefineConstants);UseLinuxLibs</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Microsoft.ServiceFabric.FabricTransport</AssemblyName>
+    <PackageId>Microsoft.ServiceFabric.FabricTransport</PackageId>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\_friends.cs;
+	  ..\..\FabricTransport\Client\IFabricTransportClientConnectionHandler.cs;
+      ..\..\FabricTransport\Common\FabricServiceConfig.cs;
+      ..\..\FabricTransport\Common\FabricServiceConfigSection.cs;
+      ..\..\FabricTransport\Common\FabricTransportReplyMessage.cs;
+      ..\..\FabricTransport\Client\IFabricTransportCallbackMessageHandler.cs;
+      ..\..\FabricTransport\Client\FabricTransportCallbackClient.cs;
+      ..\..\FabricTransport\Client\FabricTransportNativeClientConnectionEventHandler.cs;
+      ..\..\FabricTransport\Client\FabricTransportCallbackHandlerBroker.cs;
+      ..\..\FabricTransport\Client\FabricTransportClient.cs;
+      ..\..\FabricTransport\Common\FabricServiceCommunicationMessage.cs;
+      ..\..\FabricTransport\Common\FabricTransportSettings.cs;
+      ..\..\FabricTransport\Common\Helper.cs;
+      ..\..\FabricTransport\Common\IFabricServiceConfigParser.cs;
+      ..\..\FabricTransport\Common\NativeServiceCommunication.cs;
+      ..\..\FabricTransport\Common\SettingsConfigParser.cs;
+      ..\..\FabricTransport\Runtime\FabricTransportListenerAddress.cs;
+      ..\..\FabricTransport\Runtime\FabricTransportListenerSettings.cs;
+      ..\..\FabricTransport\Runtime\FabricTransportRequestContext.cs;
+      ..\..\FabricTransport\Runtime\IFabricTransportConnectionHandler.cs;
+      ..\..\FabricTransport\Runtime\IFabricTransportMessageHandler.cs;
+      ..\..\FabricTransport\Runtime\FabricTransportListener.cs;
+      ..\..\FabricTransport\Runtime\FabricTransportMessageHandlerBroker.cs;
+      ..\..\FabricTransport\Runtime\FabricTransportServiceConnectionHandlerBroker.cs;
+	  Microsoft.ServiceFabric.FabricTransport.SR.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <EmbeddedResource Include="..\..\SR.resx" Exclude="bin\**;obj\**;**\*.xproj;packages\**;@(EmbeddedResource)" />
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Microsoft.ServiceFabric.Data\CoreCLR\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="..\..\..\Microsoft.ServiceFabric.Data.Interfaces\CoreCLR\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <AssemblyName>Microsoft.ServiceFabric.FabricTransport</AssemblyName>
+    <ResourcesClassName>SR</ResourcesClassName>
+    <ResourcesFileDir>..\..\</ResourcesFileDir>
+    <ResourcesFileName>SR</ResourcesFileName>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
+	<StringResourcesCsFileName>$(RootNamespace).$(ResourcesClassName).cs</StringResourcesCsFileName>
+    <StringResourcesCsFilePath>$(IntermediateOutputPath)$(StringResourcesCsFileName)</StringResourcesCsFilePath>
+	<StringResourcesResxFilePath>..\..\SR.resx</StringResourcesResxFilePath>
+  </PropertyGroup>
+  <Target Name="EnableCoreCLRResGen"
+    BeforeTargets="BeforeBuild"
+    DependsOnTargets="CoreClrResGen" />
+
+  <!-- This is required for MCG -->
+  <ItemGroup>
+    <McgReferenceLocal Include="$(ObjectRoot)\src\prod\src\managed\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Private.CompilerServices.ICastable" Version="1.0.1" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg.targets" />
+</Project>

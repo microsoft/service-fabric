@@ -27,6 +27,8 @@ namespace Naming
     Common::GlobalWString NamingMessage::RecoverSystemPartitionsReplyAction = Common::make_global<std::wstring>(L"RecoverSystemPartitionsReply");
     Common::GlobalWString NamingMessage::ResetPartitionLoadReplyAction = Common::make_global<std::wstring>(L"ResetPartitionLoadReply");
     Common::GlobalWString NamingMessage::ToggleVerboseServicePlacementHealthReportingReplyAction = Common::make_global<std::wstring>(L"ToggleVerboseServicePlacementHealthReportingReply");
+    Common::GlobalWString NamingMessage::CreateNetworkReplyAction = Common::make_global<std::wstring>(L"CreateNetworkReply");
+    Common::GlobalWString NamingMessage::DeleteNetworkReplyAction = Common::make_global<std::wstring>(L"DeleteNetworkReply");
 
     Common::GlobalWString NamingMessage::ClientOperationFailureAction = Common::make_global<std::wstring>(L"ClientOperationFailure");
 

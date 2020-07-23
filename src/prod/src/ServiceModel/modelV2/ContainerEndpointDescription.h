@@ -1,6 +1,7 @@
-//------------------------------------------------------------
+// ------------------------------------------------------------
 // Copyright (c) Microsoft Corporation.  All rights reserved.
-//------------------------------------------------------------
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 
 #pragma once
 
@@ -36,11 +37,13 @@ namespace ServiceModel
             BEGIN_DYNAMIC_SIZE_ESTIMATION()
                 DYNAMIC_SIZE_ESTIMATION_MEMBER(name_)
                 DYNAMIC_SIZE_ESTIMATION_MEMBER(port_)
+                DYNAMIC_SIZE_ESTIMATION_MEMBER(useDynamicHostPort_)
             END_DYNAMIC_SIZE_ESTIMATION()
 
         private:
             std::wstring name_;
             int port_;
+            bool useDynamicHostPort_;
         };
     }
 }

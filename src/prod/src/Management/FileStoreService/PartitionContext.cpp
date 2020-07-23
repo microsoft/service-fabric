@@ -27,6 +27,7 @@ public:
         : TimedAsyncOperation(timeout, callback, parent)
         , owner_(owner)
         , currentSequenceNumber_(currentSequenceNumber)
+        , retryCount_(0)
     {
     }
 
@@ -48,7 +49,7 @@ public:
    
 protected:
     void OnStart(AsyncOperationSPtr const & thisSPtr)
-    {        
+    {
         bool alreadyExists = false;
         bool alreadyRefreshed = false;
         {
@@ -65,21 +66,21 @@ protected:
                 alreadyRefreshed = true;
             }
             else
-            {                
+            {
                 refreshedEvent_ = make_shared<EventT<RefreshedStagingLocationEventArgs>>();
-                owner_.refreshAsyncOperation_ = this->shared_from_this();                
+                owner_.refreshAsyncOperation_ = this->shared_from_this();
             }
         }
 
         if(alreadyExists)
         {
-            TryComplete(thisSPtr, ErrorCodeValue::AlreadyExists);        
+            TryComplete(thisSPtr, ErrorCodeValue::AlreadyExists);
             return;
         }
 
         if(alreadyRefreshed)
         {
-            TryComplete(thisSPtr, ErrorCodeValue::Success);        
+            TryComplete(thisSPtr, ErrorCodeValue::Success);
             return;
         }
         
@@ -88,7 +89,7 @@ protected:
 
     void StartRefreshStagingLocation(AsyncOperationSPtr const & thisSPtr)
     {
-        WriteNoise(                    
+        WriteNoise(
             TraceComponent,
             owner_.Root.TraceId,
             "Begin(GetStagingLocation): PartitionId:{0}",
@@ -96,7 +97,7 @@ protected:
 
         auto operation = owner_.fileStoreServiceClient_->BeginGetStagingLocation(
             owner_.PartitionId,
-            this->RemainingTime,
+            FileStoreServiceConfig::GetConfig().GetStagingLocationTimeout,
             [this] (AsyncOperationSPtr const & operation) { this->OnGetStagingLocationComplete(operation, false); },
             thisSPtr);
         this->OnGetStagingLocationComplete(operation, true);
@@ -115,12 +116,17 @@ protected:
             error.ToLogLevel(),
             TraceComponent,
             owner_.Root.TraceId,
-            "End(GetStagingLocation): NewStagingLocation:{0}, Error:{1}",
+            "End(GetStagingLocation): NewStagingLocation:{0}, Error:{1} retryCount:{2}",
             newStagingLocation,
-            error);
+            error,
+            retryCount_);
 
-        if(!error.IsSuccess() && IsRetryable(error))
-        {            
+        if(!error.IsSuccess() && 
+            IsRetryable(error) && 
+            retryCount_ < FileStoreServiceConfig::GetConfig().MaxGetStagingLocationRetryAttempt &&
+            this->RemainingTime >= FileStoreServiceConfig::GetConfig().GetStagingLocationTimeout)
+        {
+            ++retryCount_;
             StartRefreshStagingLocation(operation->Parent);
             return;
         }
@@ -130,10 +136,10 @@ protected:
     
     void UpdateStagingLocationAndComplete(AsyncOperationSPtr const & thisSPtr, ErrorCode const & error, wstring const & newStagingLocation)
     {
-        shared_ptr<EventT<RefreshedStagingLocationEventArgs>> refreshedEvent;        
+        shared_ptr<EventT<RefreshedStagingLocationEventArgs>> refreshedEvent;
         StagingLocationInfo refreshedInfo;
         {
-            AcquireWriteLock lock(owner_.lock_);                        
+            AcquireWriteLock lock(owner_.lock_);
             if(error.IsSuccess())
             {
                 refreshedInfo = StagingLocationInfo(
@@ -143,31 +149,33 @@ protected:
             }
 
             owner_.refreshAsyncOperation_.reset();
-            refreshedEvent = move(refreshedEvent_);            
+            refreshedEvent = move(refreshedEvent_);
         }
 
-        RefreshedStagingLocationEventArgs eventArg(refreshedInfo, error);                        
+        RefreshedStagingLocationEventArgs eventArg(refreshedInfo, error);
         refreshedEvent->Fire(eventArg, true);
 
-        TryComplete(thisSPtr, error);
+        TryComplete(thisSPtr, move(error));
     }
 
     bool IsRetryable(ErrorCode const & error)
     {
         switch(error.ReadValue())
-        {        
+        {
         case ErrorCodeValue::NotPrimary:
+        case ErrorCodeValue::Timeout:
             return true;
 
         default:
             return false;
-        }        
+        }
     }
 
 private:
     uint64 const currentSequenceNumber_;
     PartitionContext & owner_;
     shared_ptr<EventT<RefreshedStagingLocationEventArgs>> refreshedEvent_;
+    uint32 retryCount_;
 };
 
 class PartitionContext::GetStagingLocationAsyncOperation : public TimedAsyncOperation
@@ -373,7 +381,7 @@ void PartitionContext::StartRefresh(uint64 const currentSequenceNumber)
     auto operation = AsyncOperation::CreateAndStart<RefreshStagingLocationAsyncOperation>(
         *this,
         currentSequenceNumber,
-        FileStoreServiceConfig::GetConfig().GetStagingLocationTimeout,
+        FileStoreServiceConfig::GetConfig().ShortRequestTimeout,
         [this] (AsyncOperationSPtr const & operation) { this->OnRefreshCompleted(operation, false); },
         Root.CreateAsyncOperationRoot());
     this->OnRefreshCompleted(operation, true);

@@ -431,6 +431,13 @@ typedef interface IFabricFaultManagementClient IFabricFaultManagementClient;
 #endif 	/* __IFabricFaultManagementClient_FWD_DEFINED__ */
 
 
+#ifndef __IFabricNetworkManagementClient_FWD_DEFINED__
+#define __IFabricNetworkManagementClient_FWD_DEFINED__
+typedef interface IFabricNetworkManagementClient IFabricNetworkManagementClient;
+
+#endif 	/* __IFabricNetworkManagementClient_FWD_DEFINED__ */
+
+
 #ifndef __IFabricServiceDescriptionResult_FWD_DEFINED__
 #define __IFabricServiceDescriptionResult_FWD_DEFINED__
 typedef interface IFabricServiceDescriptionResult IFabricServiceDescriptionResult;
@@ -949,6 +956,48 @@ typedef interface IFabricGetApplicationNameResult IFabricGetApplicationNameResul
 #endif 	/* __IFabricGetApplicationNameResult_FWD_DEFINED__ */
 
 
+#ifndef __IFabricGetNetworkListResult_FWD_DEFINED__
+#define __IFabricGetNetworkListResult_FWD_DEFINED__
+typedef interface IFabricGetNetworkListResult IFabricGetNetworkListResult;
+
+#endif 	/* __IFabricGetNetworkListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetNetworkApplicationListResult_FWD_DEFINED__
+#define __IFabricGetNetworkApplicationListResult_FWD_DEFINED__
+typedef interface IFabricGetNetworkApplicationListResult IFabricGetNetworkApplicationListResult;
+
+#endif 	/* __IFabricGetNetworkApplicationListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetNetworkNodeListResult_FWD_DEFINED__
+#define __IFabricGetNetworkNodeListResult_FWD_DEFINED__
+typedef interface IFabricGetNetworkNodeListResult IFabricGetNetworkNodeListResult;
+
+#endif 	/* __IFabricGetNetworkNodeListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetApplicationNetworkListResult_FWD_DEFINED__
+#define __IFabricGetApplicationNetworkListResult_FWD_DEFINED__
+typedef interface IFabricGetApplicationNetworkListResult IFabricGetApplicationNetworkListResult;
+
+#endif 	/* __IFabricGetApplicationNetworkListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetDeployedNetworkListResult_FWD_DEFINED__
+#define __IFabricGetDeployedNetworkListResult_FWD_DEFINED__
+typedef interface IFabricGetDeployedNetworkListResult IFabricGetDeployedNetworkListResult;
+
+#endif 	/* __IFabricGetDeployedNetworkListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetDeployedNetworkCodePackageListResult_FWD_DEFINED__
+#define __IFabricGetDeployedNetworkCodePackageListResult_FWD_DEFINED__
+typedef interface IFabricGetDeployedNetworkCodePackageListResult IFabricGetDeployedNetworkCodePackageListResult;
+
+#endif 	/* __IFabricGetDeployedNetworkCodePackageListResult_FWD_DEFINED__ */
+
+
 #ifndef __IFabricSecretStoreClient_FWD_DEFINED__
 #define __IFabricSecretStoreClient_FWD_DEFINED__
 typedef interface IFabricSecretStoreClient IFabricSecretStoreClient;
@@ -1372,6 +1421,13 @@ typedef interface IFabricTestManagementClient3 IFabricTestManagementClient3;
 typedef interface IFabricTestManagementClient4 IFabricTestManagementClient4;
 
 #endif 	/* __IFabricTestManagementClient4_FWD_DEFINED__ */
+
+
+#ifndef __IFabricNetworkManagementClient_FWD_DEFINED__
+#define __IFabricNetworkManagementClient_FWD_DEFINED__
+typedef interface IFabricNetworkManagementClient IFabricNetworkManagementClient;
+
+#endif 	/* __IFabricNetworkManagementClient_FWD_DEFINED__ */
 
 
 #ifndef __IFabricGetRepairTaskListResult_FWD_DEFINED__
@@ -1969,6 +2025,48 @@ typedef interface IFabricSecretStoreClient IFabricSecretStoreClient;
 #endif 	/* __IFabricSecretStoreClient_FWD_DEFINED__ */
 
 
+#ifndef __IFabricGetNetworkListResult_FWD_DEFINED__
+#define __IFabricGetNetworkListResult_FWD_DEFINED__
+typedef interface IFabricGetNetworkListResult IFabricGetNetworkListResult;
+
+#endif 	/* __IFabricGetNetworkListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetNetworkApplicationListResult_FWD_DEFINED__
+#define __IFabricGetNetworkApplicationListResult_FWD_DEFINED__
+typedef interface IFabricGetNetworkApplicationListResult IFabricGetNetworkApplicationListResult;
+
+#endif 	/* __IFabricGetNetworkApplicationListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetNetworkNodeListResult_FWD_DEFINED__
+#define __IFabricGetNetworkNodeListResult_FWD_DEFINED__
+typedef interface IFabricGetNetworkNodeListResult IFabricGetNetworkNodeListResult;
+
+#endif 	/* __IFabricGetNetworkNodeListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetApplicationNetworkListResult_FWD_DEFINED__
+#define __IFabricGetApplicationNetworkListResult_FWD_DEFINED__
+typedef interface IFabricGetApplicationNetworkListResult IFabricGetApplicationNetworkListResult;
+
+#endif 	/* __IFabricGetApplicationNetworkListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetDeployedNetworkListResult_FWD_DEFINED__
+#define __IFabricGetDeployedNetworkListResult_FWD_DEFINED__
+typedef interface IFabricGetDeployedNetworkListResult IFabricGetDeployedNetworkListResult;
+
+#endif 	/* __IFabricGetDeployedNetworkListResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricGetDeployedNetworkCodePackageListResult_FWD_DEFINED__
+#define __IFabricGetDeployedNetworkCodePackageListResult_FWD_DEFINED__
+typedef interface IFabricGetDeployedNetworkCodePackageListResult IFabricGetDeployedNetworkCodePackageListResult;
+
+#endif 	/* __IFabricGetDeployedNetworkCodePackageListResult_FWD_DEFINED__ */
+
+
 /* header files for imported files */
 #include "Unknwn.h"
 #include "FabricTypes.h"
@@ -2123,6 +2221,13 @@ extern "C"{
 
 
 
+
+
+
+
+
+
+
 extern RPC_IF_HANDLE __MIDL_itf_fabricclient_0000_0000_v0_0_c_ifspec;
 extern RPC_IF_HANDLE __MIDL_itf_fabricclient_0000_0000_v0_0_s_ifspec;
 
@@ -2135,6 +2240,13 @@ extern RPC_IF_HANDLE __MIDL_itf_fabricclient_0000_0000_v0_0_s_ifspec;
 
 
 #pragma pack(push, 8)
+
+
+
+
+
+
+
 
 
 
@@ -20724,6 +20836,298 @@ EXTERN_C const IID IID_IFabricFaultManagementClient;
 #endif 	/* __IFabricFaultManagementClient_INTERFACE_DEFINED__ */
 
 
+#ifndef __IFabricNetworkManagementClient_INTERFACE_DEFINED__
+#define __IFabricNetworkManagementClient_INTERFACE_DEFINED__
+
+/* interface IFabricNetworkManagementClient */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricNetworkManagementClient;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("fdb754c6-69c5-4bcf-bba5-cb70c84a4398")
+    IFabricNetworkManagementClient : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE BeginCreateNetwork( 
+            /* [in] */ LPCWSTR networkName,
+            /* [in] */ const FABRIC_NETWORK_DESCRIPTION *description,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndCreateNetwork( 
+            /* [in] */ IFabricAsyncOperationContext *context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginDeleteNetwork( 
+            /* [in] */ const FABRIC_DELETE_NETWORK_DESCRIPTION *deleteDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndDeleteNetwork( 
+            /* [in] */ IFabricAsyncOperationContext *context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetNetworkList( 
+            /* [in] */ const FABRIC_NETWORK_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetNetworkList( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetNetworkListResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetNetworkApplicationList( 
+            /* [in] */ const FABRIC_NETWORK_APPLICATION_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetNetworkApplicationList( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetNetworkApplicationListResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetNetworkNodeList( 
+            /* [in] */ const FABRIC_NETWORK_NODE_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetNetworkNodeList( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetNetworkNodeListResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetApplicationNetworkList( 
+            /* [in] */ const FABRIC_APPLICATION_NETWORK_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetApplicationNetworkList( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetApplicationNetworkListResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetDeployedNetworkList( 
+            /* [in] */ const FABRIC_DEPLOYED_NETWORK_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetDeployedNetworkList( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetDeployedNetworkListResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetDeployedNetworkCodePackageList( 
+            /* [in] */ const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetDeployedNetworkCodePackageList( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetDeployedNetworkCodePackageListResult **result) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricNetworkManagementClientVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricNetworkManagementClient * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricNetworkManagementClient * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginCreateNetwork )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ LPCWSTR networkName,
+            /* [in] */ const FABRIC_NETWORK_DESCRIPTION *description,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndCreateNetwork )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginDeleteNetwork )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ const FABRIC_DELETE_NETWORK_DESCRIPTION *deleteDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndDeleteNetwork )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetNetworkList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ const FABRIC_NETWORK_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetNetworkList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetNetworkListResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetNetworkApplicationList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ const FABRIC_NETWORK_APPLICATION_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetNetworkApplicationList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetNetworkApplicationListResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetNetworkNodeList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ const FABRIC_NETWORK_NODE_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetNetworkNodeList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetNetworkNodeListResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetApplicationNetworkList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ const FABRIC_APPLICATION_NETWORK_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetApplicationNetworkList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetApplicationNetworkListResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetDeployedNetworkList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ const FABRIC_DEPLOYED_NETWORK_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetDeployedNetworkList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetDeployedNetworkListResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetDeployedNetworkCodePackageList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_DESCRIPTION *queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetDeployedNetworkCodePackageList )( 
+            IFabricNetworkManagementClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricGetDeployedNetworkCodePackageListResult **result);
+        
+        END_INTERFACE
+    } IFabricNetworkManagementClientVtbl;
+
+    interface IFabricNetworkManagementClient
+    {
+        CONST_VTBL struct IFabricNetworkManagementClientVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricNetworkManagementClient_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricNetworkManagementClient_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricNetworkManagementClient_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricNetworkManagementClient_BeginCreateNetwork(This,networkName,description,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginCreateNetwork(This,networkName,description,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricNetworkManagementClient_EndCreateNetwork(This,context)	\
+    ( (This)->lpVtbl -> EndCreateNetwork(This,context) ) 
+
+#define IFabricNetworkManagementClient_BeginDeleteNetwork(This,deleteDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginDeleteNetwork(This,deleteDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricNetworkManagementClient_EndDeleteNetwork(This,context)	\
+    ( (This)->lpVtbl -> EndDeleteNetwork(This,context) ) 
+
+#define IFabricNetworkManagementClient_BeginGetNetworkList(This,queryDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetNetworkList(This,queryDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricNetworkManagementClient_EndGetNetworkList(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetNetworkList(This,context,result) ) 
+
+#define IFabricNetworkManagementClient_BeginGetNetworkApplicationList(This,queryDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetNetworkApplicationList(This,queryDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricNetworkManagementClient_EndGetNetworkApplicationList(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetNetworkApplicationList(This,context,result) ) 
+
+#define IFabricNetworkManagementClient_BeginGetNetworkNodeList(This,queryDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetNetworkNodeList(This,queryDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricNetworkManagementClient_EndGetNetworkNodeList(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetNetworkNodeList(This,context,result) ) 
+
+#define IFabricNetworkManagementClient_BeginGetApplicationNetworkList(This,queryDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetApplicationNetworkList(This,queryDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricNetworkManagementClient_EndGetApplicationNetworkList(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetApplicationNetworkList(This,context,result) ) 
+
+#define IFabricNetworkManagementClient_BeginGetDeployedNetworkList(This,queryDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetDeployedNetworkList(This,queryDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricNetworkManagementClient_EndGetDeployedNetworkList(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetDeployedNetworkList(This,context,result) ) 
+
+#define IFabricNetworkManagementClient_BeginGetDeployedNetworkCodePackageList(This,queryDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetDeployedNetworkCodePackageList(This,queryDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricNetworkManagementClient_EndGetDeployedNetworkCodePackageList(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetDeployedNetworkCodePackageList(This,context,result) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricNetworkManagementClient_INTERFACE_DEFINED__ */
+
+
 #ifndef __IFabricServiceDescriptionResult_INTERFACE_DEFINED__
 #define __IFabricServiceDescriptionResult_INTERFACE_DEFINED__
 
@@ -26961,6 +27365,522 @@ EXTERN_C const IID IID_IFabricGetApplicationNameResult;
 #endif 	/* __IFabricGetApplicationNameResult_INTERFACE_DEFINED__ */
 
 
+#ifndef __IFabricGetNetworkListResult_INTERFACE_DEFINED__
+#define __IFabricGetNetworkListResult_INTERFACE_DEFINED__
+
+/* interface IFabricGetNetworkListResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricGetNetworkListResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("bd777a0f-2020-40bb-8f23-8756649cce47")
+    IFabricGetNetworkListResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_NETWORK_QUERY_RESULT_LIST *STDMETHODCALLTYPE get_NetworkList( void) = 0;
+        
+        virtual const FABRIC_PAGING_STATUS *STDMETHODCALLTYPE get_PagingStatus( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricGetNetworkListResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricGetNetworkListResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricGetNetworkListResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricGetNetworkListResult * This);
+        
+        const FABRIC_NETWORK_QUERY_RESULT_LIST *( STDMETHODCALLTYPE *get_NetworkList )( 
+            IFabricGetNetworkListResult * This);
+        
+        const FABRIC_PAGING_STATUS *( STDMETHODCALLTYPE *get_PagingStatus )( 
+            IFabricGetNetworkListResult * This);
+        
+        END_INTERFACE
+    } IFabricGetNetworkListResultVtbl;
+
+    interface IFabricGetNetworkListResult
+    {
+        CONST_VTBL struct IFabricGetNetworkListResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricGetNetworkListResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricGetNetworkListResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricGetNetworkListResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricGetNetworkListResult_get_NetworkList(This)	\
+    ( (This)->lpVtbl -> get_NetworkList(This) ) 
+
+#define IFabricGetNetworkListResult_get_PagingStatus(This)	\
+    ( (This)->lpVtbl -> get_PagingStatus(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricGetNetworkListResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricGetNetworkApplicationListResult_INTERFACE_DEFINED__
+#define __IFabricGetNetworkApplicationListResult_INTERFACE_DEFINED__
+
+/* interface IFabricGetNetworkApplicationListResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricGetNetworkApplicationListResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("ad1f51ff-e244-498e-9f72-609b01124b84")
+    IFabricGetNetworkApplicationListResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_NETWORK_APPLICATION_QUERY_RESULT_LIST *STDMETHODCALLTYPE get_NetworkApplicationList( void) = 0;
+        
+        virtual const FABRIC_PAGING_STATUS *STDMETHODCALLTYPE get_PagingStatus( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricGetNetworkApplicationListResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricGetNetworkApplicationListResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricGetNetworkApplicationListResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricGetNetworkApplicationListResult * This);
+        
+        const FABRIC_NETWORK_APPLICATION_QUERY_RESULT_LIST *( STDMETHODCALLTYPE *get_NetworkApplicationList )( 
+            IFabricGetNetworkApplicationListResult * This);
+        
+        const FABRIC_PAGING_STATUS *( STDMETHODCALLTYPE *get_PagingStatus )( 
+            IFabricGetNetworkApplicationListResult * This);
+        
+        END_INTERFACE
+    } IFabricGetNetworkApplicationListResultVtbl;
+
+    interface IFabricGetNetworkApplicationListResult
+    {
+        CONST_VTBL struct IFabricGetNetworkApplicationListResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricGetNetworkApplicationListResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricGetNetworkApplicationListResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricGetNetworkApplicationListResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricGetNetworkApplicationListResult_get_NetworkApplicationList(This)	\
+    ( (This)->lpVtbl -> get_NetworkApplicationList(This) ) 
+
+#define IFabricGetNetworkApplicationListResult_get_PagingStatus(This)	\
+    ( (This)->lpVtbl -> get_PagingStatus(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricGetNetworkApplicationListResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricGetNetworkNodeListResult_INTERFACE_DEFINED__
+#define __IFabricGetNetworkNodeListResult_INTERFACE_DEFINED__
+
+/* interface IFabricGetNetworkNodeListResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricGetNetworkNodeListResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("3ba780e9-58eb-478d-bc89-42c89e19d083")
+    IFabricGetNetworkNodeListResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_NETWORK_NODE_QUERY_RESULT_LIST *STDMETHODCALLTYPE get_NetworkNodeList( void) = 0;
+        
+        virtual const FABRIC_PAGING_STATUS *STDMETHODCALLTYPE get_PagingStatus( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricGetNetworkNodeListResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricGetNetworkNodeListResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricGetNetworkNodeListResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricGetNetworkNodeListResult * This);
+        
+        const FABRIC_NETWORK_NODE_QUERY_RESULT_LIST *( STDMETHODCALLTYPE *get_NetworkNodeList )( 
+            IFabricGetNetworkNodeListResult * This);
+        
+        const FABRIC_PAGING_STATUS *( STDMETHODCALLTYPE *get_PagingStatus )( 
+            IFabricGetNetworkNodeListResult * This);
+        
+        END_INTERFACE
+    } IFabricGetNetworkNodeListResultVtbl;
+
+    interface IFabricGetNetworkNodeListResult
+    {
+        CONST_VTBL struct IFabricGetNetworkNodeListResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricGetNetworkNodeListResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricGetNetworkNodeListResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricGetNetworkNodeListResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricGetNetworkNodeListResult_get_NetworkNodeList(This)	\
+    ( (This)->lpVtbl -> get_NetworkNodeList(This) ) 
+
+#define IFabricGetNetworkNodeListResult_get_PagingStatus(This)	\
+    ( (This)->lpVtbl -> get_PagingStatus(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricGetNetworkNodeListResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricGetApplicationNetworkListResult_INTERFACE_DEFINED__
+#define __IFabricGetApplicationNetworkListResult_INTERFACE_DEFINED__
+
+/* interface IFabricGetApplicationNetworkListResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricGetApplicationNetworkListResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("4f9d0390-aa08-4dee-ba49-62891eb47c37")
+    IFabricGetApplicationNetworkListResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_APPLICATION_NETWORK_QUERY_RESULT_LIST *STDMETHODCALLTYPE get_ApplicationNetworkList( void) = 0;
+        
+        virtual const FABRIC_PAGING_STATUS *STDMETHODCALLTYPE get_PagingStatus( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricGetApplicationNetworkListResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricGetApplicationNetworkListResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricGetApplicationNetworkListResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricGetApplicationNetworkListResult * This);
+        
+        const FABRIC_APPLICATION_NETWORK_QUERY_RESULT_LIST *( STDMETHODCALLTYPE *get_ApplicationNetworkList )( 
+            IFabricGetApplicationNetworkListResult * This);
+        
+        const FABRIC_PAGING_STATUS *( STDMETHODCALLTYPE *get_PagingStatus )( 
+            IFabricGetApplicationNetworkListResult * This);
+        
+        END_INTERFACE
+    } IFabricGetApplicationNetworkListResultVtbl;
+
+    interface IFabricGetApplicationNetworkListResult
+    {
+        CONST_VTBL struct IFabricGetApplicationNetworkListResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricGetApplicationNetworkListResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricGetApplicationNetworkListResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricGetApplicationNetworkListResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricGetApplicationNetworkListResult_get_ApplicationNetworkList(This)	\
+    ( (This)->lpVtbl -> get_ApplicationNetworkList(This) ) 
+
+#define IFabricGetApplicationNetworkListResult_get_PagingStatus(This)	\
+    ( (This)->lpVtbl -> get_PagingStatus(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricGetApplicationNetworkListResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricGetDeployedNetworkListResult_INTERFACE_DEFINED__
+#define __IFabricGetDeployedNetworkListResult_INTERFACE_DEFINED__
+
+/* interface IFabricGetDeployedNetworkListResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricGetDeployedNetworkListResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("347f5d8c-1abd-48e1-a7d1-9083556dafd3")
+    IFabricGetDeployedNetworkListResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_DEPLOYED_NETWORK_QUERY_RESULT_LIST *STDMETHODCALLTYPE get_DeployedNetworkList( void) = 0;
+        
+        virtual const FABRIC_PAGING_STATUS *STDMETHODCALLTYPE get_PagingStatus( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricGetDeployedNetworkListResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricGetDeployedNetworkListResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricGetDeployedNetworkListResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricGetDeployedNetworkListResult * This);
+        
+        const FABRIC_DEPLOYED_NETWORK_QUERY_RESULT_LIST *( STDMETHODCALLTYPE *get_DeployedNetworkList )( 
+            IFabricGetDeployedNetworkListResult * This);
+        
+        const FABRIC_PAGING_STATUS *( STDMETHODCALLTYPE *get_PagingStatus )( 
+            IFabricGetDeployedNetworkListResult * This);
+        
+        END_INTERFACE
+    } IFabricGetDeployedNetworkListResultVtbl;
+
+    interface IFabricGetDeployedNetworkListResult
+    {
+        CONST_VTBL struct IFabricGetDeployedNetworkListResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricGetDeployedNetworkListResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricGetDeployedNetworkListResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricGetDeployedNetworkListResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricGetDeployedNetworkListResult_get_DeployedNetworkList(This)	\
+    ( (This)->lpVtbl -> get_DeployedNetworkList(This) ) 
+
+#define IFabricGetDeployedNetworkListResult_get_PagingStatus(This)	\
+    ( (This)->lpVtbl -> get_PagingStatus(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricGetDeployedNetworkListResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricGetDeployedNetworkCodePackageListResult_INTERFACE_DEFINED__
+#define __IFabricGetDeployedNetworkCodePackageListResult_INTERFACE_DEFINED__
+
+/* interface IFabricGetDeployedNetworkCodePackageListResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricGetDeployedNetworkCodePackageListResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("6586d264-a96e-4f46-9388-189de5d61d6d")
+    IFabricGetDeployedNetworkCodePackageListResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_RESULT_LIST *STDMETHODCALLTYPE get_DeployedNetworkCodePackageList( void) = 0;
+        
+        virtual const FABRIC_PAGING_STATUS *STDMETHODCALLTYPE get_PagingStatus( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricGetDeployedNetworkCodePackageListResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricGetDeployedNetworkCodePackageListResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricGetDeployedNetworkCodePackageListResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricGetDeployedNetworkCodePackageListResult * This);
+        
+        const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_RESULT_LIST *( STDMETHODCALLTYPE *get_DeployedNetworkCodePackageList )( 
+            IFabricGetDeployedNetworkCodePackageListResult * This);
+        
+        const FABRIC_PAGING_STATUS *( STDMETHODCALLTYPE *get_PagingStatus )( 
+            IFabricGetDeployedNetworkCodePackageListResult * This);
+        
+        END_INTERFACE
+    } IFabricGetDeployedNetworkCodePackageListResultVtbl;
+
+    interface IFabricGetDeployedNetworkCodePackageListResult
+    {
+        CONST_VTBL struct IFabricGetDeployedNetworkCodePackageListResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricGetDeployedNetworkCodePackageListResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricGetDeployedNetworkCodePackageListResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricGetDeployedNetworkCodePackageListResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricGetDeployedNetworkCodePackageListResult_get_DeployedNetworkCodePackageList(This)	\
+    ( (This)->lpVtbl -> get_DeployedNetworkCodePackageList(This) ) 
+
+#define IFabricGetDeployedNetworkCodePackageListResult_get_PagingStatus(This)	\
+    ( (This)->lpVtbl -> get_PagingStatus(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricGetDeployedNetworkCodePackageListResult_INTERFACE_DEFINED__ */
+
+
 #ifndef __IFabricSecretStoreClient_INTERFACE_DEFINED__
 #define __IFabricSecretStoreClient_INTERFACE_DEFINED__
 
@@ -26995,7 +27915,7 @@ EXTERN_C const IID IID_IFabricSecretStoreClient;
         
         virtual HRESULT STDMETHODCALLTYPE EndSetSecrets( 
             /* [in] */ IFabricAsyncOperationContext *context,
-            /* [retval][out] */ IFabricSecretReferencesResult **result) = 0;
+            /* [retval][out] */ IFabricSecretsResult **result) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE BeginRemoveSecrets( 
             /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
@@ -27004,6 +27924,16 @@ EXTERN_C const IID IID_IFabricSecretStoreClient;
             /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE EndRemoveSecrets( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretReferencesResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetSecretVersions( 
+            /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetSecretVersions( 
             /* [in] */ IFabricAsyncOperationContext *context,
             /* [retval][out] */ IFabricSecretReferencesResult **result) = 0;
         
@@ -27051,7 +27981,7 @@ EXTERN_C const IID IID_IFabricSecretStoreClient;
         HRESULT ( STDMETHODCALLTYPE *EndSetSecrets )( 
             IFabricSecretStoreClient * This,
             /* [in] */ IFabricAsyncOperationContext *context,
-            /* [retval][out] */ IFabricSecretReferencesResult **result);
+            /* [retval][out] */ IFabricSecretsResult **result);
         
         HRESULT ( STDMETHODCALLTYPE *BeginRemoveSecrets )( 
             IFabricSecretStoreClient * This,
@@ -27061,6 +27991,18 @@ EXTERN_C const IID IID_IFabricSecretStoreClient;
             /* [retval][out] */ IFabricAsyncOperationContext **context);
         
         HRESULT ( STDMETHODCALLTYPE *EndRemoveSecrets )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretReferencesResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetSecretVersions )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetSecretVersions )( 
             IFabricSecretStoreClient * This,
             /* [in] */ IFabricAsyncOperationContext *context,
             /* [retval][out] */ IFabricSecretReferencesResult **result);
@@ -27105,6 +28047,12 @@ EXTERN_C const IID IID_IFabricSecretStoreClient;
 
 #define IFabricSecretStoreClient_EndRemoveSecrets(This,context,result)	\
     ( (This)->lpVtbl -> EndRemoveSecrets(This,context,result) ) 
+
+#define IFabricSecretStoreClient_BeginGetSecretVersions(This,secretReferences,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetSecretVersions(This,secretReferences,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricSecretStoreClient_EndGetSecretVersions(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetSecretVersions(This,context,result) ) 
 
 #endif /* COBJMACROS */
 

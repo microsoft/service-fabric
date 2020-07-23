@@ -515,7 +515,7 @@ ErrorCode TSReplicatedStore::ReadExact(
     __out FILETIME & lastModified)
 {
     // TODO: Not supported by V2 stack
-    UNREFERENCED_PARAMETER(lastModified);
+    lastModified = {0};
 
     if (!this->HasReadStatus()) { return ErrorCodeValue::NotPrimary; }
 
@@ -985,7 +985,7 @@ KAllocator & TSReplicatedStore::GetAllocator()
     return ktlSystem_->PagedAllocator();
 }
 
-ErrorCode TSReplicatedStore::InitializeReplicator(__out ComPointer<IFabricReplicator> & replicatorResult)
+ErrorCode TSReplicatedStore::InitializeReplicator(__inout ComPointer<IFabricReplicator> & replicatorResult)
 {
     auto partition = this->TryGetPartition();
     if (partition.GetRawPointer() == nullptr)
@@ -1378,7 +1378,7 @@ void TSReplicatedStore::TransientFault(wstring const & message, ErrorCode const 
     partition_->ReportFault(FABRIC_FAULT_TYPE_TRANSIENT);
 }
 
-ErrorCode TSReplicatedStore::OnOpen(__out ComPointer<IFabricReplicator> & replicatorResult)
+ErrorCode TSReplicatedStore::OnOpen(__inout ComPointer<IFabricReplicator> & replicatorResult)
 {
     WriteInfo(
         TraceComponent,

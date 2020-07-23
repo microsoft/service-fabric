@@ -263,9 +263,18 @@ KChecksumTest(
     int argc, WCHAR* args[]
     )
 {
-    KTestPrintf("KChecksumTest: STARTED\n");
-
     NTSTATUS status;
+    
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
+    KTestPrintf("KChecksumTest: STARTED\n");
 
     status = KtlSystem::Initialize();
 
@@ -278,6 +287,11 @@ KChecksumTest(
     KtlSystem::Shutdown();
 
     KTestPrintf("KChecksumTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return status;
 }
 

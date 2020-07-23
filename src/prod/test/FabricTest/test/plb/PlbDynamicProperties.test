@@ -1,5 +1,5 @@
 votes 10 20 30
-set LoadBalancingEnabled true
+set LoadBalancingEnabled false
 set DeletedReplicaKeepDuration 3
 # Service creation cannot be done with hard FD constraint and following node distribution across FDs
 set FaultDomainConstraintPriority 1

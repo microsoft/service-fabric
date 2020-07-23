@@ -1,0 +1,214 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <AssemblyName>System.Fabric.Management.Test</AssemblyName>
+    <RootNamespace>System.Fabric.Management.Test</RootNamespace>
+    <ProjectGuid>{42567688-E9B3-4B64-AEBF-56294CDCDE63}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationPackageGenerator.Test.cs" />
+    <Compile Include="CertificateManager.Test.cs" />
+    <Compile Include="DcaSettings.Test.cs" />
+    <Compile Include="DockerComposeParser.Test.cs" />
+    <Compile Include="FabricValidatorWrapper.Test.cs" />
+    <Compile Include="FileImageStore.Test.cs" />
+    <Compile Include="FileSignatureVerifier.Test.cs" />
+    <!--
+    <Compile Include="ImageBuilderExe.FabricUpgrade.Test.cs" />
+    <Compile Include="ImageBuilderExe.Test.cs" />
+    -->
+    <Compile Include="ImageBuilderExeTestWrapper.cs" />
+    <Compile Include="ImageBuilderChecksum.Test.cs" />
+    <Compile Include="ImageBuilderFabricUpgrade.Test.cs" />
+    <Compile Include="ImageBuilderUpgrade.Test.cs" />
+    <Compile Include="ImageBuilderTest.cs" />
+    <Compile Include="ImageBuilderTestContext.cs" />
+    <Compile Include="ImageStoreTypeAttribute.cs" />
+    <Compile Include="BuildLayoutInfo.cs" />
+    <Compile Include="FabricLayoutInfo.cs" />
+    <Compile Include="FabricValidator.Test.cs" />
+    <Compile Include="TestUtility.cs" />
+    <Compile Include="FabricDeployer.Deployment.Test.cs" />
+    <Compile Include="TestManifests.cs" />
+    <Compile Include="Firewall.Test.cs" />
+    <Compile Include="ServerDeployerValidator.Test.cs" />
+    <Compile Include="SingleInstanceApplication.Test.cs" />
+    <Compile Include="DeploymentParameters.Test.cs" />
+    <Compile Include="ClusterManifestHelper.cs" />
+    <Compile Include="FailoverManagerConfigurationValidator.Test.cs" />
+    <Compile Include="FileStoreServiceConfigurationValidator.Test.cs" />
+    <Compile Include="RASettingsValidator.Test.cs" />
+    <Compile Include="NativeRunConfigurationSettingValidator.Test.cs" />
+    <Compile Include="..\..\..\src\managed\ImageBuilderExe\StringConstants.cs">
+      <Link>..\..\..\src\managed\ImageBuilderExe\StringConstants.cs</Link>
+    </Compile>
+    <Compile Include="XStoreImageStore.Test.cs" />
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\managed\DCA\product\pluginvalidators\dll\DcaStandardPluginValidator.csproj">
+      <Project>{B7F82509-3E0B-45EC-B1C6-BB565E3DD760}</Project>
+      <Name>DcaStandardPluginValidator</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgWinFab_Test_KeyVaultWrapper_retail)\lib\net45\KeyVaultWrapper\KeyVaultWrapper.dll" />
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <ProjectReference Include="..\..\..\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\managed\Api\Dlls\System.Fabric.Management\System.Fabric.Management.csproj">
+      <Project>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</Project>
+      <Name>System.Fabric.Management</Name>
+      <Project>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</Project>
+      <Name>System.Fabric.Management</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\external\NetFwTypeLib\copy.proj" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.IO" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\bin\NetFwTypeLib.dll" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext_4_5_4)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+    <Reference Include="$(PkgYamlDotNet_Signed_4_1_0)\lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\YamlDotNet.dll">
+      <Name>YamlDotNet.dll</Name>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\ManifestFiles\ApplicationManifest.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ServiceManifest.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\Settings.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\InfrastructureManifest.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-WithoutDiagnostics.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-WithDiagnostics.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-ClusterCredentialTypeDependencyCheck.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-FabricNodeSection.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-NodeCapacitiesSection.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-NodeDomainIdsSection.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-NodePropertiesSection.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-NTLMEnabledDependencyCheck.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-ServerAuthCredentialTypeDependencyCheck.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\FabricHostSettings-InvalidFormat.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\FabricHostSettings-MultipleFabricUpgradeSections.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\FabricHostSettings-Valid.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\FabricHostSettings-ValidReplace.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest-WithRunAs.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest.MultiMachine.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\InfrastructureManifest.MultiMachine.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\ClusterManifest.MultiMachine-LocalHost.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ManifestFiles\InfrastructureManifest.MultiMachine-LocalHost.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="System.Fabric.Management.TestData.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ApplicationResourceFiles\Application_No_Setting.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ApplicationResourceFiles\Application_No_Setting2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ApplicationResourceFiles\Application_Setting1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ApplicationResourceFiles\Application_Setting2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ApplicationResourceFiles\Application_Setting2InstanceCount.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ApplicationResourceFiles\Application_Setting3Autoscaling.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+	  <Content Include="..\ApplicationResourceFiles\Application_Setting3.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\DockerComposeFiles\services_test.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\DockerComposeFiles\all_supported_options.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(TARGETNAME).dll.cfg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="..\ManifestFiles\ClusterManifest.json" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

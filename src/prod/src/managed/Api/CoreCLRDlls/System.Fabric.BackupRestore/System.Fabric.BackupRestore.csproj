@@ -19,6 +19,9 @@
     <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\FileShareBackupStore.cs" >
       <Link>DataStructures\FileShareBackupStore.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\DsmsAzureBlobBackupStore.cs">
+      <Link>DataStructures\DsmsAzureBlobBackupStore.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\FileShareAccessType.cs" >
       <Link>DataStructures\FileShareAccessType.cs</Link>
     </Compile>
@@ -100,8 +103,8 @@
     <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupMetadata.cs" >
       <Link>BackupMetadata.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupRescheduleTimer.cs" >
-      <Link>BackupRescheduleTimer.cs</Link>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\RescheduleTimer.cs" >
+      <Link>RescheduleTimer.cs</Link>
     </Compile>
     <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupRestoreBroker.cs" >
       <Link>BackupRestoreBroker.cs</Link>
@@ -120,6 +123,9 @@
     </Compile>
     <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupTimer.cs" >
       <Link>BackupTimer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BRSTimer.cs">
+      <Link>BRSTimer.cs</Link>
     </Compile>
     <Compile Include="..\..\src\System\Fabric\BackupRestore\RecoveryPointInformation.cs" >
       <Link>RecoveryPointInformation.cs</Link>

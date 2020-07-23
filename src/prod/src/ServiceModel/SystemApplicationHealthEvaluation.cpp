@@ -74,6 +74,6 @@ Common::ErrorCode SystemApplicationHealthEvaluation::FromPublicApi(
 void SystemApplicationHealthEvaluation::SetDescription()
 {
     description_ = wformatString(
-        "{0}",
-        HMResource::GetResources().HealthEvaluationUnhealthySystemApplication);
+        HMResource::GetResources().HealthEvaluationUnhealthySystemApplication,
+        aggregatedHealthState_);
 }

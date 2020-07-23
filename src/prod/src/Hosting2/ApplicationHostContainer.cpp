@@ -1669,9 +1669,9 @@ ErrorCode ApplicationHostContainer::GetRuntimeInformationFromEnv(
 
     runtimeServiceAddress = iter->second;
 
-#ifndef PLATFORM_UNIX
     if (useSslService)
     {
+#ifndef PLATFORM_UNIX
         wstring certKey;
         iter = envMap.find(Constants::EnvironmentVariable::RuntimeSslConnectionCertKey);
         if(iter == envMap.end())
@@ -1698,18 +1698,6 @@ ErrorCode ApplicationHostContainer::GetRuntimeInformationFromEnv(
 
         CryptoUtility::Base64StringToBytes(iter->second, certEncodedBytes);
 
-        iter = envMap.find(Constants::EnvironmentVariable::RuntimeSslConnectionCertThumbprint);
-        if(iter == envMap.end())
-        {
-            WriteError(
-                TraceType,
-                "Could not find the RuntimeSslConnectionCertThumbprint in the envMap of activated host.");
-
-            return ErrorCode(ErrorCodeValue::OperationFailed);
-        }
-
-        thumbprint = iter->second;
-
         CertContextUPtr cert;
         error = CryptoUtility::CreateCertFromKey(
             certEncodedBytes,
@@ -1725,29 +1713,55 @@ ErrorCode ApplicationHostContainer::GetRuntimeInformationFromEnv(
                 error);
             return error; 
         }
-    }
-#endif
+#else
+        iter = envMap.find(Constants::EnvironmentVariable::RuntimeSslConnectionCertFilePath);
+        if(iter == envMap.end())
+        {
+            WriteError(
+                TraceType,
+                "Could not find the RuntimeSslConnectionCertFilePath in the envMap of activated host.");
 
+            return ErrorCode(ErrorCodeValue::OperationFailed);
+        }
+
+        auto certFilePath = iter->second;
+        
+        CertContextUPtr cert;
+        CryptoUtility::GetCertificate(certFilePath, cert);        
+        certContextPtr = cert.release();
+#endif
+        iter = envMap.find(Constants::EnvironmentVariable::RuntimeSslConnectionCertThumbprint);
+        if(iter == envMap.end())
+        {
+            WriteError(
+                TraceType,
+                "Could not find the RuntimeSslConnectionCertThumbprint in the envMap of activated host.");
+
+            return ErrorCode(ErrorCodeValue::OperationFailed);
+        }
+
+        thumbprint = iter->second;
+    }
+
+#ifndef PLATFORM_UNIX
     if (hostContext.IsContainerHost)
     {
         ASSERT_IF(runtimeServiceAddress.empty(), "RuntimeServiceAddress should not be empty");
 
-        wstring networkingMode = ContainerEnvironment::GetContainerNetworkingMode();
-        bool isMultiIp = StringUtility::AreEqualCaseInsensitive(networkingMode, NetworkType::EnumToString(NetworkType::Open));
-
-        if (!isMultiIp)
+        if (!NetworkType::IsMultiNetwork(ContainerEnvironment::GetContainerNetworkingMode()))
         {
             map<wstring, vector<wstring>> gatewayAddressPerAdapter;
             error = IpUtility::GetGatewaysPerAdapter(gatewayAddressPerAdapter);
 
             ASSERT_IF(!error.IsSuccess(), "Getting HOST IP failed - {0}", error);
-            ASSERT_IF(gatewayAddressPerAdapter.size() != 1, "Found more than one adapter in container");
+            ASSERT_IF(gatewayAddressPerAdapter.size() > 1, "Found more than one adapter in container");
 
             USHORT port = Transport::TcpTransportUtility::ParsePortString(runtimeServiceAddress);
 
             runtimeServiceAddress = Transport::TcpTransportUtility::ConstructAddressString(gatewayAddressPerAdapter.begin()->second[0], port);
         }
     }
+#endif
 
     return error;
 }
@@ -1770,7 +1784,7 @@ ErrorCode ApplicationHostContainer::CreateApplicationHost(
 
     if (hostContext.IsContainerHost)
     {
-        error = ApplicationHostContainer::StartTraceSession();
+        error = ApplicationHostContainer::StartTraceSessionInsideContainer();
         if (!error.IsSuccess())
         {
             WriteError(TraceType, "Unable to start trace sessions: ErrorCode={0}", error);
@@ -2293,9 +2307,8 @@ ErrorCode ApplicationHostContainer::GetNodeContext(__out FabricNodeContextResult
     return error;
 }
 
-ErrorCode ApplicationHostContainer::StartTraceSession()
+ErrorCode ApplicationHostContainer::StartTraceSessionInsideContainer()
 {
-#if !defined(PLATFORM_UNIX)
     // Start will update only if necessary
     auto error = Common::TraceSession::Instance()->StartTraceSessions();
     if (!error.IsSuccess())
@@ -2306,11 +2319,9 @@ ErrorCode ApplicationHostContainer::StartTraceSession()
 
     WriteNoise(TraceType, "Trace sessions successfully started");
     return error;
-#else
-    WriteInfo(TraceType, "Trace session start not supported for containers on linux yet");
-    return ErrorCode();
-#endif
 }
+
+
 HRESULT ApplicationHostContainer::FabricCreateBackupRestoreAgent(
     /* [in] */ __RPC__in REFIID riid,
     /* [retval][out] */ __RPC__deref_out_opt void **backupRestoreAgent)

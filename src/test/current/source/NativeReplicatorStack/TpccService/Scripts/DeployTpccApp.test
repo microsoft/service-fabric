@@ -1,0 +1,17 @@
+# Deploy and create  app. 
+uploadapp TpccAppType apppackages\TpccApp<var.PartitionCount>P<var.ReplicaCount>R
+provisionapp TpccAppType
+createapp fabric:/App TpccAppType appParameters={"NumberOfPartitions":"<var.PartitionCount>","NumberOfReplicas":"<var.ReplicaCount>"}
+
+verify
+pause 30
+
+# current there is no way to know when the test starts or stops 
+
+pause 400
+
+deleteapp fabric:/App 
+verify
+
+quit
+
