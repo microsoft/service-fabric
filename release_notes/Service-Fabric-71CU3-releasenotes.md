@@ -26,7 +26,7 @@ Microsoft Azure Service Fabric 7.1 Third Refresh Release Notes
 
 ## Breaking Changes
 * SF 7.2 runtime will remove support for dotnet core SF apps build with dotnet core 2.2 runtime. [Dotnet runtime 2.2](https://dotnet.microsoft.com/platform/support/policy/dotnet-core) is out of support from Dec 2019. SF runtime 7.2 will remove installation of dotnet core 2.2 as part of its dependency. Customers should upgrade their app to the next dotnet core LTS version 3.1.
-* Dotnet core LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric release after that date will drop support for dotnet core 2.1 SF apps. Service Fabric SDK has plan will take a dependency on dotnet 3.* features to support SF dotnet core SDK.
+* Dotnet core LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric release after that date will drop support for dotnet core 2.1 SF apps. Service Fabric SDK will take a dependency on dotnet 3.* features to support SF dotnet core SDK.
 
 ## Service Fabric Common Bug Fixes
 
