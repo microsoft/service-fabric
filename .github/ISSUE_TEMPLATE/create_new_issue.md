@@ -21,4 +21,4 @@ OS(Windows/Linux):
 If this is a regression, which version did it regress from?
 
 ---
-Assignees: /cc @microsoft/service-fabric/service-fabric-triage
+Assignees: /cc @microsoft/service-fabric-triage
