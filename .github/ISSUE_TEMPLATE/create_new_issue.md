@@ -18,5 +18,7 @@ Expected Behavior:
 
 OS(Windows/Linux): 
 
+If this is a regression, which version did it regress from?
+
 ---
 Assignees: @microsoft/service-fabric-triage
