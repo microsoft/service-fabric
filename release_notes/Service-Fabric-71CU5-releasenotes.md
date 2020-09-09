@@ -22,7 +22,11 @@ Microsoft Azure Service Fabric 7.1 Fourth Refresh Release Notes
 * [Repositories and Download Links](#repositories-and-download-links)
 
 ## Key Announcements
-* **Extended support for 7.0**: Support for all 7.0 based Service Fabric releases will be extended by 3 months until October 1st,2020. We will take measures to ensure support expiration warnings for 7.0 clusters are removed. Please disregard any newsletters regarding support expiration for Service Fabric 7.0, there will be no impact to clusters.
+* **Extended support for 7.0**: Support for all 7.0 based Service Fabric releases will be extended by 3 months until October 1st, 2020. We will take measures to ensure support expiration warnings for 7.0 clusters are removed. Please disregard any newsletters regarding support expiration for Service Fabric 7.0, there will be no impact to clusters.
+* **Updating/Editing DNS name of a service using Update-ServiceFabricService command** <br>
+Previously adding a DNS name for a service was only allowed as part of service creation. ServiceDnsName parameter in Update-ServiceFabricService command allows the user to add/edit the DNS name of an already deployed service.
+Note: If a DNS name is edited for a service, DNS Service will need to be restarted to invalidate its cache. See [Update Service Fabric Service](https://docs.microsoft.com/en-us/powershell/module/servicefabric/update-servicefabricservice?view=azureservicefabricps) for more details.
+
 
 ## Breaking Changes
 * SF 7.2 runtime will remove support for dotnet core SF apps build with dotnet core 2.2 runtime. [Dotnet runtime 2.2](https://dotnet.microsoft.com/platform/support/policy/dotnet-core) is out of support from Dec 2019. SF runtime 7.2 will remove installation of dotnet core 2.2 as part of its dependency. Customers should upgrade their app to the next dotnet core LTS version 3.1.
