@@ -38,7 +38,7 @@ Update-ServiceFabricService -Stateless -ServiceName fabric:/myapp/test -ServiceD
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows 7.1.456.9590** | **Bug** |XmlLiteReader.Linux.cpp leaks memory on close|**Brief desc**: Fabric would leak memory when processing XML manifest.  <br> **Impact**: Large amount of manifest processing would result in memory leaking over a period of time.  <br> **Workaround**: N/A <br> **Fix**: The leak has been fixed.
+| **Windows 7.1.458.9590** | **Bug** |XmlLiteReader.Linux.cpp leaks memory on close|**Brief desc**: Fabric would leak memory when processing XML manifest.  <br> **Impact**: Large amount of manifest processing would result in memory leaking over a period of time.  <br> **Workaround**: N/A <br> **Fix**: The leak has been fixed.
 
 ## Repositories and Download Links
 The table below is an overview of the direct links to the packages associated with this release. 
