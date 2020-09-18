@@ -139,6 +139,33 @@ Service Fabric conceptual and reference documentation is available at [docs.micr
 For Service Fabric sample code, check out the [Azure Code Sample gallery](https://azure.microsoft.com/resources/samples/?service=service-fabric) or go straight to [Azure-Samples on GitHub](https://github.com/Azure-Samples?q=service-fabric).
 ## Channel 9: Inside Azure Service Fabric  
 <a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This Channel 9 YouTube playlist will continue to grow over time with content describing the inner workings of Service Fabric. We have covered most of the [subsystems](docs/architecture/README.md) already.  
+
+## Other Service Fabric Open Source Projects
+Below is a list of various other Service Fabric projects maintained by the Service Fabric team.
+- [Service Fabric Explorer](https://github.com/microsoft/service-fabric-explorer) - Service Fabric Explorer is an application for inspecting and managing cloud applications and nodes in a Microsoft Azure Service Fabric cluster.
+- [Service Fabric CLI](https://github.com/microsoft/service-fabric-cli) -  Command-line interface for interacting with Azure Service Fabric clusters and their related entities.
+- [Service Fabric Reliable Services and Actors](https://github.com/Microsoft/service-fabric-services-and-actors-dotnet) - Reliable Services and Reliable Actors are Service Fabric application frameworks for building highly-scalable distributed cloud applications.
+- [Service Fabric ASP.NET Core Integration](https://github.com/Microsoft/service-fabric-aspnetcore) - Repository for ASP.NET Core integration for Service Fabric Reliable Services.
+- [Patch Orchestration Application](https://github.com/microsoft/Service-Fabric-POA) - An Azure Service Fabric application that automates operating system patching on a Service Fabric cluster without downtime.
+- [Service Fabric Rest Client Library and PS Module](https://github.com/Microsoft/service-fabric-client-dotnet) - REST based Client library and PowerShell module for managing Service Fabric clusters and applications.
+- [Service Fabric Backup Explorer](https://github.com/microsoft/service-fabric-backup-explorer) - An offline tool/ library to explore and edit Service Fabric Reliable Collections backups.
+- [Service Fabric Observer](https://github.com/microsoft/service-fabric-observer) - A complete implementation of a generic resource usage watchdog service.
+- [Service Fabric Autoscale Helper](https://github.com/Azure/service-fabric-autoscale-helper) - Application that aids managing, autoscaling nodes in Service Fabric cluster.
+- [Service Fabric Application DR Tool](https://github.com/microsoft/Service-Fabric-AppDRTool) - Application which allows the user to backup application data from their primary cluster and periodically restore it on a secondary cluster.
+- [Application Insights for Service Fabric](https://github.com/microsoft/ApplicationInsights-ServiceFabric) - Application Insights telemetry experience for Service Fabric.
+- [Service Fabric Scripts and Templates](https://github.com/microsoft/service-fabric-scripts-and-templatesS) - Repository for sharing Service Fabric related scripts and templates.
+- [Service Fabric Reverse Proxy](https://github.com/microsoft/service-fabric-reverse-proxy) - Envoy based reverse proxy that works with Service Fabric.
+- [VS Code Extension for Service Fabric](https://github.com/microsoft/vscode-service-fabric-reliable-services) - A Visual Studio Code extension that provides support for building Service Fabric applications in Visual Studio Code.
+- Service Fabric Yeoman generators for various projects
+  - [C#](https://github.com/microsoft/generator-azuresfcsharp)
+  - [Java](https://github.com/microsoft/generator-azuresfjava)
+  - [Container](https://github.com/microsoft/generator-azuresfcontainer)
+  - [Guest Executable](https://github.com/microsoft/generator-azuresfguest)
+- [Collect Service Fabric Data](https://github.com/microsoft/CollectServiceFabricData) - Command-line utility to assist with the download of Azure Service Fabric diagnostic data from the configured Azure storage account.
+
+
+
+
 ## License 
 All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
 ## Code of Conduct 
