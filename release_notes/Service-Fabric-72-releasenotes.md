@@ -31,6 +31,7 @@ The following packages and versions are part of this release:
     - You can now build custom observer plugins. Please see [plugins readme](https://github.com/microsoft/service-fabric-observer/blob/master/Documentation/Plugins.md) and the [sample plugin project](https://github.com/microsoft/service-fabric-observer/tree/master/SampleObserverPlugin) for details and code.
     - You can now change any observer setting via application parameters upgrade. This means you no longer need to redeploy FO to modify specific observer settings. Please see the [sample](https://github.com/microsoft/service-fabric-observer/blob/master/Documentation/Using.md#parameterUpdates).
 - [**Support for Ubuntu 18.04 OneBox container images**](https://hub.docker.com/_/microsoft-service-fabric-onebox).
+- **Preview**: [**KeyVault Reference for Service Fabric applications supports **ONLY versioned secrets**. Versionless secrets are not supported.**](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-keyvault-references)
 
 ## Breaking Changes
 
