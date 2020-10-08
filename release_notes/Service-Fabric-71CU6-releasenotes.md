@@ -1,6 +1,6 @@
-# Microsoft Azure Service Fabric 7.1 Fifth Refresh Release Notes
+# Microsoft Azure Service Fabric 7.1 Sixth Refresh Release Notes
 
-This release includes bug fixes and features as described in this document.
+This release includes bug fixes as described in this document.
 
 The following packages and versions are part of this release:
 
@@ -14,7 +14,7 @@ The following packages and versions are part of this release:
 
 ## Content 
 
-Microsoft Azure Service Fabric 7.1 Fifth Refresh Release Notes
+Microsoft Azure Service Fabric 7.1 Sixth Refresh Release Notes
 
 ## Service Fabric Common Bug Fixes
 
