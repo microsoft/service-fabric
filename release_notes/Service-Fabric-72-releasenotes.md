@@ -7,11 +7,11 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu <br> Windows | 7.1.410.1 <br> 7.1.409.9590  |
-|Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 7.1.409.9590 |
-|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 4.1.409  <br> 7.1.409 <br> 4.1.409 <br> 4.1.409 |
+|Service Fabric Runtime| Ubuntu <br> Windows | NA <br> 7.2.413.9590  |
+|Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 7.2.413.9590 |
+|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 4.2.413  <br> 7.2.413 <br> 4.2.413 <br> 4.2.413 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
-|Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 8.0.0 |
+|Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 10.0.0 |
 
 ## Contents 
 - [Key Announcement](#key-announcements)
@@ -32,7 +32,7 @@ The following packages and versions are part of this release:
 - [**Support for Ubuntu 18.04 OneBox container images**](https://hub.docker.com/_/microsoft-service-fabric-onebox).
 - **Preview**: [**KeyVault Reference for Service Fabric applications supports **ONLY versioned secrets**. Versionless secrets are not supported.**](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-keyvault-references)
 - SF SDK requires latest VS 2019 update 16.7.6  or 16.8 Preview 4 to be able create new .Net Framework stateless/stateful/actors projects. If you do not have the latest VS update, after creating the service project, use package manager to install Microsoft.ServiceFabric.Services (version 4.2.x) for stateful/stateless projects and Microsoft.ServiceFabric.Actors (version 4.2.x) for actor projects from nuget.org.
-
+- **RunToCompletion**: Service Fabric supports concept of run to completion for guest executables. With this update once the replica runs to completion, the cluster resources allocated to this replica will be released.
 
 ## Breaking Changes
 
@@ -41,6 +41,8 @@ The following packages and versions are part of this release:
 - We will be deprecating the latest tag for [**OneBox container images**](https://hub.docker.com/_/microsoft-service-fabric-onebox).The new scheme for containers will substitute the current naming scheme ‘latest’ to be replaced with an OS-targeted latest set to explicitly identify the base OS for latest SF releases:
     - mcr.microsoft.com/service-fabric/onebox:u16
     - mcr.microsoft.com/service-fabric/onebox:u18
+- The default action of deleting uploaded application package is changed. If the application package is registered successfully, the uploaded application package is deleted by default. Before this default action changes, the uploaded application package was deleted either by calling to [Remove-ServiceFabricApplicationPackage](https://docs.microsoft.com/en-us/powershell/module/servicefabric/remove-servicefabricapplicationpackage) or by using ApplicationPackageCleanupPolicy parameter explicitly with [Register-ServiceFabricApplicationType](https://docs.microsoft.com/en-us/powershell/module/servicefabric/register-servicefabricapplicationtype)
+- Service Fabric 7.2 will become the baseline release for future development of image validation. When the feature is activated in future version e.g., Service Fabric 7.3, the cluster is not desired to rolled back down to 7.1 or lower. The version 7.2 is the baseline to which the cluster can downgrade.
 
 ## Service Fabric Features
 
@@ -86,21 +88,21 @@ Follow this guidance for setting up your developer environment:
 
 | Area | Package | Version | Repository | Direct Download Link |
 |-|-|-|-|-|
-|Service Fabric Runtime |Ubuntu Developer Set-up | 7.1.410.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
-|| Windows Developer Set-up| 7.1.409.9590 | N/A | https://download.microsoft.com/download/c/8/c/c8c98ab2-6e7a-4d9a-a0a5-506b18111677/MicrosoftServiceFabric.7.1.409.9590.exe |
-|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 7.1.409.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/7.1.409.9590/Microsoft.Azure.ServiceFabric.WindowsServer.7.1.409.9590.zip |
-||Service Fabric Standalone Runtime | 7.1.409.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/7.1.409.9590/MicrosoftAzureServiceFabric.7.1.409.9590.cab |
-|.NET SDK |Windows .NET SDK | 4.1.409 |N/A | https://download.microsoft.com/download/c/8/c/c8c98ab2-6e7a-4d9a-a0a5-506b18111677/MicrosoftServiceFabricSDK.4.1.409.msi |
-||Microsoft.ServiceFabric | 7.1.409 |N/A |https://www.nuget.org |
-||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 4.1.409 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
-||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 4.1.409 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
-||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 4.1.409 |N/A| https://www.nuget.org |
-||Microsoft.ServiceFabric.Data.Extensions | 4.1.409 | N/A |https://www.nuget.org |
+|Service Fabric Runtime |Ubuntu Developer Set-up | NA |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
+|| Windows Developer Set-up| 7.2.413.9590 | N/A | https://download.microsoft.com/download/5/9/d/59d472e7-4c84-4cc5-8622-aeed97895192/MicrosoftServiceFabric.7.2.413.9590.exe |
+| Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 7.2.413.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/7.2.413.9590/Microsoft.Azure.ServiceFabric.WindowsServer.7.2.413.9590.zip |
+||Service Fabric Standalone Runtime | 7.2.413.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/7.2.413.9590/MicrosoftAzureServiceFabric.7.2.413.9590.cab |
+|.NET SDK |Windows .NET SDK | 4.2.413 |N/A | https://download.microsoft.com/download/5/9/d/59d472e7-4c84-4cc5-8622-aeed97895192/MicrosoftServiceFabricSDK.4.2.413.msi |
+||Microsoft.ServiceFabric | 7.2.413 |N/A |https://www.nuget.org |
+||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 4.2.413 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
+||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 4.2.413 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
+||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 4.2.413 |N/A| https://www.nuget.org |
+||Microsoft.ServiceFabric.Data.Extensions | 4.2.413 | N/A |https://www.nuget.org |
 |Java SDK |Java SDK | 1.0.6 |N/A |https://mvnrepository.com/artifact/com.microsoft.servicefabric/sf-actors/1.0.6 |
 |Eclipse |Service Fabric plug-in for Eclipse | 2.0.7 | N/A |N/A |
 |Yeoman |Azure Service Fabric Java generator | 1.0.7 |https://github.com/Azure/generator-azuresfjava |N/A |
 ||Azure Service Fabric C# generator | 1.0.9 |https://github.com/Azure/generator-azuresfcsharp |N/A |
 ||Azure Service Fabric guest executables generator | 1.0.1 |https://github.com/Azure/generator-azuresfguest |N/A|
 ||Azure Service Fabric Container generators | 1.0.1 |https://github.com/Azure/generator-azuresfcontainer |N/A |
-|CLI |Service Fabric CLI | 8.0.0 |https://github.com/Azure/service-fabric-cli |https://pypi.python.org/pypi/sfctl |
+|CLI |Service Fabric CLI | 10.0.0 |https://github.com/Azure/service-fabric-cli |https://pypi.python.org/pypi/sfctl |
 |PowerShell |AzureRM.ServiceFabric | 0.3.15 |https://github.com/Azure/azure-powershell/tree/preview/src/ResourceManager/ServiceFabric |https://www.powershellgallery.com/packages/AzureRM.ServiceFabric/0.3.15  |
