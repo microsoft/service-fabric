@@ -33,7 +33,7 @@ The following packages and versions are part of this release:
 - **Preview**: [**KeyVault Reference for Service Fabric applications supports **ONLY versioned secrets**. Versionless secrets are not supported.**](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-keyvault-references)
 - SF SDK requires latest VS 2019 update 16.7.6  or 16.8 Preview 4 to be able create new .Net Framework stateless/stateful/actors projects. If you do not have the latest VS update, after creating the service project, use package manager to install Microsoft.ServiceFabric.Services (version 4.2.x) for stateful/stateless projects and Microsoft.ServiceFabric.Actors (version 4.2.x) for actor projects from nuget.org.
 - **RunToCompletion**: Service Fabric supports concept of run to completion for guest executables. With this update once the replica runs to completion, the cluster resources allocated to this replica will be released.
-- **[Resource governance support has been enhanced]**(https://docs.microsoft.com/azure/service-fabric/service-fabric-resource-governance): allowing requests and limits specifications for cpu and memory resources.
+- [**Resource governance support has been enhanced**](https://docs.microsoft.com/azure/service-fabric/service-fabric-resource-governance): allowing requests and limits specifications for cpu and memory resources.
 
 ## Breaking Changes
 
