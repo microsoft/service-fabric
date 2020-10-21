@@ -41,6 +41,8 @@ The following packages and versions are part of this release:
 - We will be deprecating the latest tag for [**OneBox container images**](https://hub.docker.com/_/microsoft-service-fabric-onebox).The new scheme for containers will substitute the current naming scheme ‘latest’ to be replaced with an OS-targeted latest set to explicitly identify the base OS for latest SF releases:
     - mcr.microsoft.com/service-fabric/onebox:u16
     - mcr.microsoft.com/service-fabric/onebox:u18
+- The default action of deleting uploaded application package is changed. If the application package is registered successfully, the uploaded application package is deleted by default. Before this default action changes, the uploaded application package was deleted either by calling to [Remove-ServiceFabricApplicationPackage](https://docs.microsoft.com/en-us/powershell/module/servicefabric/remove-servicefabricapplicationpackage) or by using ApplicationPackageCleanupPolicy parameter explicitly with [Register-ServiceFabricApplicationType](https://docs.microsoft.com/en-us/powershell/module/servicefabric/register-servicefabricapplicationtype)
+- Service Fabric 7.2 will become the baseline release for future development of image validation. When the feature is activated in future version e.g., Service Fabric 7.3, the cluster is not desired to rolled back down to 7.1 or lower. The version 7.2 is the baseline to which the cluster can downgrade.
 
 ## Service Fabric Features
 
