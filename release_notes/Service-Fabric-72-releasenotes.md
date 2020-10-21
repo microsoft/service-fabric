@@ -14,14 +14,14 @@ The following packages and versions are part of this release:
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 8.0.0 |
 
 ## Contents 
-- [Key Annoucements](#key-annoucements)
+- [Key Announcement](#key-announcements)
 - [Breaking Changes](#breaking-changes)
 - [Service Fabric Runtime](#service-fabric-runtime)
 - [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
 - [Reliable Collections](#reliable-collections)
 - [Repositories and Download Links](#repositories-and-download-links)
 
-## Key Annoucements
+## Key Announcements
 
 - **Preview**: [**Service Fabric managed clusters**](https://techcommunity.microsoft.com/t5/azure-service-fabric/azure-service-fabric-managed-clusters-are-now-in-public-preview/ba-p/1721572) are now in public preview. Service Fabric managed clusters aim to simplify cluster deployment and management by encapsulating the underlying resources that make up a Service Fabric cluster into a single ARM resource. For more details see, [Service Fabric managed cluster overview](https://docs.microsoft.com/azure/service-fabric/overview-managed-cluster).
 - **Preview**: [**Supporting stateless services with a number of instances greater than the number of nodes**](https://docs.microsoft.com/azure/service-fabric/service-fabric-cluster-resource-manager-advanced-placement-rules-placement-policies) is now in public preview. A placement policy enables the creation of multiple stateless instances of a partition on a node.
@@ -36,7 +36,7 @@ The following packages and versions are part of this release:
 
 ## Breaking Changes
 
-- Service Fabric 7.2 and higher runtime will drop support for .Net core Service Fabric apps running with .Net core 2.2 runtime. .Net core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .Net core runtime 2.2 as part of its dependency. Customers should upgrade their .Net 2.2 runtime SF apps to the next .Net core LTS version 3.1.
+- Service Fabric 7.2 and higher runtime drops support for .Net core Service Fabric apps running with .Net core 2.2 runtime. .Net core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .Net core runtime 2.2 as part of its dependency. Customers should upgrade their .Net 2.2 runtime SF apps to the next .Net core LTS version 3.1.
 - .Net core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .Net core 2.1 runtime. Service Fabric .Net SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .Net core apps.  This has no impact on Service Fabric .Net Framework SDK.
 - We will be deprecating the latest tag for [**OneBox container images**](https://hub.docker.com/_/microsoft-service-fabric-onebox).The new scheme for containers will substitute the current naming scheme ‘latest’ to be replaced with an OS-targeted latest set to explicitly identify the base OS for latest SF releases:
     - mcr.microsoft.com/service-fabric/onebox:u16
@@ -54,7 +54,7 @@ The following packages and versions are part of this release:
 | **Windows 7.1.409.9590  <br> Ubuntu 7.1.410.1** | **Feature** | Service Fabric Image Store removes local resources used for SMB share| **Brief desc** Service Fabric doesn't use SMB to transfer images between nodes by default, but resources like local accounts and shared folder are created in nodes. Local accounts includes P_FSSUserffffffff and S_FSSUserffffffff. The shared folders are StagingShare_[node name] and StoreShare_[node name]. The change is added to clean up local resources when they are not required. 
 | **Windows 7.1.409.9590  <br> Ubuntu 7.1.410.1** | **Feature** | Image Store CleanupApplicationPackageOnProvisionSuccess default value is changed from false to true 
 | **Windows 7.1.409.9590  <br> Ubuntu 7.1.410.1** | **Feature** | Service Fabric now releases resources allocated to replicas which have ran to completion. | Service Fabric supports notion of ran to completion for guest executables. Once a replica has completed its task, hence ran to completion, Service Fabric will now delete this replica and release cluster resources allocated for it. 
-
+| **Windows 7.1.409.9590  <br> Ubuntu 7.1.410.1** | **Feature** | [Resource governance support has been enhanced](https://docs.microsoft.com/azure/service-fabric/service-fabric-resource-governance) by allowing requests and limits specifications for cpu and memory resources.
 
 ## Service Fabric Common Bug Fixes
 
