@@ -356,9 +356,10 @@ namespace System.Fabric.Dca
             {
                 this.traceSource.WriteInfo(
                     TraceType,
-                    "Disk space user {0} was found to be using {1:N0}B of disk space.", 
+                    "Disk space user {0} was found to be using {1:N0}B of disk space. Disk space remaining: {2}.", 
                     userCount.Key,
-                    userCount.Value);
+                    userCount.Value,
+                    diskSpaceRemaining);
             }
 
             var totalDiskSpaceUsed = usageDictionary.Values.Sum();
