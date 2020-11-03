@@ -37,8 +37,9 @@ The following packages and versions are part of this release:
 
 ## Breaking Changes
 
-- Service Fabric 7.2 and higher runtime drops support for .Net core Service Fabric apps running with .Net core 2.2 runtime. .Net core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .Net core runtime 2.2 as part of its dependency. Customers should upgrade their .Net 2.2 runtime SF apps to the next .Net core LTS version 3.1.
-- .Net core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .Net core 2.1 runtime. Service Fabric .Net SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .Net core apps.  This has no impact on Service Fabric .Net Framework SDK.
+- Service Fabric 7.2 and higher runtime drops support for .NET core Service Fabric apps running with .NET core 2.2 runtime. .NET core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET core LTS version 3.1.
+- .NET core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .NET core apps.  This has no impact on Service Fabric .NET Framework SDK.
+- .NET 5 apps are currently not supported, support for .NET 5 applications will be added in the Service Fabric 8.0 release.
 - We will be deprecating the latest tag for [**OneBox container images**](https://hub.docker.com/_/microsoft-service-fabric-onebox).The new scheme for containers will substitute the current naming scheme ‘latest’ to be replaced with an OS-targeted latest set to explicitly identify the base OS for latest SF releases:
     - mcr.microsoft.com/service-fabric/onebox:u16
     - mcr.microsoft.com/service-fabric/onebox:u18
