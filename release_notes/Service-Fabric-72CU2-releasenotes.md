@@ -6,9 +6,9 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 7.1.454.1 <br> 7.1.454.1804 <br> 7.1.458.9590 |
-|Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 7.1.458.9590 |
-|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 4.1.458 <br> 7.1.458 <br> 4.1.458 <br> 4.1.458 |
+|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | NA <br> NA <br> 7.2.432.9590 |
+|Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 7.2.432.9590 |
+|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| NA <br> 7.2.432 <br> 4.2.432 <br> 4.2.432 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL | 0.3.15 <br> 10.0.0 |
 
