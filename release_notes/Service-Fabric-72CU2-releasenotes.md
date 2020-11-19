@@ -6,9 +6,9 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | NA <br> NA <br> 7.2.432.9590 |
-|Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 7.2.432.9590 |
-|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| NA <br> 7.2.432 <br> 4.2.432 <br> 4.2.432 |
+|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 7.2.431.1 <br> 7.2.431.1804 <br> 7.2.432.9590 |
+|Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 7.2.434.9590 |
+|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 4.2.434 <br> 7.2.434 <br> 4.2.434 <br> 4.2.434 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL | 0.3.15 <br> 10.0.0 |
 
@@ -40,3 +40,32 @@ Microsoft Azure Service Fabric 7.2 Second Refresh Release Notes
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
 | **Windows 7.1.458.9590** | **Bug** |FabricDNS regression introduced in 7.2.|**Brief desc**: FabricDNS would not behave as expected after upgrading to 7.2.<br> **Impact**: Issues seen in this regression include an increased rate of slow/failed DNS requests, and FabricDNS crashing more than usual. <br> **Workaround**: Upgrade to 7.2 CU2. <br> **Fix**: This regression has been fixed as part the CU2 release.
+
+
+## Repositories and Download Links
+The table below is an overview of the direct links to the packages associated with this release. 
+Follow this guidance for setting up your developer environment: 
+* [Geting Started with Linux](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-linux)
+* [Getting Started with Mac](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-mac)
+* [Getting Started with Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started)
+
+| Area | Package | Version | Repository | Direct Download Link |
+|-|-|-|-|-|
+|Service Fabric Runtime |Ubuntu Developer Set-up | 7.2.431.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
+|| Windows Developer Set-up| 7.2.434.9590 | N/A | https://download.microsoft.com/download/4/f/1/4f1d5cd7-4a39-493e-814b-7ccdb671dcd7/MicrosoftServiceFabric.7.2.434.9590.exe |
+| Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 7.2.434.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/7.2.434.9590/Microsoft.Azure.ServiceFabric.WindowsServer.7.2.434.9590.zip |
+||Service Fabric Standalone Runtime | 7.2.434.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/7.2.434.9590/MicrosoftAzureServiceFabric.7.2.434.9590.cab |
+|.NET SDK |Windows .NET SDK | 4.2.434 |N/A | https://download.microsoft.com/download/4/f/1/4f1d5cd7-4a39-493e-814b-7ccdb671dcd7/MicrosoftServiceFabricSDK.4.2.434.msi |
+||Microsoft.ServiceFabric | 7.2.434 |N/A |https://www.nuget.org |
+||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 4.2.434 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
+||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 4.2.434 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
+||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 4.2.434 |N/A| https://www.nuget.org |
+||Microsoft.ServiceFabric.Data.Extensions | 4.2.434 | N/A |https://www.nuget.org |
+|Java SDK |Java SDK | 1.0.6 |N/A |https://mvnrepository.com/artifact/com.microsoft.servicefabric/sf-actors/1.0.6 |
+|Eclipse |Service Fabric plug-in for Eclipse | 2.0.7 | N/A |N/A |
+|Yeoman |Azure Service Fabric Java generator | 1.0.7 |https://github.com/Azure/generator-azuresfjava |N/A |
+||Azure Service Fabric C# generator | 1.0.9 |https://github.com/Azure/generator-azuresfcsharp |N/A |
+||Azure Service Fabric guest executables generator | 1.0.1 |https://github.com/Azure/generator-azuresfguest |N/A|
+||Azure Service Fabric Container generators | 1.0.1 |https://github.com/Azure/generator-azuresfcontainer |N/A |
+|CLI |Service Fabric CLI | 10.0.0 |https://github.com/Azure/service-fabric-cli |https://pypi.python.org/pypi/sfctl |
+|PowerShell |AzureRM.ServiceFabric | 0.3.15 |https://github.com/Azure/azure-powershell/tree/preview/src/ResourceManager/ServiceFabric |https://www.powershellgallery.com/packages/AzureRM.ServiceFabric/0.3.15  |
