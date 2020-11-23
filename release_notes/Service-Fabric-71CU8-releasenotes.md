@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 7.1 Sixth Refresh Release Notes
+# Microsoft Azure Service Fabric 7.1 Eighth Refresh Release Notes
 
 This release includes bug fixes as described in this document.
 
