@@ -1,6 +1,6 @@
 # Microsoft Azure Service Fabric 7.1 Eighth Refresh Release Notes
 
-This release includes bug fixes as described in this document.
+This release includes bug fixes as described in this document. **This release is made available only and will not be available through automatic upgrades**.
 
 The following packages and versions are part of this release:
 
