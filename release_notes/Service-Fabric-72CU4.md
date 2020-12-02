@@ -1,6 +1,8 @@
 # Microsoft Azure Service Fabric 7.2 Fourth Refresh Release Notes
 
-This release includes stability fixes as described in this document. **Due to the holiday season, this update will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this update unless toggled to manual. At this time only the Windows release is available, and we will begin the Linux release soon**
+This release includes stability fixes as described in this document.
+
+**Due to the holiday season, this update will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this update unless toggled to manual. At this time only the Windows release is available, and we will begin the Linux release soon.**
 
 The following packages and versions are part of this release:
 
@@ -22,11 +24,16 @@ Microsoft Azure Service Fabric 7.2 Fourth Refresh Release Notes
 
 ## Key Announcements
 
-* .NET 5 apps for Windows on Service Fabric are now supported as a preview. Look out for the GA announcement of .NET 5 apps for Windows on Service Fabric in the coming weeks. .NET 5 apps for Linux on Service Fabric will be added in the Service Fabric 8.0 release.
+* .NET 5 apps for Windows on Service Fabric are now supported as a *preview**. Look out for the GA announcement of .NET 5 apps for Windows on Service Fabric in the coming weeks.
+* .NET 5 apps for Linux on Service Fabric will be added in the Service Fabric 8.0 release.
+* Windows Server 20H2 is now supported as of the 7.2 CU4 release.
+
+## Breaking Changes
+
+- Service Fabric 7.2 and higher runtime drops support for .NET core Service Fabric apps running with .NET core 2.2 runtime. .NET core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET core LTS version 3.1.
 
 ## Upcoming Breaking Changes
 
-- Service Fabric 7.2 and higher runtime drops support for .NET core Service Fabric apps running with .NET core 2.2 runtime. .NET core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET core LTS version 3.1.
 - .NET core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .NET core apps.  This has no impact on Service Fabric .NET Framework SDK.
 - Support for Windows Server 2016 and Windows Server 1809 will be discontinued in future Service Fabric releases. We recommend updating your cluster VMs to Windows Server 2019.
 
@@ -35,8 +42,7 @@ Microsoft Azure Service Fabric 7.2 Fourth Refresh Release Notes
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
 | **Windows 7.1.458.9590** | **Bug** |Add report code 167 to HealthReport handler |**Brief desc**: Applications which declare endpoint certificates that do not exist on the node will cause a crash in the SF runtime on Linux.<br> **Impact**: SF applications deployed to Linux clusters which declare non-existent endpoint certificates. <br> **Workaround**:  Ensure that certificates declared in application manifests exist on the nodes where the application may be deployed. <br> **Fix**: The health report raised for this scenario was not handled, and entered a code path which crashed the host process.
-| **Windows 7.1.458.9590** | **Bug** |Version-less KVRef should be explicitly blocked |**Brief desc**: Only versioned Key Vault objects of object type 'secret' are supported for SF Key Vault References:
-Read more about [key vault objects.](https://docs.microsoft.com/azure/key-vault/general/about-keys-secrets-certificates#vault-name-and-object-name) <br> **Impact**: Previously version-less objects were allowed to deploy, but have undefined behavior; this fix blocks these deployments. <br> **Workaround**:  N/A <br> **Fix**: Any app using a version-less reference can transition to versioned by upgrading to the object marked "latest" in key-vault explicitly, and using the 'secret' object-type version of that object. You will need to upgrade the app before upgrading the cluster version.
+| **Windows 7.1.458.9590** | **Bug** |Version-less KVRef should be explicitly blocked |**Brief desc**: Only versioned Key Vault objects of object type 'secret' are supported for SF Key Vault References: Read more about [key vault objects.](https://docs.microsoft.com/azure/key-vault/general/about-keys-secrets-certificates#vault-name-and-object-name) <br> **Impact**: Previously version-less objects were allowed to deploy, but have undefined behavior; this fix blocks these deployments. <br> **Workaround**:  N/A <br> **Fix**: Any app using a version-less reference can transition to versioned by upgrading to the object marked "latest" in key-vault explicitly, and using the 'secret' object-type version of that object. You will need to upgrade the app before upgrading the cluster version.
 | **Windows 7.1.458.9590** | **Bug** |Deactivation should get blocked if the node has replica with FT in QL state |**Brief desc**: Node Deactivations from MR with intent RemoveNode/RemoveData will now get blocked if the node has a replica which is part of partition which is in Quorum Loss state. <br> **Impact**: Any node deactivations (from MR jobs) or service fabric upgrades will get blocked when these conditions are met.  <br> **Workaround**:  N/A <br> **Fix**: Block these node deactivations when being performed for node which has replica whose partition is in Quorum Loss. This will prevent SF from approving destructive actions like RemoveNode/RemoveData for the service which has not recovered yet.
 | **Windows 7.1.458.9590** | **Bug** |Encoding scheme is not correct for authentication with Docker when using REST API's |**Brief desc**: Container Image downloading failed for some passwords when using basic authentication to download docker images.  This was caused due to using an incorrect base64url encoding that Docker REST API's require. <br> **Impact**:  Container image downloading failed with certain passwords that were specified in SF ApplicationManifest.xml files. <br> **Workaround**: Change the password that you use to authenticate to your container registry (most likely Azure Container Registry).  Attempt image download via Service Fabric.  Continue to change password until it works.  Due to encoding issues, some passwords will work, others will not. <br> **Fix**: Corrected the code to use base64url encoding instead of just base64 encoding.
 
