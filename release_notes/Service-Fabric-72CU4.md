@@ -24,7 +24,7 @@ Microsoft Azure Service Fabric 7.2 Fourth Refresh Release Notes
 
 ## Key Announcements
 
-* .NET 5 apps for Windows on Service Fabric are now supported as a *preview**. Look out for the GA announcement of .NET 5 apps for Windows on Service Fabric in the coming weeks.
+* .NET 5 apps for Windows on Service Fabric are now supported as a preview. Look out for the GA announcement of .NET 5 apps for Windows on Service Fabric in the coming weeks.
 * .NET 5 apps for Linux on Service Fabric will be added in the Service Fabric 8.0 release.
 * Windows Server 20H2 is now supported as of the 7.2 CU4 release.
 
