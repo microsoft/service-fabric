@@ -2,13 +2,13 @@
 
 This release includes stability fixes as described in this document.
 
-**Due to the holiday season, this update will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this update unless toggled to manual. At this time only the Windows release is available, and we will begin the Linux release soon.**
+**Due to the holiday season, this update will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this update unless toggled to manual. The Linux release is now also available.**
 
 The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | NA <br> NA <br> 7.2.445.9590 |
+|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 7.2.447.1 <br> 7.2.447.1804 <br> 7.2.445.9590 |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 7.2.445.9590 |
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 4.2.445 <br> 7.2.445 <br> 4.2.445 <br> 4.2.445 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
