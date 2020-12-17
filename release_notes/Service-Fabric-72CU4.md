@@ -30,7 +30,7 @@ Microsoft Azure Service Fabric 7.2 Fourth Refresh Release Notes
 
 ## Breaking Changes
 
-- Service Fabric 7.2 and higher runtime drops support for .NET core Service Fabric apps running with .NET core 2.2 runtime. .NET core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET core LTS version 3.1
+- Service Fabric 7.2 and higher runtime drops support for .NET core Service Fabric apps running with .NET core 2.2 runtime. .NET core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET core LTS version 3.1.
 
 Starting with Service Fabric 7.2. CU4, the logic the runtime uses to select the Cluster certificate has changed. This change applies to both clusters with certificates declared by common name, and clusters with certificates declared by thumbprint, which also have a secondary thumbprint declared. 
 
