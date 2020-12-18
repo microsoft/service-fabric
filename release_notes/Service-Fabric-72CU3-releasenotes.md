@@ -1,6 +1,7 @@
 # Microsoft Azure Service Fabric 7.2 Third Refresh Release Notes
 
-This release includes stability fixes as described in this document.
+This release includes stability fixes as described in this document. This release is only available through **manual upgrades** on Service Fabric Windows clusters.
+
 The following packages and versions are part of this release:
 
 | Service | Platform | Version |
