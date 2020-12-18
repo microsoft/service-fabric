@@ -39,7 +39,7 @@ Microsoft Azure Service Fabric 7.2 Second Refresh Release Notes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows 7.1.458.9590** | **Bug** |FabricDNS regression introduced in 7.2.|**Brief desc**: FabricDNS would not behave as expected after upgrading to 7.2.<br> **Impact**: Issues seen in this regression include an increased rate of slow/failed DNS requests, and FabricDNS crashing more than usual. <br> **Workaround**: Upgrade to 7.2 CU2. <br> **Fix**: This regression has been fixed as part the CU2 release.
+| **Windows 7.2.432.9590** | **Bug** |FabricDNS regression introduced in 7.2.|**Brief desc**: FabricDNS would not behave as expected after upgrading to 7.2.<br> **Impact**: Issues seen in this regression include an increased rate of slow/failed DNS requests, and FabricDNS crashing more than usual. <br> **Workaround**: Upgrade to 7.2 CU2. <br> **Fix**: This regression has been fixed as part the CU2 release.
 
 
 ## Repositories and Download Links
