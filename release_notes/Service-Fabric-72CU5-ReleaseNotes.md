@@ -39,7 +39,7 @@ Microsoft Azure Service Fabric 7.2 Fifth Refresh Release Notes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows 7.1.458.9590** | **Bug** | Certain application certificate configurations causing Fabric to crash in 7.1 and 7.2 prior to this release |**Brief desc**: On some SF 7.1 and 7.2 versions, certain Application Certificate configurations would cause Fabric to crash at a regular cadence. <br> **Impact**: Linux Clusters on 7.1 and 7.2 CUs. <br> **Workaround**:  If you hit this scenario, we recommend you upgrade to 7.2 CU5 as soon as possible, otherwise please engage support, you may need to make your application certificate known to the Service Fabric Bootstrap agent extension. <br> **Fix**: This change stabilizes this scenario.
+| **Windows 7.2.452.9590** | **Bug** | Certain application certificate configurations causing Fabric to crash in 7.1 and 7.2 prior to this release |**Brief desc**: On some SF 7.1 and 7.2 versions, certain Application Certificate configurations would cause Fabric to crash at a regular cadence. <br> **Impact**: Linux Clusters on 7.1 and 7.2 CUs. <br> **Workaround**:  If you hit this scenario, we recommend you upgrade to 7.2 CU5 as soon as possible, otherwise please engage support, you may need to make your application certificate known to the Service Fabric Bootstrap agent extension. <br> **Fix**: This change stabilizes this scenario.
 
 ## Repositories and Download Links
 The table below is an overview of the direct links to the packages associated with this release. 
