@@ -28,6 +28,16 @@ Microsoft Azure Service Fabric 7.2 Fourth Refresh Release Notes
 * .NET 5 apps for Linux on Service Fabric will be added in the Service Fabric 8.0 release.
 * Windows Server 20H2 is now supported as of the 7.2 CU4 release.
 
+### Update to certificate selection logic
+
+Starting with Service Fabric 7.2 CU4, and for all future SF versions, the logic the runtime uses to select the Cluster certificate has changed. This change applies to both clusters with certificates declared by common name, and clusters with certificates declared by thumbprint when Security/UseSecondaryIfNewer setting is set to true.
+
+Previously, Service Fabric selected among the pool of declared certificates, the certificate that was the farthest living (i.e. the largest NotAfter value). Starting in this CU, Service Fabric will select the most recently issued certificate (i.e. the largest NotBefore value). 
+
+In certain configurations, this upgrade will cause a change to the cluster certificate. In general this change should have no impact on cluster health. However, if clients of Service Fabric expect Service Fabric to present the previous certificate, they may need to be updated to expect the new certificate (or any valid cluster certificate).
+
+Read more [here](https://docs.microsoft.com/azure/service-fabric/cluster-security-certificates)
+
 ## Breaking Changes
 
 - Service Fabric 7.2 and higher runtime drops support for .NET core Service Fabric apps running with .NET core 2.2 runtime. .NET core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET core LTS version 3.1.
@@ -35,7 +45,7 @@ Microsoft Azure Service Fabric 7.2 Fourth Refresh Release Notes
 ## Upcoming Breaking Changes
 
 - .NET core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .NET core apps.  This has no impact on Service Fabric .NET Framework SDK.
-- Support for Windows Server 2016 and Windows Server 1809 will be discontinued in future Service Fabric releases. We recommend updating your cluster VMs to Windows Server 2019.
+- Support for Windows Server 1809 will be discontinued in future Service Fabric releases. We recommend updating your cluster VMs to Windows Server 2019.
 
 ## Service Fabric Common Bug Fixes
 
