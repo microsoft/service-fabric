@@ -14,7 +14,7 @@ The following packages and versions are part of this release:
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL | 0.3.15 <br> 10.0.0 |
 
-## Content 
+## Content
 
 Microsoft Azure Service Fabric 7.1 Tenth Refresh Release Notes
 
@@ -24,7 +24,7 @@ Microsoft Azure Service Fabric 7.1 Tenth Refresh Release Notes
 
 ## Repositories and Download Links
 The table below is an overview of the direct links to the packages associated with this release. 
-Follow this guidance for setting up your developer environment: 
+Follow this guidance for setting up your developer environment:
 * [Getting Started with Linux](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-linux)
 * [Getting Started with Mac](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-mac)
 * [Getting Started with Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started)
