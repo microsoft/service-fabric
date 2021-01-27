@@ -22,7 +22,7 @@ Microsoft Azure Service Fabric 7.2 Fifth Refresh Release Notes
 
 ## Key Announcements
 
-* Key Vault references for Service Fabric applications are now GA on Windows and Linux.
+* [Key Vault references for Service Fabric applications](https://docs.microsoft.com/azure/service-fabric/service-fabric-keyvault-references) are now GA on Windows and Linux.
 * .NET 5 apps for Windows on Service Fabric are now supported as a preview. Look out for the GA announcement of .NET 5 apps for Windows on Service Fabric.
 * .NET 5 apps for Linux on Service Fabric will be added in the Service Fabric 8.0 release.
 
