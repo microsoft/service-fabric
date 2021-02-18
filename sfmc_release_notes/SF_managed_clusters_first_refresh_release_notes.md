@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric managed clusters first refresh release (Preview)
+# Microsoft Azure Service Fabric managed clusters "2021-01-01-preview" release (Preview)
 
 The first refresh release for Microsoft Azure Service Fabric managed clusters is now available. We first introduced Service Fabric managed clusters in October, 2020. Service Fabric managed clusters enable customers to deploy Service Fabric clusters as a single ARM resource, and reduce the complexity associated with common cluster operations such as scaling, and certificate rollovers. In this refresh we are bringing additional capabilities such as ARM application deployments, automatic OS upgrades, and Virtual Machine Scale Set managed identities that enable you to focus on application development, and deployment.
 
@@ -16,7 +16,7 @@ The following APIs are updated as part of this release:
 | Microsoft.ServiceFabric/managedclusters/applicationTypes |
 | Microsoft.ServiceFabric/managedclusters/applications/services |
 
-## Features 
+## Features
 
 * [ARM application deployments](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-app-deployment-template) - You can now use ARM to deploy applications to Service Fabric managed clusters. Using ARM provides greater control of resource properties, and ensures consistent resource model. With ARM application deployments, you do not have to wait for the cluster to be ready before deploying; application registration, provisioning, and deployment can all happen in one step.
 * [Disk encryption](https://docs.microsoft.com/azure/service-fabric/how-to-enable-managed-cluster-disk-encryption?tabs=azure-powershell) - Disk encryption can now be enabled on nodes in a Service Fabric managed cluster to meet compliance requirements.
@@ -30,7 +30,7 @@ The following APIs are updated as part of this release:
 
 * Stateless service instance count cannot be updated after initial deployment.
 * When redeploying an application, the services must first be deleted through ARM.
-* When using the PowerShell cmdlets, the GET application command may fail.
+* When using the PowerShell cmdlets, the GET application command may fail. If you experience this issue, you can alternatively use the Azure CLI. 
 
 ## Upcoming Features
 
