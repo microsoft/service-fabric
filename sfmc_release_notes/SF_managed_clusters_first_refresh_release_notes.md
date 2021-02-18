@@ -1,26 +1,28 @@
 # Microsoft Azure Service Fabric managed clusters first refresh release (Preview)
 
-This release includes features as described in this document. To utilize these new features, you must update the API version in the ARM template to *2021-01-01-preview*.
+The first refresh release for Microsoft Azure Service Fabric managed clusters is now available. We first introduced Service Fabric managed clusters in October, 2020. Service Fabric managed clusters enable customers to deploy Service Fabric clusters as a single ARM resource, and reduce the complexity associated with common cluster operations such as scaling, and certificate rollovers. In this refresh we are bringing additional capabilities that will allow you to focus even more on application development, and deployment such as support for ARM application deployments, automatic OS upgrades, and scale set managed identities. 
 
-**This release is available in the following regions; East Asia, North Europe, West Central US, East US2.**
+To utilize these new features, you must update the API version in the ARM template to *2021-01-01-preview*.
+
+**This release is currently available in the following regions; East Asia, North Europe, West Central US, East US2.** Additional regions will be added in future updates.  
 
 The following APIs are updated as part of this release:
 
-| API | Version | 
-|---------|----------|
-| Microsoft.ServiceFabric/managedclusters | 2021-01-01-preview |
-| Microsoft.ServiceFabric/managedclusters/nodetypes | 2021-01-01-preview |
-| Microsoft.ServiceFabric/managedclusters/applications | 2021-01-01-preview |
-| Microsoft.ServiceFabric/managedclusters/applicationTypes | 2021-01-01-preview |
-| Microsoft.ServiceFabric/managedclusters/applications/services | 2021-01-01-preview |
+| API |
+|---------|
+| Microsoft.ServiceFabric/managedclusters |
+| Microsoft.ServiceFabric/managedclusters/nodetypes |
+| Microsoft.ServiceFabric/managedclusters/applications |
+| Microsoft.ServiceFabric/managedclusters/applicationTypes |
+| Microsoft.ServiceFabric/managedclusters/applications/services |
 
 ## Features 
 
-* [ARM application deployments](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-app-deployment-template) - Service Fabric applications can now be deployed to Service Fabric managed clusters as an ARM resource. With ARM application deployments, you do not have to wait for the cluster to be ready before deploying; application registration, provisioning, and deployment can all happen in one step. Using ARM is the best way to manage your application lifecycle.
-* [Disk encryption](https://docs.microsoft.com/azure/service-fabric/how-to-enable-managed-cluster-disk-encryption?tabs=azure-powershell) - Disk encryption can now be enabled on the nodes in a Service Fabric managed cluster using the Azure Disk encryption capability for virtual machine scale sets through Azure Resource Manager (ARM) templates.
+* [ARM application deployments](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-app-deployment-template) - Service Fabric applications can now be deployed to Service Fabric managed clusters as an ARM resource. With ARM application deployments, you do not have to wait for the cluster to be ready before deploying; application registration, provisioning, and deployment can all happen in one step. Using ARM is the best way to manage your application lifecycle as it provides greater control of resource properties and ensure that you have a consistent resource model.
+* [Disk encryption](https://docs.microsoft.com/azure/service-fabric/how-to-enable-managed-cluster-disk-encryption?tabs=azure-powershell) - Disk encryption can now be enabled on the nodes in a Service Fabric managed cluster using the Azure Disk encryption capability for Virtual Machine Scale Sets through Azure Resource Manager (ARM) templates.
 * [Automatic OS image upgrades](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-configuration#enable-automatic-os-image-upgrades) - You can now opt into Virtual Machine Scale Set automatic OS image upgrades for your Service Fabric managed cluster. If a new OS version is available, the cluster node types will be upgrade one at a time.
-* [VMSS Managed Identities](https://docs.microsoft.com/azure/service-fabric/how-to-managed-identity-managed-cluster-virtual-machine-scale-sets) - Each node type in a Service Fabric managed cluster is backed by a virtual machine scale set. To allow managed identities to be used with a managed cluster node type, a property vmManagedIdentity has been added to node type definitions containing a list of identities that may be used, userAssignedIdentities.
-* [NSG rule configuration](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-configuration#networking-configurations) - You can now customize Network Security Group rules.
+* [VMSS Managed Identities](https://docs.microsoft.com/azure/service-fabric/how-to-managed-identity-managed-cluster-virtual-machine-scale-sets) - Each node type in a Service Fabric managed cluster is backed by a Virtual Machine Scale Set. To allow managed identities to be used with a managed cluster node type, a property vmManagedIdentity has been added to node type definitions containing a list of identities that may be used such as userAssignedIdentities.
+* [NSG rule configuration](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-configuration#networking-configurations) - You can now customize Network Security Group rules enabling you to meet any compliance requirements for your scenarios.
 
 ## Known Issues
 
