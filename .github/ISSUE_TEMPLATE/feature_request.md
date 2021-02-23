@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: '[Feature]: Describe feature asks or new scenario or experience you want to enable'
-labels: 'type-enhancement'
+labels: 'type-enhancement, backlog'
 assignees: ''
 
 ---
