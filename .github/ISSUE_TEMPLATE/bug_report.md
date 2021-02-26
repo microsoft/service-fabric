@@ -4,6 +4,7 @@ about: Create a issue to track bug related to release/version in any environment
 title: '[BUG] -short desription of bug and milestone version'
 labels: 'type-code-defect'
 assignees: ''
+projects: 'ServiceFabric-Bugs'
 
 ---
 
