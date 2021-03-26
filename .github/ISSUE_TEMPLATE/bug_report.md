@@ -12,7 +12,7 @@ projects: 'ServiceFabric-Bugs'
 A clear and concise description of what the bug is.
 
 **Area/Component**:
-Please mention area or component in Service Fabric where issue was found. Ex: security, monitoring, placement or resource governance Reliable services, Actors, programming models,SDK,.etc.
+Please mention area or component in Service Fabric where issue was found. Ex: security, monitoring, placement or resource governance, Reliable services, Actors, programming models,SDK,.etc.
 
 **To Reproduce**
 Steps to reproduce the behavior:
