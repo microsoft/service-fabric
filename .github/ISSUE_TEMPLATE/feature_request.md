@@ -2,13 +2,14 @@
 name: Feature request
 about: Suggest an idea for this project
 title: '[Feature]: Describe feature asks or new scenario or experience you want to enable'
-labels: 'type-enhancement, backlog'
+labels: 'type-enhancement'
+projects: 'ServiceFabric_NewFeature_Request'
 assignees: ''
 
 ---
 
 **Is your feature request related to a problem? Please describe your workload details.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+A clear and concise description of what the problem is. 
 
 **Describe the solution you'd like**
 A clear and concise description of what you want to happen.
@@ -22,7 +23,7 @@ Please mention area or component in Service Fabric where issue was found. Ex: se
 
 
 **Expected behavior**
-A clear and concise description of what you expected to happen, expected timeline, benefits to your workload. for example, does it improve the developer experience, availability,reliability or perofrmance of your workload.
+A clear and concise description of what you expected to happen, expected timeline, benefits to your workload. for example, does it improve the developer experience, availability,reliability or performance of your workload.
 
 
 **Additional context**
