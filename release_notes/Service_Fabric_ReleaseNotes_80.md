@@ -24,7 +24,8 @@ Microsoft Azure Service Fabric 8.0 Release Notes
 * [Repositories and Download Links](#repositories-and-download-links)
 
 
-## Key Annoucements
+## Key Announcements
+* Enabled general availability support for .NET 5 for Windows
 * Ability to move stateless service instances
 * Ability to add parameterized DefaultLoad in the application manifest
 * For singleton replica upgrades - ability to have some of the cluster level settings to be defined at an application level
@@ -33,35 +34,42 @@ Microsoft Azure Service Fabric 8.0 Release Notes
 * Ability to query top loaded services
 * Ability to add a new interval for new error codes 
 * Capability to mark service instance as completed
-* Enable support for .NET 5 for Windows
+* Support for wave-based deployment model for automatic upgrades
 * Added readiness probe for containerized applications
 * Enable UseSeparateSecondaryMoveCost to true by default
 * Fixed StateManager to release the reference as soon as safe to release
+* Block Central Secret Service removal while storing user secrets
 
 
-## Current And Upcoming Breaking Changes
-Guest executable and container applications created or upgraded in SF clusters with runtime versions 7.1+ are incompatible with prior SF runtime versions (e.g. SF 7.0).<br/>
-Following scenarios are impacted:<br/>
-* An application with guest executables or containers is created or upgraded in an SF 7.1+ cluster.<br/>
-The cluster is then downgraded to a previous SF runtime version (e.g. SF 7.0).<br/>
-The application fails to activate (see symptoms).<br/>
-* A cluster upgrade from pre-SF 7.1 version to SF 7.1+ version is in progress.<br/>
-In parallel with the SF runtime upgrade, an application with guest executables or containers is created or upgraded.<br/>
-The SF runtime upgrade starts rolling back (due to any reason) to the pre-SF 7.1 version.<br/>
-The application fails to activate (see symptoms).<br/>
+## Current Breaking Changes
+* Service Fabric 7.2 and higher runtime drops support for .NET Core Service Fabric apps running with .NET Core 2.2 runtime. .NET Core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET Core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET Core LTS version 3.1.<br>
+* Guest executable and container applications created or upgraded in SF clusters with runtime versions 7.1+ are incompatible with prior SF runtime versions (e.g. SF 7.0).<br/>
+    Following scenarios are impacted:<br/>
+    * An application with guest executables or containers is created or upgraded in an SF 7.1+ cluster.<br/>
+    The cluster is then downgraded to a previous SF runtime version (e.g. SF 7.0).<br/>
+    The application fails to activate.<br/>
+    * A cluster upgrade from pre-SF 7.1 version to SF 7.1+ version is in progress.<br/>
+    In parallel with the SF runtime upgrade, an application with guest executables or containers is created or upgraded.<br/>
+    The SF runtime upgrade starts rolling back (due to any reason) to the pre-SF 7.1 version.<br/>
+    The application fails to activate.<br/>
 
-To avoid issues when upgrading from a pre-SF 7.1 runtime version to an SF 7.1+ runtime version, do not create or upgrade applications with guest executables or containers while the SF runtime upgrade is in progress.<br/>
-* The simplest mitigation, when possible, is to delete and recreate the application in SF 7.0.<br/>
-* The other option, is to upgrade the application in SF 7.0 (for example, with a version only change).<br/>
+    To avoid issues when upgrading from a pre-SF 7.1 runtime version to an SF 7.1+ runtime version, do not create or upgrade applications with guest executables or containers while the SF runtime upgrade is in progress.<br/>
+    * The simplest mitigation, when possible, is to delete and recreate the application in SF 7.0.<br/>
+    * The other option is to upgrade the application in SF 7.0 (for example, with a version only change).<br/>
 
-If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
+    If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
 
+
+## Upcoming Breaking Changes
+* .NET Core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .NET Core apps.  This has no impact on Service Fabric .NET Framework SDK.
+* Support for Windows Server 2016 and Windows 10 Server 1809 will be discontinued in future Service Fabric releases. We recommend updating your cluster VMs to Windows Server 2019.
 
 
 ## Service Fabric Runtime
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
+| **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Enable support for .NET 5 for Windows | **Brief desc**: Service Fabric 8.0 announce the general availability of the .NET 5 Windows Applications.<br>This feature includes full support in production for Reliable Services (stateless or stateful) and Reliable Actors. | 
 | **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Ability to move stateless service instances | **Brief desc**: Service Fabric 8.0 introduces the support to move instances of stateless services. This functionality is similar to the existing functionality of moving replicas of stateful services.<br>**Usage**: User can specify stateless service name, partition id, name of the node with the instance to be moved, name of the node to which the instance should be moved and whether Cluster Resource Manager constraints should be ignored.<br>This functionality can be achieved through PowerShell, REST or fabric client C# API.<br>**Impact**: Ability to manually move instances of stateless services.<br>Fault Injection and Cluster Analysis Service have also been extended with a new type of fault: Move an instance. | 
 | **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Ability to add parameterized DefaultLoad in the application manifest | **Brief desc**: Service Fabric 8.0 introduces the ability to parametrize default loads both in the application and in the service manifests.<br>**Usage**: User can now specify application parameter name inside square brackets for attributes DefaultLoad, PrimaryDefaultLoad and SecondaryDefaultLoad for LoadMetric element. &#x3C;LoadMetrics&#x3E;&#x3C;LoadMetric Name="MetricA" PrimaryDefaultLoad="[AppParam1]" SecondaryDefaultLoad="[AppParam2]" /&#x3E;&#x3C;/LoadMetrics&#x3E;<br>**Impact**: Ability to parameterize default loads.<br>This also required changing LoadMetricType field from long to string data type.<br>**Workaround**: Run application upgrade to update default load in application manifest | 
 | **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | For singleton replica upgrades - ability to have some of the cluster level settings to be defined at an application level | **Brief desc**: The service Description for stateful and stateless services has been extended in Service Fabric 8.0.<br>**Usage**: Stateless services have InstanceLifecycleDescription which contains RestoreReplicaLocationAfterUpgrade parameter.<br>Stateful services have ReplicaLifecycleDescription which contains IsSingletonReplicaMoveAllowedDuringUpgrade and RestoreReplicaLocationAfterUpgrade parameter.<br>**Workaround**: Without this change these parameters can be set at a cluster level only.<br>With this change the cluster can be organized more granularly. | 
@@ -70,8 +78,8 @@ If the application is stuck in rollback, the rollback has to be first completed 
 | **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Ability to query top loaded services | **Brief desc**: Service Fabric 8.0 introduces the support to query top/least loaded partitions based on metric name. | 
 | **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Ability to add a new interval for new error codes  | **Brief desc**: Service Fabric 8.0 adds an additional error range for the possible errors returned from its API's.<br>Previously the range was in `FACILITY_WIN32 (0x7)` between the error range from 0x7100 to 0x7499.<br>This range has now been extended to a Service Fabric specific facility `FACILITY_SERVICE_FABRIC (0x7b0)` for the entire range from 0x0000 to 0xffff.<br>**Usage**: When consuming errors directly, augment handling logic to now include errors in the new range as well.<br>**Impact**: Existing errors remain unchanged and will not require any new logic to handle it. | 
 | **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Capability to mark service instance as completed | **Brief desc**: New ReportCompletion API added to IStatelessServicePartition interface.<br>This API allows stateless instances to mark themselves as completed.<br>**Impact**: Adds new capability for the stateless services.<br>Once the API is called, Service Fabric will close the stateless instance and will not create replacement instance in the cluster. | 
-| **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Enable support for .NET 5 for Windows | **Brief desc**: Service Fabric 8.0 announce the general availability of the .NET 5 Windows Applications.<br>This feature includes full support in production for Reliable Services (stateless or stateful) and Reliable Actors. | 
-| **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Added readiness probe for containerized applications | **Brief desc**: Service Fabric 8.0 announce the support for readiness probe for containerized applications<br>**Impact**: Readiness Probes are updated when a container is ready to start acception traffic. This makes the service discoverable when the replica endpoint is published.<br>If the probe reports failure, Service Fabric will remove the replica endpoint. | 
+| **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Support for wave based deployment model for automatic upgrades | **Brief desc**: With automatic upgrade mode, you have the option to enable your cluster for wave deployment. With wave deployment, you can create a pipeline for upgrading your test, stage, and production clusters in sequence, separated by built-in 'bake time' to validate upcoming Service Fabric versions before your production clusters are updated.<br>**Usage**: To enable wave deployment for automatic upgrade, first determine which wave to assign your cluster:<br/>**Wave 0** ('Wave0'): Clusters are updated as soon as a new Service Fabric build is released. Intended for test/dev clusters.<br/>**Wave 1** ('Wave1'): Clusters are updated one week (seven days) after a new build is released. Intended for pre-prod/staging clusters.<br/>**Wave 2** ('Wave2'): Clusters are updated two weeks (14 days) after a new build is released. Intended for production clusters.<br/>Then, simply add an 'upgradeWave' property to your cluster resource template with one of the wave values listed above.<br/>Ensure your cluster resource API version is '2020-12-01-preview' or later. | 
+| **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Feature** | Added readiness probe for containerized applications | **Brief desc**: Service Fabric 8.0 announce the support for readiness probe for containerized applications<br>**Impact**: Readiness Probes are updated when a container is ready to start accepting traffic. This makes the service discoverable when the replica endpoint is published.<br>If the probe reports failure, Service Fabric will remove the replica endpoint. | 
 
 
 
@@ -79,8 +87,9 @@ If the application is stuck in rollback, the rollback has to be first completed 
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Bug** | Enable UseSeparateSecondaryMoveCost to true by default | **Brief desc**: With Service Fabric 8.0, config UseSeparateSecondaryMoveCost is enabled by default. <br>**Impact**: This fix enables the ablity to distinguish move cost between different secondary replicas (readable/non-readable etc.).<br>Reported move cost for secondary on one node will take effect only on that secondary, and no effect on secondary replicas on other nodes. | 
+| **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Bug** | Enable UseSeparateSecondaryMoveCost to true by default | **Brief desc**: With Service Fabric 8.0, config UseSeparateSecondaryMoveCost is enabled by default. <br>**Impact**: This fix enables the ability to distinguish move cost between different secondary replicas (readable/non-readable etc.).<br>Reported move cost for secondary on one node will take effect only on that secondary, and no effect on secondary replicas on other nodes. | 
 | **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Bug** | Fixed StateManager to release the reference as soon as safe to release | **Brief desc**: StateManager was holding on to references of Reliable Collections long after they were deleted if machine memory usage was lower than 50%.<br>With Service Fabric 8.0, the StateManager was fixed to release the reference as soon as it is safe to release.<br>**Impact**: This fix Impacts users of Reliable Collections on Windows with cluster version >= 7.1.<br>The impact should be low since the references will be removed once machine memory usage exceeds 50%. | 
+| **Windows - 8.0.512.9590<br>Ubuntu 16 - 8.0.511.1<br>Ubuntu 18 - 8.0.511.1804** | **Bug** | Block Central Secret Service removal while storing user secrets | **Brief desc**: To prevent accidental data loss, Central Secret Service now requires two cluster configuration upgrades to remove.<br>**Workaround**: 'IsEnabled' is still allowed, but is now deprecated. To remove CSS, the first upgrade will need to move from IsEnabled=true to DeployedState=Removing.<br>**Documentation**: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-application-secret-store | 
 
 
 
