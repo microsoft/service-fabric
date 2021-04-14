@@ -34,7 +34,7 @@ Microsoft Azure Service Fabric 8.0 Release Notes
 * Ability to define percentage threshold of unhealthy nodes that influence cluster health
 * Ability to query top loaded services
 * Ability to add a new interval for new error codes 
-* Capability to mark service instance as completed
+* Ability to mark service instance as completed
 * Support for wave-based deployment model for automatic upgrades
 * Added readiness probe for containerized applications
 * Enable UseSeparateSecondaryMoveCost to true by default
