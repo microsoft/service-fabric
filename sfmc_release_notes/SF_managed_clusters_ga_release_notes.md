@@ -22,13 +22,6 @@ The following APIs are updated as part of this release:
 * [Application managed identities](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-application-managed-identity.md) - Application managed identities enable you to access other Azure resources from your application.
 * [Cluster upgrade configurations](https://docs.microsoft.com//azure/service-fabric/service-fabric-cluster-upgrade) - You can now select between automatic(default) or manual upgrades and configure an upgrade window to meet the needs of your environment.
 
-## Upcoming Features
-
-* Auto scale the number of nodes in a cluster based on performance and load metrics.
-* Network service tag support.
-
-For more info, see the [Service Fabric managed cluster project](https://github.com/microsoft/service-fabric/projects/17).
-
 ## Resources
 
 * [Documentation](https://docs.microsoft.com/azure/service-fabric/overview-managed-cluster)
