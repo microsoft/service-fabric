@@ -1,10 +1,8 @@
 # Microsoft Azure Service Fabric managed clusters general availability release
 
-Azure Service Fabric managed clusters are now generally available. We first introduced Service Fabric managed clusters in October, 2020. Service Fabric managed clusters enable customers to deploy Service Fabric clusters as a single ARM resource, and reduce the complexity associated with common cluster operations such as scaling, and certificate rollovers. In this release we are bringing additional capabilities such as availability zone spanning, stateless node types, application secrets, application managed identities, and the ability to configure cluster upgrades.
+Azure Service Fabric managed clusters are now generally available. In this release we are bringing additional capabilities such as availability zone spanning, stateless node types, application secrets, application managed identities, and the ability to configure cluster upgrades. In this release, Service Fabric managed clusters are now available in all Azure public cloud regions and will roll out to Azure Government regions in the coming weeks.
 
 To utilize these new features, you must update the API version in the ARM template to *2021-05-01*.
-
-In this release, Service Fabric managed clusters are now available in all Azure public cloud regions and will roll out to Azure special clouds in the coming weeks.
  
 The following APIs are updated as part of this release:
 
@@ -16,18 +14,16 @@ The following APIs are updated as part of this release:
 | Microsoft.ServiceFabric/managedclusters/applicationTypes |
 | Microsoft.ServiceFabric/managedclusters/applications/services |
 
-## Features
+## New features in the GA release
 
-* [Availability zone spanning](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-availability-zones) - You can now deploy Service Fabric managed clusters across availability zones to increase resiliency against zone failures.
-* [Stateless node types](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-stateless-node-type) - Stateless node types enable faster node scaling, and VM patching when running services that do not require maintaining any state.
+* [Availability zone spanning](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-availability-zones) - You can now deploy Service Fabric managed clusters across availability zones to eliminate single points of failure.
+* [Stateless node types](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-stateless-node-type) - Stateless node types enable faster node scaling and VM patching when running services that do not require maintaining any state.
 * [Application secrets](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-configuration#enable-automatic-os-image-upgrades) - You can now access encrypted secrets from your Service Fabric application.
 * [Application managed identities](https://docs.microsoft.com/azure/service-fabric/how-to-managed-cluster-application-managed-identity.md) - Application managed identities enable you to access other Azure resources from your application.
-* [Cluster upgrade configurations](https://docs.microsoft.com//azure/service-fabric/service-fabric-cluster-upgrade) - You can now select between manual, and automatic upgrades and configure an upgrade window to meet the needs of your environment.
+* [Cluster upgrade configurations](https://docs.microsoft.com//azure/service-fabric/service-fabric-cluster-upgrade) - You can now select between automatic(default) or manual upgrades and configure an upgrade window to meet the needs of your environment.
 
 ## Upcoming Features
 
-* Bring your own VNET.
-* Multiple frontend IPs. 
 * Auto scale the number of nodes in a cluster based on performance and load metrics.
 * Network service tag support.
 
