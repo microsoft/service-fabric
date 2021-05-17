@@ -18,15 +18,9 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 8.0 Release Notes
 
-* [Key Announcements](#key-announcements)
 * [Current And Upcoming Breaking Changes](#Current-And-Upcoming-Breaking-Changes)
-* [Service Fabric Runtime](#service-fabric-runtime)
 * [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
 * [Repositories and Download Links](#repositories-and-download-links)
-
-
-## Key Announcements
-* Service Fabric SDK will now support Startup Services as an alternative to Default Services specified in Application Manifest
 
 
 ## Current Breaking Changes
@@ -51,14 +45,6 @@ Microsoft Azure Service Fabric 8.0 Release Notes
 ## Upcoming Breaking Changes
 * .NET Core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .NET Core apps.  This has no impact on Service Fabric .NET Framework SDK.
 * Support for Windows Server 2016 and Windows 10 Server 1809 will be discontinued in future Service Fabric releases. We recommend updating your cluster VMs to Windows Server 2019.
-
-
-## Service Fabric Runtime
-
-| Versions | IssueType | Description | Resolution | 
-|-|-|-|-|
-| **Windows - 8.0.516.9590<br>Ubuntu 16 - 8.0.515.1<br>Ubuntu 18 - 8.0.515.1804** | **Feature** | Service Fabric SDK will now support Startup Services as an alternative to Default Services specified in Application Manifest | **Brief desc**: Service Fabric SDK that will support Startup Services as an alternative to Default Services specified in Application Manifest for the Visual Studio debugging experience.<br>**Impact**: This is an additional feature and will not have any impact on existing behavior.<br>**Change**: This features provides support for StartupServices.xml as an alternative to Default Services specified in ApplicationManifest.xml for the Visual Studio debugging experience. With this implementation, DefaultServices and Service definition related parameters are moved from existing ApplicationManifest.xml to a new file called StartupServices.xml. Functionality for each function - from addition of a new service to deployment (Build/Rebuild/F5/Ctrl+F5/Publish experiences in Visual Studio) is provided to work this new feature end to end. For end user to use this, VS tooling team should release the corresponding feature in VS as well. | 
-
 
 
 ## Service Fabric Common Bug Fixes
