@@ -1,6 +1,6 @@
 # Microsoft Azure Service Fabric 8.0 First Refresh Release Notes
 
-This release includes bug fixes and SDK improvements as described in this document.
+This release includes bug fixes as described in this document.
 **This update will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this update unless toggled to manual.**
 
 The following packages and versions are part of this release:
