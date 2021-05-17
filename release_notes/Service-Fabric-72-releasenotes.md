@@ -45,6 +45,23 @@ The following packages and versions are part of this release:
     - mcr.microsoft.com/service-fabric/onebox:u18
 - The default action of deleting uploaded application package is changed. If the application package is registered successfully, the uploaded application package is deleted by default. Before this default action changes, the uploaded application package was deleted either by calling to [Remove-ServiceFabricApplicationPackage](https://docs.microsoft.com/en-us/powershell/module/servicefabric/remove-servicefabricapplicationpackage) or by using ApplicationPackageCleanupPolicy parameter explicitly with [Register-ServiceFabricApplicationType](https://docs.microsoft.com/en-us/powershell/module/servicefabric/register-servicefabricapplicationtype)
 - Service Fabric 7.2 will become the baseline release for future development of image validation. When the feature is activated in future version e.g., Service Fabric 7.3, the cluster is not desired to rolled back down to 7.1 or lower. The version 7.2 is the baseline to which the cluster can downgrade.
+- Service Fabric 7.2 and higher runtime drops support for .NET Core Service Fabric apps running with .NET Core 2.2 runtime. .NET Core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET Core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET Core LTS version 3.1.<br>
+- Guest executable and container applications created or upgraded in SF clusters with runtime versions 7.1+ are incompatible with prior SF runtime versions (e.g. SF 7.0).<br/>
+    Following scenarios are impacted:<br/>
+    - An application with guest executables or containers is created or upgraded in an SF 7.1+ cluster.<br/>
+    The cluster is then downgraded to a previous SF runtime version (e.g. SF 7.0).<br/>
+    The application fails to activate.<br/>
+    - A cluster upgrade from pre-SF 7.1 version to SF 7.1+ version is in progress.<br/>
+    In parallel with the SF runtime upgrade, an application with guest executables or containers is created or upgraded.<br/>
+    The SF runtime upgrade starts rolling back (due to any reason) to the pre-SF 7.1 version.<br/>
+    The application fails to activate.<br/>
+
+    To avoid issues when upgrading from a pre-SF 7.1 runtime version to an SF 7.1+ runtime version, do not create or upgrade applications with guest executables or containers while the SF runtime upgrade is in progress.<br/>
+    - The simplest mitigation, when possible, is to delete and recreate the application in SF 7.0.<br/>
+    - The other option is to upgrade the application in SF 7.0 (for example, with a version only change).<br/>
+
+    If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
+
 
 ## Service Fabric Features
 

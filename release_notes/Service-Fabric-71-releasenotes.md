@@ -76,6 +76,23 @@ The following packages and versions are part of this release:
     2. The following package will no longer be shipped:
             - Microsoft.ServiceFabric.AspNetCore.WebListener:
                  - Use Microsoft.ServiceFabric.AspNetCore.HttpSys instead.
+- Service Fabric 7.2 and higher runtime drops support for .NET Core Service Fabric apps running with .NET Core 2.2 runtime. .NET Core runtime 2.2 is out of support from Dec 2019. Service Fabric runtime will not install .NET Core runtime 2.2 as part of its dependency. Customers should upgrade their .NET 2.2 runtime SF apps to the next .NET Core LTS version 3.1.<br>
+- Guest executable and container applications created or upgraded in SF clusters with runtime versions 7.1+ are incompatible with prior SF runtime versions (e.g. SF 7.0).<br/>
+    Following scenarios are impacted:<br/>
+    - An application with guest executables or containers is created or upgraded in an SF 7.1+ cluster.<br/>
+    The cluster is then downgraded to a previous SF runtime version (e.g. SF 7.0).<br/>
+    The application fails to activate.<br/>
+    - A cluster upgrade from pre-SF 7.1 version to SF 7.1+ version is in progress.<br/>
+    In parallel with the SF runtime upgrade, an application with guest executables or containers is created or upgraded.<br/>
+    The SF runtime upgrade starts rolling back (due to any reason) to the pre-SF 7.1 version.<br/>
+    The application fails to activate.<br/>
+
+    To avoid issues when upgrading from a pre-SF 7.1 runtime version to an SF 7.1+ runtime version, do not create or upgrade applications with guest executables or containers while the SF runtime upgrade is in progress.<br/>
+    - The simplest mitigation, when possible, is to delete and recreate the application in SF 7.0.<br/>
+    - The other option is to upgrade the application in SF 7.0 (for example, with a version only change).<br/>
+
+    If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
+
 
 ## Service Fabric Runtime
 
