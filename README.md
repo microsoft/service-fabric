@@ -10,10 +10,12 @@ Here is the upcoming release schedule for Service Fabric runtime versions that w
 
 | Version 	| Release date 	|
 |---------	|--------------	|
-| 7.2     	| 2020 Oct     	|
 | 8.0     	| 2021 Mar     	|
 | 8.1     	| 2021 Jul     	|
 | 8.2     	| 2021 Oct     	|
+| 9.0     	| 2022 Mar     	|
+| 9.1     	| 2022 Jul     	|
+| 9.2     	| 2022 Oct     	|
 
 We will be publishing upcoming features and roadmap items on [Azure Updates for Service Fabric](https://azure.microsoft.com/en-us/updates/?product=service-fabric).
 
