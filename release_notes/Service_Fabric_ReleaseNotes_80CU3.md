@@ -2,6 +2,8 @@
 
 This release includes bug fixes as described in this document.
 
+**This update will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this update unless toggled to manual. The Linux release is also available.**
+
 The following packages and versions are part of this release:
 
 | Service | Platform | Version |
