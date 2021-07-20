@@ -51,7 +51,7 @@ Microsoft Azure Service Fabric 8.0 Third Refresh Release Notes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 8.0.536.9590<br>Ubuntu 16 - 8.0.527.1<br>Ubuntu 18 - 8.0.527.1** | **Bug** | Handle orphan repair tasks when tenants are deallocated/reallocated | **Brief desc**: Query for orphan repair tasks with target nodes in the current tenant, and move to completion when the executor name is something else. This will happen for a non-coordinated VMSS when it is deallocated-reallocated while a job is in progress.<br>Restrict retaining repair task only to CoordinatedMR, when a jobId is not present for a repair task. This will allow repair task for a VMSS with the traditional IS to be cancelled, when the VMSS is deallocated/reallocated.<br>**Fix**: Handle orphan repair tasks for deallocation-reallocation.<br> |
+| **Windows - 8.0.536.9590<br>Ubuntu 16 - 8.0.527.1<br>Ubuntu 18 - 8.0.527.1** | **Bug** | Handle orphan repair tasks when tenants are deallocated/reallocated | **Brief desc**: Query for orphan repair tasks with target nodes in the current tenant, and move to completion when the executor name is something else. This will happen for a non-coordinated VMSS when it is deallocated-reallocated while a job is in progress.<br>Restrict retaining repair task only to infrastructure coordination, when a jobId is not present for a repair task. This will allow repair task for a VMSS with the traditional IS to be cancelled, when the VMSS is deallocated/reallocated.<br>**Fix**: Handle orphan repair tasks for deallocation-reallocation.<br> |
 
 
 ## Repositories and Download Links
@@ -63,7 +63,7 @@ Follow this guidance for setting up your developer environment:
 
 | Area | Package | Version | Repository | Direct Download Link |
 |-|-|-|-|-|
-|Service Fabric Runtime |Ubuntu Developer Set-up | N/A |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
+|Service Fabric Runtime |Ubuntu Developer Set-up | 8.0.536.9590 | N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
 || Windows Developer Set-up| 8.0.536.9590 | N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.8.0.536.9590.exe |
 |Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 8.0.536.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/8.0.536.9590/Microsoft.Azure.ServiceFabric.WindowsServer.8.0.536.9590.zip |
 ||Service Fabric Standalone Runtime | 8.0.536.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/8.0.536.9590/MicrosoftAzureServiceFabric.8.0.536.9590.cab |
