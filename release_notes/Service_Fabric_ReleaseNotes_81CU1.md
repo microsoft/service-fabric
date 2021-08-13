@@ -42,7 +42,7 @@ Microsoft Azure Service Fabric 8.1 First Refresh Release Notes
 
 
 ## Upcoming Breaking Changes
-* .NET Core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .NET runtime 3.* features to support Service Fabric .NET Core apps. This has no impact on Service Fabric .NET Framework SDK.
+* .NET Core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. This includes the following release versions and beyond - 8.0 CU4 and above, 8.1 CU2 and above and 8.2 RTO release and above. Current apps running on .NET Core 2.1 runtime will continue to work, but requests for investigations or request for changes will no longer be entertained. Service Fabric .NET SDK will take a dependency on .NET runtime 3.* features to support Service Fabric .NET Core apps. This has no impact on Service Fabric .NET Framework SDK.
 
 
 ## Service Fabric Common Bug Fixes
