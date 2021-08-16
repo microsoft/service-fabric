@@ -63,7 +63,8 @@ Microsoft Azure Service Fabric 8.0 Release Notes
 
 ## Upcoming Breaking Changes
 * .NET Core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .NET Core apps.  This has no impact on Service Fabric .NET Framework SDK.
-* Support for Windows Server 2016 and Windows 10 Server 1809 will be discontinued in future Service Fabric releases. We recommend updating your cluster VMs to Windows Server 2019.
+* Support for Windows Server 2016 **Version 1809** will be discontinued in future Service Fabric releases. We recommend updating your cluster VMs to Windows Server 2019.
+* Support for Windows 10 **Version 1809** will be discontinued in future Service Fabric releases. We recommend updating your cluster VMs to a supported version of Windows 10.
 
 
 ## Service Fabric Runtime
