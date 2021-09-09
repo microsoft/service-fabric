@@ -39,11 +39,11 @@ Microsoft Azure Service Fabric 8.1 Second Refresh Release Notes
     * The other option is to upgrade the application in SF 7.0 (for example, with a version only change).<br/>
 
     If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
-* .NET Core runtime LTS 2.1 runtime is now out of support as of Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. This includes the following release versions and beyond - 8.0 CU4 and above, 8.1 CU2 and above and 8.2 RTO release and above. Current apps running on .NET Core 2.1 runtime will continue to work, but requests for investigations or request for changes will no longer be entertained. Service Fabric .NET SDK will take a dependency on .NET runtime 3.x features to support Service Fabric .NET Core apps. This has no impact on Service Fabric .NET Framework SDK.
+* .NET Core runtime LTS 2.1 runtime is now out of support as of Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. This includes the following release versions and beyond - 8.0 CU4 and above, 8.1 CU2 and above and 8.2 RTO release and above. Current apps running on .NET Core 2.1 runtime will continue to work, but requests for investigations or request for changes will no longer receive support. Service Fabric .NET SDK will take a dependency on .NET runtime 3.x features to support Service Fabric .NET Core apps. This has no impact on Service Fabric .NET Framework SDK.
 
 
 ## Upcoming Breaking Changes
-* Ubuntu 16.04 LTS reached it's 5-year end-of-life window on April 30, 2021 and is no longer supported by it's vendors. Service Fabric runtime will drop support for Ubuntu 16.04 after that date as well. Current applications running on it will continue to work, but requests for investigations or requests for change will no longer be entertained. We recommend moving your applications to Ubuntu 18.04.
+* Ubuntu 16.04 LTS reached it's 5-year end-of-life window on April 30, 2021 and is no longer supported by it's vendors. Service Fabric runtime will drop support for Ubuntu 16.04 after that date as well. Current applications running on it will continue to work, but requests for investigations or requests for change will no longer receive support. We recommend moving your applications to Ubuntu 18.04.
 
 
 ## Service Fabric Common Bug Fixes
