@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 8.1 Third Refresh First Update (3.1) Release Notes
+# Microsoft Azure Service Fabric 8.1 Third Refresh Update (3.1) Release Notes
 
 This release includes the bug fixes described in this document. This release includes runtime, SDKs, and Windows Server Standalone deployments to run on-premises.
 
@@ -17,7 +17,7 @@ The following packages and versions are part of this release:
 
 ## Contents 
 
-Microsoft Azure Service Fabric 8.1 Third Refresh First Update (3.1) Release Notes
+Microsoft Azure Service Fabric 8.1 Third Refresh Update (3.1) Release Notes
 
 * [Current And Upcoming Breaking Changes](#Current-And-Upcoming-Breaking-Changes)
 * [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
