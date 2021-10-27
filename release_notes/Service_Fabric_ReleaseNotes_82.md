@@ -1,7 +1,6 @@
 # Microsoft Azure Service Fabric 8.2 Release Notes
 
 This release includes the bug fixes and features described in this document. This release includes runtime, SDKs, and Windows Server Standalone deployments to run on-premises.
-This release also includes the fixes from 8.1 Third Refresh Update (8.1 CU3.1).
 
 The following packages and versions are part of this release:
 
@@ -57,11 +56,6 @@ Microsoft Azure Service Fabric 8.2 Release Notes
 | **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | Expose an API in Cluster Manager to note if upgrade is impactful | **Brief Description**: Added a new ValidateFabricUpgrade API, which validates the parameters of a Fabric Cluster upgrade request and returns the expected service host impact. Impact is assessed based on whether the upgrade is expected to cause Service Fabric's service host to restart when applied to a node, which leads to all services on the node to restart as well. |
 | **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | Node level update | **Brief Description**: Added API support for performing upgrades at the node level, which is not enabled yet.<br>**Impact**: Added support to upgrade APIs to start a node-level upgrade, and return node-level upgrade information for upgrade information queries. However, this functionality is not enabled or supported yet.<br> |
 | **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | Entry point override | **Brief Description**: This change allow users to override CodePackage EntryPoint, that is in ServiceManifest, via ApplicationManifest.<br>**Usage**: In the application manifest under CodePackagePolicies specify an element like below:<br>```<CodePackagePolicy CodePackageRef="Code"><EntryPointOverride><ExeHostOverride><Program>[Program]</Program><Arguments>[Entry]</Arguments></ExeHostOverride></EntryPointOverride></CodePackagePolicy>```<br>You can specify Either ExeHostOverride or ContainerHostOverride:<br>```<ContainerHostOverride><ImageOverrides><Image Name="[Program]" /></ImageOverrides><Commands>[Entry]</Commands><FromSource>[Entry]</FromSource></ContainerHostOverride>```|
-
-
-## Service Fabric Common Bug Fixes
-
-This release ships with all the bug fixes from the [Release 8.1 CU3.1](https://github.com/microsoft/service-fabric/blob/master/release_notes/Service_Fabric_ReleaseNotes_81CU31.md)
 
 
 ## Service Fabric Add-ons Applications
