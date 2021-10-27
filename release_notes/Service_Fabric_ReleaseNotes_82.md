@@ -1,7 +1,7 @@
 # Microsoft Azure Service Fabric 8.2 Release Notes
 
-This release includes the bug fixes and features described in this document. This release includes runtime, SDKs and Windows Server Standalone deployments to run on-premises.
-This release also include the fixes from 8.1 Third Refresh Update (8.1 CU3.1).
+This release includes the bug fixes and features described in this document. This release includes runtime, SDKs, and Windows Server Standalone deployments to run on-premises.
+This release also includes the fixes from 8.1 Third Refresh Update (8.1 CU3.1).
 
 The following packages and versions are part of this release:
 
@@ -28,6 +28,7 @@ Microsoft Azure Service Fabric 8.2 Release Notes
 ## Key Announcements
 * Expose an API in Cluster Manager to note if upgrade is impactful
 * Node level update
+* Entry point override
 
 
 ## Current Breaking Changes
@@ -44,8 +45,8 @@ Microsoft Azure Service Fabric 8.2 Release Notes
     * The simplest mitigation, when possible, is to delete and recreate the application in Service Fabric 7.0.<br/>
     * The other option is to upgrade the application in Service Fabric 7.0 (for example, with a version only change).<br/>
     If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
-* **.NET Core 2.x Support**: .NET Core runtime LTS 2.1 runtime is out of support as of Aug 21, 2021. .NET Core runtime 2.2 is out of support from Dec 2019. Service Fabric releases after those dates will drop support for Service Fabric apps running with .NET Core 2.1 & .NET Core 2.2 runtimes respectively. Current apps running on .NET Core 2.x runtime will continue to work, but requests for investigations or request for changes will no longer receive support. Service Fabric .NET SDK will take a dependency on .NET runtime 3.x features to support Service Fabric .NET Core apps.
-* **Ubuntu 16.04 Support**: Ubuntu 16.04 LTS reached it's 5-year end-of-life window on April 30, 2021 and is no longer supported by it's vendors. Service Fabric runtime will drop support for Ubuntu 16.04 after that date as well. Current applications running on it will continue to work, but requests for investigations or requests for change will no longer receive support. We recommend moving your applications to Ubuntu 18.04.
+* **.NET Core 2.x Support**: .NET Core runtime LTS 2.1 runtime is out of support as of Aug 21, 2021, and .NET Core runtime 2.2 is out of support from Dec 2019. Service Fabric releases after those dates will drop support for Service Fabric apps running with .NET Core 2.1 & .NET Core 2.2 runtimes respectively. Current apps running on .NET Core 2.x runtime will continue to work, but requests for investigations or request for changes will no longer receive support. Service Fabric .NET SDK will take a dependency on .NET runtime 3.x features to support Service Fabric .NET Core apps.
+* **Ubuntu 16.04 Support**: Ubuntu 16.04 LTS reached it's 5-year end-of-life window on April 30, 2021. Due to this, Service Fabric runtime has dropped support for 16.04 LTS and we recommend moving your clusters and applications to Ubuntu 18.04 LTS. Current applications running on it will continue to work, but requests for investigations or requests for change will no longer receive support.
 * **ASP.NET Core 1.0 Support**: Service Fabric ASP.NET Core packages are built against ASP.NET Core 1.0 binaries which are out of support. Starting Service Fabric 8.2, we will be building Service Fabric ASP.NET Core packages against .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, .NET Framework 4.6.1. As a result, they can be used only to build services targeting .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, >=.NET Framework 4.6.1 respectively.<br>For .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, Service Fabric ASP.NET Core will be taking dependency on Microsoft.AspNetCore.App shared framework, whereas for NetFx target frameworks >=.NET Framework 4.6.1, Service Fabric ASP.NET Core will be taking dependency on ASP.NET Core 2.1 packages.<br>The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shipped, Microsoft.ServiceFabric.AspNetCore.HttpSys package should be used instead.
 
 
@@ -54,7 +55,8 @@ Microsoft Azure Service Fabric 8.2 Release Notes
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
 | **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | Expose an API in Cluster Manager to note if upgrade is impactful | **Brief Description**: Added a new ValidateFabricUpgrade API, which validates the parameters of a Fabric Cluster upgrade request and returns the expected service host impact. Impact is assessed based on whether the upgrade is expected to cause Service Fabric's service host to restart when applied to a node, which leads to all services on the node to restart as well. |
-| **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | --Feature-- | **Brief Description**: Added API support for performing upgrades at the node level, which is not enabled yet.<br>**Impact**: Added support to upgrade APIs to start a node-level upgrade, and return node-level upgrade information for upgrade information queries. However, this functionality is not enabled or supported yet.<br> |
+| **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | Node level update | **Brief Description**: Added API support for performing upgrades at the node level, which is not enabled yet.<br>**Impact**: Added support to upgrade APIs to start a node-level upgrade, and return node-level upgrade information for upgrade information queries. However, this functionality is not enabled or supported yet.<br> |
+| **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | Entry point override | **Brief Description**: This change allow users to override CodePackage EntryPoint, that is in ServiceManifest, via ApplicationManifest.<br>**Usage**: In the application manifest under CodePackagePolicies specify an element like below:<br>```<CodePackagePolicy CodePackageRef="Code"><EntryPointOverride><ExeHostOverride><Program>[Program]</Program><Arguments>[Entry]</Arguments></ExeHostOverride></EntryPointOverride></CodePackagePolicy>```<br>You can specify Either ExeHostOverride or ContainerHostOverride:<br>```<ContainerHostOverride><ImageOverrides><Image Name="[Program]" /></ImageOverrides><Commands>[Entry]</Commands><FromSource>[Entry]</FromSource></ContainerHostOverride>```|
 
 
 ## Service Fabric Common Bug Fixes
