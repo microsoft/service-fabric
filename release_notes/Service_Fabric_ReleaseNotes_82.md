@@ -6,7 +6,7 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 18 <br> Windows | 8.2.1124.1 <br> 8.2.1124.1 <br> 8.2.1235.9590 |
+|Service Fabric Runtime| Ubuntu 18 <br> Windows | 8.2.1124.1 <br> 8.2.1235.9590 |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 8.2.1235.9590 |
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 5.2.1235 <br> 8.2.1235 <br> 8.2.1235 <br> 8.2.1235 |
 |Java SDK |Java for Linux SDK | 1.0.6 |
