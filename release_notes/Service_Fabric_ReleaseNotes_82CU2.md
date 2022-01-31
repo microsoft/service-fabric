@@ -47,7 +47,7 @@ Microsoft Azure Service Fabric 8.2 Second Refresh Release Notes
 
  | Versions | IssueType | Description | Resolution | 
  | - | - | - | - | 
- | **Windows - 8.2.1486.9590<br>Ubuntu 18 - 8.2.1285.1** | **Bug** | Disable FabricClient Cache in HTTP Gateway | **Brief Description**: Http gateway cache inside the FabricGateway.exe process does not automatically flush stale endpoint data from cache. As such, clients may end up receiving stale endpoints. <br> **Impact**: Client code calling http gateway can receive stale endpoints. <br> **Fix**: Disable the client cache inside http gateway. This forces http gateway to always query for the most recent data. <br> **Workaround**: A possible workaround is manually restarting the FabricGateway.exe process that is returning stale data. | 
+ | **Windows - 8.2.1486.9590<br>Ubuntu 18 - 8.2.1285.1** | **Bug** | Disable FabricClient Cache in HTTP Gateway | **Brief Description**: HTTP Gateway cache inside the FabricGateway.exe process does not automatically flush stale endpoint data from cache. As such, clients may end up receiving stale endpoints. <br> **Impact**: Client code calling HTTP Gateway can receive stale endpoints. <br> **Fix**: Disable the client cache inside HTTP Gateway. This forces http Gateway to always query for the most recent data. <br> **Workaround**: A possible workaround is manually restarting the FabricGateway.exe process that is returning stale data. | 
 
 
 ## Repositories and Download Links
