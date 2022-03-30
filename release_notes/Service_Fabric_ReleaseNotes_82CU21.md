@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 8.2 Second Refresh First Update Release Notes
+# Microsoft Azure Service Fabric 8.2 Cumulative Update 2.1 Release Notes
 
 This release includes the bug fixes described in this document. This release includes runtime, SDKs, and Windows Server Standalone deployments to run on-premises.
 
@@ -16,7 +16,7 @@ The following packages and versions are part of this release:
 
 ## Contents 
 
-Microsoft Azure Service Fabric 8.2 Second Refresh First Update Release Notes
+Microsoft Azure Service Fabric 8.2 Cumulative Update 2.1 Release Notes
 
 * [Service Fabric Common Bug Fixes](#Service-Fabric-Common-Bug-Fixes)
 * [Current Breaking Changes and Updated Support](#Current-Breaking-Changes-And-Updated-Support)
@@ -27,7 +27,7 @@ Microsoft Azure Service Fabric 8.2 Second Refresh First Update Release Notes
 
  | Versions | IssueType | Description | Resolution | 
  | - | - | - | - | 
- | **Windows - 8.2.1571.9590<br>Ubuntu 18 - 8.2.1397.1** | **Bug** | Certificate updates leave cluster in an unhealthy state  | **Brief Description**: Updating the certificate can trigger a cluster upgrade that becomes stuck and leaves the cluster in an unhealthy state.<br>If the cluster is currently on Service Fabric '8.2 Second Refresh' (Windows - 8.2.1486.9590 / Ubuntu 18 - 8.2.1285.1), refrain from making any certificate changes until the cluster is first upgraded to the '8.2 Second Refresh First Update' (Windows - 8.2.1571.9590 / Ubuntu 18 - 8.2.1397.1).<br> **Fix**: This 8.2 Second Refresh regression has been fixed with this release update. Please upgrade cluster to 8.2 Second Refresh First Update release before making any certificate changes. | 
+ | **Windows - 8.2.1571.9590<br>Ubuntu 18 - 8.2.1397.1** | **Bug** | Certificate updates leave cluster in an unhealthy state  | **Brief Description**: Updating the certificate can trigger a cluster upgrade that becomes stuck and leaves the cluster in an unhealthy state.<br>If the cluster is currently on Service Fabric '8.2 Cumulative Update 2.0' (Windows - 8.2.1486.9590 / Ubuntu 18 - 8.2.1285.1), refrain from making any certificate changes until the cluster is first upgraded to this '8.2 Cumulative Update 2.1' (Windows - 8.2.1571.9590 / Ubuntu 18 - 8.2.1397.1).<br> **Fix**: The regression identified in '8.2 Cumulative Update 2.0' has been fixed with this release update. Please upgrade cluster to this '8.2 Cumulative Update 2.1' release before making any certificate changes. | 
 
 
 ## Current Breaking Changes and Updated Support
