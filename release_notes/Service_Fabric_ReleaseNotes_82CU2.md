@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 8.2 Second Refresh Release Notes
+# Microsoft Azure Service Fabric 8.2 Cumulative Update 2.0 Release Notes
 
 This release includes the bug fixes described in this document. This release includes runtime, SDKs, and Windows Server Standalone deployments to run on-premises.
 
@@ -16,7 +16,7 @@ The following packages and versions are part of this release:
 
 ## Contents 
 
-Microsoft Azure Service Fabric 8.2 Second Refresh Release Notes
+Microsoft Azure Service Fabric 8.2 Cumulative Update 2.0 Release Notes
 
 * [Current Breaking Changes and Updated Support](#Current-Breaking-Changes-And-Updated-Support)
 * [Service Fabric Common Bug Fixes](#Service-Fabric-Common-Bug-Fixes)
