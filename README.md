@@ -8,14 +8,16 @@ Service Fabric is a distributed systems platform for packaging, deploying, and m
 ## Service Fabric release schedule 
 Here is the upcoming release schedule for Service Fabric runtime versions that we will be supporting starting with version 8.0.
 
-| Version 	| Release date 	|
-|---------	|--------------	|
-| 8.0     	| 2021 Mar     	|
-| 8.1     	| 2021 Jul     	|
-| 8.2     	| 2021 Oct     	|
-| 9.0     	| 2022 Mar     	|
-| 9.1     	| 2022 Jul     	|
-| 9.2     	| 2022 Oct     	|
+| Version 	| Release date 	   |
+|---------	|----------------- |
+| 8.0     	| 2021 Mar     	   |
+| 8.1     	| 2021 Jul     	   |
+| 8.2     	| 2021 Oct     	   |
+| 9.0     	| (Tentative) May 2nd, 2022 **(*)** <br/> * Delayed from 2022 Mar |
+| 9.1     	| 2022 Jul     	   |
+| 9.2     	| 2022 Oct     	   |
+
+**(*) Note**: The Service Fabric release version 9.0, which was originally expected to be released by end of March 2022 / begining of April 2022 is delayed and is now tentatively expected to start rolling out to various regions by May 2nd, 2022. This date will be confirmed by April 20th, 2022. This Service Fabric release version 9.0 will support .NET 6.0.
 
 Please note that these dates are advanced estimates and might be subject to change or minor adjustments closer to each release.
 
