@@ -270,7 +270,7 @@
     <Reference Include="$(PkgDotNetFxGAC_Corext)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
-    <PackageReference Include="Microsoft.Data.OData" Version="5.8.3" />
+    <PackageReference Include="Microsoft.Data.OData" Version="5.8.4" />
   </ItemGroup>
 
   <ItemGroup Condition=" $(TargetsLinux) == 'true' ">
