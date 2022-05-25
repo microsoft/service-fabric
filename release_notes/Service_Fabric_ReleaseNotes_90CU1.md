@@ -1,6 +1,6 @@
 # Microsoft Azure Service Fabric 9.0 First Refresh Release Notes
 
-This release includes bug fixes as described in this document.
+This release includes bug fixes as described in this documents.
 
 The following packages and versions are part of this release:
 
