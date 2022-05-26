@@ -18,7 +18,7 @@ The following packages and versions are part of this release:
 Microsoft Azure Service Fabric 8.0 Release Notes
 
 * [Current Breaking Changes](#Current-Breaking-Changes)
-* [Upcoming Breaking Changes](#upcoming-breaking-changes))
+* [Upcoming Breaking Changes](#upcoming-breaking-changes)
 * [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
 * [Repositories and Download Links](#repositories-and-download-links)
 
