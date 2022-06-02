@@ -10,7 +10,7 @@ The following packages and versions are part of this release:
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.0.1017.9590 |
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1028  <br> 9.0.1028 <br> 9.0.1028 <br> 9.0.1028 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
-|Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.0 |
+|Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
 
 ## Contents 
@@ -67,8 +67,8 @@ Follow this guidance for setting up your developer environment:
 |-|-|-|-|-|
 |Service Fabric Runtime |Ubuntu Developer Set-up | 9.0.1035.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
 || Windows Developer Set-up| 9.0.1028.9590 | N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.0.1028.9590.exe |
-|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 9.0.1028.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/8.0.516.9590/Microsoft.Azure.ServiceFabric.WindowsServer.8.0.516.9590.zip |
-||Service Fabric Standalone Runtime | 9.0.1028.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/8.0.516.9590/MicrosoftAzureServiceFabric.8.0.516.9590.cab |
+|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 9.0.1028.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.0.1028.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.0.1028.9590.zip |
+||Service Fabric Standalone Runtime | 9.0.1028.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/9.0.1028.9590/MicrosoftAzureServiceFabric.9.0.1028.9590.cab |
 |.NET SDK |Windows .NET SDK | 6.0.1028 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.0.1028.msi  |
 ||Microsoft.ServiceFabric | 9.0.1035 |N/A |https://www.nuget.org |
 ||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 9.0.1035 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
@@ -81,5 +81,5 @@ Follow this guidance for setting up your developer environment:
 ||Azure Service Fabric C# generator | 1.0.9 |https://github.com/Azure/generator-azuresfcsharp |N/A |
 ||Azure Service Fabric guest executables generator | 1.0.1 |https://github.com/Azure/generator-azuresfguest |N/A|
 ||Azure Service Fabric Container generators | 1.0.1 |https://github.com/Azure/generator-azuresfcontainer |N/A |
-|CLI |Service Fabric CLI | 11.1.0 |https://github.com/Azure/service-fabric-cli |https://pypi.python.org/pypi/sfctl |
-|PowerShell |AzureRM.ServiceFabric | 0.3.15 |https://github.com/Azure/azure-powershell/tree/preview/src/ResourceManager/ServiceFabric |https://www.powershellgallery.com/packages/AzureRM.ServiceFabric/0.3.15  |
+|CLI |Service Fabric CLI | 11.0.1 |https://github.com/Azure/service-fabric-cli |https://pypi.python.org/pypi/sfctl |
+|PowerShell |AzureRM.ServiceFabric | 0.3.15 |https://github.com/Azure/azure-powershell/tree/preview/src/ResourceManager/ServiceFabric |N/A  |
