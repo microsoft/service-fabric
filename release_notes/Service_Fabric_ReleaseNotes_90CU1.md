@@ -53,7 +53,7 @@ Microsoft Azure Service Fabric 8.0 Release Notes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Internal Reliability and Security fix |**Brief desc**:The fix includes below:<br> Runtime Dependencies: Update Service Fabric runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br> Container Logs:Linux: Service Fabric runtime will no longer process Service Fabric-generated diagnostics logs emitted by enlightened containerized workloads<br>Windows: The logging agent will no longer use the container-mounted log folder to stage metadata files.<br>  | 
+| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Internal Reliability and Security fix |**Brief desc**:The fix includes below:<br> Runtime Dependencies: Update Service Fabric runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br> Container Logs: Service Fabric runtime on Linux will no longer process Service Fabric-generated diagnostic logs emitted by enlightened containerized workloads; On Windows, the logging agent will no longer use the container-mounted log folder to stage metadata files.<br>  | 
 
 
 ## Repositories and Download Links
