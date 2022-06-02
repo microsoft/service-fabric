@@ -53,7 +53,7 @@ Microsoft Azure Service Fabric 8.0 Release Notes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Internal Reliability and Security fix |**Brief desc**:The fix includes below:<br> Runtime Dependencies: Update Service Fabric runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br> Cntainer Logs:Linux: Service Fabric runtime will no longer process Service Fabric-generated diagnostics logs emitted by enlightened containerized workloads<br>Windows: The logging agent will no longer use the container-mounted log folder to stage metadata files.<br>  | 
+| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Internal Reliability and Security fix |**Brief desc**:The fix includes below:<br> Runtime Dependencies: Update Service Fabric runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br> Container Logs:Linux: Service Fabric runtime will no longer process Service Fabric-generated diagnostics logs emitted by enlightened containerized workloads<br>Windows: The logging agent will no longer use the container-mounted log folder to stage metadata files.<br>  | 
 
 
 ## Repositories and Download Links
@@ -69,7 +69,7 @@ Follow this guidance for setting up your developer environment:
 || Windows Developer Set-up| 9.0.1028.9590 | N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.8.0.516.9590.exe |
 |Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 9.0.1028.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/8.0.516.9590/Microsoft.Azure.ServiceFabric.WindowsServer.8.0.516.9590.zip |
 ||Service Fabric Standalone Runtime | 9.0.1028.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/8.0.516.9590/MicrosoftAzureServiceFabric.8.0.516.9590.cab |
-|.NET SDK |Windows .NET SDK | 6.0.1017 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.5.0.516.msi |
+|.NET SDK |Windows .NET SDK | 6.0.1028 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.5.0.516.msi |
 ||Microsoft.ServiceFabric | 9.0.1035 |N/A |https://www.nuget.org |
 ||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 9.0.1035 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
 ||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 8.0.516 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
