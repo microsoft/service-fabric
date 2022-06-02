@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 8.2 Third Refresh Release Notes
+# Microsoft Azure Service Fabric 8.2 Cumulative Update 3.0 Release Notes
 
 This release includes the bug fixes described in this document. This release includes runtime, SDKs, and Windows Server Standalone deployments to run on-premises.
 
@@ -18,7 +18,7 @@ The following packages and versions are part of this release:
 
 ## Contents 
 
-Microsoft Azure Service Fabric 8.0 Cumulative Update 3 Release Notes
+Microsoft Azure Service Fabric 8.2 Cumulative Update 3.0 Release Notes
 
 * [Current Breaking Changes](#current-breaking-changes)
 * [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
@@ -48,7 +48,7 @@ Microsoft Azure Service Fabric 8.0 Cumulative Update 3 Release Notes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 8.2.1620.9590<br>Ubuntu 16 - 8.2.1434.1<br>Ubuntu 18 - 8.2.1434.1** | **Bug** | Backup Restore Service failure| **Brief desc**: When RunAsync is being cancelled for reconfiguration it is stuck at DisposeRetentionManager waiting for RetentionManagerSemaphore to be released.This happens when large number of backup policy addition requests are made in parallel. and RetentionManager object is created in a different thread<br>**Impact**: Backup Restore Service will fail blocking cluster upgrade.<br>**Fix**: Release the RetentionManagerSemaphore properly. 
+| **Windows - 8.2.1620.9590<br>Ubuntu 16 - 8.2.1434.1<br>Ubuntu 18 - 8.2.1434.1** | **Bug** | Backup Restore Service failure| **Brief desc**: When large number of backup policy addition requests are made in parallel and RetentionManager object is created in a different thread,RunAsync is cancelled for reconfiguration and gets stuck at DisposeRetentionManager waiting for RetentionManagerSemaphore to be released.<br>**Impact**: Backup Restore Service will fail blocking cluster upgrade.<br>**Fix**: Release the RetentionManagerSemaphore properly. 
 | **Windows - 8.2.1620.9590<br>Ubuntu 16 - 8.2.1434.1<br>Ubuntu 18 - 8.2.1434.1** | **Feature** | Support for parallel recursive queries to Service Fabric DNS Service|**Brief Description**: This change adds support for parallel recursive queries in Service Fabric DNS, where requests will be sent to all forwarding DNS servers and the first response received is used. When enabled, parallel queries will be attempted after the serial queries. The following config options are introduced under **DNS Service** to control the behavior:<br><ul><li>**RecursiveQuerySerialMaxAttempts** - The number of serial queries that will be attempted, at most. If this number is higher than the amount of forwarding DNS servers, querying will stop once all the servers have been attempted exactly once.</li><li>**RecursiveQuerySerialTimeout** - The timeout value in seconds for each attempted serial query.</li><li>**RecursiveQueryParallelMaxAttempts** - The number of times parallel queries will be attempted. Parallel queries are executed after the max attempts for serial queries have been exhausted.</li><li>**RecursiveQueryParallelTimeout** - The timeout value in seconds for each attempted parallel query.</li></ul>If clusters were previously using the RecursiveQueryTimeout config option, they will need to remove it before upgrading; this config is replaced by the ones above.<br>**Documentation Reference**: Read more about it at - <ul><li>[DNS Service in Azure Service Fabric - Recursive Queries](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-dnsservice#recursive-queries)</li><li>[What is the default behavior of a DNS client when three or more DNS servers are configured on the NIC](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/dns-client-resolution-timeouts#what-is-the-default-behavior-of-a-dns-client-when-three-or-more-dns-servers-are-configured-on-the-nic)</li><li>[What is the default behavior of a Windows XP DNS client when two DNS servers are configured on the NIC](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/dns-client-resolution-timeouts#what-is-the-default-behavior-of-a-windows-xp-dns-client-when-two-dns-servers-are-configured-on-the-nic)</li></ul> | 
 
 
