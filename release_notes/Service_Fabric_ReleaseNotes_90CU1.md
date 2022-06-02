@@ -53,7 +53,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 1.0 Release Notes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Reliability and Security fix |**Brief desc**:Security fixes related to Container logs and runtime dependencies. For container Logs, Service Fabric runtime on Linux will no longer process Service Fabric-generated diagnostic logs emitted by enlightened containerized workloads. On Windows, the logging agent will no longer use the container-mounted log folder to stage metadata files.<br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>  |
+| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Reliability and Security fix |**Brief desc**: Security fixes related to Container logs and runtime dependencies.<br> For container Logs, Service Fabric runtime on Linux will no longer process Service Fabric-generated diagnostic logs emitted by enlightened containerized workloads. On Windows, the logging agent will no longer use the container-mounted log folder to stage metadata files.<br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>  |
 
 
 ## Repositories and Download Links
