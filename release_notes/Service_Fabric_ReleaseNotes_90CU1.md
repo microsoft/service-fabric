@@ -8,7 +8,7 @@ The following packages and versions are part of this release:
 |---------|----------|---------|
 |Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 9.0.1035.1 <br>  9.0.1035.1 <br> 9.0.1028.9590  |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.0.1017.9590 |
-|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1017  <br> 9.0.1017 <br> 9.0.1017 <br> 9.0.1017 |
+|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1028  <br> 9.0.1028 <br> 9.0.1028 <br> 9.0.1028 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.0 |
 
@@ -46,14 +46,14 @@ Microsoft Azure Service Fabric 8.0 Release Notes
 * .NET 5.0 runtime is reaching end-of-life on May 8, 2022.Service Fabric releases after that date will drop support for Service Fabric applications running with .NET 5.0 runtime.Current applications running on .NET 5.0 runtime will continue to work, but requests for investigations or request for changes will no longer be entertained. Please migrate to using .NET 6.0 version instead.
 *  Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021.Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS.Current applications running on it will continue to work, but requests for investigations or requests for change will no longer be entertained. Please migrate to Ubuntu 18.04 or 20.04 instead.
 * Service Fabric runtime will soon be stop using BinaryFormatter based remoting exception serialization by default and move to using Data Contract Serilization (DCS) based remoting exception serialization by default.Current applications using it will continue to work as-is, but Service Fabric strongly recommends moving to using Data Contract Serilization (DCS) based remoting exception instead.
-* Service Fabric runtime will soon be archiving and removing Service Fabric runtime version 6.4 packages and older, as well as SDK version 3.3 packages and older from the package Down Center.
+* Service Fabric runtime will soon be archiving and removing Service Fabric runtime version 6.4 packages and older, as well as SDK version 3.3 packages and older from the package Download Center.
 
 
 ## Service Fabric Common Bug Fixes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Internal Reliability and Security fix | | 
+| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Internal Reliability and Security fix |**Brief desc**:The fix includes below:<br> Runtime Dependencies: Update Service Fabric runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br> Cntainer Logs:Linux: Service Fabric runtime will no longer process Service Fabric-generated diagnostics logs emitted by enlightened containerized workloads<br>Windows: The logging agent will no longer use the container-mounted log folder to stage metadata files.<br>  | 
 
 
 ## Repositories and Download Links
