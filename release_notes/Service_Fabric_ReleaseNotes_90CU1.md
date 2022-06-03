@@ -17,8 +17,8 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 9.0 Cumulative Update 1.0 Release Notes
 
-* [Current Breaking Changes](#Current-Breaking-Changes)
-* [Upcoming Breaking Changes](#upcoming-breaking-changes)
+* [Current Breaking Changes](#current-breaking-changes)
+* [Future Retirement and Deprecation Path Callouts](#future-retirement-and-deprecation-path-callouts)
 * [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
 * [Repositories and Download Links](#repositories-and-download-links)
 
@@ -41,7 +41,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 1.0 Release Notes
 
 <br>
 
-## Upcoming Breaking Changes
+## Future Retirement and Deprecation Path Callouts
 * .NET Core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .NET Core apps.  This has no impact on Service Fabric .NET Framework SDK.
 * .NET 5.0 runtime is reaching end-of-life on May 8, 2022.Service Fabric releases after that date will drop support for Service Fabric applications running with .NET 5.0 runtime.Current applications running on .NET 5.0 runtime will continue to work, but requests for investigations or request for changes will no longer be entertained. Please migrate to using .NET 6.0 version instead.
 *  Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021.Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS.Current applications running on it will continue to work, but requests for investigations or requests for change will no longer be entertained. Please migrate to Ubuntu 18.04 or 20.04 instead.
