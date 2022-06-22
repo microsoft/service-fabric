@@ -31,7 +31,7 @@
   <ItemGroup>
     <PackageReference Include="System.Reflection" Version="4.1.0" />
     <PackageReference Include="System.Reflection.TypeExtensions" Version="4.1.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
