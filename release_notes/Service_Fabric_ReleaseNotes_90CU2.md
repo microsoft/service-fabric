@@ -26,6 +26,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 
 ## Key Announcements
 * Windows Server 2022 is now supported as of the 9.0 CU2 release.
+* Support for using Service Fabric with Windows Server 2022 and Mirantis Container Runtime. Please see [Containers on Windows](https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=dockerce#windows-server-1) documentation
 
 ## Current Breaking Changes
 
