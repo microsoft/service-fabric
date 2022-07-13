@@ -47,7 +47,7 @@ Microsoft Azure Service Fabric 8.2 Cumulative Update 4.0 Release Notes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 8.2.1659.9590<br>Ubuntu 16 - 8.2.1458.1<br>Ubuntu 18 - 8.2.1458.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
+| **Windows - 8.2.1659.9590<br>Ubuntu 16 - 8.2.1458.1<br>Ubuntu 18 - 8.2.1458.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.The longer the cluster ran, the greater memory footprint would be, and performance would incrementally decrease.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
 
 
 ## Repositories and Download Links
