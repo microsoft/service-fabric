@@ -26,6 +26,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 
 ## Key Announcements
 * Windows Server 2022 is now supported as of the 9.0 CU2 release.
+* Support for using Service Fabric with Windows Server 2022 and Mirantis Container Runtime. Please see [Containers on Windows](https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=dockerce#windows-server-1) documentation
 
 ## Current Breaking Changes
 
@@ -61,7 +62,7 @@ The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shi
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
 | **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Reverse Proxy | **Brief desc**: Sending long URI request over Reverse Proxy causes an error.<br>**Impact**: Reverse Proxy (FabricApplicationGateway) would incorrectly return FABRIC_E_INVALID_ADDRESS when the path component in a URI request was over internal max limit<br>**Fix**: Support long path request URI over Reverse Proxy.
-| **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: . 
+| **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.The longer the cluster ran, the greater memory footprint would be, and performance would incrementally decrease.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
 | **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Cluster Manager Service | **Brief desc**: Service Fabric upgrades gets stuck in an upgrade domain.<br>**Impact**: Cluster Manager does not persist the current Service Fabric upgrade after the Cluster Manager primary is failed over causing stuck upgrades in a Upgrade Domain.<br>**Fix**: Cluster Manager will retry recovered operations after failover. 
 
 
@@ -75,10 +76,10 @@ Follow this guidance for setting up your developer environment:
 | Area | Package | Version | Repository | Direct Download Link |
 |-|-|-|-|-|
 |Service Fabric Runtime |Ubuntu Developer Set-up | 9.0.1056.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
-|| Windows Developer Set-up| 9.0.1048.9590 | N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.0.1028.9590.exe |
-|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 9.0.1048.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.0.1028.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.0.1028.9590.zip |
-||Service Fabric Standalone Runtime | 9.0.1048.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/9.0.1028.9590/MicrosoftAzureServiceFabric.9.0.1028.9590.cab |
-|.NET SDK |Windows .NET SDK | 6.0.1048 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.0.1028.msi  |
+|| Windows Developer Set-up| 9.0.1048.9590 | N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.0.1048.9590.exe |
+|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 9.0.1048.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.0.1048.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.0.1048.9590.zip |
+||Service Fabric Standalone Runtime | 9.0.1048.9590 |N/A | https://download.microsoft.com/download/3/1/F/31F3FEEB-F073-4E27-A98B-8E691FF74F40/ServiceFabric.9.0.1048.9590.cab |
+|.NET SDK |Windows .NET SDK | 6.0.1048 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.0.1048.msi  |
 ||Microsoft.ServiceFabric | 9.0.1048 |N/A |https://www.nuget.org |
 ||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 9.0.1048 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
 ||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 8.0.516 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
