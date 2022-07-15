@@ -6,7 +6,7 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 9.0.1056.1 <br>  9.0.1056.1 <br> 9.0.1048.9590  |
+|Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 <br> Windows | 9.0.1056.1 <br> 9.0.1056.1 <br> 9.0.1048.9590  |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.0.1048.9590 |
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1048  <br> 9.0.1048 <br> 9.0.1048 <br> 9.0.1048 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
@@ -26,7 +26,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 
 ## Key Announcements
 * Windows Server 2022 is now supported as of the 9.0 CU2 release.
-* Support for using Service Fabric with Windows Server 2022 and Mirantis Container Runtime. Please see [Containers on Windows](https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=dockerce#windows-server-1) documentation
+* Mirantis Container runtime support on Windows Server 2022 for Service Fabric containers. To configure, see [Containers on Windows](https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=dockerce#windows-server-1) documentation
 
 ## Current Breaking Changes
 
@@ -61,9 +61,9 @@ The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shi
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Reverse Proxy | **Brief desc**: Sending long URI request over Reverse Proxy causes an error.<br>**Impact**: Reverse Proxy (FabricApplicationGateway) would incorrectly return FABRIC_E_INVALID_ADDRESS when the path component in a URI request was over internal max limit<br>**Fix**: Support long path request URI over Reverse Proxy.
-| **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.The longer the cluster ran, the greater memory footprint would be, and performance would incrementally decrease.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
-| **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Cluster Manager Service | **Brief desc**: Service Fabric upgrades gets stuck in an upgrade domain.<br>**Impact**: Cluster Manager does not persist the current Service Fabric upgrade after the Cluster Manager primary is failed over causing stuck upgrades in a Upgrade Domain.<br>**Fix**: Cluster Manager will retry recovered operations after failover. 
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Reverse Proxy | **Brief desc**: Sending request URI with long path component i.e >504 characters over Reverse Proxy causes an error to be returned. Reverse proxy can now handle request that contain a long path component in the URI.<br>**Impact**: Reverse Proxy (FabricApplicationGateway) would incorrectly return FABRIC_E_INVALID_ADDRESS when the path component in a request URI was over 504 characters<br>**Fix**: Support sending long path component in request URI over Reverse Proxy.
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.The longer the cluster ran, the greater memory footprint would be, and performance would incrementally decrease.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Cluster Manager Service | **Brief desc**: Service Fabric upgrades gets stuck in an upgrade domain.<br>**Impact**: Cluster Manager does not persist the current Service Fabric upgrade after the Cluster Manager primary is failed over causing stuck upgrades in a Upgrade Domain.<br>**Fix**: Cluster Manager will retry recovered operations after failover. 
 
 
 ## Repositories and Download Links
