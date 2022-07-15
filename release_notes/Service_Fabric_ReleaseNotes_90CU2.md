@@ -6,7 +6,7 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 9.0.1056.1 <br>  9.0.1056.1 <br> 9.0.1048.9590  |
+|Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 <br> Windows | 9.0.1056.1 <br> 9.0.1056.1 <br> 9.0.1048.9590  |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.0.1048.9590 |
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1048  <br> 9.0.1048 <br> 9.0.1048 <br> 9.0.1048 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
@@ -26,7 +26,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 
 ## Key Announcements
 * Windows Server 2022 is now supported as of the 9.0 CU2 release.
-* Support for using Service Fabric with Windows Server 2022 and Mirantis Container Runtime. Please see [Containers on Windows](https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=dockerce#windows-server-1) documentation
+* Mirantis Container runtime support on Windows Server 2022 for Service Fabric containers. To configure, see [Containers on Windows](https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=dockerce#windows-server-1) documentation
 
 ## Current Breaking Changes
 
@@ -52,7 +52,7 @@ For .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, Service Fabric ASP.NET Core wil
 The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shipped, Microsoft.ServiceFabric.AspNetCore.HttpSys package should be used instead.
 * .NET Core runtime LTS 2.1 runtime will go out of support from Aug 21, 2021. Service Fabric releases after that date will drop support for Service Fabric apps running with .NET Core 2.1 runtime. Service Fabric .NET SDK will take a dependency on .Net runtime 3.* features to support Service Fabric .NET Core apps.  This has no impact on Service Fabric .NET Framework SDK.
 * .NET 5.0 runtime is reaching end-of-life on May 8, 2022.Service Fabric releases after that date will drop support for Service Fabric applications running with .NET 5.0 runtime.Current applications running on .NET 5.0 runtime will continue to work, but requests for investigations or request for changes will no longer be entertained. Please migrate to using .NET 6.0 version instead.
-* Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021.Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS.Current applications running on it will continue to work, but requests for investigations or requests for change will no longer be entertained.This would be the last release containing packages for Ubuntu 16.04 LTS. Please migrate to Ubuntu 18.04 or 20.04 instead.
+* Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021.Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS.Current applications running on it will continue to work, but requests for investigations or requests for change will no longer be entertained. Please migrate to Ubuntu 18.04 or 20.04 instead.
 * Service Fabric runtime will soon be stop using BinaryFormatter based remoting exception serialization by default and move to using Data Contract Serilization (DCS) based remoting exception serialization by default.Current applications using it will continue to work as-is, but Service Fabric strongly recommends moving to using Data Contract Serilization (DCS) based remoting exception instead.
 * Service Fabric runtime will soon be archiving and removing Service Fabric runtime version 6.4 packages and older, as well as SDK version 3.3 packages and older from the package Download Center.
 
@@ -61,9 +61,9 @@ The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shi
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Reverse Proxy | **Brief desc**: Sending long URI request over Reverse Proxy causes an error.<br>**Impact**: Reverse Proxy (FabricApplicationGateway) would incorrectly return FABRIC_E_INVALID_ADDRESS when the path component in a URI request was over internal max limit<br>**Fix**: Support long path request URI over Reverse Proxy.
-| **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.The longer the cluster ran, the greater memory footprint would be, and performance would incrementally decrease.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
-| **Windows - 9.0.1048.9590<br>Ubuntu 16 - 9.0.1056.1<br>Ubuntu 18 - 9.0.1056.1** | **Bug** | Cluster Manager Service | **Brief desc**: Service Fabric upgrades gets stuck in an upgrade domain.<br>**Impact**: Cluster Manager does not persist the current Service Fabric upgrade after the Cluster Manager primary is failed over causing stuck upgrades in a Upgrade Domain.<br>**Fix**: Cluster Manager will retry recovered operations after failover. 
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Reverse Proxy | **Brief desc**: Sending request URI with long path component i.e >504 characters over Reverse Proxy causes an error to be returned. Reverse proxy can now handle request that contain a long path component in the URI.<br>**Impact**: Reverse Proxy (FabricApplicationGateway) would incorrectly return FABRIC_E_INVALID_ADDRESS when the path component in a request URI was over 504 characters<br>**Fix**: Support sending long path component in request URI over Reverse Proxy.
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.The longer the cluster ran, the greater memory footprint would be, and performance would incrementally decrease.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Cluster Manager Service | **Brief desc**: Service Fabric upgrades gets stuck in an upgrade domain.<br>**Impact**: Cluster Manager does not persist the current Service Fabric upgrade after the Cluster Manager primary is failed over causing stuck upgrades in a Upgrade Domain.<br>**Fix**: Cluster Manager will retry recovered operations after failover. 
 
 
 ## Repositories and Download Links
