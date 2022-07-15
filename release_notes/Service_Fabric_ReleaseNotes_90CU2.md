@@ -27,7 +27,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 ## Key Announcements
 * Windows Server 2022 is now supported as of the 9.0 CU2 release.
 * Mirantis Container runtime support on Windows Server 2022 for Service Fabric containers. To configure, see [Containers on Windows](https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=dockerce#windows-server-1) documentation
-* The Microsoft Web Platform Installer (WebPI) has retired on July 1, 2022. For more information, see: [Set up Windows development environment](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-get-started#to-use-visual-studio-2017-or-2019)
+* The Microsoft Web Platform Installer (WebPI) used for installing Service Fabric SDK and Tools was retired on July 1, 2022. For latest guidance, see: [Set up Windows development environment](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-get-started#to-use-visual-studio-2017-or-2019)
 
 ## Current Breaking Changes
 
