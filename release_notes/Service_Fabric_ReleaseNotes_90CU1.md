@@ -6,7 +6,7 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 9.0.1035.1 <br>  9.0.1035.1 <br> 9.0.1028.9590  |
+|Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 <br> Windows | 9.0.1035.1 <br>  9.0.1035.1 <br> 9.0.1028.9590  |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.0.1017.9590 |
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1028  <br> 9.0.1028 <br> 9.0.1028 <br> 9.0.1028 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
@@ -56,7 +56,7 @@ The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shi
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Reliability and Security fix |**Brief desc**: Security fixes related to Container logs and runtime dependencies.<br> For container Logs, Service Fabric runtime on Linux will no longer process Service Fabric-generated diagnostic logs emitted by enlightened containerized workloads. On Windows, the logging agent will no longer use the container-mounted log folder to stage metadata files.<br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>Read more about it at - <ul><li>[Service Fabric Privilege Escalation from Containerized Workloads on Linux](https://msrc-blog.microsoft.com/2022/06/28/azure-service-fabric-privilege-escalation-from-containerized-workloads-on-linux/)</li></ul> | <br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>  |
+| **Windows - 9.0.1028.9590<br> Ubuntu 18 - 9.0.1035.1** | **Bug** | Reliability and Security fix |**Brief desc**: Security fixes related to Container logs and runtime dependencies.<br> For container Logs, Service Fabric runtime on Linux will no longer process Service Fabric-generated diagnostic logs emitted by enlightened containerized workloads. On Windows, the logging agent will no longer use the container-mounted log folder to stage metadata files.<br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>The public disclosure detailing the issue has been made available - <ul><li>[Service Fabric Privilege Escalation from Containerized Workloads on Linux](https://msrc-blog.microsoft.com/2022/06/28/azure-service-fabric-privilege-escalation-from-containerized-workloads-on-linux/)</li></ul> | <br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>  |
 
 
 ## Repositories and Download Links
