@@ -20,30 +20,10 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 8.2 Cumulative Update 4.0 Release Notes
 
-* [Current Breaking Changes](#current-breaking-changes)
-* [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
+* [Service Fabric Bug Fixes](#service-fabric-bug-fixes)
 * [Repositories and Download Links](#repositories-and-download-links)
 
-
-## Current Breaking Changes
-
-* **Guest Executable and Container Applications**: Guest executable and container applications created or upgraded in Service Fabric clusters with runtime versions 7.1+ are incompatible with prior Service Fabric runtime versions (e.g. Service Fabric 7.0).<br/>
-    Following scenarios are impacted:<br/>
-    * An application with guest executables or containers is created or upgraded in a Service Fabric 7.1+ cluster.<br/>
-    The cluster is then downgraded to a previous Service Fabric runtime version (e.g. Service Fabric 7.0).<br/>
-    The application fails to activate.<br/>
-    * A cluster upgrade from a version prior to Service Fabric v7.1 to Service Fabric 7.1+ version is in progress.<br/>
-    In parallel with the Service Fabric runtime upgrade, an application with guest executables or containers is created or upgraded.<br/>
-    The Service Fabric runtime upgrade starts rolling back (due to any reason) to a version prior to Service Fabric runtime v7.1.<br/>
-    The application fails to activate.<br/>
-    To avoid issues when upgrading from a version prior to Service Fabric runtime v7.1 to a Service Fabric 7.1+ runtime version, do not create or upgrade applications with guest executables or containers while the Service Fabric runtime upgrade is in progress.<br/>
-    * The simplest mitigation, when possible, is to delete and recreate the application in Service Fabric 7.0.<br/>
-    * The other option is to upgrade the application in Service Fabric 7.0 (for example, with a version only change).<br/>
-    If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
-
-<br>
-
-## Service Fabric Common Bug Fixes
+## Service Fabric Bug Fixes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
