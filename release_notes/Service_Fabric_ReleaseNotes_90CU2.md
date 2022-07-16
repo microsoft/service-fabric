@@ -18,9 +18,8 @@ The following packages and versions are part of this release:
 Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 
 * [Key Announcements](#key-announcements)
-* [Current Breaking Changes](#current-breaking-changes)
-* [Future Retirement and Deprecation Path Callouts](#future-retirement-and-deprecation-path-callouts)
-* [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
+* [Service Fabric Bug Fixes](#service-fabric-bug-fixes)
+* [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
 * [Repositories and Download Links](#repositories-and-download-links)
 
 
@@ -29,25 +28,15 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 * Mirantis Container runtime support on Windows for Service Fabric containers. To configure, see [Containers on Windows](https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=dockerce#windows-server-1) documentation
 * The Microsoft Web Platform Installer (WebPI) used for installing Service Fabric SDK and Tools was retired on July 1, 2022. For latest guidance, see: [Set up Windows development environment](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-get-started#to-use-visual-studio-2017-or-2019)
 
-## Current Breaking Changes
+## Service Fabric Bug Fixes
 
-* **Guest Executable and Container Applications**: Guest executable and container applications created or upgraded in Service Fabric clusters with runtime versions 7.1+ are incompatible with prior Service Fabric runtime versions (e.g. Service Fabric 7.0).<br/>
-    Following scenarios are impacted:<br/>
-    * An application with guest executables or containers is created or upgraded in a Service Fabric 7.1+ cluster.<br/>
-    The cluster is then downgraded to a previous Service Fabric runtime version (e.g. Service Fabric 7.0).<br/>
-    The application fails to activate.<br/>
-    * A cluster upgrade from a version prior to Service Fabric v7.1 to Service Fabric 7.1+ version is in progress.<br/>
-    In parallel with the Service Fabric runtime upgrade, an application with guest executables or containers is created or upgraded.<br/>
-    The Service Fabric runtime upgrade starts rolling back (due to any reason) to a version prior to Service Fabric runtime v7.1.<br/>
-    The application fails to activate.<br/>
-    To avoid issues when upgrading from a version prior to Service Fabric runtime v7.1 to a Service Fabric 7.1+ runtime version, do not create or upgrade applications with guest executables or containers while the Service Fabric runtime upgrade is in progress.<br/>
-    * The simplest mitigation, when possible, is to delete and recreate the application in Service Fabric 7.0.<br/>
-    * The other option is to upgrade the application in Service Fabric 7.0 (for example, with a version only change).<br/>
-    If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
+| Versions | IssueType | Description | Resolution | 
+|-|-|-|-|
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Reverse Proxy | **Brief desc**: Sending request URI with long path component i.e >504 characters over Reverse Proxy causes an error to be returned. Reverse proxy can now handle request that contain a long path component in the URI.<br>**Impact**: Reverse Proxy (FabricApplicationGateway) would incorrectly return FABRIC_E_INVALID_ADDRESS when the path component in a request URI was over 504 characters<br>**Fix**: Support sending long path component in request URI over Reverse Proxy.
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.The longer the cluster ran, the greater memory footprint would be, and performance would incrementally decrease.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
+| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Cluster Manager Service | **Brief desc**: Service Fabric upgrades gets stuck in an upgrade domain.<br>**Impact**: Cluster Manager does not persist the current Service Fabric upgrade after the Cluster Manager primary is failed over causing stuck upgrades in a Upgrade Domain.<br>**Fix**: Cluster Manager will retry recovered operations after failover. 
 
-<br>
-
-## Future Retirement and Deprecation Path Callouts
+## Retirement and Deprecation Path Callouts
 * Service Fabric ASP.NET Core packages built against ASP.NET Core 1.0 binaries are out of support. Starting Service Fabric 8.2, we will be building Service Fabric ASP.NET Core packages against .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, .NET Framework 4.6.1. As a result, they can be used only to build services targeting .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, >=.NET Framework 4.6.1 respectively.
 For .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, Service Fabric ASP.NET Core will be taking dependency on Microsoft.AspNetCore.App shared framework; whereas, for NetFx target frameworks >=.NET Framework 4.6.1, Service Fabric ASP.NET Core will be taking dependency on ASP.NET Core 2.1 packages.
 The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shipped, Microsoft.ServiceFabric.AspNetCore.HttpSys package should be used instead.
@@ -56,16 +45,6 @@ The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shi
 * Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021.Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS.Current applications running on it will continue to work, but requests for investigations or requests for change will no longer be entertained. Please migrate to Ubuntu 18.04 or 20.04 instead.
 * Service Fabric runtime will soon be stop using BinaryFormatter based remoting exception serialization by default and move to using Data Contract Serilization (DCS) based remoting exception serialization by default.Current applications using it will continue to work as-is, but Service Fabric strongly recommends moving to using Data Contract Serilization (DCS) based remoting exception instead.
 * Service Fabric runtime will soon be archiving and removing Service Fabric runtime version 6.4 packages and older, as well as SDK version 3.3 packages and older from the package Download Center.
-
-
-## Service Fabric Common Bug Fixes
-
-| Versions | IssueType | Description | Resolution | 
-|-|-|-|-|
-| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Reverse Proxy | **Brief desc**: Sending request URI with long path component i.e >504 characters over Reverse Proxy causes an error to be returned. Reverse proxy can now handle request that contain a long path component in the URI.<br>**Impact**: Reverse Proxy (FabricApplicationGateway) would incorrectly return FABRIC_E_INVALID_ADDRESS when the path component in a request URI was over 504 characters<br>**Fix**: Support sending long path component in request URI over Reverse Proxy.
-| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Failover Manager cache | **Brief desc**: Cache cleanup logic of Failover Manager had a bug which resulted in memory increase and performance degradation.The longer the cluster ran, the greater memory footprint would be, and performance would incrementally decrease.<br>**Impact**: This can cause clusters to be extremely unresponsive and slow.<br>**Fix**: Add cleanup logic that purges all stale entries keeping the load cache small and predictable. 
-| **Windows - 9.0.1048.9590<br>Ubuntu 18 - 9.0.1056.1<br>Ubuntu 20 - 9.0.1056.1** | **Bug** | Cluster Manager Service | **Brief desc**: Service Fabric upgrades gets stuck in an upgrade domain.<br>**Impact**: Cluster Manager does not persist the current Service Fabric upgrade after the Cluster Manager primary is failed over causing stuck upgrades in a Upgrade Domain.<br>**Fix**: Cluster Manager will retry recovered operations after failover. 
-
 
 ## Repositories and Download Links
 The table below is an overview of the direct links to the packages associated with this release. 
