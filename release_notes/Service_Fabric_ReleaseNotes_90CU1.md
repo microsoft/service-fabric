@@ -6,7 +6,7 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 9.0.1035.1 <br>  9.0.1035.1 <br> 9.0.1028.9590  |
+|Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 <br> Windows | 9.0.1035.1 <br>  9.0.1035.1 <br> 9.0.1028.9590  |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.0.1017.9590 |
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1028  <br> 9.0.1028 <br> 9.0.1028 <br> 9.0.1028 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
@@ -17,31 +17,17 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 9.0 Cumulative Update 1.0 Release Notes
 
-* [Current Breaking Changes](#current-breaking-changes)
-* [Future Retirement and Deprecation Path Callouts](#future-retirement-and-deprecation-path-callouts)
-* [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
+* [Service Fabric Bug Fixes](#service-fabric-bug-fixes)
+* [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
 * [Repositories and Download Links](#repositories-and-download-links)
 
+## Service Fabric Bug Fixes
 
-## Current Breaking Changes
+| Versions | IssueType | Description | Resolution | 
+|-|-|-|-|
+| **Windows - 9.0.1028.9590<br> Ubuntu 18 - 9.0.1035.1 <br> Ubuntu 20 - 9.0.1035.1** | **Bug** | Reliability and Security fix |**Brief desc**: Security fixes related to Container logs and runtime dependencies.<br> For container Logs, Service Fabric runtime on Linux will no longer process Service Fabric-generated diagnostic logs emitted by enlightened containerized workloads. On Windows, the logging agent will no longer use the container-mounted log folder to stage metadata files.<br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>The public disclosure detailing the issue has been made available - <ul><li>[Service Fabric Privilege Escalation from Containerized Workloads on Linux](https://msrc-blog.microsoft.com/2022/06/28/azure-service-fabric-privilege-escalation-from-containerized-workloads-on-linux/)</li></ul> | <br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>  |
 
-* **Guest Executable and Container Applications**: Guest executable and container applications created or upgraded in Service Fabric clusters with runtime versions 7.1+ are incompatible with prior Service Fabric runtime versions (e.g. Service Fabric 7.0).<br/>
-    Following scenarios are impacted:<br/>
-    * An application with guest executables or containers is created or upgraded in a Service Fabric 7.1+ cluster.<br/>
-    The cluster is then downgraded to a previous Service Fabric runtime version (e.g. Service Fabric 7.0).<br/>
-    The application fails to activate.<br/>
-    * A cluster upgrade from a version prior to Service Fabric v7.1 to Service Fabric 7.1+ version is in progress.<br/>
-    In parallel with the Service Fabric runtime upgrade, an application with guest executables or containers is created or upgraded.<br/>
-    The Service Fabric runtime upgrade starts rolling back (due to any reason) to a version prior to Service Fabric runtime v7.1.<br/>
-    The application fails to activate.<br/>
-    To avoid issues when upgrading from a version prior to Service Fabric runtime v7.1 to a Service Fabric 7.1+ runtime version, do not create or upgrade applications with guest executables or containers while the Service Fabric runtime upgrade is in progress.<br/>
-    * The simplest mitigation, when possible, is to delete and recreate the application in Service Fabric 7.0.<br/>
-    * The other option is to upgrade the application in Service Fabric 7.0 (for example, with a version only change).<br/>
-    If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
-
-<br>
-
-## Future Retirement and Deprecation Path Callouts
+## Retirement and Deprecation Path Callouts
 * Service Fabric ASP.NET Core packages built against ASP.NET Core 1.0 binaries are out of support. Starting Service Fabric 8.2, we will be building Service Fabric ASP.NET Core packages against .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, .NET Framework 4.6.1. As a result, they can be used only to build services targeting .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, >=.NET Framework 4.6.1 respectively.
 For .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, Service Fabric ASP.NET Core will be taking dependency on Microsoft.AspNetCore.App shared framework; whereas, for NetFx target frameworks >=.NET Framework 4.6.1, Service Fabric ASP.NET Core will be taking dependency on ASP.NET Core 2.1 packages.
 The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shipped, Microsoft.ServiceFabric.AspNetCore.HttpSys package should be used instead.
@@ -50,14 +36,6 @@ The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shi
 *  Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021.Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS.Current applications running on it will continue to work, but requests for investigations or requests for change will no longer be entertained. Please migrate to Ubuntu 18.04 or 20.04 instead.
 * Service Fabric runtime will soon be stop using BinaryFormatter based remoting exception serialization by default and move to using Data Contract Serilization (DCS) based remoting exception serialization by default.Current applications using it will continue to work as-is, but Service Fabric strongly recommends moving to using Data Contract Serilization (DCS) based remoting exception instead.
 * Service Fabric runtime will soon be archiving and removing Service Fabric runtime version 6.4 packages and older, as well as SDK version 3.3 packages and older from the package Download Center.
-
-
-## Service Fabric Common Bug Fixes
-
-| Versions | IssueType | Description | Resolution | 
-|-|-|-|-|
-| **Windows - 9.0.1028.9590<br>Ubuntu 16 - 9.0.1035.1<br>Ubuntu 18 - 9.0.1035.1** | **Bug** | Reliability and Security fix |**Brief desc**: Security fixes related to Container logs and runtime dependencies.<br> For container Logs, Service Fabric runtime on Linux will no longer process Service Fabric-generated diagnostic logs emitted by enlightened containerized workloads. On Windows, the logging agent will no longer use the container-mounted log folder to stage metadata files.<br> Customers will need to update any runtime dependencies with newer versions, which include fixes for known/published vulnerabilities.<br>  |
-
 
 ## Repositories and Download Links
 The table below is an overview of the direct links to the packages associated with this release. 
