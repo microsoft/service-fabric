@@ -1,19 +1,16 @@
 ﻿# Microsoft Azure Service Fabric 8.2 Cumulative Update 5.1 Release Notes
 
-This release includes bug fixes as described in this documents.
+This release includes a fix for Linux only as described below in this document.
 
 The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 | 8.2.1483.1 <br> 8.2.1483.1 |
-|Java SDK  |Java for Linux SDK  | 1.0.6 |
-|Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
-
+|Service Fabric Runtime| Ubuntu 18| 8.2.1483.1|
 
 ## Contents 
 
-Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
+Microsoft Azure Service Fabric 8.2 Cumulative Update 5.1 Release Notes
 
 * [Current Breaking Changes](#current-breaking-changes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
@@ -21,7 +18,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 
 
 ## Current Breaking Changes
-Customers running Azure Service Fabric Linux Clusters will not be able to scale out or reimage (manual or auto via VMSS OS Image Update) nodes  or create new Linux clusters without upgrading to this version of Service Fabric(8.2.1483.1). Also, if your application requires JDK, then you will need to install a JDK of your choice since SF will not install the JDK as part of the SF installation.<br>
+Customers running Azure Service Fabric Linux Clusters will not be able to scale out or reimage (manual or auto via VMSS OS Image Update) nodes  or create new Linux clusters without upgrading to this version of Service Fabric (8.2.1483.1). Also, if your application requires JDK, then you will need to install a JDK of your choice since SF will not install the JDK as part of the SF installation.<br>
 **Details:** Service Fabric Runtime installed a dependency (Azul JDK), which is now deprecated, and unavailable, as announced in dev [blog](https://nam06.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdevblogs.microsoft.com%2Fjava%2Fend-of-updates-support-and-availability-of-zulu-for-azure%2F&data=05%7C01%7CDivya.Cherkuri%40microsoft.com%7Cf02580b7e1304da015b508da7982378c%7C72f988bf86f141af91ab2d7cd011db47%7C1%7C0%7C637955897433879958%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=WmkPbF100N60IK%2BgPJ3lXdfvQR0JO%2Fy3pqzdJWRcfnI%3D&reserved=0). Since, on Linux, creation of new clusters or scale-out/reimage of nodes required all the dependencies to be installed, these workflows broke when the dependency became unavailable.<br>
 Starting with this release, Service Fabric Runtime will stop installing Azul JDK dependency which will ensure that customer can scale out, reimage, or create new Linux clusters.  If your application needs JDK, please utilize an alternate mechanism to provision a JDK.  To get the latest SF Runtime releases with this change, follow the upgrade documentation and install a JDK of your choice. To get the latest SF Runtime releases with this change, follow the [upgrade documentation](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-tutorial-upgrade-cluster) and install a JDK of your choice.<br>
 The following versions will be deprecated starting August 19 and will not be available on Linux for new cluster creation or node reimage/scale out operations:
@@ -49,20 +46,4 @@ Follow this guidance for setting up your developer environment:
 | Area | Package | Version | Repository | Direct Download Link |
 |-|-|-|-|-|
 |Service Fabric Runtime |Ubuntu Developer Set-up | 8.2.1483.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
-|| Windows Developer Set-up| N/A | N/A | N/A |
-|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | N/A |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.0.1048.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.0.1048.9590.zip |
-||Service Fabric Standalone Runtime | N/A |N/A | N/A |
-|.NET SDK |Windows .NET SDK | N/A |N/A | N/A |
-||Microsoft.ServiceFabric | N/A |N/A |N/A |
-||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | N/A |N/A |N/A |
-||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 8.0.516 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
-||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 9.0.1048 |N/A| https://www.nuget.org |
-||Microsoft.ServiceFabric.Data.Extensions | 8.0.516 | N/A |https://www.nuget.org |
-|Java SDK |Java SDK | 1.0.6 |N/A |https://mvnrepository.com/artifact/com.microsoft.servicefabric/sf-actors/1.0.6 |
-|Eclipse |Service Fabric plug-in for Eclipse | 2.0.7 | N/A |N/A |
-|Yeoman |Azure Service Fabric Java generator | 1.0.7 |https://github.com/Azure/generator-azuresfjava |N/A |
-||Azure Service Fabric C# generator | 1.0.9 |https://github.com/Azure/generator-azuresfcsharp |N/A |
-||Azure Service Fabric guest executables generator | 1.0.1 |https://github.com/Azure/generator-azuresfguest |N/A|
-||Azure Service Fabric Container generators | 1.0.1 |https://github.com/Azure/generator-azuresfcontainer |N/A |
-|CLI |Service Fabric CLI | 11.0.1 |https://github.com/Azure/service-fabric-cli |https://pypi.python.org/pypi/sfctl |
-|PowerShell |AzureRM.ServiceFabric | 0.3.15 |https://github.com/Azure/azure-powershell/tree/preview/src/ResourceManager/ServiceFabric |N/A  |
+
