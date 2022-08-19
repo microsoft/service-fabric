@@ -20,7 +20,7 @@ Microsoft Azure Service Fabric 9.0 Cumulative Update 2.0 Release Notes
 * [Repositories and Download Links](#repositories-and-download-links)
 
 
-##Current Breaking Changes
+## Current Breaking Changes
 Customers running Azure Service Fabric Linux Clusters will not be able to scale out or reimage (manual or auto via VMSS OS Image Update) nodes  or create new Linux clusters without upgrading to this version of Service Fabric(8.2.1483.1). Also, if your application requires JDK, then you will need to install a JDK of your choice since SF will not install the JDK as part of the SF installation.
  The following versions will be deprecated starting August 19 and will not be available on Linux for new cluster creation or node reimage/scale out operations: 
 	* 9.0 CU2/CU1/RTO
