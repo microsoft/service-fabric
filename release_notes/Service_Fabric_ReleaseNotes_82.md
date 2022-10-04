@@ -17,11 +17,13 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 8.2 Release Notes
 
-* [Key Announcements](#key-announcements)
-* [Current And Upcoming Breaking Changes](#Current-And-Upcoming-Breaking-Changes)
-* [Service Fabric Runtime](#service-fabric-runtime)
-* [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
-* [Repositories and Download Links](#repositories-and-download-links)
+- [Microsoft Azure Service Fabric 8.2 Release Notes](#microsoft-azure-service-fabric-82-release-notes)
+  - [Contents](#contents)
+  - [Key Announcements](#key-announcements)
+  - [Current Breaking Changes](#current-breaking-changes)
+  - [Service Fabric Runtime](#service-fabric-runtime)
+  - [Service Fabric Add-ons Applications](#service-fabric-add-ons-applications)
+  - [Repositories and Download Links](#repositories-and-download-links)
 
 
 ## Key Announcements
@@ -52,6 +54,7 @@ Microsoft Azure Service Fabric 8.2 Release Notes
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
 | **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | Expose an API in Cluster Manager to note if upgrade is impactful | **Brief Description**: Added a new ValidateFabricUpgrade API, which validates the parameters of a Fabric Cluster upgrade request and returns the expected service host impact. Impact is assessed based on whether the upgrade is expected to cause Service Fabric's service host to restart when applied to a node, which leads to all services on the node to restart as well. |
+| **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | New Sfx by Default | **Brief Description**: The option to return to the old SFX application has been moved to the advanced option's dropdown. The old SFX application is not recommended to be used due to security concerns and will be removed in a later version entirely. |
 
 
 ## Service Fabric Add-ons Applications
