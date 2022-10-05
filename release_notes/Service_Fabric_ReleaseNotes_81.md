@@ -18,14 +18,14 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 8.1 Release Notes
 
-- [Microsoft Azure Service Fabric 8.1  Release Notes](#microsoft-azure-service-fabric-81--release-notes)
-- [Contents](#contents)
-- [Key Announcements](#key-announcements)
-- [Current Breaking Changes](#current-breaking-changes)
-- [Upcoming Breaking Changes](#upcoming-breaking-changes)
-- [Service Fabric Runtime](#service-fabric-runtime)
-- [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
-- [Repositories and Download Links](#repositories-and-download-links)
+* [Microsoft Azure Service Fabric 8.1  Release Notes](#microsoft-azure-service-fabric-81--release-notes)
+* [Contents](#contents)
+* [Key Announcements](#key-announcements)
+* [Current Breaking Changes](#current-breaking-changes)
+* [Upcoming Breaking Changes](#upcoming-breaking-changes)
+* [Service Fabric Runtime](#service-fabric-runtime)
+* [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
+* [Repositories and Download Links](#repositories-and-download-links)
 
 
 ## Key Announcements
@@ -71,7 +71,7 @@ Microsoft Azure Service Fabric 8.1 Release Notes
 | **Windows - 8.1.316.9590<br>Ubuntu 16 - 8.1.320.1<br>Ubuntu 18 - 8.1.320.1** | **Feature** | Added periodic ping between RA and RAP to detect IPC failure and stuck process | **Brief desc**: Added periodic ping between Reconfiguration Agent (RA) and Reconfiguration Agent Proxy (RAP) to detect IPC failure and stuck process<br>**Usage**: On every node, the Service Fabric agent on the node will periodically exchange a heartbeat message with the customer process, to ensure the IPC is working and the customer process is not frozen. When such issues have been detected (not a single heartbeat message has been successfully exchanged in 15 min by default), the customer process will be terminated to mitigate the issue.<br>**Impact**: Add periodic ping between RA and RAP to detect IPC failure and stuck process<br> |
 | **Windows - 8.1.316.9590<br>Ubuntu 16 - 8.1.320.1<br>Ubuntu 18 - 8.1.320.1** | **Feature** | Added support probes for non containerized applications | **Brief desc**: Support for liveness and readiness probe for non containerized applications<br> |
 | **Windows - 8.1.316.9590<br>Ubuntu 16 - 8.1.320.1<br>Ubuntu 18 - 8.1.320.1** | **Feature** | Made cluster upgrade for node capacity updates impactless | **Brief desc**: Service Fabric version 8.1 introduces support for dynamic upgrade of node capacity and node property configs, with no disruption to running workloads.<br>**Impact**: Customer is able to update node capacities and node properties via dynamic config upgrade.<br> | 
-| **Windows - 8.1.316.9590<br>Ubuntu 16 - 8.1.320.1<br>Ubuntu 18 - 8.1.320.1** | **Feature** | New SFX is now available by default | **Brief desc**: New SFX will replace the existing SFX application with better performance and security fixes to ensure sanitization is performed on all values rendered. These security fixes adhere to best practices and ensure that unintended javascript is not executed. New SFX has been set as the default and is the recommended version to use due to the previous application not being as secure and not sanitizing some values before being rendered. The existing application is still accessible by using the "leave beta" button and the new application can be returned to with the "enter beta" button on the old application. |
+| **Windows - 8.1.316.9590<br>Ubuntu 16 - 8.1.320.1<br>Ubuntu 18 - 8.1.320.1** | **Feature** | New SFX is now available by default | **Brief desc**: A new implementation of SFX will replace the existing SFX application with better performance and security fixes. These changes align SFX with security best practices, and include sanitization of all values rendered to ensure that unintended javascript or html code is not executed in the client context. The new SFX has been set as the default and is the recommended version; the previous application is not sanitizing certain values before rendering, and is thus potentially vulnerable to unintended execution of javascript or html code persisted in or originating from the cluster. The previous application is still accessible by using the "leave beta" control of the default application, but it is strongly discouraged. Should the previous application be loaded, the user can exit it and return to the new application using the "enter beta" button. Please note that 'beta' does not denote a pre-production level of quality or support, and was meant strictly as 'the new/changed UX'. |
 
 
 ## Service Fabric Common Bug Fixes
