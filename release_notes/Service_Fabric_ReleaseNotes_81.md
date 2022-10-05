@@ -18,11 +18,8 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 8.1 Release Notes
 
-* [Microsoft Azure Service Fabric 8.1  Release Notes](#microsoft-azure-service-fabric-81--release-notes)
-* [Contents](#contents)
 * [Key Announcements](#key-announcements)
-* [Current Breaking Changes](#current-breaking-changes)
-* [Upcoming Breaking Changes](#upcoming-breaking-changes)
+* [Current And Upcoming Breaking Changes](#Current-And-Upcoming-Breaking-Changes)
 * [Service Fabric Runtime](#service-fabric-runtime)
 * [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
 * [Repositories and Download Links](#repositories-and-download-links)

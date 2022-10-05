@@ -17,12 +17,10 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 8.2 Release Notes
 
-* [Microsoft Azure Service Fabric 8.2 Release Notes](#microsoft-azure-service-fabric-82-release-notes)
-* [Contents](#contents)
 * [Key Announcements](#key-announcements)
-* [Current Breaking Changes](#current-breaking-changes)
+* [Current And Upcoming Breaking Changes](#Current-And-Upcoming-Breaking-Changes)
 * [Service Fabric Runtime](#service-fabric-runtime)
-* [Service Fabric Add-ons Applications](#service-fabric-add-ons-applications)
+* [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
 * [Repositories and Download Links](#repositories-and-download-links)
 
 
