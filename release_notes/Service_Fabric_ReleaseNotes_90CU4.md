@@ -1,13 +1,13 @@
 # Microsoft Azure Service Fabric 9.0 Cumulative Update 4.0 Release Notes
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
-* [Breaking Changes](#breaking-changes)
 * [Key Announcements](#key-announcements)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
 * [Repositories and Download Links](#repositories-and-download-links)
 
 ## Service Fabric Packages and Versions
+
 The following packages and versions are part of this release:
 
 | Service | Platform | Version |
@@ -17,6 +17,11 @@ The following packages and versions are part of this release:
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1121  <br> 9.0.1121 <br> 9.0.1121 <br> 9.0.1121 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
+
+## Key Announcements
+* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 10/30/2022. 5 VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads.VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
+* Azure Service Fabric node types with VMSS durability of Silver or Gold should always have Windows update explicitly disabled to avoid unintended OS restarts due to the Windows updates, which can impact the production workloads. This can be done by setting the "enableAutomaticUpdates": false, in the VMSS OSProfile. Consider enabling Automatic VMSS Image upgrades instead. The deployments will start failing from *11/10/2022* for new clusters, if the WindowsUpdates are not disabled on the VMSS. Enforcement for existing clusters will be rolled out in the coming months. <br>
+For more information see: [VMSS Image Upgrades](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade)
 
 
 ## Service Fabric Feature and Bug Fixes
@@ -33,8 +38,6 @@ The following packages and versions are part of this release:
 * Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021. Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS. Current applications running on it will continue to work, but requests to investigate issues w.r.t this OS or requests for change will no longer be entertained. Service Fabric runtime has also dropped producing builds for U16.04 so customers will no longer be able to get SF related patches.
 * Service Fabric runtime will soon stop supporting BinaryFormatter based remoting exception serialization by default and move to using Data Contract Serialization (DCS) based remoting exception serialization by default. Current applications using it will continue to work as-is, but Service Fabric strongly recommends moving to using Data Contract Serialization (DCS) based remoting exception instead.
 * Service Fabric runtime will soon be archiving and removing Service Fabric runtime version 6.4 packages and older, as well as SDK version 3.3 packages and older from the package Download Center. Archiving/Removing will affect application scaling and re-imaging of virtual machines in a Service Fabric Cluster running on unsupported versions. After older versions are removed/archived, this may cause failure while rolling back when the current in-progress upgrade has errors.
-* .Net Core 2.1 is out support as of August 2021. Applications running on .net core 2.1 and lower will stop working from Service Fabric release 10 in Feb 2023. Please migrate to a higher supported version at the earliest.
-*
 
 ## Repositories and Download Links
 
