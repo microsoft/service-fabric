@@ -28,6 +28,49 @@ Starting 8/19/2022, the following versions have been deprecated and will not be 
 Beginning with 9.0 CU 2.1 release, Service Fabric Runtime will no longer install any JDK dependency which will ensure that customer can scale out, reimage, or create new Linux clusters. If your application needs JDK, please utilize an alternate mechanism to provision a JDK. To get the latest Service Fabric Runtime releases with this change, follow the upgrade documentation. If you depend on a JDK, please be sure to install one of your choice.<br>
 For more information see: [Breaking change for Azure Service Fabric Linux customers](https://techcommunity.microsoft.com/t5/azure-service-fabric-blog/breaking-change-for-azure-service-fabric-linux-customers/ba-p/3604678)
 
+**Breaking Changes with  BackupRestoreService**
+When SF cluster is upgraded to to 9.0.1107.9590 which has existing backup policies and these are enabled on any of the app/service/partition, post upgradation BRS fails deserialize old metadata with changes in new release. It will stop taking backup and restore on the partition/service/app in question, though cluster and BRS remains healthy. Customers would see logs something like –
+| Timestamp | Type | Process | Thread | Message |
+| --- | --- | --- | --- | --- |
+| 2022-10-18T11:14:18.44Z | BackupRestoreManager | 92384 | 576992 | 2f2f40a4-b8a6-416b-98c2-939ea60b0d77 Error encountered in BackupRestoreWorker InitializeAsync System.Runtime.Serialization.SerializationException: Error in line 1 position 198. 'Element' '_x003C_NumberOfBackupsInChain_x003E_k__BackingField' from namespace 'http://schemas.datacontract.org/2004/07/System.Fabric.BackupRestore' is not expected. Expecting element '_x003C_NextBackupTime_x003E_k__BackingField'.<br>    	   at System.Runtime.Serialization.XmlObjectSerializerReadContext.ThrowRequiredMemberMissingException(XmlReaderDelegator xmlReader, Int32 memberIndex, Int32 requiredIndex, XmlDictionaryString[] memberNames)|
+
+**Mitigation**
+To mitigate, customers need to update the existing policy after upgrading to 9.0.1107.9590. User can call updatebackuppolicy API as mentioned in this doc [Update Backup Policy] https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy with existing policy values. It will update the policy model inside BRS with new data model and BRS will start taking periodic backups again.
+**Steps**
+1. Check if there were some existing backup policies applied on any application/service/partition before upgrading to 9.0.1107.9590
+2. Check if periodic backups are stopped post upgrading and above error is appearing in logs.
+above errors are appearing
+3. Update the backup policy with same old values by calling updatebackuppolicy API. Below is one sample -
+    ```powershell
+     $BackupPolicy=@{
+      Name = "DailyAzureBackupPolicy"
+      AutoRestoreOnDataLoss = "false"
+      MaxIncrementalBackups = "3"
+      Schedule = @{
+        ScheduleKind = "FrequencyBased"
+        Interval = "PT3M"
+      }
+      Storage = @{
+        StorageKind = "AzureBlobStore"
+        FriendlyName = "Azure_storagesample"
+        ConnectionString = "<connection string values>"
+        ContainerName = "<Container Name>"
+      }
+      RetentionPolicy = @{
+        RetentionPolicyType = "Basic"
+        MinimumNumberOfBackups = "20"
+        RetentionDuration = "P3M"
+      }
+     }
+      $body = (ConvertTo-Json $BackupPolicy)
+      $url = 'https://<ClusterEndPoint>:19080/BackupRestore/BackupPolicies/DailyAzureBackupPolicy/$/Update?api-version=6.4'
+      Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType 'application/json' -CertificateThumbprint '<Thumbprint>'
+      # User should update the name of backup policy [DailyAzureBackupPolicy being used here and other possible values accordinly].
+    ```
+4. Wait for 1-2 mins and policy should get updated across all entities.
+5. Periodic backups will start happening as per backup policy.
+
+
 ## Key Announcements
 * Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 10/30/2022. 5 VMs or more will be enforced with this change for newer clusters created after *10/30/2022* to help avoid data loss from VM-level infrastructure requests for production workloads.VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
 * Azure Service Fabric node types with VMSS durability of Silver or Gold should always have Windows update explicitly disabled to avoid unintended OS restarts due to the Windows updates, which can impact the production workloads. This can be done by setting the "enableAutomaticUpdates": false, in the VMSS OSProfile. Consider enabling Automatic VMSS Image upgrades instead. The deployments will start failing from *10/30/2022* for new clusters, if the WindowsUpdates are not disabled on the VMSS. Enforcement for existing clusters will be rolled out in the coming months. <br>
