@@ -32,15 +32,15 @@ int __cdecl wmain(int argc, __in_ecount(argc) wchar_t* argv[])
 
     if (StringUtility::AreEqualCaseInsensitive(arg, L"consoleWrite"))
     {
-        StringConsoleOut();        
+        StringConsoleOut();
     }
     else if(StringUtility::AreEqualCaseInsensitive(arg, L"CtrlCExit"))
     {
-        SetCtrlHandler(false);       
+        SetCtrlHandler(false);
     }
     else if(StringUtility::AreEqualCaseInsensitive(arg, L"CtrlCBlock"))
     {
-        SetCtrlHandler(true);        
+        SetCtrlHandler(true);
     }
 }
 
@@ -49,7 +49,7 @@ void StringConsoleOut()
     for (int i = 0; i < 1000; i++)
     {
         console.WriteLine("Writing test data to console");
-    }    
+    }
     SetEvent();
     exit(0);
 }
@@ -81,12 +81,13 @@ void SetEvent()
         true,
         false,
         ProcessSyncEventName.c_str()));
-    ::SetEvent(handle->Value);        
+    ::SetEvent(handle->Value);
 }
 #else
 
 RealConsole console;
 bool CtrlCAction = false;
+int syncEventFD = -1;
 
 void StringConsoleOut()
 {
@@ -102,6 +103,22 @@ void StringConsoleOut()
     exit(0);
 }
 
+void signal_parent()
+{
+    if (syncEventFD == -1)
+    {
+        return;
+    }
+
+    uint64 value = 1;
+    int res = write(syncEventFD, &value, sizeof(value));
+    if (res == -1)
+    {
+        fprintf(stderr, "HostingTestProcess %d: Error while signalling parent. Exiting.\n", getpid());
+        exit(-1);
+    }
+}
+
 void sigint_handler(int sig)
 {
     if(CtrlCAction)
@@ -111,7 +128,11 @@ void sigint_handler(int sig)
 void SetCtrlHandler(bool returnVal)
 {
     CtrlCAction = returnVal;
-    signal(SIGINT, sigint_handler); 
+    signal(SIGINT, sigint_handler);
+
+    // sigint_handler is set.
+    // Signal readiness to parent before looping.
+    signal_parent();
 
     for (;;) pause();
 }
@@ -119,10 +140,18 @@ void SetCtrlHandler(bool returnVal)
 int main(int argc, char* argv[])
 {
     string arg = "";
-    if (argc >= 2) {
+
+    if (argc >= 2)
+    {
         arg = argv[1];
+        if (argc >= 3)
+        {
+            syncEventFD = atoi(argv[2]);
+        }
     }
-    else {
+    else
+    {
+        fprintf(stderr, "HostingTestProcess %d: argc should be >=2. Exiting.\n", getpid());
         exit(-1);
     }
 
@@ -133,11 +162,11 @@ int main(int argc, char* argv[])
         StringConsoleOut();
     }
     else if(StringUtility::AreEqualCaseInsensitive(warg, L"CtrlCExit"))
-    {   
+    {
         SetCtrlHandler(true);
     }
     else if(StringUtility::AreEqualCaseInsensitive(warg, L"CtrlCBlock"))
-    {   
+    {
         SetCtrlHandler(false);
     }
 }

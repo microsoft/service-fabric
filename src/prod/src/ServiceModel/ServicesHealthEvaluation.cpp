@@ -105,7 +105,6 @@ void ServicesHealthEvaluation::SetDescription()
 {
     size_t unhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1}% ({2}/{3}), ServiceType='{4}', MaxPercentUnhealthyServices={5}%.",
         HMResource::GetResources().HealthEvaluationUnhealthyServicesPerServiceTypePolicy,
         GetUnhealthyPercent(unhealthyCount, totalCount_),
         unhealthyCount,

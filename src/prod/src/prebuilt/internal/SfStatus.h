@@ -1939,11 +1939,20 @@ const USHORT FacilitySF = 0x43;
 #define SF_STATUS_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS ((NTSTATUS)0xE0431C89L)
 
 //
-// MessageId: SF_STATUS_OPERATION_NOT_SUPPORTED
+// MessageId: SF_STATUS_COMPOSE_DEPLOYMENT_NOT_UPGRADING
 //
 // MessageText:
 //
-// Indicates that the attempted operation is not supported.
+// Indicates the compose application is not upgrading.
 //
-#define SF_STATUS_OPERATION_NOT_SUPPORTED ((NTSTATUS)0xE0431C90L)
+#define SF_STATUS_COMPOSE_DEPLOYMENT_NOT_UPGRADING ((NTSTATUS)0xE0431C8AL)
+
+//
+// MessageId: SF_STATUS_SECRET_TYPE_CANNOT_BE_CHANGED
+//
+// MessageText:
+//
+// The type of an existing secret cannot be changed.
+//
+#define SF_STATUS_SECRET_TYPE_CANNOT_BE_CHANGED ((NTSTATUS)0xE0431C8BL)
 

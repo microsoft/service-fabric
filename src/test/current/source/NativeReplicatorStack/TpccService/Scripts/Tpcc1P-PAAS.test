@@ -1,0 +1,123 @@
+load SetPerfCountersCollection.test
+
+# PaaS Configuration
+var vmSize Standard_D14
+
+# Loads values that are passed into the performance app and profiler app
+# Allows all blobs to be uploaded to a single location
+
+var accountKey <get.secret.AccountKey-shrek>
+var containerPrefix ndatatpcc-<get.guid>
+var dumpContainerName <get.crashdumpcontainername>
+var profilerDataContainerName <var.containerPrefix>-prof
+
+setcfg Config.Federation.LeaseDuration 60
+
+# Sets the replicator settings for performance and throttle tests
+
+setcfg Dca.IsEnabled true
+setcfg Config.PerformanceCounterLocalStore.IsEnabled true 
+
+# Make the DCA's ETL read interval match the new counter file creation interval. At the end of the test, the test framework
+# will wait for (DCA's ETL read interval + upload interval + some buffer time) to ensure that DCA has an opportunity to 
+# upload the data for the test. By setting the perf counter file creation interval to match the DCA's ETL read interval, we
+# are ensuring that the perf counters also get uploaded within the time that the test waits.
+setcfg Config.PerformanceCounterLocalStore.NewCounterBinaryFileCreationIntervalInMinutes 5
+setcfg Dca.CommonEtlFileReadInterval 0.00:08:00
+
+
+setcfg Config.PerformanceCounterLocalStore.SamplingIntervalInSeconds 1
+setcfg Config.PerformanceCounterLocalStore.Counters "_default_,\Process(*)\% Processor Time,\Process(*)\Private Bytes,\Process(*)\Thread Count,\Process(*)\Working Set,\Process(*)\Pool Nonpaged Bytes,\Process(*)\Pool Paged Bytes,\.NET CLR Memory(*)\# Bytes in all Heaps,\.NET CLR Memory(*)\*,\Paging File\% Usage,\Network Interface(*)\*,\.NET CLR Exceptions(*)\*,\.NET CLR LocksAndThreads(*)\*,\.NET CLR Interop(*)\*,\Process(*)\IO Read Bytes/sec,\Process(*)\IO Write Bytes/sec"
+
+
+setcfg Config.Hosting.DeactivationGraceInterval 0
+setcfg Config.TransactionalReplicator.BatchAcknowledgementInterval 0.005
+# limit memory to around 1.5 GB per replica as D3 machines have low memory and cannot handle 16K 1MB operations with 6 replicas on a node
+setcfg Config.Replication.MaxPrimaryReplicationQueueMemorySize 1610612736
+setcfg Config.Replication.MaxSecondaryReplicationQueueMemorySize 1610612736
+setcfg Config.PlacementAndLoadBalancing.MinLoadBalancingInterval 1 
+setcfg Config.PlacementAndLoadBalancing.PlacementSearchTimeout 10
+setcfg Config.ReconfigurationAgent.SendLoadReportInterval 1
+setcfg Config.Replication.EnableSlowActiveSecondaryRestartForPersisted false
+setcfg Config.Replication.EnableSlowActiveSecondaryRestartForVolatile false
+setcfg Config.Hosting.CacheCleanupScanInterval 30
+
+# delete service timeout used in the v2client code is 30 minutes. It needs to be lesser than MaxOperationTimeout
+setcfg Config.NamingService.MaxOperationTimeout 2000
+
+setcfg Config.Hosting.ActivationMaxRetryInterval 5
+setcfg Config.Hosting.RunAsPolicyEnabled true
+
+# Enable application gateway
+setcfg Config.ApplicationGatewayHttp.IsEnabled true
+
+# Disaple profiler by default
+var EnableProfilerService false
+
+#
+# This will cause RAP to raise health event if some async api takes longer than 2 minutes and 
+# you can use it to directly narrow down to the async api that is stuck.
+setcfg Config.ReconfigurationAgent.ServiceApiHealthDuration 120
+
+#
+# This script is used to deploy a local 3-node cluster with each node capacity being 1.
+# This is used to place 3 primary replicas of the loaded perf partition on the 3 nodes
+# It is used by the 1 and 3 Partition tests
+#
+
+# Set deployment type to Paas to indicate all deployments and connections will be to an Paas cluster
+setcfg Config.DeploymentType Paas
+
+# Client sends requests to a load driver service running in the Paas cluster. The request goes
+# through the test gateway that is installed on the Paas cluster by the ScriptTest framework.
+# Therefore, we need to make sure that the WCF NetTcpBinding settings used by this test gateway
+# match the settings used by the client and the service of our test.
+setcfg Paas.Gateway.WcfSendTimeoutInSeconds -1
+setcfg Paas.Gateway.WcfReceiveTimeoutInSeconds -1
+setcfg Paas.Gateway.WcfOpenTimeoutInSeconds 5
+setcfg Paas.Gateway.WcfCloseTimeoutInSeconds 5
+setcfg Paas.Gateway.WcfMaxReceivedMessageSizeInBytes 134217728
+
+# Enable Progress Vector Trimming
+setcfg Config.TransactionalReplicator2.ProgressVectorMaxEntries 20
+
+fmservice 3 1
+namingservice 1 3 1
+cmandfsservice 3 1
+faservice 3 1
+
+cm.add v1
+
+var NumNodes 5
+var NumSeedNodes 3
+
+cm.setnodes v1 <var.NumNodes> <var.NumSeedNodes> vmSizes=<var.vmSize>
+
+cm.deployandstart v1
+
+# Deploy and create Tpcc app.
+uploadapp TpccApp apppackages\TpccApp1P3R
+provisionapp TpccApp
+
+createapp fabric:/TpccApp TpccApp appParameters={"DiagnosticsConnectionString":"xstore:DefaultEndpointsProtocol=https;AccountName=shrek;AccountKey=<var.accountKey>","CrashDumpContainerName":"<var.dumpContainerName>"}
+createservice fabric:/TpccApp fabric:/TpccApp/Service TpccServiceType true minReplicaSetSize=2 targetReplicaSetSize=3 partitionCount=1 lowKey=0 highKey=5 uniformInt64Partition=true hasPersistedState=true
+
+verify
+
+uploadapp ProfilerApp apppackages\ProfilerAppPkg
+provisionapp ProfilerApp
+createapp fabric:/ProfilerApp ProfilerApp appParameters={"ProfilerMode":"OnDemandOffByDefault","DiagnosticsConnectionString":"xstore:DefaultEndpointsProtocol=https;AccountName=shrek;AccountKey=<var.accountKey>","ProfilerDataContainerName":"<var.profilerDataContainerName>","CrashDumpContainerName":"<var.dumpContainerName>","EnableAssemblyLoadDebugging":"true"}
+
+verify
+
+# Start client and test
+client.newclient TPCC NativeReplicatorHTTPClient.HTTPClient,NativeReplicatorHTTPClient parameters=serviceName:fabric:/TpccApp/Service
+
+client.starttask TPCC TpccTask StartTest parameters={"loopCount":"5","int64PartitionKey":"1","retryCount":"256","sendTimeout":"30","PAAS":"true"}
+
+# test takes a day
+client.waittask taskIds=TpccTask timeout=86400
+
+pauseignoreexceptions 1200
+
+quit

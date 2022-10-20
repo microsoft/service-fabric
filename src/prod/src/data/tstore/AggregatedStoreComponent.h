@@ -244,6 +244,47 @@ namespace Data
              return resultSPtr;
          }
 
+         KSharedPtr<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>> GetKeysAndValuesEnumerator()
+         {
+             KSharedPtr<KSharedArray<KSharedPtr<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>>>> enumeratorsSPtr = 
+                 _new(AGGREGATEDSTATE_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>>>();
+
+             auto deltaDifferentialStateListEnumerator = deltaDifferentialStateListSPtr_->GetEnumerator();
+
+             while (deltaDifferentialStateListEnumerator->MoveNext())
+             {
+                 auto currentItem = deltaDifferentialStateListEnumerator->Current();
+                 auto componentSPtr = currentItem.Value;
+
+                 auto differentialEnumerator = componentSPtr->GetKeyAndValues();
+
+                 KSharedPtr<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>> enumerator = static_cast<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>> *>(differentialEnumerator.RawPtr());
+                 enumeratorsSPtr->Append(enumerator);
+             }
+
+             auto consolidatedStateEnumerator = consolidatedStoreComponentSPtr_->EnumerateEntries();
+             KSharedPtr<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>> enumerator = static_cast<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>> *>(consolidatedStateEnumerator.RawPtr());
+             enumeratorsSPtr->Append(enumerator);
+
+             KSharedPtr<KeyVersionedItemComparer<TKey, TValue>> comparerSPtr;
+             KeyVersionedItemComparer<TKey, TValue>::Create(*keyComparerSPtr_, this->GetThisAllocator(), comparerSPtr);
+
+             KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>> defaultKV;
+             KSharedPtr<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>> resultSPtr;
+             NTSTATUS status = SortedSequenceMergeEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>::Create(
+                 *enumeratorsSPtr, 
+                 *comparerSPtr, 
+                 false, 
+                 defaultKV, 
+                 false, 
+                 defaultKV, 
+                 this->GetThisAllocator(), 
+                 resultSPtr);
+             Diagnostics::Validate(status);
+             ASSERT_IFNOT(resultSPtr != nullptr, "result enumerator should not be null");
+             return resultSPtr;
+         }
+
          //KSharedPtr<IEnumerator<KSharedPtr<VersionedItem<TValue>>>> GetValuesForSweep()
          //{
          //   ULONG32 i = 0;

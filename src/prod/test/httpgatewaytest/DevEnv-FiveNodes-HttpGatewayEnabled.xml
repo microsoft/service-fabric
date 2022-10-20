@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClusterManifest
+	Name="Server-ScaleMin-FiveNode"
+	Version="1.0"
+	xsi:schemaLocation="http://schemas.microsoft.com/2011/01/fabric ServiceFabricServiceModel.xsd"
+	xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <NodeTypes>
+    <NodeType Name="NodeType01" >
+      <Endpoints>
+        <!-- Port of the Naming Gateway Service(NGS). NGS is always the entry point to Windows Fabric.-->
+        <ClientConnectionEndpoint Port="19000"/>
+        <HttpGatewayEndpoint Port="19007" Protocol="http"/>
+        <LeaseDriverEndpoint Port="19001"/>
+        <ClusterConnectionEndpoint Port="19002"/>
+        <ServiceConnectionEndpoint Port="19006"/>
+        <!-- List of ports that Windows Fabric may use in this node for customer's services.-->
+        <ApplicationEndpoints StartPort="30001" EndPort="31000"/>
+      </Endpoints>
+    </NodeType>
+    <NodeType Name="NodeType02" >
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19010"/>
+        <HttpGatewayEndpoint Port="19017" Protocol="http"/>
+        <LeaseDriverEndpoint Port="19011"/>
+        <ClusterConnectionEndpoint Port="19012"/>
+        <ServiceConnectionEndpoint Port="19016"/>
+        <ApplicationEndpoints StartPort="31001" EndPort="32000"/>
+      </Endpoints>
+    </NodeType>
+    <NodeType Name="NodeType03" >
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19020"/>
+        <HttpGatewayEndpoint Port="19027" Protocol="http"/>
+        <LeaseDriverEndpoint Port="19021"/>
+        <ClusterConnectionEndpoint Port="19022"/>
+        <ServiceConnectionEndpoint Port="19026"/>
+        <ApplicationEndpoints StartPort="32001" EndPort="33000"/>
+      </Endpoints>
+    </NodeType>
+    <NodeType Name="NodeType04" >
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19030"/>
+        <HttpGatewayEndpoint Port="19037" Protocol="http"/>
+        <LeaseDriverEndpoint Port="19031"/>
+        <ClusterConnectionEndpoint Port="19032"/>
+        <ServiceConnectionEndpoint Port="19036"/>
+        <ApplicationEndpoints StartPort="33001" EndPort="34000"/>
+      </Endpoints>
+    </NodeType>
+    <NodeType Name="NodeType05" >
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19040"/>
+        <HttpGatewayEndpoint Port="19047" Protocol="http"/>
+        <LeaseDriverEndpoint Port="19041"/>
+        <ClusterConnectionEndpoint Port="19042"/>
+        <ServiceConnectionEndpoint Port="19046"/>
+        <ApplicationEndpoints StartPort="34001" EndPort="35000"/>
+      </Endpoints>
+    </NodeType>
+  </NodeTypes>
+  <Infrastructure>
+    <WindowsServer IsScaleMin="true">
+      <NodeList>
+        <!-- To move from ScaleMin to regular deployment each IPAddressOrFQDN needs to be unique and IsScaleMin turned to false. -->
+        <Node NodeTypeRef="NodeType01" IsSeedNode="true" IPAddressOrFQDN="localhost" NodeName="Node1" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1" />
+        <Node NodeTypeRef="NodeType02" IsSeedNode="true" IPAddressOrFQDN="localhost" NodeName="Node2" FaultDomain="fd:/RACK2" UpgradeDomain="MYUD2" />
+        <Node NodeTypeRef="NodeType03" IsSeedNode="true" IPAddressOrFQDN="localhost" NodeName="Node3" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD3" />
+        <Node NodeTypeRef="NodeType04" IsSeedNode="false" IPAddressOrFQDN="localhost" NodeName="Node4" FaultDomain="fd:/RACK2" UpgradeDomain="MYUD1" />
+        <Node NodeTypeRef="NodeType05" IsSeedNode="false" IPAddressOrFQDN="localhost" NodeName="Node5" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD2" />
+      </NodeList>
+    </WindowsServer>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="Security">
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+    </Section>
+    <Section Name="NamingService">
+      <!-- For Scale-Min, partition count is set to 1 as there is no need to have more. Default is 3-->
+      <Parameter Name="PartitionCount" Value="1"/>
+      <!-- TargetReplicaSetSize is 7 by default-->
+      <!-- MinReplicaSetSize is 3 by default-->
+    </Section>
+    <Section Name="FailoverManager">
+      <!-- For Scale-Min, partition count is set to 3 as you cannot have 7 replicas in 5 node cluster. Default is 7-->
+      <!-- TargetReplicaSetSize is 7 by default-->
+      <!-- MinReplicaSetSize is 3 by default-->
+      <Parameter Name="ExpectedClusterSize" Value="4"/>
+      <!-- Windows Fabric Developer Environment only parameter.-->
+      <!-- Warning: this parameter is not supported in production.-->
+      <Parameter Name="ClusterStableWaitDuration" Value="0" />
+      <!-- Windows Fabric Developer Environment only parameter.-->
+      <!-- Warning: this parameter is not supported in production.-->
+      <Parameter Name="RebuildRetryInterval" Value="1" />
+      <!-- Windows Fabric Developer Environment only parameter.-->
+      <!-- Warning: this parameter is not supported in production.-->
+      <Parameter Name="PeriodicStateScanInterval" Value="1" />
+      <!-- Windows Fabric Developer Environment only parameter.-->
+      <!-- Warning: this parameter is not supported in production.-->
+      <Parameter Name="MinActionRetryIntervalPerReplica" Value="1" />
+      <!-- Windows Fabric Developer Environment only parameter.-->
+      <!-- Warning: this parameter is not supported in production.-->
+      <Parameter Name="StandByReplicaKeepDuration" Value="60" />
+    </Section>
+    <Section Name="ClusterManager">
+      <Parameter Name = "UpgradeStatusPollInterval" Value="5" />
+      <!-- TargetReplicaSetSize is 7 by default -->
+      <!-- MinReplicaSetSize is 3 by default-->
+    </Section>
+    <Section Name="RepairManager">
+      <Parameter Name="TargetReplicaSetSize" Value="3"/>
+      <Parameter Name="MinReplicaSetSize" Value="1"/>
+      <Parameter Name="EnableHealthChecks" Value="true"/>
+    </Section>
+    <Section Name="InfrastructureService">
+      <Parameter Name="CoordinatorType" Value="Test"/>
+      <Parameter Name="TargetReplicaSetSize" Value="3"/>
+      <Parameter Name="MinReplicaSetSize" Value="1"/>
+    </Section>
+    <Section Name="InfrastructureService/MultiStamp">
+      <Parameter Name="CoordinatorType" Value="Test"/>
+      <Parameter Name="TargetReplicaSetSize" Value="3"/>
+      <Parameter Name="MinReplicaSetSize" Value="1"/>
+    </Section>
+    <Section Name="Management">
+      <Parameter Name="ImageStoreConnectionString" Value="_default_"/>
+    </Section>
+    <Section Name="Hosting">
+      <Parameter Name="EndpointProviderEnabled" Value="true"/>
+      <Parameter Name="RunAsPolicyEnabled" Value="true" />
+      <Parameter Name="EnableActivateNoWindow" Value="true"/>
+    </Section>
+    <Section Name="EseStore">
+      <!-- Windows Fabric Developer Environment only parameter.-->
+      <!-- Warning: this parameter is not supported in production.-->
+      <Parameter Name="EseLogFileSizeInKB" Value="64" />
+      <!-- Windows Fabric Developer Environment only parameter.-->
+      <!-- Warning: this parameter is not supported in production.-->
+      <Parameter Name="EseLogBufferSizeInKB" Value="64" />
+    </Section>
+    <Section Name="Trace/Etw">
+      <Parameter Name="Level" Value="5"/>
+    </Section>
+    <Section Name="FabricClient">
+        <Parameter Name="HealthReportSendInterval" Value="5"/>
+        <Parameter Name="HealthReportRetrySendInterval" Value="5"/>
+    </Section>
+
+    <!-- 
+         HttpGateway section
+         ===================
+         HttpGateway is disabled by default. It requires at least .net 4.5 installed for it to run
+         You can enable it here by uncommenting out the section below.
+    -->
+    <Section Name="HttpGateway">
+      <Parameter Name="IsEnabled" Value="true"/>
+    </Section>
+
+    <!-- 
+         Diagnostics section
+         ===================
+         Producer and consumer instances are specified as a comma-separated list.
+         Each item in the list is the name of a section in the manifest that 
+         contains more information about that producer/consumer instance
+         
+    -->
+    <!-- 
+    <Section Name="Diagnostics">
+      <Parameter Name="ProducerInstances" Value="WinFabEtlFile, WinFabCrashDump,WinFabPerfCtrFolder"/>
+      <Parameter Name="ConsumerInstances" Value=" FileShareWinFabEtw,FileShareWinFabCrashDump, FileShareWinFabPerfCtr "/>
+    </Section>
+    -->
+
+    <!-- 
+         Diagnostic producer instance sections
+         =====================================
+         The value for parameter "ProducerType" is one of the well-defined producer 
+         types supported by the DCA
+    -->
+    <!-- 
+    <Section Name="WinFabEtlFile">
+      <Parameter Name="ProducerType" Value="EtlFileProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="EtlReadIntervalInMinutes" Value=" 5"/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    <Section Name="WinFabCrashDump">
+      <Parameter Name="ProducerType" Value=" FolderProducer "/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="FolderType" Value="WindowsFabricCrashDumps"/>
+    </Section>
+    <Section Name="WinFabPerfCtrFolder">
+      <Parameter Name="ProducerType" Value="FolderProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="FolderType" Value="WindowsFabricPerformanceCounters"/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    -->
+
+    <!-- 
+         Diagnostic consumer instance sections
+         =====================================
+         The value for parameter "ConsumerType"  is one of the well-defined consumer 
+         types supported by the DCA
+         
+         The value for parameter "ProducerInstance" is the name of the section 
+         that contains information about the producer instance that the consumer
+         is associated with
+    -->
+    <!-- 
+    <Section Name="FileShareWinFabEtw">
+      <Parameter Name="ConsumerType" Value="FileShareEtwCsvUploader"/>
+      <Parameter Name="ProducerInstance" Value="WinFabEtlFile"/>
+      <Parameter Name="IsEnabled" Value="true "/>
+      <Parameter Name="StoreConnectionString" Value="file:[]"/>
+      <Parameter Name="UploadIntervalInMinutes" Value=" 10 "/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    <Section Name="FileShareWinFabCrashDump">
+      <Parameter Name="ConsumerType" Value="FileShareFolderUploader "/>
+      <Parameter Name="ProducerInstance" Value="WinFabCrashDump "/>
+      <Parameter Name="IsEnabled" Value="true "/>
+      <Parameter Name="StoreConnectionString" Value="file:[]"/>
+      <Parameter Name="UploadIntervalInMinutes" Value="10 "/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    <Section Name="FileShareWinFabPerfCtr">
+      <Parameter Name="ConsumerType" Value="FileShareFolderUploader "/>
+      <Parameter Name="ProducerInstance" Value="WinFabPerfCtrFolder "/>
+      <Parameter Name="IsEnabled" Value="true "/>
+      <Parameter Name="StoreConnectionString" Value="file:[]"/>
+      <Parameter Name="UploadIntervalInMinutes" Value="10 "/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    -->
+
+  </FabricSettings>
+</ClusterManifest>

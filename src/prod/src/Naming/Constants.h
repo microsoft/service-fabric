@@ -71,6 +71,7 @@ namespace Naming
         // -------------------------------
         static Common::GlobalWString FileTransferGatewayDirectory;
         static double const ChunkFileLockAcquireTimeoutInSeconds;
+        static Common::GlobalWString FileStoreServiceSingletonPartitionGuid;
     };
 
 }

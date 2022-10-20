@@ -40,6 +40,7 @@ _context(nullptr)
 
 DnsResolveFqdnOp::~DnsResolveFqdnOp()
 {
+    _tracer.Trace(DnsTraceLevel_Noise, "Destructing DnsResolveFqdnOp.");
 }
 
 //***************************************
@@ -48,6 +49,7 @@ DnsResolveFqdnOp::~DnsResolveFqdnOp()
 
 void DnsResolveFqdnOp::OnCompleted()
 {
+    _tracer.Trace(DnsTraceLevel_Info, "DnsResolveFqdnOp OnCompleted called.");
     _resolveCallback(_spMessage.RawPtr(), _context);
 }
 

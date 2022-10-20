@@ -2221,10 +2221,6 @@ Finish:
     // Complete the request.
     //
 
-    if (!NT_SUCCESS(status)) {
-        KTraceFailedAsyncRequest(status, this, 0, 0);
-    }
-
     Complete(status);
 }
 

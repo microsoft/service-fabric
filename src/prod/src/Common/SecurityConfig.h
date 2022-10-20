@@ -435,6 +435,8 @@ namespace Common
 #if defined(PLATFORM_UNIX)
         // Folder where X509 certificates and private keys are located 
         PUBLIC_CONFIG_ENTRY(std::string, L"Security", X509Folder, "/var/lib/sfcerts", ConfigEntryUpgradePolicy::Static);
+        // Folder where AppRunAsAccountGroup X509 certificates and private keys are located 
+        PUBLIC_CONFIG_ENTRY(std::string, L"Security", AppRunAsAccountGroupX509Folder, "/home/sfuser/sfusercerts", ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(std::string, L"Security", CertFileExtension, ".crt", ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(std::string, L"Security", PrivateKeyFileExtension, ".prv", ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(std::string, L"Security", X509InstallExtension, ".pem", ConfigEntryUpgradePolicy::Static);

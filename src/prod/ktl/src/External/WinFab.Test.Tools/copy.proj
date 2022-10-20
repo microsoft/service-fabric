@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <ItemGroup>
+    <BinplaceSet1 Include="$(PkgWinFab_Test_Tools)\lib\net45\WinFabric.TestInfra.TestTools\WinFabric.TestInfra.TestTools.exe" />
+    <BinplaceSet1 Include="$(PkgWinFab_Test_Tools)\lib\net45\WinFabric.TestInfra.TestTools\WinFabric.TestInfra.TestTools.pdb" />
+  </ItemGroup>
+  <ItemGroup>
+    <RunTestsFiles Include="$(PkgWinFab_RunTests_retail)\lib\net45\RunTests\**\*" 
+                   Exclude="$(PkgWinFab_RunTests_retail)\lib\net45\RunTests\**\*.lib;$(PkgWinFab_RunTests_retail)\lib\net45\RunTests\**\*.exe.config;$(PkgWinFab_RunTests_retail)\lib\net45\RunTests\**\RunTestPerfCounters.txt"/>
+    <DestDirSet1 Include="$(BinariesBuildTypeArchDirectory)\bin\ktltest\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Robocopy Include="@(BinplaceSet1);@(RunTestsFiles);@(RunTriggererFiles)">
+      <DestinationFolder>@(DestDirSet1)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+</Project>

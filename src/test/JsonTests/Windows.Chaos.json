@@ -18,7 +18,7 @@
       }
     },
     {
-      "Name": "AzureChaosTestWithGlobalUnreliableTransport_All_OneInAHundred_1_59",
+      "Name": "AzureChaos_UT",
       "Type": "Azure_Chaos",
       "Owners": "motanv,likevi",
       "ResourcesRequired": "Server:1&Azure:1",
@@ -26,7 +26,7 @@
         "SetupType": "XCopy",
         "SetupTimeout": "900",
         "ServiceTimeout": "64800",
-        "ConfigName": "WinFabricTest\\Config\\AzureChaosTestWithGlobalUnreliableTransport_All_OneInAHundred_1_59.txt",
+        "ConfigName": "WinFabricTest\\Config\\AzureChaos_UT.txt",
         "ExecutionTimeout": "70000",
         "CleanupType": "XCopy",
         "CleanupTimeout": "2100"

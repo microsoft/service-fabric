@@ -166,12 +166,14 @@ namespace TStoreTests
             }
         }
 
-        void ValidateDictionaryChangeHandlers(__in KSharedArray<TestDictionaryChangeHandler<LONG64, KString::SPtr>::SPtr> & handlers)
+        void ValidateDictionaryChangeHandlers(
+            __in KSharedArray<TestDictionaryChangeHandler<LONG64, KString::SPtr>::SPtr> & handlers,
+            __in_opt bool testSequenceNumbers = true)
         {
             for (ULONG32 i = 0; i < handlers.Count(); i++)
             {
                 auto handler = handlers[i];
-                handler->Validate();
+                handler->Validate(testSequenceNumbers);
             }
         }
         
@@ -1679,6 +1681,190 @@ namespace TStoreTests
             ValidateDictionaryChangeHandlers(*handlers);
             co_return;
         }
+
+        ktl::Awaitable<void> UndoFalseProgress_UpdateAsync_AfterRecovery_ShouldSucceed_Test()
+        {
+            auto secondaryStore = co_await CreateSecondaryAsync();
+            std::vector<Data::TStore::Store<LONG64, KString::SPtr>::SPtr> stores = {
+                Store,
+                secondaryStore
+            };
+
+            auto addedValue = CreateString(777);
+            auto updatedValue = CreateString(1337);
+            auto falseValue = CreateString(999);
+
+            //
+            // Prepare by adding keys to the store.
+            //
+
+            {
+                auto txn = CreateWriteTransaction();
+                for (LONG64 key = 0; key < 10; key++)
+                {
+                    co_await Store->AddAsync(*txn->StoreTransactionSPtr, key, addedValue, DefaultTimeout, CancellationToken::None);
+                }
+
+                co_await txn->CommitAsync();
+            }
+
+            //
+            // Update half the keys in the store.
+            //
+
+            {
+                auto txn = CreateWriteTransaction();
+                for (LONG64 key = 0; key < 5; key++)
+                {
+                    co_await Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, updatedValue, DefaultTimeout, CancellationToken::None);
+                }
+
+                co_await txn->CommitAsync();
+            }
+
+            //
+            // Write the items to disk.
+            //
+
+            for (auto store : stores)
+            {
+                co_await CheckpointAsync(*store);
+            }
+
+            //
+            // Close and recover the store. The keys should now reside only on disk.
+            //
+
+            secondaryStore = co_await CloseAndRecoverSecondaryAsync(*secondaryStore, *(*SecondaryReplicators)[2]);
+            stores[1] = secondaryStore;
+
+            //
+            // Update keys in the store, then simulate false progress.
+            // The keys should revert back to previous values.
+            //
+
+            KSharedArray<TestDictionaryChangeHandler<LONG64, KString::SPtr>::SPtr>::SPtr handlers = _new(TEST_TAG, GetAllocator()) KSharedArray<TestDictionaryChangeHandler<LONG64, KString::SPtr>::SPtr>();
+            auto handler = TrackNotifications(*stores[1]);
+            handlers->Append(handler);
+
+            {
+                auto txn = CreateWriteTransaction();
+
+                for (LONG64 key = 0; key < 10; key++)
+                {
+                    co_await Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, falseValue, DefaultTimeout, CancellationToken::None);
+                    AddExpectedUpdateNotification(*handlers, *txn, key, falseValue);
+                }
+
+                for (LONG64 key = 9; key >= 0; key--)
+                {
+                    auto expectedValue = key >= 5 ? addedValue : updatedValue;
+                    AddExpectedUpdateNotification(*handlers, *txn, key, expectedValue);
+                }
+
+                co_await Replicator->SimulateFalseProgressAsync(*txn->TransactionSPtr);
+                co_await txn->AbortAsync();
+            }
+
+            //
+            // Verify that notifications are showing the correct undo'd values.
+            //
+
+            bool testSequenceNumbers = false;
+            ValidateDictionaryChangeHandlers(*handlers, testSequenceNumbers);
+        }
+
+        ktl::Awaitable<void> UndoFalseProgress_RemoveAsync_AfterRecovery_ShouldSucceed_Test()
+        {
+            auto secondaryStore = co_await CreateSecondaryAsync();
+            std::vector<Data::TStore::Store<LONG64, KString::SPtr>::SPtr> stores = {
+                Store,
+                secondaryStore
+            };
+
+            auto addedValue = CreateString(777);
+            auto updatedValue = CreateString(1337);
+
+            //
+            // Prepare by adding keys to the store.
+            //
+
+            {
+                auto txn = CreateWriteTransaction();
+                for (LONG64 key = 0; key < 10; key++)
+                {
+                    co_await Store->AddAsync(*txn->StoreTransactionSPtr, key, addedValue, DefaultTimeout, CancellationToken::None);
+                }
+
+                co_await txn->CommitAsync();
+            }
+
+            //
+            // Update half the keys in the store.
+            //
+
+            {
+                auto txn = CreateWriteTransaction();
+                for (LONG64 key = 0; key < 5; key++)
+                {
+                    co_await Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, updatedValue, DefaultTimeout, CancellationToken::None);
+                }
+
+                co_await txn->CommitAsync();
+            }
+
+            //
+            // Write the items to disk.
+            //
+
+            for (auto store : stores)
+            {
+                co_await CheckpointAsync(*store);
+            }
+
+            //
+            // Close and recover the store. The keys should now reside only on disk.
+            //
+
+            secondaryStore = co_await CloseAndRecoverSecondaryAsync(*secondaryStore, *(*SecondaryReplicators)[2]);
+            stores[1] = secondaryStore;
+
+            //
+            // Remove keys from the store, then simulate false progress.
+            // The keys should revert back to previous values.
+            //
+
+            KSharedArray<TestDictionaryChangeHandler<LONG64, KString::SPtr>::SPtr>::SPtr handlers = _new(TEST_TAG, GetAllocator()) KSharedArray<TestDictionaryChangeHandler<LONG64, KString::SPtr>::SPtr>();
+            auto handler = TrackNotifications(*stores[1]);
+            handlers->Append(handler);
+
+            {
+                auto txn = CreateWriteTransaction();
+
+                for (LONG64 key = 0; key < 10; key++)
+                {
+                    co_await Store->ConditionalRemoveAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
+                    AddExpectedRemoveNotification(*handlers, *txn, key);
+                }
+
+                for (LONG64 key = 9; key >= 0; key--)
+                {
+                    auto expectedValue = key >= 5 ? addedValue : updatedValue;
+                    AddExpectedAddNotification(*handlers, *txn, key, expectedValue);
+                }
+
+                co_await Replicator->SimulateFalseProgressAsync(*txn->TransactionSPtr);
+                co_await txn->AbortAsync();
+            }
+
+            //
+            // Verify that notifications are showing the correct undo'd values.
+            //
+
+            bool testSequenceNumbers = false;
+            ValidateDictionaryChangeHandlers(*handlers, testSequenceNumbers);
+        }
+
     #pragma endregion
     };
 
@@ -1893,6 +2079,16 @@ namespace TStoreTests
     BOOST_AUTO_TEST_CASE(NotifyAll_UpdateMultiple_NotificationsFireInLockOrder_ShouldSucceed)
     {
         SyncAwait(NotifyAll_UpdateMultiple_NotificationsFireInLockOrder_ShouldSucceed_Test());
+    }
+
+    BOOST_AUTO_TEST_CASE(UndoFalseProgress_UpdateAsync_AfterRecovery_ShouldSucceed)
+    {
+        SyncAwait(UndoFalseProgress_UpdateAsync_AfterRecovery_ShouldSucceed_Test());
+    }
+
+    BOOST_AUTO_TEST_CASE(UndoFalseProgress_RemoveAsync_AfterRecovery_ShouldSucceed)
+    {
+        SyncAwait(UndoFalseProgress_RemoveAsync_AfterRecovery_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_SUITE_END()

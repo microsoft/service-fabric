@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <ProjectGuid>{569B84E7-2C68-49C7-9749-9188222100C2}</ProjectGuid>
+    <RootNamespace>HttpGatewayTest</RootNamespace>
+    <AssemblyName>HttpGatewayService.Test</AssemblyName>
+    <OutputType>Library</OutputType>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric.JsonSerializerWrapper\System.Fabric.JsonSerializerWrapper.csproj">
+      <Project>{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}</Project>
+      <Name>System.Fabric.JsonSerializerWrapper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\managed\dSTSClient\dll\System.Fabric.dSTSClient\System.Fabric.dSTSClient.csproj">
+      <Project>{5186701B-B2E7-4FEB-99DD-89CFA16D20E1}</Project>
+      <Name>System.Fabric.dSTSClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric\unit\System.Fabric.Test.csproj">
+      <Project>{6063627D-A418-4A45-986B-0A963583514D}</Project>
+      <Name>System.Fabric.Test</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric\scenarios\System.Fabric.Scenarios.Test.csproj">
+      <Project>{075393B5-BF67-4E0D-AEE6-2D7A16C40275}</Project>
+      <Name>System.Fabric.Scenarios.Test</Name>
+    </ProjectReference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationsOnNodeResult.cs" />
+    <Compile Include="ServicePagedResult.cs" />
+    <Compile Include="ApplicationsPagedResult.cs" />
+    <Compile Include="ApplicationsResult.cs" />
+    <Compile Include="ApplicationTypeResult.cs" />
+    <Compile Include="ApplicationUpgradeDescriptionInput.cs" />
+    <Compile Include="ApplicationUpgradeProgressResult.cs" />
+    <Compile Include="ApplicationUpgradeUpdateDescriptionInput.cs" />
+    <Compile Include="AveragePartitionLoadTriggerTest.cs" />
+    <Compile Include="ClusterLoadInformationResult.cs" />
+    <Compile Include="CodePackageEntryPoint.cs" />
+    <Compile Include="CodePackageEntryPointStatistics.cs" />
+    <Compile Include="CodePackagesOnNodeResult.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="CreateApplicationInput.cs" />
+    <Compile Include="CreateServiceFromTemplateInput.cs" />
+    <Compile Include="CreateServiceGroupInput.cs" />
+    <Compile Include="CreateServiceInput.cs" />
+    <Compile Include="DeactivateNodeInput.cs" />
+    <Compile Include="DeployedReplicaDetailResult.cs" />
+    <Compile Include="EndpointLocation.cs" />
+    <Compile Include="FabricUpgradeDescriptionInput.cs" />
+    <Compile Include="FabricUpgradeProgressResult.cs" />
+    <Compile Include="GetApplicationManifestInput.cs" />
+    <Compile Include="GetServiceManifestInput.cs" />
+    <Compile Include="HttpGatewayTest.cs" />
+    <Compile Include="InstanceCountScaleMechanismTest.cs" />
+    <Compile Include="LoadMetricReportResult.cs" />
+    <Compile Include="LoadMetricInformationResult.cs" />
+    <Compile Include="ManifestResult.cs" />
+    <Compile Include="NameDescription.cs" />
+    <Compile Include="NameValue.cs" />
+    <Compile Include="NodeControlData.cs" />
+    <Compile Include="NodeId.cs" />
+    <Compile Include="NodesResult.cs" />
+    <Compile Include="NodeLoadMetricInformationResult.cs" />
+    <Compile Include="NodeLoadInformationResult.cs" />
+    <Compile Include="PagedPropertyInfoList.cs" />
+    <Compile Include="PagedSubNameInfoList.cs" />
+    <Compile Include="PartitionDescription.cs" />
+    <Compile Include="PartitionLoadInformationResult.cs" />
+    <Compile Include="PartitionInformation.cs" />
+    <Compile Include="PredeploymentData.cs" />
+    <Compile Include="PrimaryReplicatorStatusResult.cs" />
+    <Compile Include="PropertyBatchDescription.cs" />
+    <Compile Include="PropertyBatchOperation.cs" />
+    <Compile Include="PropertyBatchInfo.cs" />
+    <Compile Include="PropertyDescription.cs" />
+    <Compile Include="PropertyInfo.cs" />
+    <Compile Include="PropertyMetadata.cs" />
+    <Compile Include="PropertyValue.cs" />
+    <Compile Include="ProvisionApplicationTypeInput.cs" />
+    <Compile Include="ProvisionFabricInput.cs" />
+    <Compile Include="RemoteReplicatorAcknowledgementStatusDetail.cs" />
+    <Compile Include="RemoteReplicatorAcknowledgementStatusResult.cs" />
+    <Compile Include="RemoteReplicatorStatusResult.cs" />
+    <Compile Include="RepairData.cs" />
+    <Compile Include="ReplicatorStatusResult.cs" />
+    <Compile Include="ReplicatorQueueStatusResult.cs" />
+    <Compile Include="ResolvedServicePartitionResult.cs" />
+    <Compile Include="RestartCodePackageData.cs" />
+    <Compile Include="RESTClient.cs" />
+    <Compile Include="RollingUpgradeUpdateDescriptionInput.cs" />
+    <Compile Include="ScalingPolicyDescriptionTest.cs" />
+    <Compile Include="SecondaryReplicatorStatusResult.cs" />
+    <Compile Include="ServiceCorrelationDescription.cs" />
+    <Compile Include="ServiceGroupMembers.cs" />
+    <Compile Include="ServiceGroupMemberDescription.cs" />
+    <Compile Include="ServiceGroupMemberMembers.cs" />
+    <Compile Include="ServiceLoadMetricDescription.cs" />
+    <Compile Include="ServiceManifestOnNodeResult.cs" />
+    <Compile Include="ServicePartitionResult.cs" />
+    <Compile Include="ServiceReplicaResult.cs" />
+    <Compile Include="ServiceReplicasOnNodeResult.cs" />
+    <Compile Include="ServiceResult.cs" />
+    <Compile Include="ServiceTypeDescription.cs" />
+    <Compile Include="ServiceTypeResult.cs" />
+    <Compile Include="StartNodeData.cs" />
+    <Compile Include="UnprovisionApplicationTypeInput.cs" />
+    <Compile Include="UnprovisionFabricInput.cs" />
+    <Compile Include="UpdateServiceDescriptionInput.cs" />
+    <Compile Include="UpgradeDomainStatus.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DevEnv-FiveNodes-HttpGatewayEnabled.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DevEnv-FiveNodes-CertSecurity-HttpGatewayEnabled.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DevEnv-FiveNodes-Kerberos-HttpGatewayEnabled.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

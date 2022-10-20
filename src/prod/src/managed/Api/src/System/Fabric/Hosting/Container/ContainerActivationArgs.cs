@@ -5,6 +5,7 @@
 
 namespace System.Fabric
 {
+    using System.Collections.Generic;
     using System.Fabric.Common;
     using System.Fabric.Interop;
 
@@ -28,13 +29,15 @@ namespace System.Fabric
 
         internal string GatewayIpAddress { get; set; }
 
+        internal List<string> GatewayIpAddresses { get; set; }
+
         internal static unsafe ContainerActivationArgs CreateFromNative(IntPtr nativePtr)
         {
             ReleaseAssert.AssertIfNot(nativePtr != IntPtr.Zero, "ContainerActivationArgs.CreateFromNative() has null pointer.");
 
             var nativeArgs = *((NativeTypes.FABRIC_CONTAINER_ACTIVATION_ARGS*)nativePtr);
 
-            return new ContainerActivationArgs
+            var containerActivationArgs = new ContainerActivationArgs
             {
                 IsUserLocalSystem = NativeTypes.FromBOOLEAN(nativeArgs.IsUserLocalSystem),
                 AppHostId = NativeTypes.FromNativeString(nativeArgs.AppHostId),
@@ -44,6 +47,14 @@ namespace System.Fabric
                 FabricBinPath = NativeTypes.FromNativeString(nativeArgs.FabricBinPath),
                 GatewayIpAddress = NativeTypes.FromNativeString(nativeArgs.GatewayIpAddress)
             };
+
+            if (nativeArgs.Reserved != null)
+            {
+                var nativeArgsEx1 = *((NativeTypes.FABRIC_CONTAINER_ACTIVATION_ARGS_EX1*)nativeArgs.Reserved);
+                containerActivationArgs.GatewayIpAddresses = NativeTypes.FromNativeStringList(nativeArgsEx1.GatewayIpAddresses);
+            }
+
+            return containerActivationArgs;
         }
     }
 }

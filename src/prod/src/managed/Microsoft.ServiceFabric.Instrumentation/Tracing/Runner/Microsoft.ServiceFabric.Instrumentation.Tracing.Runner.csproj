@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{7A9700F1-73DA-41AF-93AC-0A2966C7AE92}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.Instrumentation.Tracing.Runner</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Instrumentation.Tracing.Runner</AssemblyName>
+    <AssemblyDescription>Service Fabric Tracing</AssemblyDescription>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Parsers\Microsoft.ServiceFabric.Instrumentation.Tracing.Parsers.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Readers\Microsoft.ServiceFabric.Instrumentation.Tracing.Readers.csproj" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

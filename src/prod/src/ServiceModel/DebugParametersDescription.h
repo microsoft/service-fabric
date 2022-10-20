@@ -41,6 +41,7 @@ namespace ServiceModel
         std::vector<std::wstring> ContainerMountedVolumes;
         std::vector<std::wstring> ContainerEnvironmentBlock;
         std::vector<std::wstring> ContainerLabels;
+        bool DisableReliableCollectionReplicationMode;
 
         void ReadFromXml(Common::XmlReaderUPtr const &);
         Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);

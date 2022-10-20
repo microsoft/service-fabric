@@ -23,41 +23,68 @@ ServiceScalingPolicyDescription::ServiceScalingPolicyDescription(ScalingTriggerS
 {
 }
 
-
-bool ServiceScalingPolicyDescription::Equals(ServiceScalingPolicyDescription const & other, bool ignoreDynamicContent) const
+ErrorCode ServiceScalingPolicyDescription::Equals(
+    ServiceScalingPolicyDescription const & other,
+    bool ignoreDynamicContent) const
 {
-    bool equals = true;
     if (trigger_ && other.trigger_)
     {
-        equals = equals && trigger_->Equals(other.trigger_, ignoreDynamicContent);
+        if (!trigger_->Equals(other.trigger_, ignoreDynamicContent))
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidArgument,
+                wformatString(
+                    GET_FM_RC(ServiceScalingPolicyDescription_ScalingTrigger_Changed), trigger_, other.trigger_));
+        }
     }
-    else if (!trigger_ && !other.trigger_)
+    else if(trigger_ && !other.trigger_)
     {
-        equals = equals && true;
+        return ErrorCode(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(
+                GET_FM_RC(ServiceScalingPolicyDescription_ScalingTrigger_Removed), trigger_));
     }
-    else
+    else if (!trigger_ && other.trigger_)
     {
-        equals = equals && false;
+        return ErrorCode(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(
+                GET_FM_RC(ServiceScalingPolicyDescription_ScalingTrigger_Added), other.trigger_));
     }
 
     if (mechanism_ && other.mechanism_)
     {
-        equals = equals && mechanism_->Equals(other.mechanism_, ignoreDynamicContent);
+        if (!mechanism_->Equals(other.mechanism_, ignoreDynamicContent))
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidArgument,
+                wformatString(
+                    GET_FM_RC(ServiceScalingPolicyDescription_ScalingMechanism_Changed), mechanism_, other.mechanism_));
+        }
     }
-    else if (!mechanism_ && !other.mechanism_)
+    else if (mechanism_ && !other.mechanism_)
     {
-        equals = equals && true;
+        return ErrorCode(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(
+                GET_FM_RC(ServiceScalingPolicyDescription_ScalingMechanism_Removed), mechanism_));
     }
-    else
+    else if(!mechanism_ && other.mechanism_)
     {
-        equals = equals && false;
+        return ErrorCode(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(
+                GET_FM_RC(ServiceScalingPolicyDescription_ScalingMechanism_Added), other.mechanism_));
     }
-    return equals;
+
+    return ErrorCode::Success();
 }
 
 bool ServiceScalingPolicyDescription::operator == (ServiceScalingPolicyDescription const & other) const
 {
-    return Equals(other, false);
+    auto error = Equals(other, false);
+
+    return error.IsSuccess();
 }
 
 bool ServiceScalingPolicyDescription::operator != (ServiceScalingPolicyDescription const & other) const

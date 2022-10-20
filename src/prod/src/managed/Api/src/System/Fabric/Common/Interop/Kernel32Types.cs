@@ -82,5 +82,24 @@ namespace System.Fabric.Interop
             [FieldOffset(0)]
             public FILE_IO_PRIORITY_HINT_INFO FILE_IO_PRIORITY_HINT_INFO;
         }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct FILE_BASIC_INFO
+        {
+            [FieldOffset(0)]
+            internal long CreationTime;
+
+            [FieldOffset(8)]
+            internal long LastAccessTime;
+
+            [FieldOffset(16)]
+            internal long LastWriteTime;
+
+            [FieldOffset(24)]
+            internal long ChangeTime;
+
+            [FieldOffset(32)]
+            internal uint FileAttributes;
+        }
     }
 }

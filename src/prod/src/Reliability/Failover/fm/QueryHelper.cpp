@@ -543,6 +543,14 @@ protected:
         case QueryNames::GetReplicaListByServiceNames:
             errorCode = owner_.GetReplicaListByServiceNames(queryArgs_, queryResult, activityId_);
             break;
+        case QueryNames::GetNetworkList:
+        case QueryNames::GetNetworkApplicationList:
+        case QueryNames::GetNetworkNodeList:
+        case QueryNames::GetApplicationNetworkList:
+        case QueryNames::GetDeployedNetworkList:
+            errorCode = owner_.ProcessNIMQuery(queryName_, queryArgs_, queryResult, activityId_);
+            break;
+            
         default:
             errorCode = ErrorCodeValue::InvalidArgument;
         }
@@ -813,6 +821,14 @@ ErrorCode FMQueryHelper::GetSystemServicesList(QueryArgumentMap const & queryArg
     wstring continuationToken;
     bool checkContinuationToken = queryArgs.TryGetValue(QueryResourceProperties::QueryMetadata::ContinuationToken, continuationToken);
 
+    // Get max results value
+    int64 maxResults;
+    auto error = QueryPagingDescription::TryGetMaxResultsFromArgumentMap(queryArgs, maxResults, activityId.ToString(), L"FMQueryHelper::GetSystemServicesList");
+    if (!error.IsSuccess())
+    {
+        return(move(error));
+    }
+
     if (serviceNameFilter && checkContinuationToken && desiredServiceName <= continuationToken)
     {
         // The desired service doesn't respect the continuation token
@@ -869,13 +885,15 @@ ErrorCode FMQueryHelper::GetSystemServicesList(QueryArgumentMap const & queryArg
 
     // Add the sorted services to result
     ListPager<ServiceQueryResult> pager;
+    pager.SetMaxResults(maxResults);
+
     for (auto it = sortedServices.begin(); it != sortedServices.end(); ++it)
     {
-        auto error = pager.TryAdd(move(it->second));
-        if (error.IsError(ErrorCodeValue::EntryTooLarge))
+        error = pager.TryAdd(move(it->second));
+        if (!error.IsSuccess() && pager.IsBenignError(error))
         {
             fm_.WriteInfo(Constants::QuerySource,
-                "{0}: reached max message size with {1}: {2}",
+                "{0}: reached max message size or page limit with {1}: {2}",
                 activityId,
                 it->first,
                 error.Message);
@@ -900,6 +918,14 @@ ErrorCode FMQueryHelper::GetServicesList(QueryArgumentMap const & queryArgs, Que
 
     wstring continuationToken;
     bool checkContinuationToken = queryArgs.TryGetValue(QueryResourceProperties::QueryMetadata::ContinuationToken, continuationToken);
+
+    // Get max results value
+    int64 maxResults;
+    auto error = QueryPagingDescription::TryGetMaxResultsFromArgumentMap(queryArgs, maxResults, activityId.ToString(), L"FMQueryHelper::GetServicesList");
+    if (!error.IsSuccess())
+    {
+        return(move(error));
+    }
 
     if (serviceFilter && checkContinuationToken)
     {
@@ -956,13 +982,16 @@ ErrorCode FMQueryHelper::GetServicesList(QueryArgumentMap const & queryArgs, Que
 
     // Add the services to the result.
     ListPager<ServiceQueryResult> pager;
+    pager.SetMaxResults(maxResults);
+
+    // Add the services to the result.
     for (auto it = serviceQueryResultList.begin(); it != serviceQueryResultList.end(); ++it)
     {
-        auto error = pager.TryAdd(move(*it));
-        if (error.IsError(ErrorCodeValue::EntryTooLarge))
+        error = pager.TryAdd(move(*it));
+        if (!error.IsSuccess() && pager.IsBenignError(error))
         {
             fm_.WriteInfo(Constants::QuerySource,
-                "{0}: reached max message size with {1}: {2}",
+                "{0}: reached max message size or page limit with {1}: {2}",
                 activityId,
                 it->ServiceName,
                 error.Message);
@@ -1726,6 +1755,16 @@ Common::ErrorCode FMQueryHelper::GetServiceName(
     queryResult = ServiceModel::QueryResult(move(queryResultUPtr));
 
     return ErrorCode::Success();
+}
+
+ErrorCode FMQueryHelper::ProcessNIMQuery(Query::QueryNames::Enum queryname, QueryArgumentMap const & queryArgs, QueryResult & queryResult, Common::ActivityId const & activityId)
+{
+    if(!Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
+    {
+        return ErrorCode(ErrorCodeValue::InvalidConfiguration);
+    }
+
+    return fm_.NIS.ProcessNIMQuery(queryname, queryArgs, queryResult, activityId);
 }
 
 bool FMQueryHelper::IsMatch(FABRIC_QUERY_SERVICE_REPLICA_STATUS replicaStatus, DWORD replicaStatusFilter)

@@ -1,0 +1,359 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricTypes.idl";
+import "FabricCommon.idl";
+import "FabricRuntime.idl";
+
+[v1_enum, uuid(b4b9295d-b65c-4777-ab54-6199877cb2fc)]
+typedef enum FABRIC_INBOUND_RELIABLE_SESSION_RESPONSE
+{
+	FABRIC_INBOUND_RELIABLE_SESSION_ACCEPTED,
+	FABRIC_INBOUND_RELIABLE_SESSION_REJECTED,
+	FABRIC_INBOUND_RELIABLE_SESSION_RESUMED
+} FABRIC_INBOUND_RELIABLE_SESSION_RESPONSE;
+
+[v1_enum, uuid(05691fa8-6c19-42ba-8ef5-4934d4e4d63b)]
+typedef enum FABRIC_SESSION_STOP_LISTEN_REASON
+{
+	FABRIC_SESSION_STOP_LISTEN_REASON_NOT_PRIMARY,
+	FABRIC_SESSION_STOP_LISTEN_REASON_SERVICE_CLOSING,
+	FABRIC_SESSION_STOP_LISTEN_REASON_UNKNOWN
+} FABRIC_SESSION_STOP_LISTEN_REASON;
+
+typedef GUID FABRIC_RELIABLE_MESSAGEID;
+
+//
+// Forward Declarations
+//
+interface IFabricReliableSession;
+interface IFabricReliableSessionMessage;
+
+[
+	uuid(d58ddaf2-bc17-4e87-a366-05fc640e7025),
+	version(1.0),
+]
+library FabricReliableSessionTypeLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+	// ----------------------------------------------------------------------------
+	// List of interfaces to include in the type library
+	//
+	interface IFabricReliableSessionMessage;
+	interface IFabricReliableDuplexSession;
+	interface IFabricReliableInboundSessionCallback;
+	interface IFabricReliableSessionCallback;
+	interface IFabricReliableSessionManager;
+
+
+	// ----------------------------------------------------------------------------
+	// module definitions
+	[
+		uuid(5a5aa8b8-9f5c-4675-83d9-b347d8ccd481),
+		dllname("FabricReliableSession.dll")
+	]
+	module FabricReliableSession
+	{
+		[entry("CreateReliableSessionManager")] HRESULT FabricCreateReliableSessionManager(
+																	[in] FABRIC_URI callingServiceInstanceName,
+																	[in] FABRIC_PARTITION_KEY_TYPE partitionKeyType,
+																	[in] const void * partitionKey,
+																	[out, retval] IFabricReliableSessionManager ** sessionManager);
+	}
+
+#pragma pack (pop)
+}
+
+// This interface is meant for simple fast synchronous interactions--more delay-prone behavior is in the interfaces being exchanged
+[object, local, uuid(90f13016-7c1e-48f4-a7db-479c22f87252)]
+interface IFabricReliableSessionManager : IUnknown
+{
+	// creates a session object locally but must be "opened" or "resumed" to activate wire protocol
+	[] HRESULT CreateReliableOutboundSession(
+		[in] FABRIC_URI targetServiceInstanceName,	
+        [in] FABRIC_PARTITION_KEY_TYPE partitionKeyType,
+        [in] const void * partitionKey,
+		[in] FABRIC_URI sessionName, 
+		[out, retval] IFabricReliableDuplexSession ** session);
+
+	// starts listening for inbound sessions and registers a callback interface
+	// can only do this once per service: FABRIC_INBOUND_ALREADY_LISTENING returned on repeat
+	// Calling service needs to know the session endpoint to communicate to naming 
+	// FABRIC_E_RELIABLE_SESSION_LISTEN_PORT_UNAVAILABLE return on transport listen failure
+	[] HRESULT RegisterReliableInboundSessionCallback(
+		[in] IFabricReliableInboundSessionCallback * listenerCallback,
+		[out, retval] FABRIC_URI *sessionListenerEndpoint);
+
+	// Unregisters a callback interface and stops listening for inbound sessions  
+	// Now open for RegisterReliableInboundSessionCallback again
+	// 	FABRIC_E_RELIABLE_SESSION_INVALID_STOP_LISTEN_REASON returned for invalid reason code
+	[] HRESULT UnregisterReliableInboundSessionCallback(
+		[in] LONG unregisterReason);	// must use FABRIC_SESSION_STOP_LISTEN_REASON codes
+
+	// Release and unregister the session manager for the owner service instance
+	[] HRESULT Close();
+}
+
+
+[object, local, uuid(496b7bbc-b6d3-4990-adf4-d6e06eedfd7d)]
+interface IFabricReliableInboundSessionCallback : IUnknown
+{
+	// response is FABRIC_INBOUND_RELIABLE_SESSION_ACCEPTED or FABRIC_INBOUND_RELIABLE_SESSION_REJECTED
+	[] HRESULT ReliableInboundSessionRequested(
+		[in] FABRIC_URI sourceServiceInstanceName,
+        [in] FABRIC_PARTITION_KEY_TYPE partitionKeyType,
+        [in] const void * partitionKey,
+		[in] FABRIC_URI sessionName,
+		[in] IFabricReliableDuplexSession *session,
+		[out, retval] LONG *response);
+}
+
+[object, local, uuid(978932f4-c93f-45ac-a804-d0fb4b4f7193)]
+interface IFabricReliableSessionCallback : IUnknown
+{
+	// the session is suspended at this time until explicitly resumed by the service
+	[] HRESULT SessionPartnerMoved(
+		[in] FABRIC_URI partnerServiceInstanceName,
+        [in] FABRIC_PARTITION_KEY_TYPE partitionKeyType,
+        [in] const void * partitionKey,
+		[in] FABRIC_URI sessionName);
+
+	[] HRESULT SessionClosedByPartner(
+		[in] FABRIC_URI partnerServiceInstanceName,
+        [in] FABRIC_PARTITION_KEY_TYPE partitionKeyType,
+        [in] const void * partitionKey,
+		[in] FABRIC_URI sessionName);
+}
+
+
+[object, local, uuid(9bfca0f9-3b2e-478c-8c95-a77b1904d7cb)]
+interface IFabricReliableSessionMessage : IUnknown
+{
+    [] HRESULT GetMetadata(
+		[out] ULONG * byteCount, 
+		[out, retval] const BYTE ** buffer);
+    // TODO:  Multiple buffers
+    [] HRESULT GetContent(
+		[out] ULONG * byteCount, 
+		[out, retval] const BYTE ** buffer);
+}
+
+
+[object, local, uuid(df1e6d90-3fab-4c36-ae22-7213223f46ae)]
+interface IFabricReliableDuplexSession : IUnknown 
+{
+	// Function: BeginOpen
+	//
+	// Description:
+	//	Resolve service instance name, establish connection with transport target and initialize session protocol.
+	//
+	// Parameters:
+	//  serviceInstance         name of the instance to resolve via naming service
+	//  callback                async callback
+	//  context					async context
+	// 
+	// Return codes:
+	//	S_OK
+	//  E_OUTOFMEMORY
+	//  FABRIC_E_OBJECT_CLOSED
+	//  FABRIC_E_RELIABLE_SESSION_CANNOT_RESOLVE,
+	//  FABRIC_E_RELIABLE_SESSION_CANNOT_CONNECT
+	//  FABRIC_E_RELIABLE_SESSION_REJECTED
+	//	
+	[] HRESULT BeginOpen(
+		[in] IFabricReliableSessionCallback * sessionCallback,
+		[in] IFabricAsyncOperationCallback * operationCallback,
+		[out, retval] IFabricAsyncOperationContext ** context);
+	
+	//--------------------------------------------------------------------------
+	// Function: EndOpen
+	//
+	// Description:
+	//	EndOpen async call
+	//
+	// Parameters:
+	//  context                 async context
+	// 
+	// Return codes:
+	//	S_OK
+	//  E_OUTOFMEMORY
+	//
+	[] HRESULT EndOpen(
+		[in] IFabricAsyncOperationContext * context,
+		[out, retval] BOOLEAN * success);
+		
+	//--------------------------------------------------------------------------
+	// Function: BeginResumeOnPartnerMoved
+	//
+	// Description:
+	//	Re-establish a session that was interrupted because the partner service instance moved.
+	//  TODO:  Decide if this is only possible on outbound sessions?
+	//         If so we need to invent a new error or a new interface
+	//
+	// Parameters:
+	//  callback                async callback
+	//  context					async context
+	// 
+	// Return codes:
+	//	S_OK
+	//  E_OUTOFMEMORY
+	//  FABRIC_E_OBJECT_CLOSED
+	//  FABRIC_E_RELIABLE_SESSION_CANNOT_RESOLVE,
+	//  FABRIC_E_RELIABLE_SESSION_CANNOT_CONNECT
+	//  FABRIC_E_RELIABLE_SESSION_CANNOT_RESUME
+	//  FABRIC_E_RELIABLE_SESSION_REJECTED
+	//	
+	[] HRESULT BeginResumeOnPartnerMoved(
+		[in] IFabricAsyncOperationCallback * callback,
+		[out, retval] IFabricAsyncOperationContext ** context);
+	
+	//--------------------------------------------------------------------------
+	// Function: EndResumeOnPartnerMoved
+	//
+	// Description:
+	//	EndResumeOnPartnerMoved async call
+	//
+	// Parameters:
+	//  context                 async context
+	// 
+	// Return codes:
+	//	S_OK
+	//  E_OUTOFMEMORY
+	//
+	[] HRESULT EndResumeOnPartnerMoved(
+		[in] IFabricAsyncOperationContext * context,
+		[out, retval] BOOLEAN * success);
+	
+	//--------------------------------------------------------------------------
+	// Function: BeginClose
+	//
+	// Description:
+	//	Gracefully close the session protocol and release connections and other resources
+	//
+	// Parameters:
+	//  callback                async callback
+	//  context                 async context
+	// 
+	// Return codes:
+	//	S_OK
+	//	S_FALSE - session is not open
+	//
+
+	[] HRESULT BeginClose(
+		[in] IFabricAsyncOperationCallback * callback,
+		[out, retval] IFabricAsyncOperationContext ** context);
+
+	//--------------------------------------------------------------------------
+	// Function: EndClose
+	//
+	// Description:
+	//	EndClose async call
+	//
+	// Parameters:
+	//  context                 async context
+	//
+	// Return codes:
+	//	S_OK
+	//
+	[] HRESULT EndClose(
+		[in] IFabricAsyncOperationContext * context,
+		[out, retval] BOOLEAN * success);
+		
+	//--------------------------------------------------------------------------
+	// Function: Abort
+	//
+	// Description:
+	//	Rudely close the session protocol and abort connections and release other resources
+	//
+	// Return codes:
+	//	S_OK
+	//	S_FALSE - failed (?)
+	//
+	[] HRESULT Abort();	
+	
+	//--------------------------------------------------------------------------
+	// Function: BeginReceive
+	//
+	// Description:
+	//	Receive a message from the session target.
+	//
+	// Parameters:
+	//  callback                async callback
+	//  context                 async context
+	//
+	// Return codes:
+	//	S_OK
+	//	FABRIC_E_OBJECT_CLOSED
+	//
+	[] HRESULT BeginReceive(
+		[in] IFabricAsyncOperationCallback * callback,
+		[out, retval] IFabricAsyncOperationContext ** context);
+		
+	//--------------------------------------------------------------------------
+	// Function: EndReceive
+	//
+	// Description:
+	//	EndRecive actually gets the message
+	//
+	// Parameters:
+	//  context                 async context
+	//  message					received message
+	//
+	// Return codes:
+	//	S_OK
+	//  E_OUTOFMEMORY
+	//
+	[] HRESULT EndReceive(
+		[in] IFabricAsyncOperationContext * context,
+		[out, retval] IFabricReliableSessionMessage ** message);
+
+	//--------------------------------------------------------------------------
+	// Function: BeginSend
+	//
+	// Description:
+	//	Send a message to session source
+	//
+	// Parameters:
+	//  callback                async callback
+	//  context                 async context
+	//
+	// Return codes:
+	//	S_OK
+	//	FABRIC_E_OBJECT_CLOSED
+	//
+	[] HRESULT BeginSend(
+		[in] IFabricReliableSessionMessage * message,
+		[in] IFabricAsyncOperationCallback * callback,
+		[out, retval] IFabricAsyncOperationContext ** context);
+	
+	//--------------------------------------------------------------------------
+	// Function: EndSend
+	//
+	// Description:
+	//	EndSend async call
+	//
+	// Parameters:
+	//  context                 async context
+	//
+	// Return codes:
+	//	S_OK
+	//  E_OUTOFMEMORY
+	//
+	[] HRESULT EndSend(
+		[in] IFabricAsyncOperationContext * context);
+}
+

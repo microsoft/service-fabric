@@ -370,6 +370,9 @@ namespace ReliabilityTestApi
             __declspec(property(get = get_IsDeleted)) bool IsDeleted;
             bool get_IsDeleted() const;
 
+            __declspec(property(get = get_IsUpgradeCompleted)) bool IsUpgradeCompleted;
+            bool get_IsUpgradeCompleted() const;
+
             void WriteTo(Common::TextWriter& writer, Common::FormatOptions const &) const;
 
         private:

@@ -790,16 +790,46 @@ void ComGuestServiceCodePackageActivationManager::OnCodePackageEvent(
         typeHost_.HostContext,
         internalEventDesc);
 
-    if (internalEventDesc.EventType == CodePackageEventType::Terminated)
-    {
-        this->NotifyServices(move(internalEventDesc));
-    }
-    else if (
+    if (
         internalEventDesc.EventType == CodePackageEventType::Started ||
+        internalEventDesc.EventType == CodePackageEventType::Terminated ||
         internalEventDesc.EventType == CodePackageEventType::Stopped)
     {
         this->TrackCodePackage(move(internalEventDesc));
     }
+}
+
+bool ComGuestServiceCodePackageActivationManager::IsFailureCountExceeded(
+    CodePackageEventDescription const & eventDesc)
+{
+    auto iter = eventDesc.Properties.find(CodePackageEventProperties::FailureCount);
+    if (iter != eventDesc.Properties.end())
+    {
+        ULONG failureCount;
+        if (StringUtility::TryFromWString<ULONG>(iter->second, failureCount))
+        {
+            auto failureCountThreshold = (ULONG)HostingConfig::GetConfig().DeployedServiceFailoverContinuousFailureThreshold;
+            return (failureCount >= failureCountThreshold);
+        }
+
+        TRACE_ERROR_AND_ASSERT(
+            TraceType,
+            "IsFailureCountExceeded() : Failed to parse failure count as ULONG. Event={0}.",
+            eventDesc);
+    }
+
+    WriteWarning(
+        TraceType,
+        "IsFailureCountExceeded(): FailureCount property is missing. CPContext={0}, AppHostContext={1}, Event={2}.",
+        typeHost_.CodeContext,
+        typeHost_.HostContext,
+        eventDesc);
+
+    //
+    // Ideally we should always have FailureCount property set. If it is not then
+    // return true so that replica is transient faulted and failover is triggered.
+    //
+    return true;
 }
 
 void ComGuestServiceCodePackageActivationManager::NotifyServices(CodePackageEventDescription && eventDesc)
@@ -812,6 +842,22 @@ void ComGuestServiceCodePackageActivationManager::NotifyServices(CodePackageEven
 
         if (isClosed_.load())
         {
+            return;
+        }
+
+        //
+        // Notify replica to fault itself only when failure limit is exceeded.
+        //
+        if (this->IsFailureCountExceeded(eventDesc) == false)
+        {
+            WriteInfo(
+                TraceType,
+                "NotifyServices(): Skipping notifying replica. CPContext={0}, AppHostContext={1}, Event={2}, FailoverContinuousFailureThreshold={3}.",
+                typeHost_.CodeContext,
+                typeHost_.HostContext,
+                eventDesc,
+                HostingConfig::GetConfig().DeployedServiceFailoverContinuousFailureThreshold);
+
             return;
         }
 
@@ -873,7 +919,8 @@ void ComGuestServiceCodePackageActivationManager::TrackCodePackage(CodePackageEv
                 typeHost_.CodeContext);
         }
 
-        if (eventDesc.EventType == CodePackageEventType::Stopped)
+        if (eventDesc.EventType == CodePackageEventType::Stopped ||
+            eventDesc.EventType == CodePackageEventType::Terminated)
         {
             if (iter->second.first == true)
             {
@@ -882,9 +929,15 @@ void ComGuestServiceCodePackageActivationManager::TrackCodePackage(CodePackageEv
                 --eventReceivedCount_;
             }
 
+            if (eventDesc.EventType == CodePackageEventType::Terminated)
+            {
+                this->NotifyServices(move(eventDesc));
+            }
+
             return;
         }
 
+        // We are here means this is Started event.
         if (iter->second.first == false)
         {
             iter->second.first = true;
@@ -901,6 +954,11 @@ void ComGuestServiceCodePackageActivationManager::TrackCodePackage(CodePackageEv
         }
     }
 
+    //
+    // Complete the waiters outside the event lock and these operations
+    // remove themselves from event waiter map on completion and need
+    // to acquire the event lock.
+    //
     for (auto waiter : waitersToComplete)
     {
         waiter->TryComplete(waiter, ErrorCode::Success());

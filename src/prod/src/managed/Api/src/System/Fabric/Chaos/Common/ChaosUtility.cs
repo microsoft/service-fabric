@@ -83,8 +83,53 @@ namespace System.Fabric.Chaos.Common
             }
         }
 
+        /// <summary>
+        /// If it is a native or rest call, reason in TestErrorEvent, ValidationFailedEvent, or WaitingEvent
+        /// is not compressed, but the reason could be a valid base64 string by itself,
+        /// thus the reason being not compressed will not be caught in Decompress.
+        /// This method makes the reason not a base64 when it is not compressed (i.e., it was rest or native client).
+        /// </summary>
+        /// <param name="reason">Reason in TestErrorEvent, ValidationFailedEvent, and WaitingEvent</param>
+        /// <returns>If reason has length a multiple of 4, this returns the floor or ceil that is not a multiple of 4.</returns>
+        public static string MakeLengthNotMultipleOfFour(string reason)
+        {
+            if (reason.Length % 4 == 0)
+            {
+                if (reason.Length == ChaosConstants.StringLengthLimit)
+                {
+                    return reason.Substring(0, reason.Length-1);
+                }
+                else
+                {
+                    return string.Format("{0}.", reason);
+                }
+            }
+
+            return reason;
+        }
+
+        /// <summary>
+        /// If it is a native or rest call, reason in TestErrorEvent, ValidationFailedEvent, or WaitingEvent
+        /// is not compressed, but the reason could be a valid base64 string by itself,
+        /// thus the reason being not compressed will not be caught in Decompress.
+        /// This method makes the reason not a base64 when it is not compressed (i.e., it was rest or native client).
+        /// </summary>
+        /// <param name="reason">Reason in TestErrorEvent, ValidationFailedEvent, and WaitingEvent</param>
+        /// <returns>If reason has length a multiple of 4, this returns the floor or ceil that is not a multiple of 4.</returns>
+        public static string MakeLengthNotMultipleOfFourIgnoreReasonLength(string reason)
+        {
+            if (reason.Length % 4 == 0)
+            {
+                return string.Format("{0}.", reason);
+            }
+
+            return reason;
+        }
+
         public static string Compress(string text)
         {
+            TestabilityTrace.TraceSource.WriteInfo(TraceType, "compressing the text: {0}", text);
+
             byte[] buffer = Encoding.UTF8.GetBytes(text);
 
             using (MemoryStream ms = new MemoryStream())
@@ -108,9 +153,11 @@ namespace System.Fabric.Chaos.Common
 
         public static string Decompress(string compressedText)
         {
+            TestabilityTrace.TraceSource.WriteInfo(TraceType, "decompressing the compressedText: {0}", compressedText);
+
             byte[] gzBuffer = null;
 
-            try 
+            try
             {
                 gzBuffer = Convert.FromBase64String(compressedText);
             }
@@ -123,6 +170,8 @@ namespace System.Fabric.Chaos.Common
             using (MemoryStream ms = new MemoryStream())
             {
                 int msgLength = BitConverter.ToInt32(gzBuffer, 0);
+                TestabilityTrace.TraceSource.WriteInfo(TraceType, "Decompress msg length of compressed text is: {0}", msgLength);
+
                 ms.Write(gzBuffer, 4, gzBuffer.Length - 4);
 
                 byte[] buffer = new byte[msgLength];
@@ -197,6 +246,17 @@ namespace System.Fabric.Chaos.Common
             }
 
             Helper(obj, name, value, mode, new HashSet<string>(StringComparer.Ordinal));
+        }
+
+        public static NativeTypes.NativeFILETIME ToNativeFILETIMENormalTimeStamp(DateTime dateTime)
+        {
+            Int64 fileTimeUtc = dateTime.ToFileTimeUtc();
+
+            NativeTypes.NativeFILETIME nativeFileTime = new NativeTypes.NativeFILETIME();
+            nativeFileTime.dwLowDateTime = (UInt32)(fileTimeUtc & 0xFFFFFFFF);
+            nativeFileTime.dwHighDateTime = (UInt32)(fileTimeUtc >> 32);
+
+            return nativeFileTime;
         }
 
         /// <summary>

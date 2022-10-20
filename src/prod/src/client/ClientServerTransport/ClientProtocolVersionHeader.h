@@ -18,12 +18,7 @@ namespace ClientServerTransport
 
         static Common::Global<ClientProtocolVersionHeader> CurrentVersionHeader;
         static Common::Global<ClientProtocolVersionHeader> SingleFileUploadVersionHeader;
-        // History:
-        //
-        // 1 (WF-v1.0)   - Gateway only accepts version = 1 clients
-        // 1.1 (WF-v3.0) - Introduced PingReplyMessageBody
-        //               - Introduced Minor version field
-        // 1.2           - Support for file upload based on chunk APIs.
+
 
     public:
         ClientProtocolVersionHeader() 
@@ -47,9 +42,20 @@ namespace ClientServerTransport
         __declspec(property(get=get_Minor)) __int64 Minor;
         inline __int64 get_Minor() const { return minor_; }
 
-        static bool IsMinorAtLeast(ClientProtocolVersionHeader const & header, __int64 minorMinimum)
+
+        bool IsChunkedFileUploadSupported() const
         {
-            return (header.Major == CurrentMajorVersion && header.Minor >= minorMinimum);
+            return IsMinorAtLeast(ClientProtocolVersionHeader::MinorVersion_ChunkedFileUploadSupport);
+        }
+
+        bool IsPingReplyBodySupported() const
+        {
+            return IsMinorAtLeast(ClientProtocolVersionHeader::MinorVersion_PingReplyMessageBodySupport);
+        }
+
+        bool IsCompatibleVersion() const
+        {
+            return IsMinorAtLeast(0);
         }
 
         void WriteTo(Common::TextWriter& w, Common::FormatOptions const&) const { w << "v-" << major_ << "." << minor_; }
@@ -57,6 +63,22 @@ namespace ClientServerTransport
         FABRIC_FIELDS_02(major_, minor_);
 
     private:
+        // History:
+        //
+        // 1 (WF-v1.0)   - Gateway only accepts version = 1 clients
+        // 1.1 (WF-v3.0) - Introduced PingReplyMessageBody
+        //               - Introduced Minor version field
+        // 1.2           - Support for file upload based on chunk APIs.
+        
+        static const __int64 MinorVersion_PingReplyMessageBodySupport = 1;
+        static const __int64 MinorVersion_ChunkedFileUploadSupport = 2;
+
+        bool IsMinorAtLeast(__int64 minorMinimum) const
+        {
+            return (major_ == CurrentMajorVersion && minor_ >= minorMinimum);
+        }
+
+
         __int64 major_;
         __int64 minor_;
     };

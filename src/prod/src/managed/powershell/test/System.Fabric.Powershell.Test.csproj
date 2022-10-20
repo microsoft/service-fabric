@@ -1,0 +1,535 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <AssemblyName>System.Fabric.Powershell.Test</AssemblyName>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <RootNamespace>System.Fabric.Powershell</RootNamespace>
+    <ProjectGuid>{83FE5549-822C-454A-9BBE-CA4FCCD71CC6}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\ApplicationCmdletBase.cs">
+      <Link>ApplicationCmdletBase.cs</Link>
+    </Compile>
+    <Compile Include="..\ApproveRepairTask.cs">
+      <Link>ApproveRepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\CleanTestState.cs">
+      <Link>CleanTestState.cs</Link>
+    </Compile>
+    <Compile Include="..\CodePackageControlOperationBase.cs">
+      <Link>CodePackageControlOperationBase.cs</Link>
+    </Compile>
+    <Compile Include="..\ClusterCmdletBase.cs">
+      <Link>ClusterCmdletBase.cs</Link>
+    </Compile>
+    <Compile Include="..\ClusterConnection.cs">
+      <Link>ClusterConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\CommonCmdletBase.cs">
+      <Link>CommonCmdletBase.cs</Link>
+    </Compile>
+    <Compile Include="..\CompleteRepairTask.cs">
+      <Link>CompleteRepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\ConnectCluster.cs">
+      <Link>ConnectCluster.cs</Link>
+    </Compile>
+    <Compile Include="..\Constants.cs">
+      <Link>Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\CopyApplicationPackage.cs">
+      <Link>CopyApplicationPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\CopyClusterPackage.cs">
+      <Link>CopyClusterPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\DeployServicePackageToNode.cs">
+      <Link>DeployServicePackageToNode.cs</Link>
+    </Compile>
+    <Compile Include="..\DisableNode.cs">
+      <Link>DisableNode.cs</Link>
+    </Compile>
+    <Compile Include="..\dSTSClientProxy.cs">
+      <Link>dSTSClientProxy.cs</Link>
+    </Compile>
+    <Compile Include="..\EnableNode.cs">
+      <Link>EnableNode.cs</Link>
+    </Compile>
+    <Compile Include="..\GetApplicationName.cs">
+      <Link>GetApplicationName.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDebugParameters.cs">
+      <Link>GetDebugParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\GetApplication.cs">
+      <Link>GetApplication.cs</Link>
+    </Compile>
+    <Compile Include="..\GetApplicationHealth.cs">
+      <Link>GetApplicationHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\GetApplicationManifest.cs">
+      <Link>GetApplicationManifest.cs</Link>
+    </Compile>
+    <Compile Include="..\GetApplicationType.cs">
+      <Link>GetApplicationType.cs</Link>
+    </Compile>
+    <Compile Include="..\GetApplicationUpgradeStatus.cs">
+      <Link>GetApplicationUpgradeStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\GetClusterCodeVersion.cs">
+      <Link>GetClusterCodeVersion.cs</Link>
+    </Compile>
+    <Compile Include="..\GetClusterConfigVersion.cs">
+      <Link>GetClusterConfigVersion.cs</Link>
+    </Compile>
+    <Compile Include="..\GetClusterConnection.cs">
+      <Link>GetClusterConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\GetClusterHealth.cs">
+      <Link>GetClusterHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\GetClusterHealthChunk.cs">
+      <Link>GetClusterHealthChunk.cs</Link>
+    </Compile>
+    <Compile Include="..\GetClusterLoadInformation.cs">
+      <Link>GetClusterLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\GetClusterManifest.cs">
+      <Link>GetClusterManifest.cs</Link>
+    </Compile>
+    <Compile Include="..\GetClusterUpgradeStatus.cs">
+      <Link>GetClusterUpgradeStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDeployedApplication.cs">
+      <Link>GetDeployedApplication.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDeployedApplicationHealth.cs">
+      <Link>GetDeployedApplicationHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDeployedCodePackage.cs">
+      <Link>GetDeployedCodePackage.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDeployedReplica.cs">
+      <Link>GetDeployedReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDeployedReplicaDetail.cs">
+      <Link>GetDeployedReplicaDetail.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDeployedServicePackage.cs">
+      <Link>GetDeployedServicePackage.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDeployedServicePackageHealth.cs">
+      <Link>GetDeployedServicePackageHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\GetDeployedServiceType.cs">
+      <Link>GetDeployedServiceType.cs</Link>
+    </Compile>
+    <Compile Include="..\GetImageStoreContent.cs">
+      <Link>GetImageStoreContent.cs</Link>
+    </Compile>
+    <Compile Include="..\GetNode.cs">
+      <Link>GetNode.cs</Link>
+    </Compile>
+    <Compile Include="..\GetNodeHealth.cs">
+      <Link>GetNodeHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\GetNodeLoadInformation.cs">
+      <Link>GetNodeLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\GetApplicationLoadInformation.cs">
+      <Link>GetApplicationLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\GetPartition.cs">
+      <Link>GetPartition.cs</Link>
+    </Compile>
+    <Compile Include="..\GetPartitionHealth.cs">
+      <Link>GetPartitionHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\GetPartitionLoadInformation.cs">
+      <Link>GetPartitionLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\GetRepairTask.cs">
+      <Link>GetRepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\GetReplica.cs">
+      <Link>GetReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\GetReplicaHealth.cs">
+      <Link>GetReplicaHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\GetReplicaLoadInformation.cs">
+      <Link>GetReplicaLoadInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\GetService.cs">
+      <Link>GetService.cs</Link>
+    </Compile>
+    <Compile Include="..\GetServiceDescription.cs">
+      <Link>GetServiceDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\GetServiceGroupDescription.cs">
+      <Link>GetServiceGroupDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\GetServiceGroupMember.cs">
+      <Link>GetServiceGroupMember.cs</Link>
+    </Compile>
+    <Compile Include="..\GetServiceGroupMemberType.cs">
+      <Link>GetServiceGroupMemberType.cs</Link>
+    </Compile>
+    <Compile Include="..\GetServiceHealth.cs">
+      <Link>GetServiceHealth.cs</Link>
+    </Compile>
+    <Compile Include="..\GetServiceManifest.cs">
+      <Link>GetServiceManifest.cs</Link>
+    </Compile>
+    <Compile Include="..\GetServiceName.cs">
+      <Link>GetServiceName.cs</Link>
+    </Compile>
+    <Compile Include="..\GetServiceType.cs">
+      <Link>GetServiceType.cs</Link>
+    </Compile>
+    <Compile Include="..\helpers.cs">
+      <Link>Helpers.cs</Link>
+    </Compile>
+    <Compile Include="..\IClusterConnection.cs">
+      <Link>IClusterConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\ImageStoreCmdletBase.cs">
+      <Link>ImageStoreCmdletBase.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeChaosTestScenario.cs">
+      <Link>InvokeChaosTestScenario.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeFailoverTestScenario.cs">
+      <Link>InvokeFailoverTestScenario.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeDataLoss.cs">
+      <Link>InvokeDataLoss.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeQuorumLoss.cs">
+      <Link>InvokeQuorumLoss.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeDecryptText.cs">
+      <Link>InvokeDecryptText.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeEncryptSecret.cs">
+      <Link>InvokeEncryptSecret.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeEncryptText.cs">
+      <Link>InvokeEncryptText.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeInfrastructureCmdletBase.cs">
+      <Link>InvokeInfrastructureCmdletBase.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeInfrastructureCommand.cs">
+      <Link>InvokeInfrastructureCommand.cs</Link>
+    </Compile>
+    <Compile Include="..\InvokeInfrastructureQuery.cs">
+      <Link>InvokeInfrastructureQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\MovePrimaryReplica.cs">
+      <Link>MovePrimaryReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\MoveSecondaryReplica.cs">
+      <Link>MoveSecondaryReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\NewApplication.cs">
+      <Link>NewApplication.cs</Link>
+    </Compile>
+    <Compile Include="..\NewNodeConfiguration.cs">
+      <Link>NewNodeConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\NewPackageSharingPolicy.cs">
+      <Link>NewPackageSharingPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\NewService.cs">
+      <Link>NewService.cs</Link>
+    </Compile>
+    <Compile Include="..\NewServiceFromTemplate.cs">
+      <Link>NewServiceFromTemplate.cs</Link>
+    </Compile>
+    <Compile Include="..\NewServiceGroup.cs">
+      <Link>NewServiceGroup.cs</Link>
+    </Compile>
+    <Compile Include="..\NewServiceGroupFromTemplate.cs">
+      <Link>NewServiceGroupFromTemplate.cs</Link>
+    </Compile>
+    <Compile Include="..\OutputFormatter.cs">
+      <Link>OutputFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\PartitionSelectorOperationbase.cs">
+      <Link>PartitionSelectorOperationbase.cs</Link>
+    </Compile>
+    <Compile Include="..\PartitionSelectorTestHelper.cs">
+      <Link>PartitionSelectorTestHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\RegisterApplicationType.cs">
+      <Link>RegisterApplicationType.cs</Link>
+    </Compile>
+    <Compile Include="..\RegisterClusterPackage.cs">
+      <Link>RegisterClusterPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveApplication.cs">
+      <Link>RemoveApplication.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveApplicationPackage.cs">
+      <Link>RemoveApplicationPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveClusterPackage.cs">
+      <Link>RemoveClusterPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveNodeConfiguration.cs">
+      <Link>RemoveNodeConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveNodeState.cs">
+      <Link>RemoveNodeState.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveRepairTask.cs">
+      <Link>RemoveRepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveReplica.cs">
+      <Link>RemoveReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveService.cs">
+      <Link>RemoveService.cs</Link>
+    </Compile>
+    <Compile Include="..\RemoveServiceGroup.cs">
+      <Link>RemoveServiceGroup.cs</Link>
+    </Compile>
+    <Compile Include="..\RepairPartition.cs">
+      <Link>RepairPartition.cs</Link>
+    </Compile>
+    <Compile Include="..\ReplicaControlOperationBase.cs">
+      <Link>ReplicaControlOperationBase.cs</Link>
+    </Compile>
+    <Compile Include="..\ReplicaSelectorOperationBase.cs">
+      <Link>ReplicaSelectorOperationBase.cs</Link>
+    </Compile>
+    <Compile Include="..\ReplicaSelectorTestHelper.cs">
+      <Link>ReplicaSelectorTestHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\ResetPartitionLoad.cs">
+      <Link>ResetPartitionLoad.cs</Link>
+    </Compile>
+    <Compile Include="..\ResolveService.cs">
+      <Link>ResolveService.cs</Link>
+    </Compile>
+    <Compile Include="..\RestartDeployedCodePackage.cs">
+      <Link>RestartDeployedCodePackage.cs</Link>
+    </Compile>
+    <Compile Include="..\RestartNode.cs">
+      <Link>RestartNode.cs</Link>
+    </Compile>
+    <Compile Include="..\RestartPartition.cs">
+      <Link>RestartPartition.cs</Link>
+    </Compile>
+    <Compile Include="..\RestartReplica.cs">
+      <Link>RestartReplica.cs</Link>
+    </Compile>
+    <Compile Include="..\ResumeApplicationUpgrade.cs">
+      <Link>ResumeApplicationUpgrade.cs</Link>
+    </Compile>
+    <Compile Include="..\ResumeClusterUpgrade.cs">
+      <Link>ResumeClusterUpgrade.cs</Link>
+    </Compile>
+    <Compile Include="..\SendApplicationHealthReport.cs">
+      <Link>SendApplicationHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\SendClusterHealthReport.cs">
+      <Link>SendClusterHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\SendDeployedApplicationHealthReport.cs">
+      <Link>SendDeployedApplicationHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\SendDeployedServicePackageHealthReport.cs">
+      <Link>SendDeployedServicePackageHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\SendHealthReport.cs">
+      <Link>SendHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\SendNodeHealthReport.cs">
+      <Link>SendNodeHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\SendPartitionHealthReport.cs">
+      <Link>SendPartitionHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\SendReplicaHealthReport.cs">
+      <Link>SendReplicaHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\SendServiceHealthReport.cs">
+      <Link>SendServiceHealthReport.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceCmdletBase.cs">
+      <Link>ServiceCmdletBase.cs</Link>
+    </Compile>
+    <Compile Include="..\ServiceGroupCmdletBase.cs">
+      <Link>ServiceGroupCmdletBase.cs</Link>
+    </Compile>
+    <Compile Include="..\StartApplicationRollback.cs">
+      <Link>StartApplicationRollback.cs</Link>
+    </Compile>
+    <Compile Include="..\StartApplicationUpgrade.cs">
+      <Link>StartApplicationUpgrade.cs</Link>
+    </Compile>
+    <Compile Include="..\StartClusterRollback.cs">
+      <Link>StartClusterRollback.cs</Link>
+    </Compile>
+    <Compile Include="..\StartClusterUpgrade.cs">
+      <Link>StartClusterUpgrade.cs</Link>
+    </Compile>
+    <Compile Include="..\StartNode.cs">
+      <Link>StartNode.cs</Link>
+    </Compile>
+    <Compile Include="..\StartRepairTask.cs">
+      <Link>StartRepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\StopNode.cs">
+      <Link>StopNode.cs</Link>
+    </Compile>
+    <Compile Include="..\StopRepairTask.cs">
+      <Link>StopRepairTask.cs</Link>
+    </Compile>
+    <Compile Include="..\TestApplication.cs">
+      <Link>TestApplication.cs</Link>
+    </Compile>
+    <Compile Include="..\TestApplicationPackage.cs">
+      <Link>TestApplicationPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\TestClusterConnection.cs">
+      <Link>TestClusterConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\TestClusterManifest.cs">
+      <Link>TestClusterManifest.cs</Link>
+    </Compile>
+    <Compile Include="..\TestService.cs">
+      <Link>TestService.cs</Link>
+    </Compile>
+    <Compile Include="..\UnregisterApplicationType.cs">
+      <Link>UnregisterApplicationType.cs</Link>
+    </Compile>
+    <Compile Include="..\UnregisterClusterPackage.cs">
+      <Link>UnregisterClusterPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\UpdateApplication.cs">
+      <Link>UpdateApplication.cs</Link>
+    </Compile>
+    <Compile Include="..\UpdateApplicationUpgrade.cs">
+      <Link>UpdateApplicationUpgrade.cs</Link>
+    </Compile>
+    <Compile Include="..\UpdateClusterUpgrade.cs">
+      <Link>UpdateClusterUpgrade.cs</Link>
+    </Compile>
+    <Compile Include="..\UpdateNodeConfiguration.cs">
+      <Link>UpdateNodeConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\UpdateService.cs">
+      <Link>UpdateService.cs</Link>
+    </Compile>
+    <Compile Include="..\UpdateServiceGroup.cs">
+      <Link>UpdateServiceGroup.cs</Link>
+    </Compile>
+    <Compile Include="..\UploadProgressHandler.cs">
+      <Link>UploadProgressHandler.cs</Link>
+    </Compile>
+    <Compile Include="_friends.cs" />
+    <Compile Include="..\MockClusterConnection.cs">
+      <Link>MockClusterConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\PowershellTest.cs">
+      <Link>PowershellTest.cs</Link>
+    </Compile>
+    <Compile Include="..\TestConstants.cs">
+      <Link>TestConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\TestExceptionHelper.cs">
+      <Link>TestExceptionHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\TestHealthReportHelper.cs">
+      <Link>TestHealthReportHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\TestHelper.cs">
+      <Link>TestHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\TestUtility.cs">
+      <Link>TestUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\SendApplicationHealthReportTests.cs">
+      <Link>SendApplicationHealthReportTests.cs</Link>
+    </Compile>
+    <Compile Include="..\SendClusterHealthReportTests.cs">
+      <Link>SendClusterHealthReportTests.cs</Link>
+    </Compile>
+    <Compile Include="..\SendDeployedApplicationHealthReportTests.cs">
+      <Link>SendDeployedApplicationHealthReportTests.cs</Link>
+    </Compile>
+    <Compile Include="..\SendDeployedServicePackageHealthReportTests.cs">
+      <Link>SendDeployedServicePackageHealthReportTests.cs</Link>
+    </Compile>
+    <Compile Include="..\SendNodeHealthReportTests.cs">
+      <Link>SendNodeHealthReportTests.cs</Link>
+    </Compile>
+    <Compile Include="..\SendPartitionHealthReportTests.cs">
+      <Link>SendPartitionHealthReportTests.cs</Link>
+    </Compile>
+    <Compile Include="..\SendReplicaHealthReportTests.cs">
+      <Link>SendReplicaHealthReportTests.cs</Link>
+    </Compile>
+    <Compile Include="..\SendServiceHealthReportTests.cs">
+      <Link>SendServiceHealthReportTests.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager\Microsoft.ServiceFabric.DeploymentManager.csproj">
+      <Project>{738570C5-43DB-4C00-AB7B-6975ECA8A61E}</Project>
+      <Name>Microsoft.ServiceFabric.DeploymentManager</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\dSTSClient\dll\System.Fabric.dSTSClient\System.Fabric.dSTSClient.csproj">
+      <Project>{5186701B-B2E7-4FEB-99DD-89CFA16D20E1}</Project>
+      <Name>System.Fabric.dSTSClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management\System.Fabric.Management.csproj">
+      <Project>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</Project>
+      <Name>System.Fabric.Management</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <Reference Include="System.IdentityModel" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext)\v4.0.30319\assembly\GAC_MSIL\Microsoft.PowerShell.Commands.Utility\v4.0_3.0.0.0__31bf3856ad364e35\Microsoft.PowerShell.Commands.Utility.dll" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+    <Reference Include="$(PkgMoq)\lib\net45\moq.dll" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

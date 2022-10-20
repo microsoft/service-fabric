@@ -21,6 +21,13 @@ namespace ServiceModel
             {
             }
 
+            ResourceDescription(std::wstring const &invalidNameCharacters, std::wstring const &name)
+                : invalidNameCharacters_(invalidNameCharacters)
+                , Name(name)
+            {
+
+            }
+
             bool operator==(ResourceDescription const & other) const
             {
                 return this->Name == other.Name;

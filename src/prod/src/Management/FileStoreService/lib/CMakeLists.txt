@@ -37,6 +37,7 @@ set( LINUX_SOURCES
     ../processuploadchunkrequestasyncoperation.cpp
     ../processuploadchunkcontentrequestasyncoperation.cpp
     ../processcheckexistencerequestasyncoperation.cpp
+    ../FileStoreService.PerformanceCounters.cpp
 )
 
 include_directories("..")

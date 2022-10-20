@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_winfabrictest.props" />
+  <PropertyGroup>
+    <ProjectGuid>{09A3C161-364C-4781-A474-4209751B8C96}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>NativeReplicatorClientWorkload</RootNamespace>
+    <AssemblyName>NativeReplicatorClientWorkload</AssemblyName>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net40\Newtonsoft.Json.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="NightWatchTXRClient.cs" />
+    <Compile Include="NightWatchTXRClientBaseResult.cs" />
+    <Compile Include="NightWatchTXRClientConstants.cs" />
+    <Compile Include="NightWatchTXRClientRunParameters.cs" />
+    <Compile Include="NightWatchTXRClientTestAction.cs" />
+    <Compile Include="NightWatchTXRClientTestParameters.cs" />
+    <Compile Include="NightWatchTXRClientTestResult.cs" />
+    <Compile Include="NightWatchTXRClientTestStatus.cs" />
+    <Compile Include="Utility.cs" />
+    <Content Include="FabricTransportSettings.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.FabricTransport\Microsoft.ServiceFabric.FabricTransport.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.FabricTransport.V2\Microsoft.ServiceFabric.FabricTransport.V2.csproj" />
+    <ProjectReference Include="$(SrcRoot)\test\current\framework\ms.test.winfabric.current\MS.Test.WinFabric.current.csproj">
+      <Name>MS.Test.WinFabric.current</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\test\current\framework\MS.Test.WinFabric.userclient\MS.Test.WinFabric.UserClient.csproj">
+      <Name>MS.Test.WinFabric.UserClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Testability\System.Fabric.Testability.csproj">
+      <Name>System.Fabric.Testability</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.dll" />
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.Remoting.dll" />
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.Wcf.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <OutputFiles Include="$(OutDir)**\*" Exclude="$(OutDir)**\*.pdb" />
+    </ItemGroup>
+    <copy SourceFiles="@(OutputFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest" SkipUnchangedFiles="false" />
+  </Target>
+</Project>

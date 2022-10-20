@@ -235,6 +235,9 @@ namespace System.Fabric.Store
 
             if (LockStatus.Timeout == acquiredLock.Status)
             {
+#if DEBUG
+                Diagnostics.Assert(acquiredLock.OldestGrantee != -1, "OldestGrantee should not be -1. There should be at least one grantee");
+#endif
                 throw new TimeoutException(
                     string.Format(
                         CultureInfo.CurrentCulture,
@@ -243,7 +246,8 @@ namespace System.Fabric.Store
                         this.tracer,
                         lockTimeout,
                         this.id,
-                        lockResourceNameHash));
+                        lockResourceNameHash,
+                        acquiredLock.OldestGrantee));
             }
 
             Diagnostics.Assert(LockStatus.Granted == acquiredLock.Status, this.tracer, "incorrect lock status");

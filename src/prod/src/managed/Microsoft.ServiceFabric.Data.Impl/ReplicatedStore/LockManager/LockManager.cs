@@ -622,6 +622,7 @@ namespace System.Fabric.Store
                     //
                     if (0 == timeout)
                     {
+                        long oldestGrantee = hashValue.LockResourceControlBlock.GrantedList[0].Owner;
                         //
                         // Release second level lock.
                         //
@@ -630,7 +631,7 @@ namespace System.Fabric.Store
                         //
                         // Timeout lock request immediately.
                         //
-                        return Task.FromResult<ILock>(new LockControlBlock(this, owner, resourceNameHash, mode, timeout, LockStatus.Timeout, false));
+                        return Task.FromResult<ILock>(new LockControlBlock(this, owner, resourceNameHash, mode, timeout, LockStatus.Timeout, false, oldestGrantee));
                     }
 
                     //
@@ -951,6 +952,9 @@ namespace System.Fabric.Store
                 //
                 lockControlBlock.LockStatus = LockStatus.Timeout;
                 lockControlBlock.LockCount = 0;
+
+                // Since we have the lockHashValue lock, GrantedList should not change underneath us
+                lockControlBlock.oldestGrantee = lockHashValue.LockResourceControlBlock.GrantedList[0].Owner;
 
                 //
                 // Recompute the new grantees and lock granted mode.

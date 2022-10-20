@@ -105,6 +105,7 @@ namespace FabricDCA
 
             // Create and initialize the container manager object if required.
             ContainerManager containerManager = null;
+            ContainerEnvironment containerEnvironment = null;
 
             // FabricContainerAppsEnabled is set to true by default
             bool enableContainerManager = Utility.GetUnencryptedConfigValue<bool>(
@@ -114,7 +115,8 @@ namespace FabricDCA
 
             if (enableContainerManager)
             {
-                containerManager = new ContainerManager(appInstanceMgr);
+                containerEnvironment = new ContainerEnvironment();
+                containerManager = new ContainerManager(appInstanceMgr, containerEnvironment);
             }
 
             // DCA is running again.

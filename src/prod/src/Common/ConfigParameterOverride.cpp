@@ -7,24 +7,13 @@
 
 using namespace std;
 using namespace Common;
+using namespace ServiceModel;
 
 ConfigParameterOverride::ConfigParameterOverride()
     : Name(),
     Value(),
     IsEncrypted(false),
     Type(L"")
-{
-}
-
-ConfigParameterOverride::ConfigParameterOverride(
-    std::wstring && name,
-    std::wstring && value,
-    bool isEncrypted,
-    std::wstring && type) :
-    Name(move(name)),
-    Value(move(value)),
-    IsEncrypted(isEncrypted),
-    Type(move(type))
 {
 }
 
@@ -76,4 +65,61 @@ void ConfigParameterOverride::WriteTo(TextWriter & w, FormatOptions const &) con
     w.Write("IsEncrypted = {0},", this->IsEncrypted);
     w.Write("IsType = {0}", this->Type);
     w.Write("}");
+}
+
+void ConfigParameterOverride::ReadFromXml(
+    XmlReaderUPtr const & xmlReader)
+{
+    // ensure that we are positioned on ConfigParameter
+    xmlReader->StartElement(
+        *SchemaNames::Element_ConfigParameter, 
+        *SchemaNames::Namespace);
+
+    this->Name = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Name);
+    this->Value = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Value);       
+    
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_IsEncrypted))
+    {
+        this->IsEncrypted = xmlReader->ReadAttributeValueAs<bool>(*SchemaNames::Attribute_IsEncrypted);
+    }
+
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_Type))
+    {
+        this->Type = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Type);
+    }
+
+    xmlReader->ReadElement();
+}
+
+ErrorCode ConfigParameterOverride::WriteToXml(XmlWriterUPtr const & xmlWriter)
+{
+    //Paramter
+    ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_ConfigParameter, L"", *SchemaNames::Namespace);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Name, this->Name);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Value, this->Value);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteBooleanAttribute(*SchemaNames::Attribute_IsEncrypted, this->IsEncrypted);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Type, this->Type);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    //</Paramter>
+    return xmlWriter->WriteEndElement();
+
 }

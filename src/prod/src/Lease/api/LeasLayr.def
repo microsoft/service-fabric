@@ -1,0 +1,22 @@
+LIBRARY "LeaseLayer"
+EXPORTS
+    RegisterLeasingApplication
+    UnregisterLeasingApplication
+    EstablishLease
+    TerminateLease
+    GetLeasingApplicationExpirationTime
+    CompleteArbitrationSuccessProcessing
+    FaultLeaseAgent
+    BlockLeaseAgent
+    SetGlobalLeaseExpirationTime
+    CompleteRemoteCertificateVerification
+    UpdateCertificate
+    BlockLeaseConnection
+    addLeaseBehavior
+    removeLeaseBehavior
+    SetListenerSecurityDescriptor
+    UpdateLeaseDuration
+    QueryLeaseDuration
+    UpdateHeartbeatResult
+    UpdateLeaseGlobalConfig
+    GetRemoteLeaseExpirationTime

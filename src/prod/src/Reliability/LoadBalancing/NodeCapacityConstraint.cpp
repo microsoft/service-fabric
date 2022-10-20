@@ -461,7 +461,9 @@ IViolationUPtr NodeCapacityConstraint::GetViolations(
         }
 
         return true;
-    });
+    },
+        true,   // Iterate only over nodes with capacity
+        false);
 
     return make_unique<NodeLoadViolation>(totalLoadOverCapacity, move(nodeLoadOverCapacity), &globalDomain);
 }
@@ -472,7 +474,7 @@ ConstraintCheckResult NodeCapacityConstraint::CheckSolutionAndGenerateSubspace(
     bool relaxed,
     bool useNodeBufferCapacity,
     Random & random,
-	std::shared_ptr<IConstraintDiagnosticsData> const diagnosticsDataPtr /* = nullptr */) const
+    std::shared_ptr<IConstraintDiagnosticsData> const diagnosticsDataPtr /* = nullptr */) const
 {
     PlacementReplicaSet invalidReplicas;
 
@@ -482,6 +484,7 @@ ConstraintCheckResult NodeCapacityConstraint::CheckSolutionAndGenerateSubspace(
     size_t globalMetricStartIndex = totalMetricCount - globalMetricCount;
 
     bool preventTransientOvercommit = tempSolution.OriginalPlacement->Settings.PreventTransientOvercommit;
+    bool countDisappearingLoad = preventTransientOvercommit && tempSolution.OriginalPlacement->Settings.CountDisappearingLoadForSimulatedAnnealing;
     bool applyOnlyMoveInChanges = preventTransientOvercommit &&
         tempSolution.BaseSolution.CurrentSchedulerAction != PLBSchedulerActionType::ConstraintCheck;
 
@@ -491,9 +494,14 @@ ConstraintCheckResult NodeCapacityConstraint::CheckSolutionAndGenerateSubspace(
 
     tempSolution.ForEachNode(changedOnly, [&](NodeEntry const* node) -> bool
     {
-
-        // ----------------------------------
         // Check for node capacity and calculate the diff (load - capacity)
+        // Node is over capacity if:
+        //      PreventTransientOvercommit is false:
+        //          Original load on the node + load changes > node capacity.
+        //      PreventTransientOvercommit is true:
+        //          Original load on node + load changes > node capacity
+        //          or Load changes > 0 and Original load on node + load changes + should disappear load > capacity.
+
         if (!node->IsUp || !node->HasCapacity)
         {
             return true;
@@ -507,35 +515,58 @@ ConstraintCheckResult NodeCapacityConstraint::CheckSolutionAndGenerateSubspace(
         LoadEntry const& originalLoads = node->Loads;
         LoadEntry const& baseLoads = tempSolution.BaseSolution.NodeChanges[node];
         LoadEntry const& tempLoads = applyOnlyMoveInChanges ? tempSolution.NodeMovingInChanges[node] : tempSolution.NodeChanges[node];
+        LoadEntry const& shouldDisappearLoads = node->ShouldDisappearLoads;
 
         ASSERT_IFNOT(totalMetricCount == originalLoads.Length && totalMetricCount == tempLoads.Length &&
             totalMetricCount == baseLoads.Length, "Invalid temp loads or base loads");
 
         bool overCapacity = false;
-        for (size_t i = 0; i < globalMetricCount; ++i)
+        for (size_t globalMetricIndex = 0; globalMetricIndex < globalMetricCount; ++globalMetricIndex)
         {
-            size_t totalIndex = globalMetricStartIndex + i;
-            int64 capacity = useNodeBufferCapacity ? node->TotalCapacities.Values[i] : node->BufferedCapacities.Values[i];
+            size_t totalIndex = globalMetricStartIndex + globalMetricIndex;
+            int64 nodeCapacity = useNodeBufferCapacity ? node->TotalCapacities.Values[globalMetricIndex] : node->BufferedCapacities.Values[globalMetricIndex];
+            int64 capacity = nodeCapacity;
 
-            if (capacity >= 0)
+            if (nodeCapacity >= 0)
             {
                 int64 originalLoadValue = node->Loads.Values[totalIndex];
+                auto tempReservedLoad = tempSolution.GetApplicationReservedLoad(node, globalMetricIndex);
                 int64 load = originalLoadValue +
                     tempLoads.Values[totalIndex] +
-                    tempSolution.GetApplicationReservedLoad(node, i);
+                    tempReservedLoad;
 
                 if (relaxed)
                 {
                     int64 baseLoadWithReservation = originalLoadValue +
                         baseLoads.Values[totalIndex] +
-                        tempSolution.GetBaseApplicationReservedLoad(node, i);
-                    capacity = max(capacity, baseLoadWithReservation);
+                        tempSolution.GetBaseApplicationReservedLoad(node, globalMetricIndex);
+                    capacity = max(nodeCapacity, baseLoadWithReservation);
                 }
 
                 if (load > capacity)
                 {
                     overCapacity = true;
-                    diff.Set(i, load - capacity);
+                }
+                else if (countDisappearingLoad)
+                {
+                    // If we are preventing transient overcommit, and if there is incoming load or reservation to the node,
+                    // then we also need to account for disappearing load when calculating capacity violation.
+                    // Otherwise, it is possible the incoming replicas will use the load that is occupied by disappearing replicas.
+                    if (   tempLoads.Values[totalIndex] > 0
+                        || tempReservedLoad > tempSolution.BaseSolution.GetApplicationReservedLoad(node, globalMetricIndex))
+                    {
+                        auto sdLoad = shouldDisappearLoads.Values[globalMetricIndex];
+                        load += sdLoad;
+                        if (load > capacity)
+                        {
+                            overCapacity = true;
+                        }
+                    }
+                }
+
+                if (overCapacity)
+                {
+                    diff.Set(globalMetricIndex, load - capacity);
 
                     //Diagnostics
                     if (diagnosticsDataPtr != nullptr)
@@ -546,14 +577,14 @@ ConstraintCheckResult NodeCapacityConstraint::CheckSolutionAndGenerateSubspace(
                         auto nCap = std::static_pointer_cast<NodeCapacityConstraintDiagnosticsData>(diagnosticsDataPtr);
 
                         MetricCapacityDiagnosticInfo info(
-                            globalDomain.Metrics[i].Name,
+                            globalDomain.Metrics[globalMetricIndex].Name,
                             node->NodeId,
                             (diagnosticsDataPtr->plbNodesPtr_ != nullptr) ? (*(diagnosticsDataPtr->plbNodesPtr_)).at(node->NodeIndex).NodeDescriptionObj.NodeName : L"",
                             load,
                             capacity);
 
-						nCap->AddMetricDiagnosticInfo(move(info));
-					}
+                        nCap->AddMetricDiagnosticInfo(move(info));
+                    }
                 }
             }
         }
@@ -632,7 +663,9 @@ ConstraintCheckResult NodeCapacityConstraint::CheckSolutionAndGenerateSubspace(
         nodeChanges.insert(make_pair(node, move(nodeInvalidReplicas)));
 
         return true;
-    });
+    },
+        true,   // Iterate only over nodes with capacity
+        false);
 
     return ConstraintCheckResult(make_unique<NodeCapacitySubspace>(relaxed, move(nodeChanges), move(nodeExtraApplications), move(nodeExtraServicePackages)), move(invalidReplicas));
 }

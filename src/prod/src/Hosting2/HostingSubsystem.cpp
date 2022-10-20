@@ -28,7 +28,30 @@ private:
     {
         wstring ServiceName;
         wstring PublicActivationId;
+        wstring ApplicationName;
     };
+
+    bool TryGetInstanceInfo(
+        ServicePackageIdentifier const & servicePackageId,
+        ServicePackageActivationContext const & activationContext,
+        __out InstanceInfo & instanceInfo) const
+    {
+        auto key = this->CreateKey(servicePackageId, activationContext);
+
+        {
+            AcquireReadLock readLock(lock_);
+
+            auto iter = map_.find(key);
+            if (iter == map_.end())
+            {
+                return false;
+            }
+
+            instanceInfo = iter->second;
+        }
+
+        return true;
+    }
 
 public:
     ServicePackageInstanceInfoMap(__in HostingSubsystem & hosting)
@@ -49,19 +72,13 @@ public:
             return true;
         }
 
-        auto key = this->CreateKey(servicePackageId, activationContext);
-
+        InstanceInfo instanceInfo;
+        if (!TryGetInstanceInfo(servicePackageId, activationContext, instanceInfo))
         {
-            AcquireReadLock readLock(lock_);
-
-            auto iter = map_.find(key);
-            if (iter == map_.end())
-            {
-                return false;
-            }
-
-            activationId = iter->second.PublicActivationId;
+            return false;
         }
+
+        activationId = instanceInfo.PublicActivationId;
 
         return true;
     }
@@ -72,20 +89,30 @@ public:
         __out wstring & serviceName) const
     {
         ASSERT_IFNOT(activationContext.IsExclusive, "ServiceName requested for shared service package activation.");
-        
-        auto key = this->CreateKey(servicePackageId, activationContext);
 
+        InstanceInfo instanceInfo;
+        if (!TryGetInstanceInfo(servicePackageId, activationContext, instanceInfo))
         {
-            AcquireReadLock readLock(lock_);
-
-            auto iter = map_.find(key);
-            if (iter == map_.end())
-            {
-                return false;
-            }
-
-            serviceName = iter->second.ServiceName;
+            return false;
         }
+
+        serviceName = instanceInfo.ServiceName;
+
+        return true;
+    }
+
+    bool TryGetApplicationName(
+        ServicePackageIdentifier const & servicePackageId,
+        ServicePackageActivationContext const & activationContext,
+        __out wstring & applicationName) const
+    {
+        InstanceInfo instanceInfo;
+        if (!TryGetInstanceInfo(servicePackageId, activationContext, instanceInfo))
+        {
+            return false;
+        }
+
+        applicationName = instanceInfo.ApplicationName;
 
         return true;
     }
@@ -93,7 +120,8 @@ public:
     wstring GetOrAddActivationId(
         ServicePackageIdentifier const & servicePackageId,
         ServicePackageActivationContext const & activationContext,
-        wstring const & serviceName)
+        wstring const & serviceName,
+        wstring const & applicationName)
     {
         wstring activationId;
         if (this->TryGetActivationId(servicePackageId, activationContext, activationId))
@@ -101,7 +129,7 @@ public:
             return activationId;
         }
 
-        ASSERT_IF(serviceName.empty(), "ServiceName cannot be empty for exlusive service package activation.");
+        ASSERT_IF(serviceName.empty(), "ServiceName cannot be empty for exclusive service package activation.");
 
         auto key = this->CreateKey(servicePackageId, activationContext);
 
@@ -117,14 +145,16 @@ public:
             InstanceInfo info;
             info.ServiceName = serviceName;
             info.PublicActivationId = Guid::NewGuid().ToString();
+            info.ApplicationName = applicationName;
 
             map_.insert(make_pair(key, info));
 
             WriteNoise(
                 TraceType,
                 hosting_.Root.TraceId,
-                "Added ServiceName=[{0}], ServicePackagePublicActivationId=[{1}] for ServicePackageActivationContext=[{2}].",
+                "Added ServiceName=[{0}], ApplicationName=[{1}], ServicePackagePublicActivationId=[{2}] for ServicePackageActivationContext=[{3}].",
                 info.ServiceName,
+                info.ApplicationName,
                 info.PublicActivationId,
                 activationContext);
 
@@ -288,7 +318,7 @@ protected:
             }
         }
 
-        if (CentralSecretServiceConfig::IsCentralSecretServiceConfigured())
+        if (CentralSecretServiceConfig::IsCentralSecretServiceEnabled())
         {
             error = owner_.passThroughClientFactoryPtr_->CreateSecretStoreClient(owner_.secretStoreClient_);
             if (!error.IsSuccess())
@@ -327,7 +357,7 @@ private:
             return;
         }
 
-        OpenEventDispatcher(thisSPtr);
+        OpenEventDispatcher(thisSPtr);        
     }
 
     void OpenEventDispatcher(AsyncOperationSPtr const & thisSPtr)
@@ -683,7 +713,7 @@ private:
     {
         // Perform LSS open operations only if SecretStoreService is enabled in the cluster manifest
         ErrorCode error(ErrorCodeValue::Success);
-        if (CentralSecretServiceConfig::IsCentralSecretServiceConfigured())
+        if (CentralSecretServiceConfig::IsCentralSecretServiceEnabled())
         {
           error = owner_.LocalSecretServiceManagerObj->Open();
           WriteTrace(
@@ -1080,7 +1110,7 @@ private:
     void CloseLocalSecretServiceManager(AsyncOperationSPtr const & thisSPtr)
     {
         ErrorCode error(ErrorCodeValue::Success);
-        if (CentralSecretServiceConfig::IsCentralSecretServiceConfigured())
+        if (CentralSecretServiceConfig::IsCentralSecretServiceEnabled())
         {
             error = owner_.LocalSecretServiceManagerObj->Close();
 
@@ -2067,12 +2097,21 @@ bool HostingSubsystem::TryGetExclusiveServicePackageServiceName(
     return svcPkgInstanceInfoMap_->TryGetServiceName(servicePackageId, activationContext, serviceName);
 }
 
+bool HostingSubsystem::TryGetServicePackagePublicApplicationName(
+    ServicePackageIdentifier const & servicePackageId,
+    ServicePackageActivationContext const & activationContext,
+    wstring & applicationName) const
+{
+    return svcPkgInstanceInfoMap_->TryGetApplicationName(servicePackageId, activationContext, applicationName);
+}
+
 wstring HostingSubsystem::GetOrAddServicePackagePublicActivationId(
     ServicePackageIdentifier const & servicePackageId,
     ServicePackageActivationContext const & activationContext,
-    wstring const & serviceName)
+    wstring const & serviceName,
+    wstring const & applicationName)
 {
-    return svcPkgInstanceInfoMap_->GetOrAddActivationId(servicePackageId, activationContext, serviceName);
+    return svcPkgInstanceInfoMap_->GetOrAddActivationId(servicePackageId, activationContext, serviceName, applicationName);
 }
 
 int64 HostingSubsystem::GetNextSequenceNumber() const

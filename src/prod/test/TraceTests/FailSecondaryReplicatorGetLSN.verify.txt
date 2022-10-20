@@ -1,0 +1,8 @@
+###Partition 622cb244-1f86-4205-950f-19af968ac1f0 time range 7/23/2014 5:57:56 AM-7/23/2014 6:02:41 AM
+Partition stuck in reconfiguration for at least ###00:04:10.2370000
+Checking primary on node 50
+Primary is stuck in Phase1_GetLSN for at least ###00:04:10.1750000
+Primary is still waiting for GetLSN result from 40
+Primary get LSN from 40 not completed.
+Failed Task: GetRemoteLSN(SecondaryGetLocalLSN(RAPEndActions(ApiError: IReplicator.GetStatus()->E_FAIL))[*3])
+

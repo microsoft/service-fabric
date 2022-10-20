@@ -7,16 +7,11 @@
 
 using namespace std;
 using namespace Common;
+using namespace ServiceModel;
 
 ConfigSection::ConfigSection()
     : Name(),
     Parameters()
-{
-}
-
-ConfigSection::ConfigSection(std::wstring && name, ParametersMapType && parameters)
-    : Name(move(name)),
-    Parameters(move(parameters))
 {
 }
 
@@ -96,6 +91,66 @@ void ConfigSection::WriteTo(TextWriter & w, FormatOptions const &) const
     w.Write("}");
 }
 
+void ConfigSection::ReadFromXml(XmlReaderUPtr const & xmlReader)
+{
+    clear();
+
+    // ensure that we are positioned on <ConfigSection 
+    xmlReader->StartElement(
+        *SchemaNames::Element_ConfigSection, 
+        *SchemaNames::Namespace);
+
+    // Section Name=""
+    this->Name = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Name);
+
+    if (xmlReader->IsEmptyElement())
+    {
+        // <Section ... />
+        xmlReader->ReadElement();
+    }
+    else
+    {
+        // <Section ...>
+        xmlReader->ReadStartElement();
+
+        bool done = false;
+        while(!done)
+        {
+            // <Parameter ... >
+            if (xmlReader->IsStartElement(
+                *SchemaNames::Element_ConfigParameter,
+                *SchemaNames::Namespace,
+                false))
+            {
+                ConfigParameter parameter;
+                parameter.ReadFromXml(xmlReader);
+                wstring parameterName(parameter.Name);
+
+                if (!TryAddParameter(move(parameter)))
+                {
+                    Trace.WriteError(
+                        "Common",
+                        L"XMlParser",
+                        "Parameter {0} with a different name than existing parameters in the section. Input={1}, Line={2}, Position={3}",
+                        parameterName,
+                        xmlReader->FileName,
+                        xmlReader->GetLineNumber(),
+                        xmlReader->GetLinePosition());
+
+                    throw XmlException(ErrorCode(ErrorCodeValue::XmlInvalidContent));
+                }
+            }
+            else
+            {
+                done = true;
+            }
+        }
+
+        // </Section>
+        xmlReader->ReadEndElement();
+    }
+}
+
 void ConfigSection::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_CONFIGURATION_SECTION & publicSection) const
 {
     publicSection.Name = heap.AddString(this->Name);
@@ -117,6 +172,22 @@ void ConfigSection::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_CONFIGURATI
             iter->second.ToPublicApi(heap, publicItems[ix]);
             ++ix;
         }
+    }
+}
+
+bool ConfigSection::TryAddParameter(ConfigParameter && parameter)
+{
+    wstring parameterName(parameter.Name);
+
+    auto iter = this->Parameters.find(parameterName);
+    if (iter != this->Parameters.end())
+    {
+        return false;   
+    }
+    else
+    {
+        this->Parameters.insert(make_pair(move(parameterName), move(parameter)));
+        return true;
     }
 }
 

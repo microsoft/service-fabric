@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{0C6E0DCC-7A0A-4D3E-B19B-CC06E94BB9DD}</ProjectGuid>
+    <RootNamespace>FabricDCA</RootNamespace>
+    <AssemblyName>TelemetryWriters</AssemblyName>
+    <AssemblyDescription>Telemetry Writer to send telemetry events from a TelemetryCollection</AssemblyDescription>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <OutputType>Library</OutputType>
+    <TargetDestination>bin</TargetDestination>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(OSSBUILD)' != ''">
+      <ItemGroup>
+        <Compile Include="..\AppInsightsTelemetryKey.cs">
+          <Link>AppInsightsTelemetryKey.cs</Link>
+        </Compile>
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <Compile Include="..\AppInsightsTelemetryKey.Internal.cs">
+          <Link>AppInsightsTelemetryKey.Internal.cs</Link>
+        </Compile>
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+  <ItemGroup>
+    <Compile Include="..\AppInsightsTelemetryWriter.cs">
+      <Link>AppInsightsTelemetryWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\FileShareTelemetryWriter.cs">
+      <Link>FileShareTelemetryWriter.cs</Link>
+    </Compile>
+    <Reference Include="$(PkgMicrosoft_ApplicationInsights)\lib\net45\Microsoft.ApplicationInsights.dll">
+      <Name>Microsoft.ApplicationInsights</Name>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\TelemetryAggregation\dll\TelemetryAggregation.csproj">
+      <Project>{4ED2B9F1-639E-465D-8200-CD05E499232F}</Project>
+      <Name>TelemetryAggregation</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+</Project>

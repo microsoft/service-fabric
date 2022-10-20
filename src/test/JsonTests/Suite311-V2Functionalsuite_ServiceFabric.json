@@ -24,7 +24,7 @@
     {
       "Name": "PLB_PlacementConstraint",
       "Type": "V2_DllTest",
-      "Owners": "v-bogmar,sfplbtestfailures",
+      "Owners": "v-brmilo,sfplbtestfailures",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -79,7 +79,7 @@
     {
       "Name": "Mgmt_SetupEntryPoint",
       "Type": "V2_DllTest",
-      "Owners": "tugup, harahma, vaishnav, vipulm",
+      "Owners": "tugup, harahma",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -96,7 +96,7 @@
     {
       "Name": "Mgmt_HealthRestApi",
       "Type": "V2_DllTest",
-      "Owners": "mialu",
+      "Owners": "iyyappam, oanapl",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:3;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -115,7 +115,7 @@
     {
       "Name": "Mgmt_DiffProvision",
       "Type": "V2_DllTest",
-      "Owners": "mialu",
+      "Owners": "iyyappam, oanapl",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:3;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -134,7 +134,7 @@
     {
       "Name": "Mgmt_LargeApplicationDeployment",
       "Type": "V2_DllTest",
-      "Owners": "mialu",
+      "Owners": "iyyappam, oanapl",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -151,7 +151,7 @@
     {
       "Name": "Mgmt_ImageStoreRestApi",
       "Type": "V2_DllTest",
-      "Owners": "mialu",
+      "Owners": "iyyappam, oanapl",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:3;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -189,7 +189,7 @@
     {
       "Name": "FSSWithFaults",
       "Type": "V2_DllTest",
-      "Owners": "tugup,iyyappam,mialu",
+      "Owners": "tugup,iyyappam",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -208,7 +208,7 @@
     {
       "Name": "Hosting_FSS",
       "Type": "V2_DllTest",
-      "Owners": "tugup,iyyappam,mialu",
+      "Owners": "tugup,iyyappam",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {

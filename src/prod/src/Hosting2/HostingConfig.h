@@ -67,8 +67,6 @@ namespace Hosting2
         PUBLIC_CONFIG_ENTRY(Common::SecureString, L"Hosting", NTLMAuthenticationPasswordSecret, Common::SecureString(L""), Common::ConfigEntryUpgradePolicy::Static);
         //Enables management of Endpoint resources by Fabric. Requires specification of start and end application port range in FabricNode.
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", EndpointProviderEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
-        //Enables management of IP addresses.
-        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", IPProviderEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
         //How often hosting should attempt to find and acl new cluster certificates
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ClusterCertificateAclingInterval, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);
 
@@ -76,6 +74,7 @@ namespace Hosting2
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultContainerRepositoryAccountName, L"", Common::ConfigEntryUpgradePolicy::Static);
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultContainerRepositoryPassword, L"", Common::ConfigEntryUpgradePolicy::Static);
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", IsDefaultContainerRepositoryPasswordEncrypted, false, Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultContainerRepositoryPasswordType, L"", Common::ConfigEntryUpgradePolicy::Static);
 
         // Endpoint that an HTTP GET request is made from to get authentication token for downloading container images.  Any valid URI can be specified here
         // as long as the endpoint returns a simple JSON format with "access_token" as an attribute so the token can be parsed.
@@ -84,6 +83,17 @@ namespace Hosting2
         // Default endpoint URI for MSI.  Adding a variable here instead of hardcoding it in case the folks handling MSI decide to change the endpoint.
         // See here (https://docs.microsoft.com/en-us/azure/active-directory/managed-service-identity/howto-assign-access-portal) for more information.
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultMSIEndpointForTokenAuthentication, L"http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.core.windows.net/", Common::ConfigEntryUpgradePolicy::Static);
+
+        //-----------------  network settings
+
+        //Enables management of open network IP addresses.
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", IPProviderEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
+        //Enables management of nat network IP addresses.
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", LocalNatIpProviderEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
+        //Name of the nat network created.
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", LocalNatIpProviderNetworkName, L"servicefabric_nat", Common::ConfigEntryUpgradePolicy::Static);
+        //Network address range of the nat network created.
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", LocalNatIpProviderNetworkRange, L"10.128.0.0/24", Common::ConfigEntryUpgradePolicy::Static);
 
 #if defined(PLATFORM_UNIX)
         //The name of the plugin used for flat networks
@@ -98,7 +108,28 @@ namespace Hosting2
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", AzureVnetPluginActivationExceptionInterval, Common::TimeSpan::FromMinutes(5), Common::ConfigEntryUpgradePolicy::Dynamic);
         //Backoff interval on every retry to start azure vnet plugin.
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", AzureVnetPluginActivationRetryBackoffInterval, Common::TimeSpan::FromSeconds(1), Common::ConfigEntryUpgradePolicy::Dynamic);
+#else
+        //The name of the plugin used for isolated networks
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", IsolatedNetworkPluginName, L"sf_cns.exe", Common::ConfigEntryUpgradePolicy::Static);
 #endif
+        //The timeout for initializing the isolated network plugin process manager
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", IsolatedNetworkPluginProcessManagerInitTimeout, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Dynamic);
+        //This is the maximum count for which the system will retry isolated network plugin activation before giving up. 
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", IsolatedNetworkPluginActivationMaxFailureCount, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
+        //This is the interval during which if we reach max retry activation count, we will assert. 
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", IsolatedNetworkPluginActivationExceptionInterval, Common::TimeSpan::FromMinutes(5), Common::ConfigEntryUpgradePolicy::Dynamic);
+        //Backoff interval on every retry to start isolated network plugin.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", IsolatedNetworkPluginActivationRetryBackoffInterval, Common::TimeSpan::FromSeconds(1), Common::ConfigEntryUpgradePolicy::Dynamic);
+        //Retry interval to check if overlay reservation pool needs to be replenished.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ReplenishOverlayNetworkReservationPoolRetryInterval, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
+        //Retry interval to reserve overlay network resource
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ReserveOverlayNetworkResourceRetryInterval, Common::TimeSpan::FromMilliseconds(100), Common::ConfigEntryUpgradePolicy::Dynamic);
+        //Retry interval to release overlay network resource
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ReleaseOverlayNetworkResourceRetryInterval, Common::TimeSpan::FromMilliseconds(100), Common::ConfigEntryUpgradePolicy::Dynamic);
+        //This is the maximum count for which the system will retry reserving network resources before giving up. 
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ReserveNetworkResourceRetryCount, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
+        //This is the maximum count for which the system will retry releasing network resources before giving up. 
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ReleaseNetworkResourceRetryCount, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         //Enables opening firewall ports for Endpoint resources with explicit ports specified in ServiceManifest
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", FirewallPolicyEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
@@ -177,11 +208,17 @@ namespace Hosting2
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", FabricUpgradeTimeout, Common::TimeSpan::FromSeconds(1800), Common::ConfigEntryUpgradePolicy::Dynamic);
 
         TEST_CONFIG_ENTRY(std::wstring, L"Hosting", FabricTypeHostPath, L"FabricTypeHost.exe", Common::ConfigEntryUpgradePolicy::Static);
+#if defined(PLATFORM_UNIX)
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", SFBlockStoreSvcPath, L"SFBlockStoreService", Common::ConfigEntryUpgradePolicy::Static);
+#else
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", SFBlockStoreSvcPath, L"SFBlockstoreService.exe", Common::ConfigEntryUpgradePolicy::Static);
+#endif
 
 #if defined(PLATFORM_UNIX)
+        // Setting to enable or disable support for running service fabric stateful services inside containers
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", FabricContainerAppsEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
 #else
+        // Setting to enable or disable support for running service fabric stateful services inside containers
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", FabricContainerAppsEnabled, true, Common::ConfigEntryUpgradePolicy::Static);
 #endif
 
@@ -199,6 +236,9 @@ namespace Hosting2
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerTerminationTimeout, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerPackageRootFolder, L"C:\\SFPackageRoot", Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerFabricBinRootFolder, L"C:\\SFFabricBin", Common::ConfigEntryUpgradePolicy::Static);
+#if defined(PLATFORM_UNIX)
+        INTERNAL_CONFIG_ENTRY(bool, L"Hosting", UseKataContainerRuntime, false, Common::ConfigEntryUpgradePolicy::Static);
+#endif
 
 
 #if defined(PLATFORM_UNIX)
@@ -206,6 +246,19 @@ namespace Hosting2
 #else
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DockerRequestTimeout, Common::TimeSpan::FromSeconds(120), Common::ConfigEntryUpgradePolicy::Dynamic);
 #endif
+
+        //
+        // By default SF communicates with DD (docker dameon) with a timeout of 'DockerRequestTimeout' for each
+        // http request sent to it. If DD does not responds within this time period, SF resends the request if
+        // top level operation still has remining time.
+        //
+        // With hyperv container, DD sometimes take much more time to bring up the container or deactivate it. 
+        // In such cases DD request times out from SF perspective and SF retries the operation. Sometimes this
+        // seems to adds more pressure on DD which is already struggling. This config allows to disable this
+        // retry and wait for DD to respond.
+        //
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", DisableDockerRequestRetry, false, Common::ConfigEntryUpgradePolicy::Dynamic);
+
         // Report health with time to live (DockerHealthReportTTL) if Docker process crashes.
         INTERNAL_CONFIG_ENTRY(bool, L"Hosting", ReportDockerHealth, true, Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DockerHealthReportTTL, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -217,11 +270,11 @@ namespace Hosting2
         DEPRECATED_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerDeactivationRetryDelayInMilliseconds, Common::TimeSpan::FromMilliseconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", SkipDockerProcessManagement, false, Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(int, L"Hosting", MaxContainerOperations, 100, Common::ConfigEntryUpgradePolicy::Static);
-        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerDeactivationRetryDelayInSec, 1, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerDeactivationRetryDelayInSec, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         //Config to determine the time to trace number of active Containers and Exe
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", InitialStatisticsInterval, Common::TimeSpan::FromMinutes(20), Common::ConfigEntryUpgradePolicy::Static);
-        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", StatisticsInterval, Common::TimeSpan::FromMinutes(300), Common::ConfigEntryUpgradePolicy::Static);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", StatisticsInterval, Common::TimeSpan::FromMinutes(30), Common::ConfigEntryUpgradePolicy::Static);
 
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultNatNetwork, L"bridge", Common::ConfigEntryUpgradePolicy::Dynamic);
 #if defined(PLATFORM_UNIX)
@@ -328,7 +381,10 @@ namespace Hosting2
 
         //
         // For guest applications, if one or more CodePackages in a ServicePackage undergoes these many continuous failures,
-        // Hosting will trigger failover by killing the FabricTypeHost. After every failure, the retry time is computed as:
+        // Hosting will trigger failover by transient faulting the replica residing in in-process FabricTypeHost. If on-demand
+        // code package activation is disabled, then it will kill the FabricTypeHost to trigger failover.
+        // 
+        // After every failure, the retry time is computed as:
         //
         // RetryTime = (ActivationRetryBackoffInterval in seconds) * (ActivationRetryBackoffExponentiationBase ^ ContinuousFailureCount)
         //
@@ -380,11 +436,9 @@ namespace Hosting2
         //Enable cleanup of Firewall rules on start of FabricHost and restart of Fabric.exe
         INTERNAL_CONFIG_ENTRY(bool, L"Hosting", EnableFirewallSecurityCleanup, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
-#if !defined(PLATFORM_UNIX)
         // Define the flag to be used to determine if SFVolumeDisk should be enabled or not.
         // The name of the flag is the same as set by the AddonService processing.
         INTERNAL_CONFIG_ENTRY(bool, L"Hosting", IsSFVolumeDiskServiceEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
-#endif // !defined(PLATFORM_UNIX)
 
         // Comma-separated list of volume plugin names and the port numbers that they are listening on. Format:
         // <pluginName1>:<port1>,<pluginName2>:<port2>, ...
@@ -392,6 +446,12 @@ namespace Hosting2
 
         // Timeout for messages that are sent to the volume plugin
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", VolumePluginRequestTimeout, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Static);
+
+        // Disables on-demand code package activation for stateless guest application (i.e. using stateless service type
+        // with UseImplicitHost=true) that uses FabricTypeHost as implicit code package. Note that other type of guest 
+        // application like stateful guest application (i.e. using stateful service type with UseImplicitHost=true), SFVolumeDisk
+        // service etc. always need on-demand activation to function properly.
+        INTERNAL_CONFIG_ENTRY(bool, L"Hosting", DisableOnDemandActivationForStatelessGuestApp, false, Common::ConfigEntryUpgradePolicy::Static);
 
     public:
         std::wstring GetContainerHostAddress()

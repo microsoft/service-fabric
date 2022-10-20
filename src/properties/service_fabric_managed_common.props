@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_msbuild15_fixes.props" />
+  <!-- Generic Properties -->
+  <PropertyGroup>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn></NoWarn>
+
+    <!-- 
+      Disable shared compilation to fix intermittent CS8104 errors 
+
+      https://stackoverflow.microsoft.com/questions/8571/csc-error-cs8104-an-error-occurred-while-writing-the-output-file
+    -->
+    <UseSharedCompilation>false</UseSharedCompilation>
+  </PropertyGroup>
+
+  <!-- Cls Compliant -->
+  <PropertyGroup>
+    <AssemblyClsCompliant>true</AssemblyClsCompliant>
+  </PropertyGroup>
+
+  <!-- debug and release switches -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+
+</Project>

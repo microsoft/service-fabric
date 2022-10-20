@@ -994,39 +994,14 @@ ErrorCode KeyValueStoreReplica::TryInitializeMigrator(unique_ptr<MigrationInitDa
     return this->TryInitializeMigrator_Unlocked(move(migrationData));
 }
 
-ErrorCode KeyValueStoreReplica::TryInitializeMigrator_Unlocked(unique_ptr<MigrationInitData> && migrationData)
+ErrorCode KeyValueStoreReplica::TryInitializeMigrator_Unlocked(unique_ptr<MigrationInitData> && )
 {
-    if (migrationData.get() != nullptr)
-    {
-        auto error = KeyValueStoreMigrator::CreateForTStoreMigration(
-            *this, // ComponentRoot
-            this->PartitionedReplicaId,
-            *iReplicatedStore_, 
-            move(replicatedStoreSettings_V2_),
-            move(migrationData),
-            migrator_);
+    WriteInfo(
+        TraceComponent, 
+        "{0} did not create migrator",
+        this->TraceId);
 
-        if (error.IsSuccess()) 
-        { 
-            WriteInfo(
-                TraceComponent, 
-                "{0} created migrator",
-                this->TraceId);
-        }
-        else
-        {
-            WriteWarning(
-                TraceComponent, 
-                "{0} failed to create migrator: {1}",
-                this->TraceId,
-                error);
-
-            return error; 
-        }
-
-        replicatedStoreSettings_V2_.reset();
-    }
-
+    
     return ErrorCodeValue::Success;
 }
 
@@ -1438,7 +1413,7 @@ AsyncOperationSPtr KeyValueStoreReplica::BeginBackup(
 }
 
 ErrorCode KeyValueStoreReplica::EndBackup(__in AsyncOperationSPtr const & operation)
-{	
+{   
     return iReplicatedStore_->EndBackupLocal(operation);
 }
 

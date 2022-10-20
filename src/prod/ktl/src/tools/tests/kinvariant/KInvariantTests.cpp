@@ -40,7 +40,11 @@ Abstract:
 extern volatile LONGLONG gs_AllocsRemaining;
 #endif
 
-WCHAR KInvariantText[256];
+#define TextConditionSize 256
+#define TextFileSize 512
+CHAR KInvariantTextCondition[TextConditionSize];
+CHAR KInvariantTextFile[TextFileSize];
+ULONG KInvariantTextLine;
 BOOLEAN KInvariantBoolean;
 
 KInvariantCalloutType PreviousKInvariantCallout;
@@ -54,9 +58,10 @@ BOOLEAN MyKInvariantCallout(
     //
     // Remember the info passed
     //
-    StringCbPrintf(KInvariantText, sizeof(KInvariantText),
-                   L"KInvariant Failure %s at %s line %d\n", Condition, File, Line);
-
+    StringCchCopyA(KInvariantTextCondition, TextConditionSize, Condition);
+    StringCchCopyA(KInvariantTextFile, TextFileSize, File);
+    KInvariantTextLine = Line;
+    
     //
     // Forward on to the previous callout and remember result
     //
@@ -99,20 +104,22 @@ KInvariantTest(
     //
     PreviousKInvariantCallout = SetKInvariantCallout(MyKInvariantCallout);
 
-
     //
     // NOTE: This all needs to be on the same line so that the line
     // numbers will match when comparing the results
     //
-    WCHAR ExpectedKInvariantText[256];
-    StringCbPrintf(ExpectedKInvariantText, sizeof(ExpectedKInvariantText), L"KInvariant Failure %s at %s line %d\n", "0", __FILE__, __LINE__); KInvariant(FALSE);
+    CHAR *expectedKInvariantTextCondition = "0"; CHAR *expectedKInvariantTextFile = __FILE__;   ULONG expectedKInvariantTextLine = __LINE__; KInvariant(FALSE);
 
-    if (wcscmp(ExpectedKInvariantText, KInvariantText) != 0)
+    if ((strcmp(KInvariantTextCondition, expectedKInvariantTextCondition) != 0) ||
+        (strcmp(KInvariantTextFile, expectedKInvariantTextFile) != 0) ||
+        (KInvariantTextLine != expectedKInvariantTextLine))
     {
-        KTestPrintf("FAILED: computed \"%ws\" and expected \"%ws\"\n", KInvariantText, ExpectedKInvariantText);
-        status = STATUS_UNSUCCESSFUL;
+        KTestPrintf("FAILED: Results are not correct Condition: %s, File: %s, Line: %d\n"
+                    "                                Expecting: %s, File: %s, Line: %d\n",
+                    KInvariantTextCondition, KInvariantTextFile, KInvariantTextLine,
+                    expectedKInvariantTextCondition, expectedKInvariantTextFile, expectedKInvariantTextLine);
     }
-
+    
     if (! KInvariantBoolean)
     {
         KTestPrintf("FAILED: Expected default KInvariant callout to return TRUE\n");
@@ -152,6 +159,15 @@ main(int argc, char* cargs[])
         args++;
     }
 
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+
     status = KInvariantTest(argc, args);
 
     if (!NT_SUCCESS(status)) {
@@ -159,6 +175,10 @@ main(int argc, char* cargs[])
         return RtlNtStatusToDosError(status);
     }
 
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return RtlNtStatusToDosError(status);
 }
 #endif

@@ -39,7 +39,7 @@ namespace TestCommon
         Common::TimeSpan maxIdleTime_;
 
         void ProcessClientMessage(Transport::MessageUPtr &, Transport::IpcReceiverContextUPtr & context);
-        bool StartMonitoringClient(DWORD processId, std::wstring const& clientId);
+        bool StartMonitoringClient(DWORD processId, std::wstring const& clientId, __out bool & processExitedBeforeOpen);
         void OnClientProcessTerminate(DWORD processId, std::wstring const& clientId);
     };
 };

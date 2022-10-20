@@ -24,7 +24,7 @@ namespace Microsoft.ServiceFabric.Replicator.Diagnostics
         private const string ClassName = "MetricManager";
 
         private readonly IReadOnlyDictionary<MetricProviderType, IMetricProvider> metricProviders;
-        private readonly TimeSpan aggregationWindow = TimeSpan.FromMinutes(3);
+        private readonly TimeSpan aggregationWindow = TimeSpan.FromMinutes(15);
         private readonly TimeSpan samplingInterval = TimeSpan.FromMinutes(1);
 
         private TimeSpan timeSinceLastReport = TimeSpan.Zero;
@@ -36,11 +36,11 @@ namespace Microsoft.ServiceFabric.Replicator.Diagnostics
         /// <summary>
         /// Initializes a new instance of the MetricManager class.
         /// </summary>
-        public MetricManager()
+        public MetricManager(ITransactionalReplicator replicator)
         {
             this.metricProviders = new Dictionary<MetricProviderType, IMetricProvider>()
             {
-                { MetricProviderType.TStore, new TStoreMetricProvider() }
+                { MetricProviderType.TStore, new TStoreMetricProvider(replicator) }
             };
         }
 

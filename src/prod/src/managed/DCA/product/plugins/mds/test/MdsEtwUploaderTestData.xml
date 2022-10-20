@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<Data>
+  <Table Id="MdsEtwEventUpload">
+    <ParameterTypes>
+      <ParameterType Name="FabricDtrFileInfo" Array="true">String</ParameterType>
+      <ParameterType Name="LeaseDtrFileInfo" Array="true">String</ParameterType>
+    </ParameterTypes>
+    <Row>
+      <Parameter Name="FabricDtrFileInfo">
+        <!--EtlFileName, LastChunk, CreationPass, LastEventTimestamp, SameTimestampForAllEvents, LastWriteTime, ProcessedInPass, DeletionPass, EmptyFile-->
+        
+        <!-- [TEST CASE] None of the files processed in pass 0 are considered recent files.-->
+        <Value>fabric_traces_0_000001, false, 0, -390, false, -180, 0, -1, false</Value>
+        <Value>fabric_traces_0_000001, false, 0, -380, false, -190, 0, -1, false</Value>
+        <Value>fabric_traces_0_000001, true, 0, -370, false, -200, 0, -1, false</Value>
+        <Value>fabric_traces_0_000002, false, 0, -360, false, -210, 0, -1, false</Value>
+        <Value>fabric_traces_0_000002, false, 0, -350, false, -220, 0, -1, false</Value>
+        <Value>fabric_traces_0_000002, false, 0, -340, false, -230, 0, -1, false</Value>
+        <!-- [TEST CASE] Uploader's bookmark was moved past this ETL file in pass 0 before the 
+                         ETL-to-CSV writer could process it in pass 1.-->
+        <Value>fabric_traces_0_000002, true, 1, -330, false, -170, -1, -1, false</Value>
+        <Value>fabric_traces_1_000001, false, 0, -320, false, -240, 0, -1, false</Value>
+        <Value>fabric_traces_1_000001, false, 0, -310, false, -250, 0, -1, false</Value>
+        <Value>fabric_traces_1_000001, true, 0, -300, false, -260, 0, -1, false</Value>
+        <Value>fabric_traces_1_000002, false, 0, -290, false, -270, 0, -1, false</Value>
+        <!-- [TEST CASE] In pass 1, no new files after the last read file -->
+      </Parameter>
+      <Parameter Name="LeaseDtrFileInfo">
+        <!--EtlFileName, LastChunk, CreationPass, LastEventTimestamp, SameTimestampForAllEvents, LastWriteTime, ProcessedInPass, DeletionPass, EmptyFile-->
+        <!-- [TEST CASE] No gaps in recent files in pass 0 -->
+        <Value>lease_traces_0_000001, false, 0, -100, false, -20, 0, -1, false</Value>
+        <Value>lease_traces_0_000001, true, 0, -90, false, -30, 0, -1, false</Value>
+        <Value>lease_traces_0_000002, true, 0, -80, false, -40, 0, -1, true</Value>
+        <!-- [TEST CASE] Two files with same last event timestamp but different first event timestamps -->
+        <Value>lease_traces_0_000003, false, 0, -70, false, -50, 0, -1, false</Value>
+        <Value>lease_traces_0_000003, true, 1, -70, true, -10, 1, -1, false</Value>
+      </Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="FabricDtrFileInfo">
+        <!--EtlFileName, LastChunk, CreationPass, LastEventTimestamp, SameTimestampForAllEvents, LastWriteTime, ProcessedInPass, DeletionPass, EmptyFile-->
+        <Value>fabric_traces_0_000001, false, 0, -190, false, -180, 0, -1, false</Value>
+        <Value>fabric_traces_0_000001, true, 1, -180, false, -10, 1, -1, false</Value>
+        <!-- [TEST CASE] Gap found before the recent files in pass 0 -->
+        <Value>fabric_traces_0_000002, false, 0, -170, false, -20, 1, -1, false</Value>
+        <Value>fabric_traces_0_000002, true, 0, -160, false, -30, 1, -1, false</Value>
+        <Value>fabric_traces_1_000001, false, 0, -150, false, -40, 1, -1, false</Value>
+        <Value>fabric_traces_1_000001, true, 0, -140, false, -50, 1, -1, false</Value>
+        <Value>fabric_traces_1_000002, true, 0, -130, false, -60, 1, -1, false</Value>
+      </Parameter>
+      <Parameter Name="LeaseDtrFileInfo">
+        <!--EtlFileName, LastChunk, CreationPass, LastEventTimestamp, SameTimestampForAllEvents, LastWriteTime, ProcessedInPass, DeletionPass, EmptyFile-->
+        <!-- [TEST CASE] Multiple files with same first event and last event timestamps but different 
+                         last-write times  -->
+        <Value>lease_traces_0_000001, true, 0, -180, true, -150, 0, -1, false</Value>
+        <Value>lease_traces_1_000001, true, 0, -180, true, -160, 0, -1, false</Value>
+        <Value>lease_traces_2_000001, true, 1, -180, true, -140, 1, -1, false</Value>
+      </Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="FabricDtrFileInfo">
+        <!--EtlFileName, LastChunk, CreationPass, LastEventTimestamp, SameTimestampForAllEvents, LastWriteTime, ProcessedInPass, DeletionPass, EmptyFile-->
+        <!-- [TEST CASE] Gaps within recent files in pass 0 -->
+        <!-- [TEST CASE] All files in pass 0 are recent files -->
+        <Value>fabric_traces_0_000001, false, 0, -130, false, -20, 1, -1, false</Value>
+        <Value>fabric_traces_0_000001, true, 0, -120, false, -30, 1, -1, false</Value>
+        <Value>fabric_traces_1_000001, false, 0, -110, false, -40, 1, -1, false</Value>
+        <Value>fabric_traces_1_000001, true, 1, -100, false, -10, 1, -1, false</Value>
+        <Value>fabric_traces_1_000002, true, 0, -90, false, -50, 1, -1, false</Value>
+      </Parameter>
+      <Parameter Name="LeaseDtrFileInfo">
+        <!--EtlFileName, LastChunk, CreationPass, LastEventTimestamp, SameTimestampForAllEvents, LastWriteTime, ProcessedInPass, DeletionPass, EmptyFile-->
+        <!-- [TEST CASE] Last read file and everything before it is deleted in pass 1 -->
+        <Value>lease_traces_0_000001, true, 0, -130, false, -50, 0, 1, false</Value>
+        <Value>lease_traces_0_000002, true, 0, -120, false, -60, 0, 1, false</Value>
+        <Value>lease_traces_1_000001, false, 0, -110, false, -70, 0, 1, false</Value>
+        <Value>lease_traces_1_000001, false, 1, -100, false, -20, 1, -1, false</Value>
+        <Value>lease_traces_1_000001, false, 1, -90, false, -30, 1, -1, false</Value>
+        <Value>lease_traces_1_000001, true, 1, -80, false, -40, 1, -1, false</Value>
+      </Parameter>
+    </Row>
+  </Table>
+</Data>

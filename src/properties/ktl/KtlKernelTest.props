@@ -1,0 +1,122 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Configuration">
+    <SignMode>Off</SignMode>
+  </PropertyGroup>
+
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <!--Actually building a driver now-->
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <!-- <TrackFileAccess>false</TrackFileAccess> -->
+    <ConfigurationType>Driver</ConfigurationType>
+    <TargetVersion>WindowsV6.3</TargetVersion>
+    <DriverType>KMDF</DriverType>
+    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
+    <KMDF_VERSION_MINOR>13</KMDF_VERSION_MINOR>
+    <IsDriver>true</IsDriver>
+    <TargetExt>.sys</TargetExt>
+    <OutputType>sys</OutputType>
+    <LinkCompiled>true</LinkCompiled>
+    <GenerateManifest>false</GenerateManifest>
+    <LegacyManifestEmbedding>true</LegacyManifestEmbedding>
+    <!--Required if including any rc files-->
+    <GenerateAssemblyFileVersion>false</GenerateAssemblyFileVersion>
+  </PropertyGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.props" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <!--Standard kernel header and lib imports-->
+  <Import Project="$(SRCROOT)\properties\ktl\imports\KtlKernelImports.props" />
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions)
+        MSC_NOOPT;
+        RUN_WPP;
+        TESTNAME="$(TargetName)";
+      </PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories)
+        ..;
+        $(KTLSRCROOT)\tools\tests\kernellib\$(O);
+        $(KTLSRCROOT)\tools\inc;
+        $(KTLSRCROOT)\tools\tests\common;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\wdm;
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:sizedDealloc- /d1import_no_registry /Zm400 /kernel /d2epilogunwind /d1nodatetime /d2AllowCompatibleILVersions /d2Zi+ /favor:AMD64 /d2guardspecload</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>native</SubSystem>
+      <StackCommitSize>0x1000</StackCommitSize>
+      <StackReserveSize>0x40000</StackReserveSize>
+      <EntryPointSymbol>FxDriverEntry</EntryPointSymbol>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <AdditionalOptions>/MERGE:_PAGE=PAGE /MERGE:_TEXT=.text /OPT:REF /OPT:ICF /IGNORE:4010,4037,4039,4065,4070,4078,4087,4089,4221,4198,4281 /INCREMENTAL:NO /release /WX /debug /debugtype:cv,fixup,pdata /version:6.2 /osversion:6.2 /GUARD:CF /pdbcompress /driver /kernel /base:0x10000 /d2:-guardspecload</AdditionalOptions>
+      <AdditionalLibraryDirectories>
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\lib\$(BuildArchitecture)\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\wdf\kmdf\$(KmdfVersion)\;
+      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+        BufferOverflowFastFailK.lib;
+        ntoskrnl.lib;
+        hal.lib;
+        wmilib.lib;
+        ntstrsafe.lib;
+        wdmsec.lib;
+        WdfLdr.lib;
+        WdfDriverEntry.lib;
+        netio.lib;
+        ksecdd.lib;
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(KTLSRCROOT)\src\kernel\KTL.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\StatusCodes\StatusCodes.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\tools\tests\kernellib\KmUnitKernel.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\tools\CommandlineParser\kernel\CommandLineParserKernel.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\tools\tests\testloader\TestLoader.vcxproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Inf Exclude="@(Inf)" Include="*.inf">
+      <EnableVerbose>true</EnableVerbose>
+    </Inf>
+  </ItemGroup>
+  <!--Required to run test-->
+  <ItemGroup>
+    <PostBuildCopy Include="$(PkgTaef_Redist)\Build\Binaries\Release\x64\TestExecution\*.*">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="$(PkgWinFab_Test_Tools_retail)\lib\net45\RunTests\**\*" Exclude="$(PkgWinFab_Test_Tools_retail)\lib\net45\RunTests\**\*.exe.config">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="$(KTLSRCROOT)\test\Config\RunTests.exe.config">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+    </PostBuildCopy>
+    <PostBuildCopy Include="$(KTLSRCROOT)\External\WdfCoInstaller\*.*" Exclude="$(KTLSRCROOT)\External\WdfCoInstaller\*.proj">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+    </PostBuildCopy>
+  </ItemGroup>
+  <!--Final binplace-->
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\ktltest\</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+    </Robocopy>
+  </ItemGroup>
+</Project>

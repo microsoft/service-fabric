@@ -18,6 +18,9 @@ namespace Data
             K_SHARED_INTERFACE(IConsolidationProvider)
 
         public:
+            __declspec(property(get = get_HasPersistedState)) bool HasPersistedState;
+            virtual bool get_HasPersistedState() const = 0;
+
             __declspec(property(get = get_KeyConverter)) KSharedPtr<Data::StateManager::IStateSerializer<TKey>> KeyConverterSPtr;
             virtual KSharedPtr<Data::StateManager::IStateSerializer<TKey>> get_KeyConverter() const = 0;
 

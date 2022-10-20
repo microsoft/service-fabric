@@ -15,9 +15,10 @@ public:
     {
         KtlLogStream::SPtr LogStream;
         ULONG MaxRandomRecordSize;
-		BOOLEAN UseFixedRecordSize;
+        BOOLEAN UseFixedRecordSize;
         ULONGLONG LogSpaceAllowed;
         ULONGLONG HighestAsn;
+        ULONG WaitTimerInMs;
     };
 
     VOID StartIt(
@@ -33,17 +34,19 @@ public:
         _MaxRandomRecordSize = startParameters->MaxRandomRecordSize;
         _LogSpaceAllowed = startParameters->LogSpaceAllowed;
         _HighestAsn = startParameters->HighestAsn;
-		_UseFixedRecordSize = startParameters->UseFixedRecordSize;
+        _UseFixedRecordSize = startParameters->UseFixedRecordSize;
+        _WaitTimerInMs = startParameters->WaitTimerInMs;
 
         Start(ParentAsyncContext, CallbackPtr);
     }
-	
+    
 private:
     KtlLogStream::SPtr _LogStream;
     ULONG _MaxRandomRecordSize;
     ULONGLONG _LogSpaceAllowed;
     ULONGLONG _HighestAsn;
-	BOOLEAN _UseFixedRecordSize;
+    BOOLEAN _UseFixedRecordSize;
+    ULONG _WaitTimerInMs;
 
 public:
     static NTSTATUS
@@ -73,14 +76,16 @@ public:
             context->_MaxRandomRecordSize = 0;
             context->_LogSpaceAllowed = 0;
             context->_HighestAsn = 0;
-			context->_UseFixedRecordSize = FALSE;
+            context->_UseFixedRecordSize = FALSE;
 
             context->_WriteContext = nullptr;
             context->_TruncateContext = nullptr;
             context->_EmptyIoBuffer = nullptr;
             context->_IoBuffer = nullptr;
             context->_Metadata = nullptr;
-            context->_DataWritten = nullptr;            
+            context->_DataWritten = nullptr;
+            context->_WaitTimerInMs = 0;
+            context->_WaitTimer = nullptr;
 
             Context = context.RawPtr();
 
@@ -95,7 +100,7 @@ protected:
     {
     }
 
-    enum  FSMState { Initial = 0, WriteRecord = 1, Completed = 3 };
+    enum  FSMState { Initial = 0, WriteRecord = 1, WriteRecordWait = 2, Completed = 3 };
     FSMState _State;
     
     VOID FSMContinue(
@@ -129,47 +134,17 @@ protected:
                                          _DataWritten,
                                          *g_Allocator);
                 VERIFY_IS_TRUE(NT_SUCCESS(Status));
-                
 
+                Status = KTimer::Create(_WaitTimer, GetThisAllocator(), GetThisAllocationTag());
+                VERIFY_IS_TRUE(NT_SUCCESS(Status));
+                
                 _State = WriteRecord;
                 // fall through
             }
 
             case WriteRecord:
             {
-                if (! NT_SUCCESS(Status)) 
-                {
-                    if (Status != STATUS_INSUFFICIENT_RESOURCES)
-                    {
-                        KTraceFailedAsyncRequest(Status, this, _State, 0);
-                        Complete(Status);
-                        return;
-                    } else {
-                        //
-                        // Retry and hope for success next time
-                        //
-                        _RetryCount++;
-                        KTraceFailedAsyncRequest(Status, this, _RetryCount, _IoBuffer->QuerySize());
-
-                        if (_RetryCount == 256)
-                        {
-                            Complete(Status);
-                            return;                     
-                        }
-
-                        _WriteContext->Reuse();
-                        _WriteContext->StartWrite(_WriteAsn,
-                                                 _Version,
-                                                 KLogicalLogInformation::FixedMetadataSize,
-                                                 _Metadata,
-                                                 _IoBuffer,
-                                                 0,    // Reservation
-                                                 this,    // ParentAsync
-                                                 _Completion);
-                        return;
-                    }
-                }
-
+WriteRecord:
                 _RetryCount = 0;
                 ULONGLONG nextTruncation = _LastTruncationAsn + _LogSpaceAllowed;
                 if (_Asn >= nextTruncation)
@@ -185,15 +160,15 @@ protected:
                 {
                     ULONG dataSizeWritten;
                     ULONG maxIoBufferSize;
-					
-					maxIoBufferSize = (_MaxRandomRecordSize + 0xfff) &~ 0xfff;
-					if (_UseFixedRecordSize)
-					{
-						dataSizeWritten = _MaxRandomRecordSize;
-					} else {
-						dataSizeWritten = rand() % _MaxRandomRecordSize; 
-					}
-					
+                    
+                    maxIoBufferSize = (_MaxRandomRecordSize + 0xfff) &~ 0xfff;
+                    if (_UseFixedRecordSize)
+                    {
+                        dataSizeWritten = _MaxRandomRecordSize;
+                    } else {
+                        dataSizeWritten = rand() % _MaxRandomRecordSize; 
+                    }
+                    
                     PVOID p;
                     
                     Status = KIoBuffer::CreateSimple(KLogicalLogInformation::FixedMetadataSize,
@@ -233,6 +208,7 @@ protected:
 
                     VERIFY_IS_TRUE(NT_SUCCESS(Status));
 
+                    _State = WriteRecordWait;
                     _WriteAsn = _Asn;
                     _WriteContext->Reuse();
                     _WriteContext->StartWrite(_WriteAsn,
@@ -254,6 +230,52 @@ protected:
                 break;
             }
 
+            case WriteRecordWait:
+            {
+                if (! NT_SUCCESS(Status)) 
+                {
+                    if (Status != STATUS_INSUFFICIENT_RESOURCES)
+                    {
+                        KTraceFailedAsyncRequest(Status, this, _State, 0);
+                        Complete(Status);
+                        return;
+                    } else {
+                        //
+                        // Retry and hope for success next time
+                        //
+                        _RetryCount++;
+                        KTraceFailedAsyncRequest(Status, this, _RetryCount, _IoBuffer->QuerySize());
+
+                        if (_RetryCount == 256)
+                        {
+                            Complete(Status);
+                            return;                     
+                        }
+
+                        _WriteContext->Reuse();
+                        _WriteContext->StartWrite(_WriteAsn,
+                                                 _Version,
+                                                 KLogicalLogInformation::FixedMetadataSize,
+                                                 _Metadata,
+                                                 _IoBuffer,
+                                                 0,    // Reservation
+                                                 this,    // ParentAsync
+                                                 _Completion);
+                        return;
+                    }
+                }
+
+                _State = WriteRecord;
+                if (_WaitTimerInMs != 0)
+                {
+                    _WaitTimer->Reuse();
+                    _WaitTimer->StartTimer(_WaitTimerInMs, this, _Completion);
+                } else {
+                    goto WriteRecord;
+                }
+                
+                break;
+            }
 
             default:
             {
@@ -279,11 +301,12 @@ public:
     ULONGLONG GetAsn() { return(_Asn); };
     ULONGLONG GetVersion() { return(_Version); };
     ULONGLONG GetTruncationAsn() { return(_LastTruncationAsn); };
-	ULONGLONG ForceCompletion() { ULONGLONG a = _Asn; _HighestAsn = _Asn; return(a); };
+    ULONGLONG ForceCompletion() { ULONGLONG a = _Asn; _HighestAsn = _Asn; return(a); };
 private:
     //
     // Internal
     //
+    KTimer::SPtr _WaitTimer;
     KtlLogStream::AsyncWriteContext::SPtr _WriteContext;
     KtlLogStream::AsyncTruncateContext::SPtr _TruncateContext;
     KIoBuffer::SPtr _EmptyIoBuffer;

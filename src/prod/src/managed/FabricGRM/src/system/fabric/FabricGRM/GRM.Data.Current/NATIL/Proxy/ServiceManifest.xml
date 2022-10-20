@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="Proxy" Version="1.0"
+  xmlns="http://schemas.microsoft.com/2011/01/fabric"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <ServiceTypes>
+    <StatelessServiceType ServiceTypeName="GatewayProxyServiceType" UseImplicitHost="true"/>
+  </ServiceTypes>
+
+  <CodePackage Name="GatewayProxyService.Code" Version="1.0">
+    <EntryPoint>
+      <ContainerHost>
+        <ImageName>microsoft/service-fabric-reverse-proxy:0.20.0</ImageName>
+        <Commands></Commands>
+      </ContainerHost>
+    </EntryPoint>
+
+    <EnvironmentVariables>
+      <EnvironmentVariable Name="Gateway_Listen_Network" Value=""/>
+      <EnvironmentVariable Name="Gateway_Config" Value=""/>
+      <EnvironmentVariable Name="GatewayMode" Value="true"/>
+
+      <EnvironmentVariable Name="SF_ClientCertCommonName" Value=""/>
+      <EnvironmentVariable Name="SF_ClientCertIssuerThumbprints" Value=""/>
+      <EnvironmentVariable Name="SF_ClusterCertCommonNames" Value=""/>
+      <EnvironmentVariable Name="SF_ClusterCertIssuerThumbprints" Value=""/>
+    </EnvironmentVariables>
+  </CodePackage>
+
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="GatewayProxyEndpoint" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint1" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint2" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint3" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint4" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint5" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint6" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint7" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint8" CodePackageRef="GatewayProxyService.Code" />
+      <Endpoint Name="GatewayProxyEndpoint9" CodePackageRef="GatewayProxyService.Code" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

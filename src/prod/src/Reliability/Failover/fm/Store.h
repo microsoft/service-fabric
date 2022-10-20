@@ -98,6 +98,11 @@ namespace Reliability
             static std::wstring const FabricVersionInstanceKey;
             static std::wstring const FabricUpgradeKey;
 
+            static std::wstring const NetworkDefinitionType;
+            static std::wstring const NetworkNodeType;
+            static std::wstring const NetworkMACAddressPoolType;
+            static std::wstring const NetworkIPv4AddressPoolType;
+
         private:
             class IReplicatedStoreHolder;
 

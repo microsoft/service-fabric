@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Section Name="UserServiceHostSection">    
+        <Parameter Name="configFileName" Value="UserServiceHostConfig.cfg" />
+        <Parameter Name="types" Value="Foo!Bar!Zar!Frap" />
+        <Parameter Name="port" Value="2000" />
+        <Parameter Name="MyParam" Value="" Type="PlainText" />
+    </Section>
+    <Section Name="CustomSection">
+        <Parameter Name="timeout" Value="00:01:00" />
+		<Parameter Name="MyParam" Value="" Type="PlainText" />
+    </Section>
+</Settings>

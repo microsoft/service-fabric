@@ -6,6 +6,10 @@ cmservice 3 1
 namingservice 1 3 1
 set DummyPLBEnabled true
 set OpenTimeout 180
+
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 cleantest
 votes 10
 +10

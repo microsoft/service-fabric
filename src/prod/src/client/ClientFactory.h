@@ -16,7 +16,7 @@ namespace Client
         : public Api::IClientFactory
         , public Common::ComponentRoot
     {
-    public: 
+    public:
         ClientFactory();
         virtual ~ClientFactory();
 
@@ -63,7 +63,7 @@ namespace Client
 
 
         // This method is used by Http gateway to create fabric client where it has already authenticated
-        // the incoming connection and wants to communicate with TCP gateway without requiring the client 
+        // the incoming connection and wants to communicate with TCP gateway without requiring the client
         // to be authenticated again.
         static Common::ErrorCode CreateLocalClientFactory(
             Common::FabricNodeConfigSPtr const&,
@@ -97,6 +97,8 @@ namespace Client
         Common::ErrorCode CreateSecretStoreClient(__out Api::ISecretStoreClientPtr &);
         Common::ErrorCode CreateResourceManagerClient(__out Api::IResourceManagerClientPtr &);
         Common::ErrorCode CreateResourceManagementClient(__out Api::IResourceManagementClientPtr &);
+        Common::ErrorCode CreateNetworkManagementClient(__out Api::INetworkManagementClientPtr &);
+        Common::ErrorCode CreateGatewayResourceManagerClient(__out Api::IGatewayResourceManagerClientPtr &);
 
     private:
 

@@ -1,0 +1,33 @@
+﻿{
+    "Providers": {
+        "UploadBuildProvider": {
+            "ProviderName": "DefaultUploadBuildProvider",
+            "ProviderType": "UploadBuildV2.BasicUploadBuild, UploadBuildV2"
+        },
+
+        "TestTypeProviders": [
+            {
+                "ProviderName": "DefaultTestTypeProvider",
+                "ProviderType": "JsonTestTypeProvider.JSONTestTypeProvider, JsonTestTypeProvider"
+            }
+        ]
+    },
+
+    "TestTypeExecutionMode": {
+        "ParallelTestTypes": "KUserTest, KUserLongTest, KConsTest",
+        "SequentialTestTypes": "KUserTest_Sequential, KConsTest_Sequential, KUserLongTest, KKernelTest_Sequential, KKernelTest, KKernelLongTest"
+    },
+
+    "AppSettings": {
+        "JSONTestsPath": "ktltest\\JsonTests",
+        "JSONTestTypesPath": "ktltest\\JsonTestTypes",
+        "LogsFolderPath": "ktltest\\log",
+        "MsiInstalled": "false",
+        "NumberOfTestsPerGroup": "25",
+        "NumberOfGroups": "20",
+        "RunTestsExe": "ktltest\\RunTests.exe",
+        "ConfigFilesPath": "ktltest",
+        "TimeToWaitForWERFaultExitInSeconds": "900",
+        "LinuxSuiteWhitelist": "SingleMachine-CIT.json,SingleMachine-Functional.json",
+    }
+}

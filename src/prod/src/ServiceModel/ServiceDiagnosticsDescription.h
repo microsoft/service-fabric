@@ -7,7 +7,7 @@
 
 namespace ServiceModel
 {
-    // <Diagnostics> element in serivce manifest and service package
+    // <Diagnostics> element in service manifest and service package
     struct ServiceManifestDescription;
     struct ServicePackageDescription;
     struct ServiceDiagnosticsDescription
@@ -35,6 +35,6 @@ namespace ServiceModel
         friend struct ServicePackageDescription;
 
         void ReadFromXml(Common::XmlReaderUPtr const &);
-		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
+        Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
     };
 }

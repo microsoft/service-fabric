@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patches>
+  <OverallTimeout value="1800" />
+  <Patch name="DisableHttpSysCache">
+    <Command value="DisableHttpSysCache.cmd" />
+    <LogFolder path="C:\Logs\DisableHttpSysCache" />
+    <RegistryTable>
+      <Registry keyName="HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\HTTP\Parameters" valueName="UriEnableCache" expectedValue="0" />
+    </RegistryTable>
+  </Patch>
+  <!-- Example of Windows Patch
+  <Patch name="KB2973351" appliesToOsVersion="6.2.*.*">
+    <Command value="wusa.exe Windows8-RT-KB2973351-x64.msu /quiet /norestart /log:%WINDIR%\OSPatch\KB2973351\install_KB2973351.log" />
+    <RegistryTable>
+      <Registry keyName="HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages\Package_for_KB2973351_RTM~31bf3856ad364e35~amd64~~6.2.1.0" valueName="CurrentState" />
+    </RegistryTable>
+    <LogFolder path="%WINDIR%\OSPatch\KB2973351" />
+  </Patch>
+  -->
+</Patches>
+

@@ -1,0 +1,17 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_user_common_pre.props" />
+  <PropertyGroup>
+   <ConfigurationType>DynamicLibrary</ConfigurationType>
+   <WholeProgramOptimization>false</WholeProgramOptimization>
+   <TargetVersion>Windows7</TargetVersion>
+  </PropertyGroup>
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_user_common_post.props" />
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_user_compile.props" />
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_user_link.props" />
+  <ItemDefinitionGroup>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EntryPointSymbol>_DllMainCRTStartup</EntryPointSymbol>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

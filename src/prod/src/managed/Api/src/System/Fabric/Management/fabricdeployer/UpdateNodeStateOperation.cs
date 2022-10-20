@@ -43,6 +43,7 @@ namespace System.Fabric.FabricDeployer
                 NodeSettings nodeSetting = nodeSettings[i];
                 List<string> servicesToBeDeployed = GetServicesToBeDeployed(i);
                 DeploymentNode node = new DeploymentNode(nodeSetting, clusterSettings, infrastructure, servicesToBeDeployed.ToArray(), servicesToBeEnabled.ToArray(), this.manifest);
+
                 if (string.IsNullOrEmpty(parameters.NodeName) || parameters.NodeName.Equals(nodeSetting.NodeName, StringComparison.OrdinalIgnoreCase))
                 {
                     if (parameters.Operation == DeploymentOperations.Update || parameters.Operation == DeploymentOperations.UpdateInstanceId)

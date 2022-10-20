@@ -2149,13 +2149,6 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
                 expressionCache_ = nullptr;
             }
         }
-
-        if (!isNewService)
-        {
-            // Error is reported when affinity chain is detected and service update is required to remove affinity chain.
-            // Clear the health error only if this is user-initiated service update (!force and !new)
-            plbDiagnosticsSPtr_->ReportServiceDescriptionOK(serviceDescription);
-        }
     }
 
 
@@ -2173,10 +2166,48 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
     //freshly affinitized as child, but parent hasn't been created yet.
     bool isParentAbsent = false;
 
-    bool isScalingPolicyChanged = false;
     // This is used for scaling based on number of partitions
     Common::StopwatchTime serviceScalingExpiry = Common::StopwatchTime::Zero;
     int partitionCountChange = 0;
+
+    auto isAutoScalingPolicyValid = [](ServiceDescription const& serviceDescription)
+    {
+        int minCount = 0;
+        auto autoScalingPolicy = serviceDescription.AutoScalingPolicy;
+        if (autoScalingPolicy.Mechanism->Kind == ScalingMechanismKind::PartitionInstanceCount)
+        {
+            InstanceCountScalingMechanismSPtr mechanism = static_pointer_cast<InstanceCountScalingMechanism>(serviceDescription.AutoScalingPolicy.Mechanism);
+            minCount = mechanism->MinimumInstanceCount;
+        }
+        if (autoScalingPolicy.Mechanism->Kind == ScalingMechanismKind::AddRemoveIncrementalNamedPartition)
+        {
+            AddRemoveIncrementalNamedPartitionScalingMechanismSPtr mechanism = static_pointer_cast<AddRemoveIncrementalNamedPartitionScalingMechanism>(serviceDescription.AutoScalingPolicy.Mechanism);
+            minCount = mechanism->MinimumPartitionCount;
+        }
+        if (minCount == 0)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    };
+
+    if (isNewService)
+    {
+        if (!forceUpdate && serviceDescription.IsAutoScalingDefined)
+        {
+            //New auto scaling policy should be created with new service, so checking is mincount > 0
+            if (!isAutoScalingPolicyValid(serviceDescription))
+            {
+                Trace.InvalidAutoScaleMinCount(serviceDescription.Name);
+                return make_pair(ErrorCodeValue::InvalidServiceScalingPolicy, false);
+            }
+        }
+    }
+
+    bool isScalingPolicyChanged = false;
 
     //In case of redefinition, we will execute a deleteService() to clear all info. This deleteservice won't split any domains though.
     if (!isNewService)
@@ -2209,6 +2240,15 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
                     isScalingPolicyChanged = serviceDescription.AutoScalingPolicy != originalServiceDescription.AutoScalingPolicy;
                 }
 
+                if (!forceUpdate && serviceDescription.IsAutoScalingDefined && isScalingPolicyChanged)
+                {
+                    // Autoscaling policy is changed so check is it still valid
+                    if (!isAutoScalingPolicyValid(serviceDescription))
+                    {
+                        Trace.InvalidAutoScaleMinCount(serviceDescription.Name);
+                        return make_pair(ErrorCodeValue::InvalidServiceScalingPolicy, false);
+                    }
+                }
                 //inquires whether the affinity relationship was changed
 
                 areRelatedFailoverUnitsStateful = originalServiceDescription.IsStateful;
@@ -2230,6 +2270,13 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
                 FailoverUnitDescription fuDescription(iter->FUId, move(serviceName), serviceDescription.ServiceId);
                 itServiceDomain->second.UpdateFailoverUnit(move(fuDescription), Common::Stopwatch::Now(), false);
             }
+        }
+
+        if (!forceUpdate)
+        {
+            // Error is reported when affinity chain is detected and service update is required to remove affinity chain.
+            // Clear the health error only if this is user-initiated service update (!force and !new)
+            plbDiagnosticsSPtr_->ReportServiceDescriptionOK(serviceDescription);
         }
         bool deleted = InternalDeleteService(serviceDescription.Name, false, false);
         ASSERT_IFNOT(deleted, "Failed to delete a service for service update.");
@@ -3963,8 +4010,8 @@ void PlacementAndLoadBalancing::BeginRefresh(vector<ServiceDomain::DomainData> &
     for (auto it = serviceDomainTable_.begin(); it != serviceDomainTable_.end(); ++it)
     {
         ServiceDomain & sd = it->second;
-        sd.AutoScalerComponent.Refresh(refreshTime, sd);
         ServiceDomain::DomainData domainData = sd.RefreshStates(refreshTime, plbDiagnosticsSPtr_);
+        sd.AutoScalerComponent.Refresh(refreshTime, sd, upNodeCount_);
         UpdateNextActionPeriod(sd.GetNextActionInterval(refreshTime));
         stats.Update(domainData.state_);
         totalMovementThrottledFailoverUnits += sd.Scheduler.GetMovementThrottledFailoverUnits().size();
@@ -5179,7 +5226,9 @@ Common::ErrorCode PlacementAndLoadBalancing::SnapshotConstraintChecker(
             }
 
             return !(currentEntry && futureEntry);
-        });
+        },
+            false,
+            false);
 
 
         tempSolution.ForEachReplica(false, [fuId, currentNode, newNode, futureEntry, &replicaPtr, &tempSolution, role, &tracePtr](PlacementReplica const * r) -> bool

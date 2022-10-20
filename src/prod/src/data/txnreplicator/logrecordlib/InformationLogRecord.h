@@ -35,6 +35,8 @@ namespace Data
                 __in PhysicalLogRecord & invalidPhysicalLogRecord,
                 __in KAllocator & allocator);
 
+            virtual std::wstring ToString() const override;
+
             _declspec(property(get = get_InformationEvent)) InformationEvent::Enum InformationEvent;
             InformationEvent::Enum get_InformationEvent() const
             {

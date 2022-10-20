@@ -21,12 +21,16 @@ namespace Hosting2
             IFabricPrimaryReplicator)
 
     public:
+        ComDummyReplicator() = default;
+
         ComDummyReplicator(
             std::wstring const & serviceName,
             Common::Guid const & partitionId,
             FABRIC_REPLICA_ID replicaId);
 
         virtual ~ComDummyReplicator();
+
+        FABRIC_EPOCH GetCurrentEpoch();
 
         HRESULT STDMETHODCALLTYPE BeginOpen(
             /* [in] */ IFabricAsyncOperationCallback *callback,
@@ -104,5 +108,10 @@ namespace Hosting2
 
      private:
         std::wstring const traceId_;
+
+        // NOTE: This value is written only in the replicator changerole/updateepoch and is read only in the replica changerole.
+        // So there is no need for explicit synchronization between the read and write as of now. Please add synchronization if
+        // this is accessed outside of changerole.
+        FABRIC_EPOCH currentEpoch_;
     };
 }

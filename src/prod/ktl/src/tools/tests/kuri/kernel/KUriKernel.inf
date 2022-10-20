@@ -1,0 +1,8 @@
+[Version]
+Signature="$WINDOWS NT$"
+
+[KUriKernel.NT.Wdf]
+KmdfService = KUriKernel, KmUnit_Service_kmdfInst
+
+[KmUnit_Service_kmdfInst]
+KmdfLibraryVersion = 1.9

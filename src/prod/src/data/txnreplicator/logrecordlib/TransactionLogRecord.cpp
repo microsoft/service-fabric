@@ -251,6 +251,16 @@ void TransactionLogRecord::ReadPrivate(
     UpdateApproximateDiskSize();
 }
 
+std::wstring TransactionLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CompEndlJSON;
+
+    logRecordString += L"Transaction Id" + Constants::DivisionJSON +
+        std::to_wstring(get_TransactionId()) + Constants::Quote;
+
+    return __super::ToString() + logRecordString;
+}
+
 void TransactionLogRecord::FreeParentChainProactively()
 {
     // To prevent a stack overflow proactively, release the parent references in a loop

@@ -1,0 +1,380 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppName" xml:space="preserve">
+    <value>Service Fabric Local Cluster Manager</value>
+  </data>
+  <data name="ClusterAlreadyRunningBalloonTip" xml:space="preserve">
+    <value>The cluster is already running or pending start.</value>
+  </data>
+  <data name="ClusterAlreadySetupBalloonTip" xml:space="preserve">
+    <value>The local cluster is already set up.</value>
+  </data>
+  <data name="ClusterAlreadyStoppedBalloonTip" xml:space="preserve">
+    <value>The local cluster is already stopped or pending stop.</value>
+  </data>
+  <data name="ClusterFiveNodeSwitchConfirmation" xml:space="preserve">
+    <value>Existing cluster will be removed. Are you sure you want to switch to a 5-node local cluster?</value>
+  </data>
+  <data name="ClusterMode_FiveNode" xml:space="preserve">
+    <value>5 Node</value>
+  </data>
+  <data name="ClusterMode_OneNode" xml:space="preserve">
+    <value>1 Node</value>
+  </data>
+  <data name="ClusterNotSetupOrNotRunning" xml:space="preserve">
+    <value>Either no local cluster exists or it is not running.</value>
+  </data>
+  <data name="ClusterOneNodeSwitchConfirmation" xml:space="preserve">
+    <value>Existing cluster will be removed. Are you sure you want to switch to a 1-node local cluster?</value>
+  </data>
+  <data name="ClusterResetConfirmation" xml:space="preserve">
+    <value>Existing cluster will be removed. Are you sure you want to reset the local cluster?</value>
+  </data>
+  <data name="ClusterResetFailedBalloonTip" xml:space="preserve">
+    <value>Failed to reset the local cluster.</value>
+  </data>
+  <data name="ClusterResetSuccessBalloonTip" xml:space="preserve">
+    <value>Local cluster reset completed successfully.</value>
+  </data>
+  <data name="ClusterRunningLongerConnectBalloonTip" xml:space="preserve">
+    <value>The local cluster is running but taking longer than expected to connect.</value>
+  </data>
+  <data name="ClusterSetupFailedBalloonTip" xml:space="preserve">
+    <value>Failed to setup local cluster.</value>
+  </data>
+  <data name="LogInfoBalloonTip" xml:space="preserve">
+    <value>Detailed log available at</value>
+  </data>  
+  <data name="ClusterSetupSuccessBalloonTip" xml:space="preserve">
+    <value>Local cluster setup completed successfully.</value>
+  </data>
+  <data name="ClusterStartConnectBalloonTip" xml:space="preserve">
+    <value>Local cluster started successfully. Trying to connect now. This may take a few minutes.</value>
+  </data>
+  <data name="ConnectClusterFailBalloonTip" xml:space="preserve">
+    <value>Failed to connect to cluster. The local cluster is not running.</value>
+  </data>
+  <data name="ConnectClusterSuccessBalloonTip" xml:space="preserve">
+    <value>Successfully connected to local cluster.</value>
+  </data>
+  <data name="ConnectClusterToolTip" xml:space="preserve">
+    <value>Waiting for local cluster to be ready...</value>
+  </data>
+  <data name="CurrentClusterFiveNodeText" xml:space="preserve">
+    <value>Service Fabric Local Cluster Manager (5 Nodes)</value>
+  </data>
+  <data name="CurrentClusterOneNodeText" xml:space="preserve">
+    <value>Service Fabric Local Cluster Manager (1 Node)</value>
+  </data>
+  <data name="DefaultTrayIconText" xml:space="preserve">
+    <value>Service Fabric Local Cluster Manager</value>
+    <comment>"Service Fabric" is the name of the product.</comment>
+  </data>
+  <data name="ErrorRemovingClusterBalloonTip" xml:space="preserve">
+    <value>There were errors while removing the local cluster. Retrying...</value>
+  </data>
+  <data name="ErrorResettingClusterBalloonTip" xml:space="preserve">
+    <value>There were errors while resetting the local cluster. Retrying...</value>
+  </data>
+  <data name="ErrorSettingUpClusterBalloonTip" xml:space="preserve">
+    <value>There were errors while setting up the local cluster. Retrying...</value>
+  </data>
+  <data name="ErroSwitchingToFiveNodeClusterBalloonTip" xml:space="preserve">
+    <value>There were errors while switching to a 5-node local cluster. Retrying...</value>
+  </data>
+  <data name="ErroSwitchingToOneNodeClusterBalloonTip" xml:space="preserve">
+    <value>There were errors while switching to a 1-node local cluster. Retrying...</value>
+  </data>
+  <data name="LogsNotPresentBalloonTip" xml:space="preserve">
+    <value>No logs were available for packaging.</value>
+  </data>
+  <data name="LogsPackagedBalloonTip" xml:space="preserve">
+    <value>Packaged logs available at</value>
+  </data>
+  <data name="PackagingLogsBalloonTip" xml:space="preserve">
+    <value>Packaging cluster logs....</value>
+  </data>
+  <data name="PackageLogsMenuItemText" xml:space="preserve">
+    <value>Package Logs</value>
+  </data>
+  <data name="ExitLCMConfirmation" xml:space="preserve">
+    <value>Are you sure you want to exit?</value>
+  </data>
+  <data name="ExitMenuItemText" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="FailedToOpenLCE" xml:space="preserve">
+    <value>Failed to open local cluster explorer. Please restart the local cluster manager and try again.</value>
+  </data>
+  <data name="ManageClusterMenuItemText" xml:space="preserve">
+    <value>Manage Local Cluster</value>
+  </data>
+  <data name="NoClusterSetupBalloonTip" xml:space="preserve">
+    <value>No local cluster set up on machine.</value>
+  </data>
+  <data name="RemoveClusterBalloonTip" xml:space="preserve">
+    <value>Removing local cluster. This may take a few minutes.</value>
+  </data>
+  <data name="RemoveClusterConfirmation" xml:space="preserve">
+    <value>Are you sure you want to remove the local cluster?</value>
+  </data>
+  <data name="RemoveClusterFailedBalloonTip" xml:space="preserve">
+    <value>Failed to remove the local cluster.</value>
+  </data>
+  <data name="RemoveClusterMenuItemText" xml:space="preserve">
+    <value>Remove Local Cluster</value>
+  </data>
+  <data name="RemoveClusterSuccessBalloonTip" xml:space="preserve">
+    <value>Local cluster removed successfully.</value>
+  </data>
+  <data name="RemoveClusterToolTip" xml:space="preserve">
+    <value>Removing local cluster...</value>
+  </data>
+  <data name="ResetClusterBalloonTip" xml:space="preserve">
+    <value>Resetting local cluster. This may take a few minutes.</value>
+  </data>
+  <data name="ResetClusterMenuItemText" xml:space="preserve">
+    <value>Reset Local Cluster</value>
+  </data>
+  <data name="ResetClusterToolTip" xml:space="preserve">
+    <value>Resetting local cluster...</value>
+  </data>
+  <data name="SetupClusterBalloonTip" xml:space="preserve">
+    <value>Setting up local cluster. This may take few minutes.</value>
+  </data>
+  <data name="SetupClusterMenuItemText" xml:space="preserve">
+    <value>Setup Local Cluster</value>
+  </data>
+  <data name="SetupClusterToolTip" xml:space="preserve">
+    <value>Setting up local cluster...</value>
+  </data>
+  <data name="StartClusterBalloonTip" xml:space="preserve">
+    <value>Starting local cluster. This may take a few minutes.</value>
+  </data>
+  <data name="StartClusterFailedBalloonTip" xml:space="preserve">
+    <value>Failed to start the local cluster.</value>
+  </data>
+  <data name="StartClusterMenuItemText" xml:space="preserve">
+    <value>Start Local Cluster</value>
+  </data>
+  <data name="StartClusterToolTip" xml:space="preserve">
+    <value>Starting local cluster...</value>
+  </data>
+  <data name="StopClusterBalloonTip" xml:space="preserve">
+    <value>Stopping local cluster. This may take a few minutes.</value>
+  </data>
+  <data name="StopClusterConfirmation" xml:space="preserve">
+    <value>Are you sure you want to stop the local cluster?</value>
+  </data>
+  <data name="StopClusterFailedBalloonTip" xml:space="preserve">
+    <value>Failed to stop the local cluster.</value>
+  </data>
+  <data name="StopClusterMenuItemText" xml:space="preserve">
+    <value>Stop Local Cluster</value>
+  </data>
+  <data name="StopClusterSuccessBalloonTip" xml:space="preserve">
+    <value>Local cluster stopped successfully.</value>
+  </data>
+  <data name="StopClusterToolTip" xml:space="preserve">
+    <value>Stopping local cluster...</value>
+  </data>
+  <data name="SwitchClusterModeText" xml:space="preserve">
+    <value>Switch Cluster Mode</value>
+  </data>
+  <data name="SwitchClusterToFiveNodeFailedBalloonTip" xml:space="preserve">
+    <value>Failed to switch to a 5-node local cluster.</value>
+  </data>
+  <data name="SwitchClusterToFiveNodeSuccessBalloonTip" xml:space="preserve">
+    <value>Switched to a 5-node local cluster successfully.</value>
+  </data>
+  <data name="SwitchClusterToOneNodeFailedBalloonTip" xml:space="preserve">
+    <value>Failed to switch to 1-node local cluster.</value>
+  </data>
+  <data name="SwitchClusterToOneNodeSuccessBalloonTip" xml:space="preserve">
+    <value>Switched to a 1-node local cluster successfully.</value>
+  </data>
+  <data name="SwitchToFiveNodeClusterBalloonTip" xml:space="preserve">
+    <value>Switching to a 5-node local cluster. This may take a few minutes.</value>
+  </data>
+  <data name="SwitchToFiveNodelusterToolTip" xml:space="preserve">
+    <value>Switching to a 5-node local cluster...</value>
+  </data>
+  <data name="SwitchToOneNodeClusterBalloonTip" xml:space="preserve">
+    <value>Switching to a 1-node local cluster. This may take a few minutes.</value>
+  </data>
+  <data name="SwitchToOneNodelusterToolTip" xml:space="preserve">
+    <value>Switching to a 1-node local cluster...</value>
+  </data>
+  <data name="WelcomeBalloonText" xml:space="preserve">
+    <value>You can use it to manage your local dev cluster.</value>
+  </data>
+  <data name="WelcomeTrayIconText" xml:space="preserve">
+    <value>Welcome to Service Fabric Local Cluster Manager</value>
+    <comment>"Service Fabric" is name of product.</comment>
+  </data>
+  <data name="ClusterMeshFiveNodeSwitchConfirmation" xml:space="preserve">
+    <value>Existing cluster will be removed. Are you sure you want to switch to a 5-node Mesh local cluster?</value>
+  </data>
+  <data name="ClusterMeshOneNodeSwitchConfirmation" xml:space="preserve">
+    <value>Existing cluster will be removed. Are you sure you want to switch to a 1-node Mesh local cluster?</value>
+  </data>
+  <data name="ClusterMode_MeshFiveNode" xml:space="preserve">
+    <value>Mesh 5 Node</value>
+  </data>
+  <data name="ClusterMode_MeshOneNode" xml:space="preserve">
+    <value>Mesh 1 Node</value>
+  </data>
+  <data name="CurrentClusterMeshFiveNodeText" xml:space="preserve">
+    <value>Service Fabric Mesh Local Cluster Manager (5 Nodes)</value>
+  </data>
+  <data name="CurrentClusterMeshOneNodeText" xml:space="preserve">
+    <value>Service Fabric Mesh Local Cluster Manager (1 Node)</value>
+  </data>
+  <data name="ErrorSwitchingToMeshFiveNodeClusterBalloonTip1" xml:space="preserve">
+    <value>There were errors while switching to a 5-node Mesh local cluster. Retrying...</value>
+  </data>
+  <data name="ErrorSwitchingToMeshOneNodeClusterBalloonTip" xml:space="preserve">
+    <value>There were errors while switching to a 1-node Mesh local cluster. Retrying...</value>
+  </data>
+  <data name="SwitchClusterToMeshFiveNodeFailedBalloonTip1" xml:space="preserve">
+    <value>Failed to switch to 5-node Mesh local cluster.</value>
+  </data>
+  <data name="SwitchClusterToMeshFiveNodeSuccessBalloonTip1" xml:space="preserve">
+    <value>Switched to a 5-node Mesh local cluster successfully.</value>
+  </data>
+  <data name="SwitchClusterToMeshOneNodeFailedBalloonTip" xml:space="preserve">
+    <value>Failed to switch to 1-node Mesh local cluster.</value>
+  </data>
+  <data name="SwitchClusterToMeshOneNodeSuccessBalloonTip" xml:space="preserve">
+    <value>Switched to a 1-node Mesh local cluster successfully.</value>
+  </data>
+  <data name="SwitchToMeshFiveNodeClusterBalloonTip1" xml:space="preserve">
+    <value>Switching to a 5-node Mesh local cluster. This may take a few minutes.</value>
+  </data>
+  <data name="SwitchToMeshFiveNodelusterToolTip1" xml:space="preserve">
+    <value>Switching to a 5-node Mesh local cluster...</value>
+  </data>
+  <data name="SwitchToMeshOneNodeClusterBalloonTip" xml:space="preserve">
+    <value>Switching to a 1-node Mesh local cluster. This may take a few minutes.</value>
+  </data>
+  <data name="SwitchToMeshOneNodelusterToolTip" xml:space="preserve">
+    <value>Switching to a 1-node Mesh local cluster...</value>
+  </data>
+</root>

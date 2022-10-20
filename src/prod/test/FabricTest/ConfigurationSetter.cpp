@@ -189,6 +189,7 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(FailoverConfig::GetConfig().ServiceTypeRegistrationMaxRetryThresholdEntry);
     AddMapEntry(FailoverConfig::GetConfig().ServiceTypeRegistrationRestartThresholdEntry);
     AddMapEntry(FailoverConfig::GetConfig().ServiceTypeRegistrationErrorReportThresholdEntry);
+    AddMapEntry(FailoverConfig::GetConfig().SwapPrimaryRequestTimeoutEntry);
     AddMapEntry(FailoverConfig::GetConfig().UnknownNodeKeepDurationEntry);
     AddMapEntry(FailoverConfig::GetConfig().RemovedNodeKeepDurationEntry);
     AddMapEntry(FailoverConfig::GetConfig().RemoteReplicaProgressQueryWaitDurationEntry);
@@ -212,6 +213,8 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(FailoverConfig::GetConfig().StandByReplicaKeepDurationEntry, L"FMStandByReplicaKeepDuration");
     AddMapEntry(FailoverConfig::GetConfig().IsStrongSafetyCheckEnabledEntry);
     AddMapEntry(FailoverConfig::GetConfig().RemoveNodeOrDataUpReplicaTimeoutEntry);
+    AddMapEntry(FailoverConfig::GetConfig().EnableConstraintCheckDuringFabricUpgradeEntry);
+    AddMapEntry(FailoverConfig::GetConfig().RemoveNodeOrDataCloseStatelessInstanceAfterSafetyCheckCompleteEntry);
     #pragma endregion "FailoverConfig"
 
     #pragma region "FederationConfig"
@@ -309,6 +312,7 @@ void ConfigurationSetter::PopulateConfigMap()
     #pragma endregion "NamingConfig"
 
     #pragma region "PLBConfig"
+    AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().BalancingDelayAfterNodeDownEntry);
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().BalancingDelayAfterNewNodeEntry);
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().ConstraintCheckEnabledEntry);
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().ConstraintViolationReportingPolicyEntry);
@@ -343,6 +347,11 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MoveParentToFixAffinityViolationTransitionPercentageEntry);
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().SlowBalancingSearchTimeoutEntry);
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().PreferNodesForContainerPlacementEntry);
+    AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().ThrottlingConstraintPriorityEntry);
+    AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().ThrottlePlacementPhaseEntry);
+    AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().ThrottleBalancingPhaseEntry);
+    AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().ThrottleConstraintCheckPhaseEntry);
+    AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().PerNodeThrottlingCheckEntry);
     #pragma endregion "PLBConfig"
 
     #pragma region "RepairManagerConfig"
@@ -476,6 +485,54 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DummyPLBEnabled = dummyPLBEnabled;
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().LoadBalancingEnabled = !dummyPLBEnabled; // The difference between LoadBalancing Enabled and DummyPLB Enabled never seems to be used. We should consider whether we want to maintain this distinction (though in this case it doesn't seem to matter as LB is disabled at relevant times in fabrictestdispatcher.cpp)
     }
+    else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MaximumInBuildReplicasPerNodeEntry.Section))
+    {
+        // Example: MaximumInBuildReplicasPerNode NodeType1 2 NodeType2 3
+        StringMap mapThrottlingLimits;
+        for (int i = 1; i < params.size(); i += 2)
+        {
+            mapThrottlingLimits.insert(make_pair(params[i], params[i + 1]));
+        }
+
+        Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MaximumInBuildReplicasPerNode =
+        Reliability::LoadBalancingComponent::PLBConfig::KeyIntegerValueMap::Parse(mapThrottlingLimits);
+    }
+    else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MaximumInBuildReplicasPerNodeBalancingThrottleEntry.Section))
+    {
+        // Example: MaximumInBuildReplicasPerNodeBalancingThrottle NodeType1 2 NodeType2 3
+        StringMap mapThrottlingLimits;
+        for (int i = 1; i < params.size(); i += 2)
+        {
+            mapThrottlingLimits.insert(make_pair(params[i], params[i + 1]));
+        }
+
+        Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MaximumInBuildReplicasPerNodeBalancingThrottle =
+        Reliability::LoadBalancingComponent::PLBConfig::KeyIntegerValueMap::Parse(mapThrottlingLimits);
+    }
+    else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MaximumInBuildReplicasPerNodeConstraintCheckThrottleEntry.Section))
+    {
+        // Example: MaximumInBuildReplicasPerNodeConstraintCheckThrottle NodeType1 2 NodeType2 3
+        StringMap mapThrottlingLimits;
+        for (int i = 1; i < params.size(); i += 2)
+        {
+            mapThrottlingLimits.insert(make_pair(params[i], params[i + 1]));
+        }
+
+        Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MaximumInBuildReplicasPerNodeConstraintCheckThrottle =
+        Reliability::LoadBalancingComponent::PLBConfig::KeyIntegerValueMap::Parse(mapThrottlingLimits);
+    }
+    else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MaximumInBuildReplicasPerNodePlacementThrottleEntry.Section))
+    {
+        // Example: MaximumInBuildReplicasPerNodePlacementThrottle NodeType1 2 NodeType2 3
+        StringMap mapThrottlingLimits;
+        for (int i = 1; i < params.size(); i += 2)
+        {
+            mapThrottlingLimits.insert(make_pair(params[i], params[i + 1]));
+        }
+
+        Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MaximumInBuildReplicasPerNodePlacementThrottle =
+        Reliability::LoadBalancingComponent::PLBConfig::KeyIntegerValueMap::Parse(mapThrottlingLimits);
+    }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DefragmentationMetricsEntry.Section))
     {
         // Example: DefragmentationMetrics CpuMin true Mem false
@@ -486,7 +543,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DefragmentationMetrics =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyBoolValueMap::Parse(mapDefragMetrics);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyBoolValueMap::Parse(mapDefragMetrics);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MetricActivityThresholdsEntry.Section))
     {
@@ -497,7 +554,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MetricActivityThresholds =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyIntegerValueMap::Parse(mapActivityThresholdsMetric);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyIntegerValueMap::Parse(mapActivityThresholdsMetric);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MetricBalancingThresholdsEntry.Section))
     {
@@ -508,7 +565,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MetricBalancingThresholds =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapBalancingThresholdsMetric);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapBalancingThresholdsMetric);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MetricEmptyNodeThresholdsEntry.Section))
     {
@@ -519,7 +576,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MetricEmptyNodeThresholds =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyIntegerValueMap::Parse(mapEmptyNodeMetric);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyIntegerValueMap::Parse(mapEmptyNodeMetric);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().GlobalMetricWeightsEntry.Section))
     {
@@ -530,7 +587,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().GlobalMetricWeights =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapGlobalWeightsMetric);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapGlobalWeightsMetric);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DefragmentationEmptyNodeWeightEntry.Section))
     {
@@ -541,7 +598,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DefragmentationEmptyNodeWeight =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapDefragmentationEmptyNodeWeight);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapDefragmentationEmptyNodeWeight);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DefragmentationScopedAlgorithmEnabledEntry.Section))
     {
@@ -552,7 +609,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DefragmentationScopedAlgorithmEnabled =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyBoolValueMap::Parse(mapDefragmentationScopedAlgorithmEnabled);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyBoolValueMap::Parse(mapDefragmentationScopedAlgorithmEnabled);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThresholdEntry.Section))
     {
@@ -563,7 +620,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapDefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapDefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().NodeBufferPercentageEntry.Section))
     {
@@ -575,7 +632,7 @@ bool ConfigurationSetter::ProcessCustomConfigurationSetter(StringCollection cons
         }
 
         Reliability::LoadBalancingComponent::PLBConfig::GetConfig().NodeBufferPercentage =
-            Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapNodeBuffPercentage);
+        Reliability::LoadBalancingComponent::PLBConfig::KeyDoubleValueMap::Parse(mapNodeBuffPercentage);
     }
     else if (StringUtility::AreEqualCaseInsensitive(params[0], Reliability::LoadBalancingComponent::PLBConfig::GetConfig().PLBHealthEventTTLEntry.Key))
     {

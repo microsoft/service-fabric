@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <ProjectGuid>{15F69A07-CD59-471D-B138-ACC6054FB942}</ProjectGuid>
+    <AssemblyName>IDLValidation.Test</AssemblyName>
+    <OutputType>Library</OutputType>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <ProjectReference Include="..\generated\generated.csproj">
+      <Project>{e4088b2e-1379-4502-9eca-4e08b891a04e}</Project>
+      <Name>generated</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric\unit\System.Fabric.Test.csproj">
+      <Project>{6063627D-A418-4A45-986B-0A963583514D}</Project>
+      <Name>System.Fabric.Test</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Constants.cs" />
+    <Compile Include="IDLValidation.cs" />
+    <Compile Include="InterfaceObject.cs" />
+    <Compile Include="Interfaces.cs" />
+    <Compile Include="Members.cs" />
+    <Compile Include="methods.cs" />
+    <Compile Include="StructObject.cs" />
+    <Compile Include="Structs.cs" />
+    <Compile Include="ValidationHelper.cs" />
+    <Compile Include="ValidationIgnoreList.cs" />
+    <Compile Include="$(BinariesBuildTypeArchDirectory)\inc\ServiceFabricGeneratedServiceModel.cs" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+      <_Last_Version_Files Include="$(ProjectDir)Release\v6.2\*.h" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_Last_Version_Files)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\IDLFiles\v6.2" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -29,6 +29,7 @@
       ..\..\src\System\Fabric\Chaos\Common\ChaosUtility.cs;
       ..\..\src\System\Fabric\Description\ChaosEventsDescription.cs;
       ..\..\src\System\Fabric\Chaos\Common\CoordinatorStateData.cs;
+      ..\..\src\System\Fabric\Chaos\Common\Exceptions\ChaosInconsistentClusterSnapshotException.cs;
       ..\..\src\System\Fabric\Chaos\DataStructures\ChaosDescription.cs;
       ..\..\src\System\Fabric\Description\SetChaosScheduleDescription.cs;
       ..\..\src\System\Fabric\Chaos\DataStructures\ChaosSchedule.cs;
@@ -141,6 +142,7 @@
       ..\..\src\System\Fabric\Common\FabricTestActionHandler.cs;
       ..\..\src\System\Fabric\Common\FabricTestContext.cs;
       ..\..\src\System\Fabric\Common\FileSignatureVerifier.cs;
+      ..\..\src\System\Fabric\Common\GatewayResourceManagerTrace.cs;
       ..\..\src\System\Fabric\Common\GetSelectedPartitionStateAction.cs;
       ..\..\src\System\Fabric\Common\GetSelectedReplicaStateAction.cs;
       ..\..\src\System\Fabric\Common\Helpers.cs;
@@ -271,6 +273,7 @@
       ..\..\src\System\Fabric\Description\ApplicationLoadInformationQueryDescription.cs;
       ..\..\src\System\Fabric\Description\ApplicationMetricDescription.cs;
       ..\..\src\System\Fabric\Description\ApplicationNameQueryDescription.cs;
+      ..\..\src\System\Fabric\Description\ApplicationNetworkQueryDescription.cs;
       ..\..\src\System\Fabric\Description\ApplicationPackageCleanupPolicy.cs;
       ..\..\src\System\Fabric\Description\ApplicationParameter.cs;
       ..\..\src\System\Fabric\Description\ApplicationParameterList.cs;
@@ -295,6 +298,7 @@
       ..\..\src\System\Fabric\Description\ComposeDeploymentDescriptionWrapper.cs;
       ..\..\src\System\Fabric\Description\ComposeDeploymentStatusQueryDescriptionWrapper.cs;
       ..\..\src\System\Fabric\Description\ComposeDeploymentUpgradeDescriptionWrapper.cs;
+      ..\..\src\System\Fabric\Description\ComposeDeploymentRollbackDescriptionWrapper.cs;
       ..\..\src\System\Fabric\Description\ConfigurationPackageDescription.cs;
       ..\..\src\System\Fabric\Description\ConfigurationProperty.cs;
       ..\..\src\System\Fabric\Description\ConfigurationSection.cs;
@@ -302,10 +306,13 @@
       ..\..\src\System\Fabric\Description\DataPackageDescription.cs;
       ..\..\src\System\Fabric\Description\DeleteApplicationDescription.cs;
       ..\..\src\System\Fabric\Description\DeleteComposeDeploymentDescription.cs;
+      ..\..\src\System\Fabric\Description\DeleteNetworkDescription.cs;
       ..\..\src\System\Fabric\Description\DeleteServiceDescription.cs;
       ..\..\src\System\Fabric\Description\DeployedApplicationHealthQueryDescription.cs;
       ..\..\src\System\Fabric\Description\DeployedApplicationQueryDescription.cs;
       ..\..\src\System\Fabric\Description\DeployedCodePackageQueryDescription.cs;
+      ..\..\src\System\Fabric\Description\DeployedNetworkCodePackageQueryDescription.cs;
+      ..\..\src\System\Fabric\Description\DeployedNetworkQueryDescription.cs;
       ..\..\src\System\Fabric\Description\DeployedServicePackageHealthQueryDescription.cs;
       ..\..\src\System\Fabric\Description\DeployedServicePackageQueryDescription.cs;
       ..\..\src\System\Fabric\Description\DeployedServiceReplicaDetailQueryDescription.cs;
@@ -334,6 +341,12 @@
       ..\..\src\System\Fabric\Description\MonitoredRollingUpgradePolicyDescription.cs;
       ..\..\src\System\Fabric\Description\NamedPartitionDescription.cs;
       ..\..\src\System\Fabric\Description\NamedRepartitionDescription.cs;
+      ..\..\src\System\Fabric\Description\LocalNetworkDescription.cs;
+      ..\..\src\System\Fabric\Description\LocalNetworkConfigurationDescription.cs;
+      ..\..\src\System\Fabric\Description\NetworkDescription.cs;
+      ..\..\src\System\Fabric\Description\NetworkQueryDescription.cs;
+      ..\..\src\System\Fabric\Description\NetworkApplicationQueryDescription.cs;
+      ..\..\src\System\Fabric\Description\NetworkNodeQueryDescription.cs;
       ..\..\src\System\Fabric\Description\NodeHealthQueryDescription.cs;
       ..\..\src\System\Fabric\Description\NodeLoadInformationQueryDescription.cs;
       ..\..\src\System\Fabric\Description\NodeQueryDescription.cs;
@@ -422,6 +435,7 @@
       ..\..\src\System\Fabric\FabricClient.ComposeDeploymentClient.cs;
       ..\..\src\System\Fabric\FabricClient.FaultManagementClient.cs;
       ..\..\src\System\Fabric\FabricClient.SecretStoreClient.cs;
+      ..\..\src\System\Fabric\FabricClient.NetworkManagementClient.cs;
       ..\..\src\System\Fabric\FabricClient.HealthClient.cs;
       ..\..\src\System\Fabric\FabricClient.ImageStoreClient.cs;
       ..\..\src\System\Fabric\FabricClient.InfrastructureServiceClient.cs;
@@ -438,6 +452,7 @@
       ..\..\src\System\Fabric\FabricErrorCode.cs;
       ..\..\src\System\Fabric\FabricException.cs;
       ..\..\src\System\Fabric\FabricFaultAnalysisServiceAgent.cs;
+      ..\..\src\System\Fabric\FabricGatewayResourceManagerAgent.cs;     
       ..\..\src\System\Fabric\FabricInfrastructureServiceAgent.cs;
       ..\..\src\System\Fabric\FabricOrchestrationUpgradeProgress.cs;
       ..\..\src\System\Fabric\FabricPackageType.cs;
@@ -451,6 +466,7 @@
       ..\..\src\System\Fabric\FabricValidatorConstants.cs;
       ..\..\src\System\Fabric\FabricValidationException.cs;
       ..\..\src\System\Fabric\FaultAnalysisServiceBroker.cs;
+      ..\..\src\System\Fabric\GatewayResourceManagerBroker.cs;
       ..\..\src\System\Fabric\FaultType.cs;
       ..\..\src\System\Fabric\GatewayInformation.cs;
       ..\..\src\System\Fabric\GetPropertyOperation.cs;
@@ -481,6 +497,7 @@
       ..\..\src\System\Fabric\IAtomicGroupStateReplicator.cs;
       ..\..\src\System\Fabric\IByteSerializable.cs;
       ..\..\src\System\Fabric\IFaultAnalysisService.cs;
+      ..\..\src\System\Fabric\IGatewayResourceManager.cs;
       ..\..\src\System\Fabric\IImageStoreProgressHandler.cs;
       ..\..\src\System\Fabric\IInfrastructureService.cs;
       ..\..\src\System\Fabric\ImageStore\ChecksumUtility.cs;
@@ -540,6 +557,8 @@
       ..\..\src\System\Fabric\Interop\NativeClientInternal.cs;
       ..\..\src\System\Fabric\Interop\NativeCommon.cs;
       ..\..\src\System\Fabric\Interop\NativeFaultAnalysisService.cs;
+      ..\..\src\System\Fabric\Interop\NativeGatewayResourceManager.cs;
+      ..\..\src\System\Fabric\Interop\NativeGatewayResourceManagerTypes.cs;
       ..\..\src\System\Fabric\Interop\NativeImageStore.cs;
       ..\..\src\System\Fabric\Interop\NativeInfrastructureService.cs;
       ..\..\src\System\Fabric\Interop\NativeRuntime.cs;
@@ -554,6 +573,7 @@
       ..\..\src\System\Fabric\Interop\SharedNativeObject.cs;
       ..\..\src\System\Fabric\Interop\StringCollectionResult.cs;
       ..\..\src\System\Fabric\Interop\StringResult.cs;
+      ..\..\src\System\Fabric\Interop\StringListResult.cs;
       ..\..\src\System\Fabric\Interop\Utility.cs;
       ..\..\src\System\Fabric\InvokeDataLossProgress.cs;
       ..\..\src\System\Fabric\InvokeQuorumLossProgress.cs;
@@ -576,6 +596,9 @@
       ..\..\src\System\Fabric\NamedPartitionInformation.cs;
       ..\..\src\System\Fabric\NamedProperty.cs;
       ..\..\src\System\Fabric\NamedPropertyMetadata.cs;
+      ..\..\src\System\Fabric\NetworkType.cs;
+      ..\..\src\System\Fabric\NetworkStatus.cs;
+      ..\..\src\System\Fabric\NetworkStatusFilter.cs;
       ..\..\src\System\Fabric\NodeConfiguration.cs;
       ..\..\src\System\Fabric\NodeContext.cs;
       ..\..\src\System\Fabric\NodeDeactivationIntent.cs;
@@ -867,6 +890,8 @@
       ..\..\src\System\Fabric\query\ApplicationList.cs;
       ..\..\src\System\Fabric\query\ApplicationLoadInformation.cs;
       ..\..\src\System\Fabric\query\ApplicationLoadMetricInformation.cs;
+      ..\..\src\System\Fabric\query\ApplicationNetworkList.cs;
+      ..\..\src\System\Fabric\query\ApplicationNetworkResultItem.cs;
       ..\..\src\System\Fabric\query\ApplicationResultItem.cs;
       ..\..\src\System\Fabric\query\ApplicationStatus.cs;
       ..\..\src\System\Fabric\query\ApplicationTypeDefinitionKind.cs;
@@ -875,6 +900,7 @@
       ..\..\src\System\Fabric\query\ApplicationTypeResultItem.cs;
       ..\..\src\System\Fabric\query\ApplicationTypeStatus.cs;
       ..\..\src\System\Fabric\query\ClusterLoadInformation.cs;
+      ..\..\src\System\Fabric\query\ClusterVersion.cs;
       ..\..\src\System\Fabric\query\CodePackageEntryPoint.cs;
       ..\..\src\System\Fabric\query\CodePackageEntryPointStatistics.cs;
       ..\..\src\System\Fabric\query\ComposeDeploymentStatusListWrapper.cs;
@@ -885,6 +911,10 @@
       ..\..\src\System\Fabric\query\DeployedApplicationResultItem.cs;
       ..\..\src\System\Fabric\query\DeployedCodePackageList.cs;
       ..\..\src\System\Fabric\query\DeployedCodePackageResultItem.cs;
+      ..\..\src\System\Fabric\query\DeployedNetworkCodePackageList.cs;
+      ..\..\src\System\Fabric\query\DeployedNetworkCodePackageResultItem.cs;
+      ..\..\src\System\Fabric\query\DeployedNetworkList.cs;
+      ..\..\src\System\Fabric\query\DeployedNetworkResultItem.cs;
       ..\..\src\System\Fabric\query\DeployedServiceManifestList.cs;
       ..\..\src\System\Fabric\query\DeployedServiceManifestResultItem.cs;
       ..\..\src\System\Fabric\query\DeployedServiceReplicaDetailResultItem.cs;
@@ -908,6 +938,13 @@
       ..\..\src\System\Fabric\query\KeyValueStoreReplicaStatus.cs;
       ..\..\src\System\Fabric\query\LoadMetricInformation.cs;
       ..\..\src\System\Fabric\query\LoadMetricReport.cs;
+      ..\..\src\System\Fabric\query\LocalNetworkInformation.cs;
+      ..\..\src\System\Fabric\query\NetworkApplicationList.cs;
+      ..\..\src\System\Fabric\query\NetworkApplicationResultItem.cs;
+      ..\..\src\System\Fabric\query\NetworkInformation.cs;
+      ..\..\src\System\Fabric\query\NetworkList.cs;
+      ..\..\src\System\Fabric\query\NetworkNodeList.cs;
+      ..\..\src\System\Fabric\query\NetworkNodeResultItem.cs;
       ..\..\src\System\Fabric\query\NodeDeactivationResult.cs;
       ..\..\src\System\Fabric\query\NodeDeactivationTask.cs;
       ..\..\src\System\Fabric\query\NodeDeactivationTaskId.cs;
@@ -965,8 +1002,11 @@
       ..\..\src\System\Fabric\query\UploadSession.cs;
       ..\..\src\System\Fabric\query\UploadSessionInfo.cs;
       ..\..\src\System\Fabric\XMLHelper.cs;
+      ..\..\src\System\Fabric\Hosting\Container\ContainerNetworkType.cs;
       ..\..\src\System\Fabric\Hosting\Container\ContainerIsolationMode.cs;
       ..\..\src\System\Fabric\Hosting\Container\ContainerActivationArgs.cs;
+      ..\..\src\System\Fabric\Hosting\Container\ContainerNetworkConfigDescription.cs;
+      ..\..\src\System\Fabric\Hosting\Container\ContainerUpdateRouteArgs.cs;
       ..\..\src\System\Fabric\Hosting\Container\ContainerDeactivationArgs.cs;
       ..\..\src\System\Fabric\Hosting\Container\ContainerDescription.cs;
       ..\..\src\System\Fabric\Hosting\Container\ContainerDriverOptionDescription.cs;

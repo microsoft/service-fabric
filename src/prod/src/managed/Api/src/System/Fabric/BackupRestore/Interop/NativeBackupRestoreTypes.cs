@@ -53,9 +53,10 @@ namespace System.Fabric.BackupRestore.Interop
         [Guid("0c51aec0-922d-4f07-961f-26e7c0ab686c")]
         internal enum FABRIC_BACKUP_STORE_TYPE : int
         {
-            FABRIC_BACKUP_STORE_TYPE_INVALID        = 0x0000,
-            FABRIC_BACKUP_STORE_TYPE_FILE_SHARE     = 0x0001,
-            FABRIC_BACKUP_STORE_TYPE_AZURE_STORE    = 0x0002,
+            FABRIC_BACKUP_STORE_TYPE_INVALID          = 0x0000,
+            FABRIC_BACKUP_STORE_TYPE_FILE_SHARE       = 0x0001,
+            FABRIC_BACKUP_STORE_TYPE_AZURE_STORE      = 0x0002,
+            FABRIC_BACKUP_STORE_TYPE_DSMS_AZURE_STORE = 0x0003,
         }
 
         [Guid("9460d8aa-e70d-480e-a118-453016a0867e")]
@@ -101,6 +102,15 @@ namespace System.Fabric.BackupRestore.Interop
             public IntPtr ContainerName;
             public IntPtr FolderPath;
             public BOOLEAN IsConnectionStringEncrypted;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        internal struct FABRIC_BACKUP_STORE_DSMS_AZURE_STORAGE_INFORMATION
+        {
+            public IntPtr StorageCredentialsSourceLocation;
+            public IntPtr ContainerName;
+            public IntPtr FolderPath;
             public IntPtr Reserved;
         }
 

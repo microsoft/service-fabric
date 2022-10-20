@@ -79,11 +79,16 @@ typedef unsigned char       BOOLEAN, *PBOOLEAN;
 
 
 #if !__has_builtin(__int2c)
+#ifdef __aarch64__
+extern "C" void __int2c();
+#else
 void
 __int2c(void)
 {
     __asm__ __volatile__("int $0x2c");
 }
+#endif
+
 #endif
 
 void FailOnError(BOOLEAN Condition, const char * Message)

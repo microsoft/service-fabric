@@ -26,6 +26,7 @@ add_executable(${exe_LoadBalancing.Test}
   ../PLBResourceGovernance.Test.cpp
   ../FailoverUnit.Test.cpp
   ../btest.cpp
+  ../PLBThrottling.Test.cpp
 )
 
 add_precompiled_header(${exe_LoadBalancing.Test} ../stdafx.h)

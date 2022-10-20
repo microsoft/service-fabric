@@ -34,7 +34,7 @@ namespace Api
         public IInternalFabricInfrastructureServiceClient,
         public IInternalFabricQueryClient2,
         public IInternalFabricClusterManagementClient,
-        public IInternalFabricApplicationManagementClient,
+        public IInternalFabricApplicationManagementClient2,
         public IInternalFabricServiceManagementClient2,
         public IFabricAccessControlClient,
         public IFabricImageStoreClient,
@@ -43,6 +43,7 @@ namespace Api
         public IFabricTestManagementClientInternal2,
         public IFabricFaultManagementClient,
         public IFabricFaultManagementClientInternal,
+        public IFabricNetworkManagementClient,
         public Naming::IFabricTestClient,
         public IFabricSecretStoreClient,
         private Common::ComUnknownBase
@@ -87,6 +88,7 @@ namespace Api
             COM_INTERFACE_ITEM(IID_IFabricClusterManagementClient10, IFabricClusterManagementClient10)
             COM_INTERFACE_ITEM(IID_IInternalFabricClusterManagementClient, IInternalFabricClusterManagementClient)
             COM_INTERFACE_ITEM(IID_IInternalFabricApplicationManagementClient, IInternalFabricApplicationManagementClient)
+            COM_INTERFACE_ITEM(IID_IInternalFabricApplicationManagementClient2, IInternalFabricApplicationManagementClient2)
             COM_INTERFACE_ITEM(IID_IInternalFabricServiceManagementClient, IInternalFabricServiceManagementClient)
             COM_INTERFACE_ITEM(IID_IInternalFabricServiceManagementClient2, IInternalFabricServiceManagementClient2)
             COM_INTERFACE_ITEM(IID_IFabricRepairManagementClient,IFabricRepairManagementClient)
@@ -119,6 +121,7 @@ namespace Api
             COM_INTERFACE_ITEM(IID_IFabricTestManagementClientInternal2, IFabricTestManagementClientInternal2)
             COM_INTERFACE_ITEM(IID_IFabricFaultManagementClient, IFabricFaultManagementClient)
             COM_INTERFACE_ITEM(IID_IFabricFaultManagementClientInternal, IFabricFaultManagementClientInternal)
+            COM_INTERFACE_ITEM(IID_IFabricNetworkManagementClient, IFabricNetworkManagementClient)
             COM_INTERFACE_ITEM(Naming::IID_IFabricTestClient, Naming::IFabricTestClient)
             COM_INTERFACE_ITEM(IID_IFabricSecretStoreClient, IFabricSecretStoreClient)
         END_COM_INTERFACE_LIST()
@@ -2184,6 +2187,15 @@ namespace Api
             /* [in] */ IFabricAsyncOperationContext *context,
             /* [retval][out] */ IFabricComposeDeploymentUpgradeProgressResult **result);
 
+        HRESULT STDMETHODCALLTYPE BeginRollbackComposeDeployment(
+            /* [in] */ const FABRIC_COMPOSE_DEPLOYMENT_ROLLBACK_DESCRIPTION *rollbackDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+
+        HRESULT STDMETHODCALLTYPE EndRollbackComposeDeployment(
+            /* [in] */ IFabricAsyncOperationContext *context);
+
         //
         // IFabricSecretStoreClient APIs
         //
@@ -2207,7 +2219,7 @@ namespace Api
 
         HRESULT STDMETHODCALLTYPE EndSetSecrets(
             /* [in] */ IFabricAsyncOperationContext *context,
-            /* [retval][out] */ IFabricSecretReferencesResult **result);
+            /* [retval][out] */ IFabricSecretsResult **result);
 
         HRESULT STDMETHODCALLTYPE BeginRemoveSecrets(
             /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
@@ -2218,6 +2230,89 @@ namespace Api
         HRESULT STDMETHODCALLTYPE EndRemoveSecrets(
             /* [in] */ IFabricAsyncOperationContext *context,
             /* [retval][out] */ IFabricSecretReferencesResult **result);
+
+        HRESULT STDMETHODCALLTYPE BeginGetSecretVersions(
+            /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+
+        HRESULT STDMETHODCALLTYPE EndGetSecretVersions(
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretReferencesResult **result);
+
+        // IFabricNetworkManagementClient methods
+        //
+        HRESULT STDMETHODCALLTYPE BeginCreateNetwork(
+            /* [in] */ LPCWSTR networkName,
+            /* [in] */ const FABRIC_NETWORK_DESCRIPTION * description,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback * callback,
+            /* [retval][out] */ IFabricAsyncOperationContext ** context);
+        HRESULT STDMETHODCALLTYPE EndCreateNetwork(
+            /* [in] */ IFabricAsyncOperationContext * context);
+
+        HRESULT STDMETHODCALLTYPE BeginDeleteNetwork(
+            /* [in] */ const FABRIC_DELETE_NETWORK_DESCRIPTION * deleteDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback * callback,
+            /* [retval][out] */ IFabricAsyncOperationContext ** context);
+        HRESULT STDMETHODCALLTYPE EndDeleteNetwork(
+            /* [in] */ IFabricAsyncOperationContext * context);
+
+        HRESULT STDMETHODCALLTYPE BeginGetNetworkList(
+            /* [in] */ const FABRIC_NETWORK_QUERY_DESCRIPTION * queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback * callback,
+            /* [retval][out] */ IFabricAsyncOperationContext ** context);
+        HRESULT STDMETHODCALLTYPE EndGetNetworkList(
+            /* [in] */ IFabricAsyncOperationContext * context,
+            /* [retval][out] */ IFabricGetNetworkListResult ** result);
+
+        HRESULT STDMETHODCALLTYPE BeginGetNetworkApplicationList(
+            /* [in] */ const FABRIC_NETWORK_APPLICATION_QUERY_DESCRIPTION * queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback * callback,
+            /* [retval][out] */ IFabricAsyncOperationContext ** context);
+        HRESULT STDMETHODCALLTYPE EndGetNetworkApplicationList(
+            /* [in] */ IFabricAsyncOperationContext * context,
+            /* [retval][out] */ IFabricGetNetworkApplicationListResult ** result);
+
+        HRESULT STDMETHODCALLTYPE BeginGetNetworkNodeList(
+            /* [in] */ const FABRIC_NETWORK_NODE_QUERY_DESCRIPTION * queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback * callback,
+            /* [retval][out] */ IFabricAsyncOperationContext ** context);
+        HRESULT STDMETHODCALLTYPE EndGetNetworkNodeList(
+            /* [in] */ IFabricAsyncOperationContext * context,
+            /* [retval][out] */ IFabricGetNetworkNodeListResult ** result);
+
+        HRESULT STDMETHODCALLTYPE BeginGetApplicationNetworkList(
+            /* [in] */ const FABRIC_APPLICATION_NETWORK_QUERY_DESCRIPTION * queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback * callback,
+            /* [retval][out] */ IFabricAsyncOperationContext ** context);
+        HRESULT STDMETHODCALLTYPE EndGetApplicationNetworkList(
+            /* [in] */ IFabricAsyncOperationContext * context,
+            /* [retval][out] */ IFabricGetApplicationNetworkListResult ** result);
+
+        HRESULT STDMETHODCALLTYPE BeginGetDeployedNetworkList(
+            /* [in] */ const FABRIC_DEPLOYED_NETWORK_QUERY_DESCRIPTION * queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback * callback,
+            /* [retval][out] */ IFabricAsyncOperationContext ** context);
+        HRESULT STDMETHODCALLTYPE EndGetDeployedNetworkList(
+            /* [in] */ IFabricAsyncOperationContext * context,
+            /* [retval][out] */ IFabricGetDeployedNetworkListResult ** result);
+
+        HRESULT STDMETHODCALLTYPE BeginGetDeployedNetworkCodePackageList(
+            /* [in] */ const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_DESCRIPTION * queryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback * callback,
+            /* [retval][out] */ IFabricAsyncOperationContext ** context);
+        HRESULT STDMETHODCALLTYPE EndGetDeployedNetworkCodePackageList(
+            /* [in] */ IFabricAsyncOperationContext * context,
+            /* [retval][out] */ IFabricGetDeployedNetworkCodePackageListResult ** result);
 
     private:
         HRESULT Initialize();
@@ -2312,6 +2407,7 @@ namespace Api
         class GetSecretsAsyncOperation;
         class SetSecretsAsyncOperation;
         class RemoveSecretsAsyncOperation;
+        class GetSecretVersionsAsyncOperation;
         class GetInvokeDataLossProgressAsyncOperation;
         class InvokeQuorumLossAsyncOperation;
         class GetInvokeQuorumLossProgressAsyncOperation;
@@ -2404,9 +2500,18 @@ namespace Api
         class CreateComposeDeploymentOperation;
         class DeleteComposeDeploymentOperation;
         class UpgradeComposeDeploymentOperation;
+        class RollbackComposeDeploymentOperation;
         class GetChaosAsyncOperation;
         class GetChaosScheduleAsyncOperation;
         class SetChaosScheduleAsyncOperation;
+        class CreateNetworkOperation;
+        class DeleteNetworkOperation;
+        class GetNetworkListOperation;
+        class GetNetworkApplicationListOperation;
+        class GetNetworkNodeListOperation;
+        class GetApplicationNetworkListOperation;
+        class GetDeployedNetworkListOperation;
+        class GetDeployedNetworkCodePackageListOperation;
 
         IClientFactoryPtr factoryPtr_;
         IClientSettingsPtr settingsClient_;
@@ -2429,6 +2534,8 @@ namespace Api
         IComposeManagementClientPtr composeMgmtClient_;
         ISecretStoreClientPtr secretStoreClient_;
         IResourceManagementClientPtr resourceMgmtClient_;
+        INetworkManagementClientPtr networkMgmtClient_;
+        IGatewayResourceManagerClientPtr gatewayResourceManagerClient_;
 
         std::map<LONGLONG, LocationChangeCallbackAdapterSPtr> serviceLocationChangeHandlers_;
         Common::RwLock serviceLocationChangeTrackerLock_;

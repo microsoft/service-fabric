@@ -172,6 +172,10 @@ namespace ServiceModel
         static Common::GlobalWString const Element_ResourceGovernancePolicy;
         static Common::GlobalWString const Element_ServicePackageResourceGovernancePolicy;
         static Common::GlobalWString const Element_ServiceFabricRuntimeAccessPolicy;
+        static Common::GlobalWString const Element_NetworkPolicies;
+        static Common::GlobalWString const Element_ContainerNetworkPolicies;
+        static Common::GlobalWString const Element_ContainerNetworkPolicy;        
+        static Common::GlobalWString const Element_EndpointBinding;
         static Common::GlobalWString const Element_ContainerEntryPoint;
         static Common::GlobalWString const Element_ContainerMountedVolume;
         static Common::GlobalWString const Element_ContainerEnvironmentBlock;
@@ -308,6 +312,7 @@ namespace ServiceModel
         static Common::GlobalWString const Attribute_LockFile;
         static Common::GlobalWString const Attribute_WorkingFolder;
         static Common::GlobalWString const Attribute_DebugParametersFile;
+        static Common::GlobalWString const Attribute_DisableReliableCollectionReplicationMode;
         static Common::GlobalWString const Attribute_ContainerPort;
         static Common::GlobalWString const Attribute_MemoryInMB;
         static Common::GlobalWString const Attribute_MemorySwapInMB;
@@ -330,6 +335,7 @@ namespace ServiceModel
         static Common::GlobalWString const Attribute_CpuCores;
         static Common::GlobalWString const Attribute_NetworkType;
         static Common::GlobalWString const Attribute_RemoveServiceFabricRuntimeAccess;
+        static Common::GlobalWString const Attribute_NetworkRef;
         static Common::GlobalWString const Attribute_IncludeDockerHealthStatusInSystemHealthReport;
         static Common::GlobalWString const Attribute_RestartContainerOnUnhealthyDockerHealthStatus;
         static Common::GlobalWString const Attribute_AutoRemove;

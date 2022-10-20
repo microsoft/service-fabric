@@ -6,6 +6,7 @@
 #include "stdafx.h"
 #include <boost/test/unit_test.hpp>
 #include "Common/boost-taef.h"
+#include <sys/stat.h>
 
 namespace Common
 {
@@ -52,6 +53,82 @@ namespace Common
         BOOST_REQUIRE(!dstr.empty());
     }
 
+    BOOST_AUTO_TEST_CASE(FileChmod)
+    {
+        wstring wfname = fprefix + Guid::NewGuid().ToString();
+
+        char c = 'a';
+        size_t dataSize = sizeof(c);
+        {
+            File file;
+            auto error = file.TryOpen(wfname, FileMode::OpenOrCreate, FileAccess::Write);
+            BOOST_REQUIRE_EQUAL(error.ReadValue(), ErrorCodeValue::Success);
+
+            file.Write(&c, (int)dataSize);
+            BOOST_REQUIRE_EQUAL(file.size(), (int64)dataSize);
+        }
+
+        // change permissions so only user can read and write
+        string fname = StringUtility::Utf16ToUtf8(wfname);
+        int err = chmod(fname.c_str(), S_IRUSR | S_IWUSR);
+        BOOST_REQUIRE_EQUAL(err, 0);
+
+        // check the permissions
+        struct stat stat_data;
+        err = stat(fname.c_str(), &stat_data);
+        VERIFY_IS_TRUE(err == 0, L"Unable to retrive stat data.");
+
+        mode_t mode = stat_data.st_mode;
+        VERIFY_IS_TRUE(mode & S_IRUSR, L"User read permission not set.");
+        VERIFY_IS_TRUE(mode & S_IWUSR, L"User write permission not set.");
+        VERIFY_IS_TRUE(mode & ~S_IXUSR, L"User execute permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IRGRP, L"Group read permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IWGRP, L"Group write permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IXGRP, L"Group execute permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IROTH, L"Others read permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IWOTH, L"Others write permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IXOTH, L"Others execute permission set.");
+
+        // ensure the file can be opened and read from
+        char r;
+        {
+            File file;
+            auto error = file.TryOpen(wfname, FileMode::OpenOrCreate, FileAccess::Read);
+            BOOST_REQUIRE_EQUAL(error.ReadValue(), ErrorCodeValue::Success);
+
+            int bytesRead = file.TryRead(&r, sizeof(char));
+            BOOST_REQUIRE(bytesRead > 0);
+            BOOST_REQUIRE_EQUAL(r, 'a');
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(FileOpenWithPermissions)
+    {
+        wstring wfname = fprefix + Guid::NewGuid().ToString();
+        string fname = StringUtility::Utf16ToUtf8(wfname);
+
+        int fd = open(fname.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+        VERIFY_IS_TRUE(fd != -1, L"Unable to open file.");
+
+        int err = close(fd);
+        BOOST_REQUIRE_EQUAL(err, 0);
+
+        // verify the permissions
+        struct stat stat_data;
+        err = stat(fname.c_str(), &stat_data);
+        VERIFY_IS_TRUE(err == 0, L"Unable to retrive stat data.");
+
+        mode_t mode = stat_data.st_mode;
+        VERIFY_IS_TRUE(mode & S_IRUSR, L"User read permission not set.");
+        VERIFY_IS_TRUE(mode & S_IWUSR, L"User write permission not set.");
+        VERIFY_IS_TRUE(mode & ~S_IXUSR, L"User execute permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IRGRP, L"Group read permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IWGRP, L"Group write permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IXGRP, L"Group execute permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IROTH, L"Others read permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IWOTH, L"Others write permission set.");
+        VERIFY_IS_TRUE(mode & ~S_IXOTH, L"Others execute permission set.");
+    }
 #endif // defined(PLATFORM_UNIX)
 
     BOOST_AUTO_TEST_CASE(ReplaceFileNoBackup)

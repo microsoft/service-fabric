@@ -73,14 +73,17 @@ namespace System.Fabric.FabricDeployer
         public const string SystemApplicationId = "__FabricSystem_App4294967295";
         public const string UpgradeOrchestrationService = "UOS";
         public const string CentralSecretService = "CSS";
+        public const string EventStoreService = "ES";
+        public const string GatewayResourceManager = "GRM";
 
         public const int FileOpenDefaultRetryAttempts = 10;
         public const int FileOpenDefaultRetryIntervalMilliSeconds = 100;
 
         public const int ApiRetryAttempts = 5;
         public const int ApiRetryIntervalMilliSeconds = 3000;
-        
+        public const int MaxApiRetryAttempts = 20;
         public const int ErrorCode_Success = 0;
+
         // Failure Error Code
 #if DotNetCoreClrLinux
         public const int ErrorCode_Failure = 3;
@@ -95,13 +98,17 @@ namespace System.Fabric.FabricDeployer
         public const uint ExitCode_UpdateAlreadyInstalled = 0x240006;
 
         public static readonly string[] RequiredServices = { DCAService, FabricService, FabricGatewayService };
-        
+
 #if DotNetCoreClrIOT
         public static readonly Dictionary<string, string> ServiceExes = new Dictionary<string, string>() { { DCAService, "FabricDCA.bat" }, { FabricService, "Fabric.exe" }, { FabricGatewayService, "FabricGateway.exe" }, { FileStoreService, "FileStoreService.exe" }, { FabricApplicationGatewayService, "FabricApplicationGateway.exe" }, { FaultAnalysisService, "FabricFAS.exe" }, { FabricUpgradeService, "FabricUS.bat" }, { FabricRepairManagerService, "FabricRM.exe" }, { FabricInfrastructureService, "FabricIS.exe" }, { UpgradeOrchestrationService, "FabricUOS.exe" }, { BackupRestoreService, "FabricBRS.exe" } };
 #elif DotNetCoreClrLinux
-        public static readonly Dictionary<string, string> ServiceExes = new Dictionary<string, string>() { { DCAService, "FabricDCA.sh" }, { FabricService, "Fabric" }, { FabricGatewayService, "FabricGateway.exe" }, { FileStoreService, "FileStoreService.exe" }, { FabricApplicationGatewayService, "FabricApplicationGateway.exe" }, { FaultAnalysisService, "FabricFAS.exe" }, { FabricUpgradeService, "FabricUS.exe" }, { FabricRepairManagerService, "FabricRM.exe" }, { FabricInfrastructureService, "FabricIS.exe" }  };
+        public static readonly Dictionary<string, string> ServiceExes = new Dictionary<string, string>() { { DCAService, "FabricDCA.sh" }, { FabricService, "Fabric" }, { FabricGatewayService, "FabricGateway.exe" }, { FileStoreService, "FileStoreService.exe" }, { FabricApplicationGatewayService, "FabricApplicationGateway.exe" }, { FaultAnalysisService, "FabricFAS.exe" }, { FabricUpgradeService, "FabricUS.exe" }, { FabricRepairManagerService, "FabricRM.exe" }, { FabricInfrastructureService, "FabricIS.exe" }, { GatewayResourceManager, "FabricGRM.exe" }  };
 #else        
-        public static readonly Dictionary<string, string> ServiceExes = new Dictionary<string, string>() { { DCAService, "FabricDCA.exe" }, { FabricService, "Fabric.exe" }, { FabricGatewayService, "FabricGateway.exe" }, { FileStoreService, "FileStoreService.exe" }, { FabricApplicationGatewayService, "FabricApplicationGateway.exe" }, { FaultAnalysisService, "FabricFAS.exe" }, { FabricUpgradeService, "FabricUS.exe" }, { FabricRepairManagerService, "FabricRM.exe" }, { FabricInfrastructureService, "FabricIS.exe" }, { UpgradeOrchestrationService, "FabricUOS.exe" }, { BackupRestoreService, "FabricBRS.exe" }, { CentralSecretService, "FabricCSS.exe" } };
+        public static readonly Dictionary<string, string> ServiceExes = new Dictionary<string, string>() { { DCAService, "FabricDCA.exe" }, { FabricService, "Fabric.exe" }, { FabricGatewayService, "FabricGateway.exe" }, { FileStoreService, "FileStoreService.exe" }, { FabricApplicationGatewayService, "FabricApplicationGateway.exe" }, { FaultAnalysisService, "FabricFAS.exe" }, { FabricUpgradeService, "FabricUS.exe" }, { FabricRepairManagerService, "FabricRM.exe" }, { FabricInfrastructureService, "FabricIS.exe" }, { UpgradeOrchestrationService, "FabricUOS.exe" }, { BackupRestoreService, "FabricBRS.exe" }, { CentralSecretService, "FabricCSS.exe" }, { EventStoreService, "EventStore.Service.exe" }, { GatewayResourceManager, "FabricGRM.exe" } };
+#endif
+
+#if DotNetCoreClr
+        public static readonly string FabricEtcConfigPath = "/etc/servicefabric/";
 #endif
 
         public const string DefaultFabricDataRoot = @"%ProgramData%\Windows Fabric\";
@@ -166,6 +173,40 @@ namespace System.Fabric.FabricDeployer
         /// </summary>
         public static string ContainersFeatureName = "Containers";
 
+        /// <summary>
+        /// Used to distinguish if the target machine is local, to avoid remote calls.
+        /// </summary>
+        public const string LocalHostMachineName = "localhost";
+
+        /// <summary>
+        /// Docker host dns name
+        /// </summary>
+        public const string DockerHostDnsName = "host.docker.internal";
+
+#if DotNetCoreClrLinux
+        public const string PackageName_ServiceFabric = "servicefabric";
+        public const string PackageName_DockerCE = "docker-ce";
+        public const string PackageName_ContainerdIO = "containerd.io";
+        public const string PackageName_MobyEngine = "moby-engine";
+        public const string PackageName_MobyCLI = "moby-cli";
+
+        public const string DpkgPackageCleanlyInstalledCommandFormat = "dpkg -l {0} | grep ^ii[[:space:]]*{0}";
+        public const string DpkgPackageStateVisibleCommandFormat = "dpkg -l {0} | grep [[:space:]]*{0}";
+        public const string DpkgConfigureCommand = "dpkg --configure -a";
+        public const string AptPackageDepencenciesContainsFormat = "apt-cache depends {0} | grep \"Depends:[[:space:]]*{1}$\"";
+        public const string AptPackageResolveCommand = "apt -o Debug::pkgProblemResolver=yes install -fy";
+        public const string AptPackageInstallCommand = "apt -o Debug::pkgProblemResolver=yes install {0} -fy";
+        public const string AptUpdateCommand = "apt update";
+        public const string AptUpgradePackageCommandFormat = "apt -o Debug::pkgProblemResolver=yes install --only-upgrade {0} -y";
+        public const string AptPurgePackageCommandFormat = "apt -o Debug::pkgProblemResolver=yes purge {0} -fy";
+        public const string AptAutoremoveCommand = "apt autoremove -y";
+#endif
+
+        /// <summary>
+        /// APIPA subnet
+        /// </summary>
+        public const string ApipaSubnet = "169.254.0.0";
+        
         public static class FileNames
         {
             public const string Schema = "ServiceFabricServiceModel.xsd";
@@ -184,6 +225,7 @@ namespace System.Fabric.FabricDeployer
             public const string TestFailDeployerKey = "__Test_Fail_FirstDeployment";
             public const string SkipDeleteFabricDataRoot = "SkipDeleteFabricDataRoot";
             public const string RemoveNodeConfigurationValue = "RemoveNodeConfiguration";
+            public const string DynamicTopologyKindValue = "DynamicTopologyKind";
 #if !DotNetCoreClrLinux
             public const string NodeLastBootUpTime = "NodeLastBootUpTime";
 #endif
@@ -257,9 +299,13 @@ namespace System.Fabric.FabricDeployer
             public const string ProcessMemorySwapInMB = "ProcessMemorySwapInMB";
 #if !DotNetCoreClrLinux
             public const string SkipContainerNetworkResetOnReboot = "SkipContainerNetworkResetOnReboot";
+            public const string SkipIsolatedNetworkResetOnReboot = "SkipIsolatedNetworkResetOnReboot";
 #endif
             public const string IsSFVolumeDiskServiceEnabled = "IsSFVolumeDiskServiceEnabled";
             public const string EnableUnsupportedPreviewFeatures = "EnableUnsupportedPreviewFeatures";
+            public const string ContainerServiceArguments = "ContainerServiceArguments";
+            public const string UseContainerServiceArguments = "UseContainerServiceArguments";
+            public const string EnableContainerServiceDebugMode = "EnableContainerServiceDebugMode";
         }
 
         public static class SectionNames

@@ -131,6 +131,7 @@ target_link_libraries(${exe_FabricTest}
   ${lib_txnreplicator_testcommon}
   ${lib_data_testcommon}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_FailoverCommon}
   ${lib_SystemServices}
@@ -156,6 +157,7 @@ target_link_libraries(${exe_FabricTest}
   ${lib_FabricUUID}
   ${lib_FabricResources}
   ${lib_DnsServiceConfig}
+  ${lib_GatewayResourceManager}
   ${KtlUser}
   ${KtlLoggerUser}
   ${lib_KtlLoggerShimUnify}

@@ -30,6 +30,7 @@ LoggingReplicatorImpl::LoggingReplicatorImpl(
     __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
     __in ITransactionalReplicator & transactionalReplicator,
+    __in bool hasPersistedState,
     __out IStateProvider::SPtr & stateProvider)
     : ILoggingReplicator()
     , KObject()
@@ -73,6 +74,7 @@ LoggingReplicatorImpl::LoggingReplicatorImpl(
     , healthClient_(healthClient)
     , iStateReplicator_(&stateReplicator)
     , iTransactionalReplicator_(transactionalReplicator)
+    , hasPersistedState_(hasPersistedState)
 {
     EventSource::Events->Ctor(
         TracePartitionId,
@@ -141,6 +143,7 @@ LoggingReplicatorImpl::SPtr LoggingReplicatorImpl::Create(
     __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
     __in ITransactionalReplicator & transactionalReplicator,
+    __in bool hasPersistedState,
     __in KAllocator & allocator,
     __out IStateProvider::SPtr & stateProvider)
 {
@@ -155,7 +158,16 @@ LoggingReplicatorImpl::SPtr LoggingReplicatorImpl::Create(
 
     LogManager::SPtr logManager;
 
-    if (transactionalReplicatorConfig->Test_LoggingEngine.compare(Constants::Test_Ktl_LoggingEngine) == 0)
+    if (hasPersistedState == false)
+    {
+        logManager = up_cast<LogManager, MemoryLogManager>(MemoryLogManager::Create(
+            traceId,
+            perfCounters,
+            healthClient,
+            transactionalReplicatorConfig,
+            allocator));
+    }
+    else if (transactionalReplicatorConfig->Test_LoggingEngine.compare(Constants::Test_Ktl_LoggingEngine) == 0)
     {
         KLogManager::SPtr ktlLogManager = KLogManager::Create(
             traceId,
@@ -213,11 +225,18 @@ LoggingReplicatorImpl::SPtr LoggingReplicatorImpl::Create(
         perfCounters,
         healthClient,
         transactionalReplicator,
+        hasPersistedState,
         stateProvider);
     THROW_ON_ALLOCATION_FAILURE(result);
 
     return Ktl::Move(result);
 }
+
+bool LoggingReplicatorImpl::get_HasPersistedState() const
+{
+    return hasPersistedState_;
+}
+
 
 Awaitable<NTSTATUS> LoggingReplicatorImpl::OpenAsync(__out RecoveryInformation & recoveryInformation) noexcept
 {
@@ -442,6 +461,13 @@ Awaitable<NTSTATUS> LoggingReplicatorImpl::BackupAsync(
 {
     KShared$ApiEntry();
 
+    if (hasPersistedState_ == false)
+    {
+        result = {};
+        // Currently, backup/restore is not supported for in-memory stack
+        co_return STATUS_NOT_SUPPORTED;
+    }
+
     NTSTATUS status = ErrorIfNoWriteStatus();
 
     CO_RETURN_ON_FAILURE(status);
@@ -468,6 +494,13 @@ Awaitable<NTSTATUS> LoggingReplicatorImpl::BackupAsync(
 {
     KShared$ApiEntry();
 
+    if (hasPersistedState_ == false)
+    {
+        result = {};
+        // Currently, backup/restore is not supported for in-memory stack
+        co_return STATUS_NOT_SUPPORTED;
+    }
+
     NTSTATUS status = ErrorIfNoWriteStatus();
 
     CO_RETURN_ON_FAILURE(status);
@@ -493,6 +526,12 @@ Awaitable<NTSTATUS> LoggingReplicatorImpl::RestoreAsync(
 {
     KShared$ApiEntry();
 
+    if (hasPersistedState_ == false)
+    {
+        // Currently, restore is not supported for in-memory stack
+        co_return STATUS_NOT_SUPPORTED;
+    }
+
     NTSTATUS status = STATUS_SUCCESS;
     
     try
@@ -514,6 +553,12 @@ Awaitable<NTSTATUS> LoggingReplicatorImpl::RestoreAsync(
     __in CancellationToken const & cancellationToken) noexcept
 {
     KShared$ApiEntry();
+
+    if (hasPersistedState_ == false)
+    {
+        // Currently, restore is not supported for in-memory stack
+        co_return STATUS_NOT_SUPPORTED;
+    }
 
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -1598,6 +1643,7 @@ Awaitable<NTSTATUS> LoggingReplicatorImpl::UpdateEpochAsync(
         copyContext,
         *copyStageBuffers_,
         transactionalReplicatorConfig_,
+        hasPersistedState_,
         GetThisAllocator());
     
     result = IOperationDataStream::SPtr(stream.RawPtr());

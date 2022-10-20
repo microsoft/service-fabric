@@ -23,14 +23,11 @@ namespace Hosting2
 
             // Constructor used for testing.
             // First parameter is the mock implementation of IIPAM.
-            // Second parameter is the mock implementation of IAzureVnetPluginProcessManager.
-            // Third parameter is the clusterId. This is used to determine whether we are on azure.
+            // Second parameter is the clusterId. This is used to determine if we are on azure.
+            // Third parameter is to determine if the provider should be enabled.
             // Fourth parameter is the parent object for this instance.
             IPAddressProvider(
                 IIPAMSPtr const & ipamClient,
-#if defined(PLATFORM_UNIX)
-                IAzureVnetPluginProcessManagerSPtr const & azureVnetPluginProcessManager,
-#endif
                 std::wstring const & clusterId,
                 bool const ipAddressProviderEnabled,
                 Common::ComponentRootSPtr const & root);
@@ -46,6 +43,10 @@ namespace Hosting2
             // Get the gateway ip address for the vnet in the dot format.
             __declspec(property(get = get_GatewayIpAddress)) wstring GatewayIpAddress;
             wstring get_GatewayIpAddress() const { return this->gatewayIpAddress_; };
+
+            // Get the subnet in CIDR format.
+            __declspec(property(get = get_Subnet)) wstring Subnet;
+            wstring get_Subnet() const { return this->subnet_; };
 
             // Acquire ip addresses for all code packages passed in. If there is a failure 
             // we release all ips acquired so far.
@@ -76,6 +77,13 @@ namespace Hosting2
             void GetReservedCodePackages(std::map<std::wstring, std::map<std::wstring, vector<std::wstring>>> & reservedCodePackages,
                                          std::map<std::wstring, std::wstring> & reservationIdCodePackageMap);
 
+            // GetNetworkReservedCodePackages: Get a map of flat network name and service/code packages.
+            //
+            // The arguments are:
+            // networkReservedCodePackages: Updated with a reference to a map of flat network name and service/code packages.
+            //
+            void GetNetworkReservedCodePackages(std::map<std::wstring, std::map<std::wstring, std::vector<std::wstring>>> & networkReservedCodePackages);
+
         protected:
             // AsyncFabricComponent methods
             virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -100,10 +108,8 @@ namespace Hosting2
             Common::ExclusiveLock ipAddressReservationLock_;
             bool ipamInitialized_;
             IIPAMSPtr ipam_;
-#if defined(PLATFORM_UNIX)
-            IAzureVnetPluginProcessManagerSPtr azureVnetPluginProcessManager_;
-#endif
             std::wstring gatewayIpAddress_;
+            std::wstring subnet_;
             std::wstring clusterId_;
             bool ipAddressProviderEnabled_;
             std::map<std::wstring, std::map<std::wstring, vector<std::wstring>>> reservedCodePackages_;

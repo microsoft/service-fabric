@@ -7,6 +7,7 @@
 
 namespace Common
 {
+#ifndef PLATFORM_UNIX
     static const int ProvidersPerSession = 11;
 
     namespace TraceSessionKind
@@ -22,6 +23,7 @@ namespace Common
             SFBDMiniport = 6
         };
     }
+#endif
 
     class TraceSession :
         public Common::TextTraceComponent<Common::TraceTaskCodes::Common>
@@ -35,12 +37,19 @@ namespace Common
 
         Common::ErrorCode StartTraceSessions();
         Common::ErrorCode StopTraceSessions();
-
+#ifndef PLATFORM_UNIX
         Common::ErrorCode StartTraceSession(TraceSessionKind::Enum traceSessionKind);
         Common::ErrorCode StopTraceSession(TraceSessionKind::Enum traceSessionKind);
-
+#endif
     private:
 
+        TraceSession();
+
+        HRESULT TraceResult(
+            std::wstring const & method,
+            HRESULT exitCode);
+
+#ifndef PLATFORM_UNIX
         struct DataCollectorSetInfo
         {
             TraceSessionKind::Enum TraceSessionKind;
@@ -56,16 +65,11 @@ namespace Common
             ULONG FlushIntervalInSeconds;
         };
 
-        TraceSession();
 
         unique_ptr<EVENT_TRACE_PROPERTIES, decltype(free)*> GetSessionProperties(DataCollectorSetInfo const & info, uint additionalBytes);
 
         HRESULT StartTraceSession(DataCollectorSetInfo const & info);
         HRESULT StopTraceSession(DataCollectorSetInfo const & info);
-
-        HRESULT TraceResult(
-            std::wstring const & method,
-            HRESULT exitCode);
 
         HRESULT TraceSession::Prepare(DataCollectorSetInfo const & info, BOOLEAN *runningLatestStatus);
 
@@ -76,8 +80,11 @@ namespace Common
         wstring TraceSession::GetTraceFolder(DataCollectorSetInfo const & info);
 
         int TraceSession::TraceSessionFilePathCompare(std::wstring const & a, std::wstring const & b);
-
+#else
+        HRESULT StartLinuxTraceSessions(int linuxTraceDiskBufferSizeInMB, bool keepExistingSFSession);
+#endif
     private:
+#ifndef PLATFORM_UNIX
         static const ULONG DefaultTraceBufferSizeInKB = 128;
         static const ULONG DefaultTraceFileSizeInMB = 64;
         static const ULONG DefaultTraceFlushIntervalInSeconds = 60;
@@ -128,5 +135,6 @@ namespace Common
         std::wstring testKeyword_;
         std::wstring tracePath_;
         BOOLEAN enableCircularTraceSession_;
+#endif
     };
 }

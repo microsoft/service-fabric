@@ -73,7 +73,7 @@
     {
       "Name": "Management_ImageStoreScale (D3)",
       "Type": "V2_Dll_Perf_Test",
-      "Owners": "iyyappam,mialu,oanapl",
+      "Owners": "iyyappam,jeongham",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -114,7 +114,7 @@
     {
       "Name": "Health_HealthServiceScale (LAB)",
       "Type": "V2_Dll_Perf_Test",
-      "Owners": "oanapl",
+      "Owners": "bikang,hsun",
       "Environment": "Iaas",     
       "ResourcesRequired": "Server:5;Group=Management_Perf",
       "TestExecutionParameters": {

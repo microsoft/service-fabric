@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{FABB432F-46A5-4D4B-99FA-52400896BCC4}</ProjectGuid>
+    <RootNamespace>System.Fabric.BackupRestore</RootNamespace>
+    <AssemblyName>System.Fabric.BackupRestore</AssemblyName>
+    <AssemblyDescription>Service Fabric BackupRestore Library</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <ResourcesFileName>SR</ResourcesFileName>
+    <ResourcesClassName>$(ResourcesFileName)</ResourcesClassName>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\AzureBlobBackupStore.cs">
+      <Link>DataStructures\AzureBlobBackupStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\FileShareBackupStore.cs">
+      <Link>DataStructures\FileShareBackupStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\DsmsAzureBlobBackupStore.cs">
+      <Link>DataStructures\DsmsAzureBlobBackupStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\FileShareAccessType.cs">
+      <Link>DataStructures\FileShareAccessType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupPartitionInfo.cs">
+      <Link>DataStructures\BackupPartitionInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupNowConfiguration.cs">
+      <Link>DataStructures\BackupNowConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupOperationResult.cs">
+      <Link>DataStructures\BackupOperationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\RestoreOperationResult.cs">
+      <Link>DataStructures\RestoreOperationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupPolicy.cs">
+      <Link>DataStructures\BackupPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupStoreInformation.cs">
+      <Link>DataStructures\BackupStoreInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\ScheduleBasedBackupPolicy.cs">
+      <Link>DataStructures\ScheduleBasedBackupPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\FrequencyBasedBackupPolicy.cs">
+      <Link>DataStructures\FrequencyBasedBackupPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupStoreType.cs">
+      <Link>DataStructures\BackupStoreType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupPolicyType.cs">
+      <Link>DataStructures\BackupPolicyType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupPolicyRunSchedule.cs">
+      <Link>DataStructures\BackupPolicyRunSchedule.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\BackupPolicyRunFrequency.cs">
+      <Link>DataStructures\BackupPolicyRunFrequency.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\DownloadBackupInfo.cs">
+      <Link>DataStructures\DownloadBackupInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\RestorePointDetails.cs">
+      <Link>DataStructures\RestorePointDetails.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\DataStructures\UploadBackupInfo.cs">
+      <Link>DataStructures\UploadBackupInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\Interop\NativeBackupRestoreTypes.cs">
+      <Link>Interop\NativeBackupRestoreTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\Interop\NativeBackupRestoreRuntime.cs">
+      <Link>Interop\NativeBackupRestoreRuntime.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\Result\GetBackupSchedulePolicyResult.cs">
+      <Link>Result\GetBackupSchedulePolicyResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\Result\GetRestorePointDetailsResult.cs">
+      <Link>Result\GetRestorePointDetailsResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\FileFormat\BlockHandle.cs">
+      <Link>FileFormat\BlockHandle.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\FileFormat\CRC64.cs">
+      <Link>FileFormat\CRC64.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\FileFormat\FileBlock.cs">
+      <Link>FileFormat\FileBLock.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\FileFormat\FileFooter.cs">
+      <Link>FileFormat\FileFooter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\FileFormat\FileProperties.cs">
+      <Link>FileFormat\FileProperties.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\FileFormat\VarInt.cs">
+      <Link>FileFormat\VarInt.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupMetadata.cs">
+      <Link>BackupMetadata.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\RescheduleTimer.cs">
+      <Link>RescheduleTimer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupRestoreBroker.cs">
+      <Link>BackupRestoreBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupRestoreConstants.cs">
+      <Link>BackupRestoreConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\IBackupRestoreHandler.cs">
+      <Link>IBackupRestoreHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupRestoreManager.cs">
+      <Link>BackupRestoreManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupScheduler.cs">
+      <Link>BackupScheduler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupTimer.cs">
+      <Link>BackupTimer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BRSTimer.cs">
+      <Link>BRSTimer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\RecoveryPointInformation.cs">
+      <Link>RecoveryPointInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\RecoveryPointMetadataFile.cs">
+      <Link>RecoveryPointMetadataFile.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\RecoveryPointMetadataFileProperties.cs">
+      <Link>RecoveryPointMetadataFileProperties.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\RetriableOperationExceptionHandler.cs">
+      <Link>RetriableOperationExceptionHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\BackupRestoreUtility.cs">
+      <Link>BackupRestoreUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\BackupRestore\RecoveryPointMetadataProperties.cs">
+      <Link>RecoveryPointMetadataProperties.cs</Link>
+    </Compile>
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(ResourcesFileName).resx" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="BeforeResGen" Inputs="SR.resx" Outputs="$(IntermediateOutputPath)$(ResourcesFileName).cs">
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe $(ResourcesFileName).resx $(IntermediateOutputPath)\$(RootNamespace).$(ResourcesFileName).resources /str:csharp,$(RootNamespace),$(ResourcesClassName),$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </Target>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFIles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTestInfra" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

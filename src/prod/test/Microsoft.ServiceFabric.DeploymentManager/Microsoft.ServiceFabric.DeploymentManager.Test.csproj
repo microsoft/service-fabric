@@ -1,0 +1,459 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <AssemblyName>Microsoft.ServiceFabric.DeploymentManager.Test</AssemblyName>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <RootNamespace>Microsoft.ServiceFabric.DeploymentManager.Test</RootNamespace>
+    <ProjectGuid>{9EDA8D65-29D5-4688-9F7A-99200B30A993}</ProjectGuid>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseVSHostingProcess>False</UseVSHostingProcess>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <OutputPath>..\..\..\..\out\debug-amd64\Microsot.ServiceFabric.DeploymentManager.Test\</OutputPath>
+  </PropertyGroup>
+  <Import Project="$(SrcRoot)\prod\StrongNameKeys.props" />
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(InsecurePublicKey)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="BaselineClusterUpgradeTest.cs" />
+    <Compile Include="ClusterCertUpgradeTest.cs" />
+    <Compile Include="AddonFeatureTest.cs" />
+    <Compile Include="DeploymentManager.Test.cs" />
+    <Compile Include="DevJsonModelTest.cs" />
+    <Compile Include="MockUps\MockUpMultiphaseClusterUpgradeState.cs" />
+    <Compile Include="MultiphaseClusterUpgradeStateTest.cs" />
+    <Compile Include="SimpleClusterUpgradeTest.cs" />
+    <Compile Include="AutoScaleClusterUpgradeTest.cs" />
+    <Compile Include="StandaloneSettingsValidatorTest.cs" />
+    <Compile Include="UosFaultInjectionTest.cs" />
+    <Compile Include="UosTest.cs" />
+    <Compile Include="Utility.cs" />
+    <Compile Include="X509CertificateUtilityTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgWinFab_Test_KeyVaultWrapper_retail)\lib\net45\KeyVaultWrapper\KeyVaultWrapper.dll" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.ClusterManagementCommon\Microsoft.ServiceFabric.ClusterManagementCommon.csproj">
+      <Project>{f4598049-c09f-4a6c-a5c7-9d215ef355ca}</Project>
+      <Name>Microsoft.ServiceFabric.ClusterManagementCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager\Microsoft.ServiceFabric.DeploymentManager.csproj">
+      <Project>{738570C5-43DB-4C00-AB7B-6975ECA8A61E}</Project>
+      <Name>Microsoft.ServiceFabric.DeploymentManager</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599f-c6b0-4c47-ae92-5bdafe19f12e}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\managed\FabricUOS\exe\FabricUOS.csproj">
+      <Project>{740A5A95-5CE6-4BCC-90D6-8FEEE1BC64C3}</Project>
+      <Name>FabricUOS</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+    <ProjectReference Include="$(SrcRoot)\external\NetFwTypeLib\copy.proj" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\bin\NetFwTypeLib.dll" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext_4_5_4)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="AdminConfigs\myClusterSettings.1.0.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.April2017.HasAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.April2017.HasUnsupportedAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.April2017.NoAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.April2017.NoAddonV2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.April2017.NoAddonV3.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.April2017.NoAddonDns.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.GA.v1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.GA.v2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Jan2017.v1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Jan2017.v2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.April2017.HasAddonMultibox.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.May2017.HasAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.May2017.HasUnsupportedAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.May2017.NoAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.May2017.NoAddonDns.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.May2017.HasAddonMultibox.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Aug2017.HasAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Aug2017.HasUnsupportedAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Aug2017.NoAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Aug2017.RMAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Aug2017.HasAddonMultibox.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.HasUnsupportedAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.NoAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.HasAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.HasAddonMultibox.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.RMAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.MultiMachine.HasAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.MultiMachine.HasAddonScale.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.MultiMachine.NoAddon.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AddonJsonConfigs\AddonTest.X509.DevCluster.Oct2017.MultiMachine.NoAddonScale.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClusterConfig.Unsecure.json" />
+    <None Include="UosStates\5.7cu2UosState1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="UosStates\5.7cu2UosState2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\ClusterConfig.Windows.MultiMachine.June2018.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\ClusterConfig.Windows.MultiMachine.June2018.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\ClusterConfig.Windows.MultiMachine.InvalidJune2018.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterId.Unsecure.DevCluster.GA.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterId.Unsecure.DevCluster.Jan2017.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.UnSecure.DevCluster.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.UnSecure.DevClusterV2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.AddPrimary.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.AddPrimary.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.WinCert.DevCluster.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.AddCn1.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.AddCn1.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.AddCn2.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.AddCn2.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.AddSecondary.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.AddSecondary.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.RemoveCn1.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.RemoveCn1.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.RemoveCn2.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.RemoveCn2.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.RemovePrimary.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.RemovePrimary.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.RemoveSecondary.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.RemoveSecondary.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Replace.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Replace.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.ReplaceCn.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.ReplaceCn.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.UpdateIssuerStore.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.UpdateIssuerStore.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.UpdateIssuerStoreAndCn.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.UpdateIssuerThumbprint.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.UpdateIssuerThumbprint.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.ChangeCertType.V1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.ChangeCertType.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevClusterV2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Silver.AddPrimary.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Silver.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Gold.RemovePrimaryAndNonPrimary.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Gold.RemovePrimaryAndNonPrimaryV2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Silver.AddPrimaryAndNonPrimary.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.AddPrimaryAndNonPrimary.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.V2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.4Nodes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.4Nodes2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.5Nodes2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.7Nodes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Silver.7Nodes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.3Nodes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Gold.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.AddNonPrimary.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.Add4NonPrimary.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="JsonConfigs\myClusterConfig.X509.DevCluster.Bronze.AddPrimaryWithoutReliabilityLevelChange.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="JsonConfigs\ClusterConfig.Unsecure.MultiMachine.AutoScaleSeedCheckV1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonConfigs\ClusterConfig.Unsecure.MultiMachine.AutoScaleSeedCheckV2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Unsecure.DevCluster.Dev5Nodetemplate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Unsecure.DevCluster.Dev1Nodetemplate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Unsecure.DevCluster.Dev1NodetemplateOverride.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.X509.DevCluster.Dev5Nodetemplate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.X509.DevCluster.Dev1Nodetemplate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.InvalidWindowsGMSA.Oct2017.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.X509.DevCluster.OptionalIssuerTP.Oct2017.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\samples2\ClusterManifests\WindowsServer\Development-Nine-Node-Server.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\tools\StandAloneScripts\ClusterConfig.Unsecure.DevCluster.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\tools\StandAloneScripts\ClusterConfig.Unsecure.OneNode.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\tools\StandAloneScripts\ClusterConfig.Unsecure.MultiMachine.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(SrcRoot)\prod\config\StandaloneGoalState\goalstate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Unsecure.DevCluster.GA.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\UnsupportedApiVersion.noVer.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\UnsupportedApiVersion.unsupportedVer.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Unsecure.DevCluster.Jan2017.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Windows.DevCluster.GA.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Windows.DevCluster.Jan2017.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Windows.MultiMachine.Jan2017.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.X509.DevCluster.GA.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.X509.DevCluster.Jan2017.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.X509.DevCluster.IssuerCN.Oct2017.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Unsecure.MultiMachine.SeedCheckV1.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\ClusterConfig.Unsecure.MultiMachine.SeedCheckV2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\NodesSameMachine.SameNodeType.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\NodesSameMachine.PortCollision.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JsonTestConfigs\NodesSameMachine.PortRangeCollision.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -27,6 +27,7 @@ namespace Data
                 __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
                 __in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
+                __in bool hasPersistedState,
                 __in KAllocator& allocator,
                 __out IStateProvider::SPtr & stateProvider);
         };

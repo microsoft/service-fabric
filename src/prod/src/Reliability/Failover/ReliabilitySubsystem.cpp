@@ -204,11 +204,6 @@ void ReliabilitySubsystem::OnAbort()
 void ReliabilitySubsystem::Cleanup()
 {
     UnRegisterRAMessageHandlers();
-    UnRegisterFederationSubsystemEvents();
-
-    this->serviceResolver_.UnRegisterFMChangeEvent(this->fmUpdateHHandler_);
-    
-    serviceResolver_.Dispose();
 
     // Deactivate FM
     {
@@ -228,6 +223,12 @@ void ReliabilitySubsystem::Cleanup()
 
     // Close RA
     ra_->Close();
+
+    UnRegisterFederationSubsystemEvents();
+
+    this->serviceResolver_.UnRegisterFMChangeEvent(this->fmUpdateHHandler_);
+
+    serviceResolver_.Dispose();
 
     if (healthClient_)
     {

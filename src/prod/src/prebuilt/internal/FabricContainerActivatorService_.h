@@ -46,6 +46,13 @@ typedef interface IFabricContainerActivatorService IFabricContainerActivatorServ
 #endif 	/* __IFabricContainerActivatorService_FWD_DEFINED__ */
 
 
+#ifndef __IFabricContainerActivatorService2_FWD_DEFINED__
+#define __IFabricContainerActivatorService2_FWD_DEFINED__
+typedef interface IFabricContainerActivatorService2 IFabricContainerActivatorService2;
+
+#endif 	/* __IFabricContainerActivatorService2_FWD_DEFINED__ */
+
+
 #ifndef __IFabricContainerActivatorServiceAgent_FWD_DEFINED__
 #define __IFabricContainerActivatorServiceAgent_FWD_DEFINED__
 typedef interface IFabricContainerActivatorServiceAgent IFabricContainerActivatorServiceAgent;
@@ -86,11 +93,25 @@ typedef interface IFabricContainerActivatorService IFabricContainerActivatorServ
 #endif 	/* __IFabricContainerActivatorService_FWD_DEFINED__ */
 
 
+#ifndef __IFabricContainerActivatorService2_FWD_DEFINED__
+#define __IFabricContainerActivatorService2_FWD_DEFINED__
+typedef interface IFabricContainerActivatorService2 IFabricContainerActivatorService2;
+
+#endif 	/* __IFabricContainerActivatorService2_FWD_DEFINED__ */
+
+
 #ifndef __IFabricContainerActivatorServiceAgent_FWD_DEFINED__
 #define __IFabricContainerActivatorServiceAgent_FWD_DEFINED__
 typedef interface IFabricContainerActivatorServiceAgent IFabricContainerActivatorServiceAgent;
 
 #endif 	/* __IFabricContainerActivatorServiceAgent_FWD_DEFINED__ */
+
+
+#ifndef __IFabricContainerActivatorServiceAgent2_FWD_DEFINED__
+#define __IFabricContainerActivatorServiceAgent2_FWD_DEFINED__
+typedef interface IFabricContainerActivatorServiceAgent2 IFabricContainerActivatorServiceAgent2;
+
+#endif 	/* __IFabricContainerActivatorServiceAgent2_FWD_DEFINED__ */
 
 
 #ifndef __IFabricHostingSettingsResult_FWD_DEFINED__
@@ -134,6 +155,7 @@ extern "C"{
 
 
 
+
 extern RPC_IF_HANDLE __MIDL_itf_FabricContainerActivatorService__0000_0000_v0_0_c_ifspec;
 extern RPC_IF_HANDLE __MIDL_itf_FabricContainerActivatorService__0000_0000_v0_0_s_ifspec;
 
@@ -146,6 +168,7 @@ extern RPC_IF_HANDLE __MIDL_itf_FabricContainerActivatorService__0000_0000_v0_0_
 
 
 #pragma pack(push, 8)
+
 
 
 
@@ -369,6 +392,198 @@ EXTERN_C const IID IID_IFabricContainerActivatorService;
 
 
 #endif 	/* __IFabricContainerActivatorService_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricContainerActivatorService2_INTERFACE_DEFINED__
+#define __IFabricContainerActivatorService2_INTERFACE_DEFINED__
+
+/* interface IFabricContainerActivatorService2 */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricContainerActivatorService2;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("8fdba659-674c-4464-ac64-21d410313b96")
+    IFabricContainerActivatorService2 : public IFabricContainerActivatorService
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE BeginContainerUpdateRoutes( 
+            /* [in] */ FABRIC_CONTAINER_UPDATE_ROUTE_ARGS *updateExecArgs,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndContainerUpdateRoutes( 
+            /* [in] */ IFabricAsyncOperationContext *context) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricContainerActivatorService2Vtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricContainerActivatorService2 * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricContainerActivatorService2 * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *StartEventMonitoring )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ BOOLEAN isContainerServiceManaged,
+            /* [in] */ ULONGLONG sinceTime);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginActivateContainer )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ FABRIC_CONTAINER_ACTIVATION_ARGS *activationParams,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndActivateContainer )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricStringResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginDeactivateContainer )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ FABRIC_CONTAINER_DEACTIVATION_ARGS *deactivationParams,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndDeactivateContainer )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginDownloadImages )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ FABRIC_CONTAINER_IMAGE_DESCRIPTION_LIST *images,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndDownloadImages )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginDeleteImages )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ FABRIC_STRING_LIST *images,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndDeleteImages )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginInvokeContainerApi )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ FABRIC_CONTAINER_API_EXECUTION_ARGS *apiExecArgs,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndInvokeContainerApi )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricContainerApiExecutionResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginContainerUpdateRoutes )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ FABRIC_CONTAINER_UPDATE_ROUTE_ARGS *updateExecArgs,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndContainerUpdateRoutes )( 
+            IFabricContainerActivatorService2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        END_INTERFACE
+    } IFabricContainerActivatorService2Vtbl;
+
+    interface IFabricContainerActivatorService2
+    {
+        CONST_VTBL struct IFabricContainerActivatorService2Vtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricContainerActivatorService2_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricContainerActivatorService2_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricContainerActivatorService2_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricContainerActivatorService2_StartEventMonitoring(This,isContainerServiceManaged,sinceTime)	\
+    ( (This)->lpVtbl -> StartEventMonitoring(This,isContainerServiceManaged,sinceTime) ) 
+
+#define IFabricContainerActivatorService2_BeginActivateContainer(This,activationParams,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginActivateContainer(This,activationParams,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricContainerActivatorService2_EndActivateContainer(This,context,result)	\
+    ( (This)->lpVtbl -> EndActivateContainer(This,context,result) ) 
+
+#define IFabricContainerActivatorService2_BeginDeactivateContainer(This,deactivationParams,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginDeactivateContainer(This,deactivationParams,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricContainerActivatorService2_EndDeactivateContainer(This,context)	\
+    ( (This)->lpVtbl -> EndDeactivateContainer(This,context) ) 
+
+#define IFabricContainerActivatorService2_BeginDownloadImages(This,images,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginDownloadImages(This,images,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricContainerActivatorService2_EndDownloadImages(This,context)	\
+    ( (This)->lpVtbl -> EndDownloadImages(This,context) ) 
+
+#define IFabricContainerActivatorService2_BeginDeleteImages(This,images,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginDeleteImages(This,images,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricContainerActivatorService2_EndDeleteImages(This,context)	\
+    ( (This)->lpVtbl -> EndDeleteImages(This,context) ) 
+
+#define IFabricContainerActivatorService2_BeginInvokeContainerApi(This,apiExecArgs,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginInvokeContainerApi(This,apiExecArgs,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricContainerActivatorService2_EndInvokeContainerApi(This,context,result)	\
+    ( (This)->lpVtbl -> EndInvokeContainerApi(This,context,result) ) 
+
+
+#define IFabricContainerActivatorService2_BeginContainerUpdateRoutes(This,updateExecArgs,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginContainerUpdateRoutes(This,updateExecArgs,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricContainerActivatorService2_EndContainerUpdateRoutes(This,context)	\
+    ( (This)->lpVtbl -> EndContainerUpdateRoutes(This,context) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricContainerActivatorService2_INTERFACE_DEFINED__ */
 
 
 #ifndef __IFabricContainerActivatorServiceAgent_INTERFACE_DEFINED__
@@ -642,6 +857,101 @@ FabricContainerActivatorServiceAgent;
 
 #endif /* __FabricContainerActivatorService_MODULE_DEFINED__ */
 #endif /* __FabricContainerActivatorServiceLib_LIBRARY_DEFINED__ */
+
+#ifndef __IFabricContainerActivatorServiceAgent2_INTERFACE_DEFINED__
+#define __IFabricContainerActivatorServiceAgent2_INTERFACE_DEFINED__
+
+/* interface IFabricContainerActivatorServiceAgent2 */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricContainerActivatorServiceAgent2;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("ac2bcdde-3987-4bf0-ac91-989948faac85")
+    IFabricContainerActivatorServiceAgent2 : public IFabricContainerActivatorServiceAgent
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE RegisterContainerActivatorService( 
+            /* [in] */ IFabricContainerActivatorService2 *activatorService) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricContainerActivatorServiceAgent2Vtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricContainerActivatorServiceAgent2 * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricContainerActivatorServiceAgent2 * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricContainerActivatorServiceAgent2 * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *ProcessContainerEvents )( 
+            IFabricContainerActivatorServiceAgent2 * This,
+            /* [in] */ FABRIC_CONTAINER_EVENT_NOTIFICATION *notifiction);
+        
+        HRESULT ( STDMETHODCALLTYPE *RegisterContainerActivatorService )( 
+            IFabricContainerActivatorServiceAgent2 * This,
+            /* [in] */ IFabricContainerActivatorService *activatorService);
+        
+        HRESULT ( STDMETHODCALLTYPE *RegisterContainerActivatorService )( 
+            IFabricContainerActivatorServiceAgent2 * This,
+            /* [in] */ IFabricContainerActivatorService2 *activatorService);
+        
+        END_INTERFACE
+    } IFabricContainerActivatorServiceAgent2Vtbl;
+
+    interface IFabricContainerActivatorServiceAgent2
+    {
+        CONST_VTBL struct IFabricContainerActivatorServiceAgent2Vtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricContainerActivatorServiceAgent2_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricContainerActivatorServiceAgent2_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricContainerActivatorServiceAgent2_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricContainerActivatorServiceAgent2_ProcessContainerEvents(This,notifiction)	\
+    ( (This)->lpVtbl -> ProcessContainerEvents(This,notifiction) ) 
+
+#define IFabricContainerActivatorServiceAgent2_RegisterContainerActivatorService(This,activatorService)	\
+    ( (This)->lpVtbl -> RegisterContainerActivatorService(This,activatorService) ) 
+
+
+#define IFabricContainerActivatorServiceAgent2_RegisterContainerActivatorService(This,activatorService)	\
+    ( (This)->lpVtbl -> RegisterContainerActivatorService(This,activatorService) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricContainerActivatorServiceAgent2_INTERFACE_DEFINED__ */
+
 
 /* Additional Prototypes for ALL interfaces */
 

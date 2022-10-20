@@ -5,7 +5,7 @@
 
 #include <ktl.h>
 #include <ktrace.h>
-#include <minmax.h>
+#include "minmax.h"
 #include <kinstrumentop.h>
 
 #include "KtlPhysicalLog.h"

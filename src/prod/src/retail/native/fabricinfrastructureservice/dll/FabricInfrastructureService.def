@@ -1,0 +1,3 @@
+LIBRARY FabricInfrastructureService
+EXPORTS
+    CreateFabricInfrastructureServiceAgent

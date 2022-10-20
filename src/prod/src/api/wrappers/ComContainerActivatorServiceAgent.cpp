@@ -15,7 +15,7 @@ StringLiteral const TraceType("ComContainerActivatorServiceAgent");
 
 ComContainerActivatorServiceAgent::ComContainerActivatorServiceAgent(
     IContainerActivatorServiceAgentPtr const & impl)
-    : IFabricContainerActivatorServiceAgent()
+    : IFabricContainerActivatorServiceAgent2()
     , ComUnknownBase()
     , impl_(impl)
 {
@@ -49,6 +49,14 @@ HRESULT STDMETHODCALLTYPE ComContainerActivatorServiceAgent::ProcessContainerEve
 
 HRESULT STDMETHODCALLTYPE ComContainerActivatorServiceAgent::RegisterContainerActivatorService(
     IFabricContainerActivatorService * activatorService)
+{
+    UNREFERENCED_PARAMETER(activatorService);
+
+    return ComUtility::OnPublicApiReturn(E_NOTIMPL);
+}
+
+HRESULT STDMETHODCALLTYPE ComContainerActivatorServiceAgent::RegisterContainerActivatorService(
+    IFabricContainerActivatorService2 * activatorService)
 {
     auto rootedPtr = WrapperFactory::create_rooted_com_proxy(activatorService);
 

@@ -253,7 +253,10 @@ void NodeCache::InitializeHealthState()
             NodeInfoSPtr const& nodeInfo = it->second->Get();
             if (nodeInfo->HealthSequence >= progress && nodeInfo->HealthSequence < initialSequence_)
             {
-                reports.push_back(fm_.HealthReportFactoryObj.GenerateNodeInfoHealthReport(nodeInfo));
+                reports.push_back(
+                    fm_.HealthReportFactoryObj.GenerateNodeInfoHealthReport(
+                        nodeInfo,
+                        fm_.Federation.IsSeedNode(nodeInfo->Id)));
             }
         }
 
@@ -1547,7 +1550,11 @@ void NodeCache::ReportHealthAfterNodeUpdate(NodeInfoSPtr const & nodeInfo, Error
 
     if (error.IsSuccess())
     {
-        auto e1 = fm_.HealthClient->AddHealthReport(fm_.HealthReportFactoryObj.GenerateNodeInfoHealthReport(nodeInfo, isUpgrade));
+        auto e1 = fm_.HealthClient->AddHealthReport(
+            fm_.HealthReportFactoryObj.GenerateNodeInfoHealthReport(
+                nodeInfo,
+                fm_.Federation.IsSeedNode(nodeInfo->Id),
+                isUpgrade));
         fm_.WriteInfo(Constants::NodeSource, wformatString(nodeInfo->Id), "AddHealthReport for node {0} completed with {1}", nodeInfo->Id, e1);
     }
     else
@@ -1560,7 +1567,11 @@ void NodeCache::ReportHealthForNodeDeactivation(NodeInfoSPtr const & nodeInfo, E
 {
     if (error.IsSuccess())
     {
-        auto e1 = fm_.HealthClient->AddHealthReport(fm_.HealthReportFactoryObj.GenerateNodeDeactivationHealthReport(nodeInfo, isDeactivationComplete));
+        auto e1 = fm_.HealthClient->AddHealthReport(
+            fm_.HealthReportFactoryObj.GenerateNodeDeactivationHealthReport(
+                nodeInfo,
+                fm_.Federation.IsSeedNode(nodeInfo->Id),
+                isDeactivationComplete));
 
         fm_.WriteInfo(
             Constants::NodeSource,

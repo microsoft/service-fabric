@@ -2048,6 +2048,51 @@ namespace PlacementAndLoadBalancingUnitTest
 
     }
 
+    BOOST_AUTO_TEST_CASE(SingleChildUpgradeWithCheckAffinityTest)
+    {
+        // Check that all affinitized replicas are moved at once,
+        // when CheckAffinityForUpgradePlacement flag is enabled,
+        // and only one child replica is in singleton replica upgrade
+        wstring testName = L"SingleChildUpgradeWithCheckAffinityTest";
+        Trace.WriteInfo("PLBUpgradeTestSource", "{0}", testName);
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinLoadBalancingInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(CheckAffinityForUpgradePlacement, bool, true);
+        PLBConfigScopeChange(RelaxAffinityConstraintDuringUpgrade, bool, true);
+        FailoverConfigScopeChange(IsSingletonReplicaMoveAllowedDuringUpgradeEntry, bool, true);
+
+        plb.UpdateNode(CreateNodeDescription(0));
+        plb.UpdateNode(CreateNodeDescription(1));
+
+        wstring parentType = wformatString("{0}_ParentType", testName);
+        wstring childType = wformatString("{0}_ChildType", testName);
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(parentType), set<NodeId>()));
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(childType), set<NodeId>()));
+
+        wstring parentService = L"ParentService";
+        plb.UpdateService(CreateServiceDescription(parentService, parentType, true, CreateMetrics(L""), FABRIC_MOVE_COST_LOW, false, 1, false));
+        for (int i = 1; i < 7; ++i)
+        {
+            plb.UpdateService(CreateServiceDescriptionWithAffinity(wformatString("ChildService{0}", i), childType, true, parentService, CreateMetrics(L""), false, 1, false, false));
+        }
+
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(parentService), 0, CreateReplicas(L"P/0"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(L"ChildService1"), 0, CreateReplicas(L"P/0/LI"), 1, upgradingFlag_));
+        for (int i = 2; i < 7; ++i)
+        {
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(i), wformatString("ChildService{0}", i), 0, CreateReplicas(L"P/0"), 0));
+        }
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        VERIFY_ARE_EQUAL(7u, actionList.size());
+        VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"1 add secondary 1", value)));
+        VERIFY_ARE_EQUAL(6u, CountIf(actionList, ActionMatch(L"0|2|3|4|5|6 move primary 0=>1", value)));
+    }
+
     BOOST_AUTO_TEST_SUITE_END()
 
     bool TestPLBUpgrade::ClassSetup()

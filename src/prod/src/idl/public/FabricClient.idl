@@ -1,0 +1,2886 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricTypes.idl";
+import "FabricCommon.idl";
+
+// ----------------------------------------------------------------------------
+// Forward Declaration of interfaces
+
+interface IFabricServicePartitionResolutionChangeHandler;
+interface IFabricServiceNotificationEventHandler;
+interface IFabricClientConnectionEventHandler;
+interface IFabricClientConnectionEventHandler2;
+interface IFabricClientSettings;
+interface IFabricClientSettings2;
+interface IFabricPropertyManagementClient;
+interface IFabricPropertyManagementClient2;
+interface IFabricServiceManagementClient;
+interface IFabricServiceManagementClient2;
+interface IFabricServiceManagementClient3;
+interface IFabricServiceManagementClient4;
+interface IFabricServiceManagementClient5;
+interface IFabricServiceManagementClient6;
+interface IFabricServiceGroupManagementClient;
+interface IFabricServiceGroupManagementClient2;
+interface IFabricServiceGroupManagementClient3;
+interface IFabricServiceGroupManagementClient4;
+interface IFabricApplicationManagementClient;
+interface IFabricApplicationManagementClient2;
+interface IFabricApplicationManagementClient3;
+interface IFabricApplicationManagementClient4;
+interface IFabricApplicationManagementClient5;
+interface IFabricApplicationManagementClient6;
+interface IFabricApplicationManagementClient7;
+interface IFabricApplicationManagementClient8;
+interface IFabricApplicationManagementClient9;
+interface IFabricApplicationManagementClient10;
+interface IFabricClusterManagementClient;
+interface IFabricClusterManagementClient2;
+interface IFabricClusterManagementClient3;
+interface IFabricClusterManagementClient4;
+interface IFabricClusterManagementClient5;
+interface IFabricClusterManagementClient6;
+interface IFabricClusterManagementClient7;
+interface IFabricHealthClient;
+interface IFabricHealthClient2;
+interface IFabricHealthClient3;
+interface IFabricHealthClient4;
+interface IFabricQueryClient;
+interface IFabricQueryClient2;
+interface IFabricQueryClient3;
+interface IFabricQueryClient4;
+interface IFabricQueryClient5;
+interface IFabricQueryClient6;
+interface IFabricQueryClient7;
+interface IFabricQueryClient8;
+interface IFabricQueryClient9;
+interface IFabricQueryClient10;
+interface IFabricInfrastructureServiceClient;
+interface IFabricRepairManagementClient;
+interface IFabricRepairManagementClient2;
+interface IFabricTestManagementClient;
+interface IFabricTestManagementClient2;
+interface IFabricTestManagementClient3;
+interface IFabricFaultManagementClient;
+interface IFabricNetworkManagementClient;
+interface IFabricServiceDescriptionResult;
+interface IFabricServiceGroupDescriptionResult;
+interface IFabricResolvedServicePartitionResult;
+interface IFabricServiceNotification;
+interface IFabricServiceEndpointsVersion;
+interface IFabricNameEnumerationResult;
+interface IFabricPropertyMetadataResult;
+interface IFabricPropertyValueResult;
+interface IFabricPropertyBatchResult;
+interface IFabricPropertyEnumerationResult;
+interface IFabricApplicationUpgradeProgressResult;
+interface IFabricApplicationUpgradeProgressResult2;
+interface IFabricApplicationUpgradeProgressResult3;
+interface IFabricUpgradeProgressResult;
+interface IFabricUpgradeProgressResult2;
+interface IFabricUpgradeProgressResult3;
+interface IFabricClientSettingsResult;
+interface IFabricNodeHealthResult;
+interface IFabricClusterHealthResult;
+interface IFabricApplicationHealthResult;
+interface IFabricServiceHealthResult;
+interface IFabricPartitionHealthResult;
+interface IFabricReplicaHealthResult;
+interface IFabricDeployedApplicationHealthResult;
+interface IFabricDeployedServicePackageHealthResult;
+interface IFabricGetNodeListResult;
+interface IFabricGetApplicationListResult;
+interface IFabricGetApplicationTypeListResult;
+interface IFabricGetApplicationTypePagedListResult;
+interface IFabricGetServiceTypeListResult;
+interface IFabricGetServiceGroupMemberTypeListResult;
+interface IFabricGetServiceListResult;
+interface IFabricGetServiceGroupMemberListResult;
+interface IFabricGetSystemServiceListResult;
+interface IFabricGetPartitionListResult;
+interface IFabricGetPartitionLoadInformationResult;
+interface IFabricGetReplicaListResult;
+interface IFabricGetDeployedApplicationListResult;
+interface IFabricGetDeployedApplicationPagedListResult;
+interface IFabricGetDeployedServicePackageListResult;
+interface IFabricGetDeployedServiceTypeListResult;
+interface IFabricGetDeployedCodePackageListResult;
+interface IFabricGetDeployedReplicaListResult;
+interface IFabricGetDeployedServiceReplicaDetailResult;
+interface IFabricGetClusterLoadInformationResult;
+interface IFabricGetProvisionedCodeVersionListResult;
+interface IFabricGetProvisionedConfigVersionListResult;
+interface IFabricGetNodeLoadInformationResult;
+interface IFabricGetReplicaLoadInformationResult;
+interface IFabricGetApplicationLoadInformationResult;
+interface IFabricGetRepairTaskListResult;
+interface IFabricGatewayInformationResult;
+interface IFabricGetRollingUpgradeMonitoringPolicyResult;
+interface IFabricGetUnplacedReplicaInformationResult;
+interface IFabricGetNodeListResult2;
+interface IFabricGetApplicationListResult2;
+interface IFabricGetServiceListResult2;
+interface IFabricGetPartitionListResult2;
+interface IFabricGetReplicaListResult2;
+interface IFabricRestartNodeResult;
+interface IFabricStartNodeResult;
+interface IFabricStopNodeResult;
+interface IFabricRestartDeployedCodePackageResult;
+interface IFabricMovePrimaryResult;
+interface IFabricMoveSecondaryResult;
+interface IFabricGetClusterHealthChunkResult;
+interface IFabricPartitionDataLossProgressResult;
+interface IFabricPartitionQuorumLossProgressResult;
+interface IFabricPartitionRestartProgressResult;
+interface IFabricTestCommandStatusResult;
+interface IFabricOrchestrationUpgradeStatusResult;
+interface IFabricUpgradeOrchestrationServiceStateResult;
+interface IFabricNodeTransitionProgressResult;
+interface IFabricServiceNameResult;
+interface IFabricApplicationNameResult;
+interface IFabricSecretStoreClient;
+interface IFabricGetNetworkListResult;
+interface IFabricGetNetworkApplicationListResult;
+interface IFabricGetNetworkNodeListResult;
+interface IFabricGetApplicationNetworkListResult;
+interface IFabricGetDeployedNetworkListResult;
+interface IFabricGetDeployedNetworkCodePackageListResult;
+
+[
+    uuid(31e3a54f-57f2-4453-b38e-bfa90b505231),
+    version(1.0),
+]
+library FabricClientLib
+{
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List all interfaces to be included in the type library
+
+    interface IFabricServicePartitionResolutionChangeHandler;
+    interface IFabricServiceNotificationEventHandler;
+    interface IFabricClientConnectionEventHandler;
+    interface IFabricClientConnectionEventHandler2;
+    interface IFabricClientSettings;
+    interface IFabricClientSettings2;
+    interface IFabricPropertyManagementClient;
+    interface IFabricPropertyManagementClient2;
+    interface IFabricServiceManagementClient;
+    interface IFabricServiceManagementClient2;
+    interface IFabricServiceManagementClient3;
+    interface IFabricServiceManagementClient4;
+    interface IFabricServiceManagementClient5;
+    interface IFabricServiceManagementClient6;
+    interface IFabricServiceGroupManagementClient;
+    interface IFabricServiceGroupManagementClient2;
+    interface IFabricServiceGroupManagementClient3;
+    interface IFabricServiceGroupManagementClient4;
+    interface IFabricApplicationManagementClient;
+    interface IFabricApplicationManagementClient2;
+    interface IFabricApplicationManagementClient3;
+    interface IFabricApplicationManagementClient4;
+    interface IFabricApplicationManagementClient5;
+    interface IFabricApplicationManagementClient6;
+    interface IFabricApplicationManagementClient7;
+    interface IFabricApplicationManagementClient8;
+    interface IFabricApplicationManagementClient9;
+    interface IFabricApplicationManagementClient10;
+    interface IFabricClusterManagementClient;
+    interface IFabricClusterManagementClient2;
+    interface IFabricClusterManagementClient3;
+    interface IFabricClusterManagementClient4;
+    interface IFabricClusterManagementClient5;
+    interface IFabricClusterManagementClient6;
+    interface IFabricClusterManagementClient7;
+    interface IFabricHealthClient;
+    interface IFabricHealthClient2;
+    interface IFabricHealthClient3;
+    interface IFabricHealthClient4;
+    interface IFabricQueryClient;
+    interface IFabricQueryClient2;
+    interface IFabricQueryClient3;
+    interface IFabricQueryClient4;
+    interface IFabricQueryClient5;
+    interface IFabricQueryClient6;
+    interface IFabricQueryClient7;
+    interface IFabricQueryClient8;
+    interface IFabricQueryClient9;
+    interface IFabricQueryClient10;
+    interface IFabricInfrastructureServiceClient;
+    interface IFabricRepairManagementClient;
+    interface IFabricRepairManagementClient2;
+    interface IFabricTestManagementClient;
+    interface IFabricTestManagementClient2;
+    interface IFabricTestManagementClient3;
+    interface IFabricFaultManagementClient;
+    interface IFabricNetworkManagementClient;
+    interface IFabricServiceDescriptionResult;
+    interface IFabricServiceGroupDescriptionResult;
+    interface IFabricResolvedServicePartitionResult;
+    interface IFabricServiceNotification;
+    interface IFabricServiceEndpointsVersion;
+    interface IFabricNameEnumerationResult;
+    interface IFabricPropertyMetadataResult;
+    interface IFabricPropertyValueResult;
+    interface IFabricPropertyBatchResult;
+    interface IFabricPropertyEnumerationResult;
+    interface IFabricApplicationUpgradeProgressResult;
+    interface IFabricApplicationUpgradeProgressResult2;
+    interface IFabricApplicationUpgradeProgressResult3;
+    interface IFabricUpgradeProgressResult;
+    interface IFabricUpgradeProgressResult2;
+    interface IFabricUpgradeProgressResult3;
+    interface IFabricClusterManifestResult;
+    interface IFabricClientSettingsResult;
+    interface IFabricNodeHealthResult;
+    interface IFabricClusterHealthResult;
+    interface IFabricApplicationHealthResult;
+    interface IFabricServiceHealthResult;
+    interface IFabricPartitionHealthResult;
+    interface IFabricReplicaHealthResult;
+    interface IFabricDeployedApplicationHealthResult;
+    interface IFabricDeployedServicePackageHealthResult;
+    interface IFabricGetNodeListResult;
+    interface IFabricGetApplicationListResult;
+    interface IFabricGetApplicationTypeListResult;
+    interface IFabricGetApplicationTypePagedListResult;
+    interface IFabricGetServiceTypeListResult;
+    interface IFabricGetServiceGroupMemberTypeListResult;
+    interface IFabricGetServiceListResult;
+    interface IFabricGetServiceGroupMemberListResult;
+    interface IFabricGetSystemServiceListResult;
+    interface IFabricGetPartitionListResult;
+    interface IFabricGetReplicaListResult;
+    interface IFabricGetDeployedApplicationListResult;
+    interface IFabricGetDeployedApplicationPagedListResult;
+    interface IFabricGetDeployedServicePackageListResult;
+    interface IFabricGetDeployedServiceTypeListResult;
+    interface IFabricGetDeployedCodePackageListResult;
+    interface IFabricGetDeployedReplicaListResult;
+    interface IFabricGetDeployedServiceReplicaDetailResult;
+    interface IFabricGetProvisionedCodeVersionListResult;
+    interface IFabricGetProvisionedConfigVersionListResult;
+    interface IFabricGetNodeLoadInformationResult;
+    interface IFabricGetApplicationLoadInformationResult;
+    interface IFabricGetReplicaLoadInformationResult;
+    interface IFabricGetUnplacedReplicaInformationResult;
+    interface IFabricGetRepairTaskListResult;
+    interface IFabricGatewayInformationResult;
+    interface IFabricGetRollingUpgradeMonitoringPolicyResult;
+    interface IFabricGetNodeListResult2;
+    interface IFabricGetApplicationListResult2;
+    interface IFabricGetServiceListResult2;
+    interface IFabricGetPartitionListResult2;
+    interface IFabricGetReplicaListResult2;
+    interface IFabricRestartNodeResult;
+    interface IFabricStartNodeResult;
+    interface IFabricStopNodeResult;
+    interface IFabricRestartDeployedCodePackageResult;
+    interface IFabricMovePrimaryResult;
+    interface IFabricMoveSecondaryResult;
+    interface IFabricGetClusterHealthChunkResult;
+    interface IFabricPartitionDataLossProgressResult;
+    interface IFabricPartitioneQuorumLossProgressResult;
+    interface IFabricPartitionRestartProgressResult;
+    interface IFabricTestCommandStatusResult;
+    interface IFabricOrchestrationUpgradeStatusResult;
+    interface IFabricChaosDescriptionResult;
+    interface IFabricChaosScheduleDescriptionResult;
+    interface IFabricChaosEventsSegmentResult;
+    interface IFabricChaosReportResult;
+    interface IFabricNodeTransitionProgressResult;
+    interface IFabricGetServiceNameResult;
+    interface IFabricGetApplicationNameResult;
+    interface IFabricGetNetworkListResult;
+    interface IFabricGetNetworkApplicationListResult;
+    interface IFabricGetNetworkNodeListResult;
+    interface IFabricGetApplicationNetworkListResult;
+    interface IFabricGetDeployedNetworkListResult;
+    interface IFabricGetDeployedNetworkCodePackageListResult;
+    interface IFabricSecretStoreClient;
+    interface IFabricSecretsResult;
+    interface IFabricSecretReferencesResult;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(75f087fa-37f1-4984-b513-724da5b02197),
+        noncreatable
+    ]
+    coclass FabricClient
+    {
+        [default] interface IFabricClientSettings2;
+        interface IFabricPropertyManagementClient2;
+        interface IFabricServiceManagementClient;
+        interface IFabricServiceManagementClient2;
+        interface IFabricServiceManagementClient3;
+        interface IFabricServiceManagementClient4;
+        interface IFabricServiceManagementClient5;
+        interface IFabricServiceManagementClient6;
+        interface IFabricServiceGroupManagementClient;
+        interface IFabricServiceGroupManagementClient2;
+        interface IFabricServiceGroupManagementClient3;
+        interface IFabricServiceGroupManagementClient4;
+        interface IFabricApplicationManagementClient;
+        interface IFabricApplicationManagementClient2;
+        interface IFabricApplicationManagementClient3;
+        interface IFabricApplicationManagementClient4;
+        interface IFabricApplicationManagementClient5;
+        interface IFabricApplicationManagementClient6;
+        interface IFabricApplicationManagementClient7;
+        interface IFabricApplicationManagementClient8;
+        interface IFabricApplicationManagementClient9;
+        interface IFabricApplicationManagementClient10;
+        interface IFabricClusterManagementClient;
+        interface IFabricClusterManagementClient2;
+        interface IFabricClusterManagementClient3;
+        interface IFabricClusterManagementClient4;
+        interface IFabricClusterManagementClient5;
+        interface IFabricClusterManagementClient6;
+        interface IFabricClusterManagementClient7;
+        interface IFabricHealthClient;
+        interface IFabricHealthClient2;
+        interface IFabricHealthClient3;
+        interface IFabricHealthClient4;
+        interface IFabricQueryClient;
+        interface IFabricQueryClient2;
+        interface IFabricQueryClient3;
+        interface IFabricQueryClient4;
+        interface IFabricQueryClient5;
+        interface IFabricQueryClient6;
+        interface IFabricQueryClient7;
+        interface IFabricQueryClient8;
+        interface IFabricQueryClient9;
+        interface IFabricQueryClient10;
+        interface IFabricInfrastructureServiceClient;
+        interface IFabricRepairManagementClient;
+        interface IFabricRepairManagementClient2;
+        interface IFabricTestManagementClient;
+        interface IFabricTestManagementClient2;
+        interface IFabricTestManagementClient3;
+        interface IFabricFaultManagementClient;
+        interface IFabricNetworkManagementClient;
+        interface IFabricSecretStoreClient;
+    }
+
+    [
+        uuid(fefc1487-3c52-4ea1-a8eb-19cd7ec533e6),
+        dllname("FabricClient.dll")
+    ]
+    module FabricClientModule {
+        [entry("FabricCreateClient")] HRESULT FabricCreateClient(
+            [in] USHORT connectionStringsSize,
+            [in, size_is(connectionStringsSize)] const LPCWSTR * connectionStrings,
+            [in] REFIID iid,
+            [out, retval] void ** fabricClient);
+
+        [entry("FabricCreateLocalClient")] HRESULT FabricCreateLocalClient(
+            [in] REFIID iid,
+            [out, retval] void ** fabricClient);
+
+        [entry("FabricCreateClient2")] HRESULT FabricCreateClient2(
+            [in] USHORT connectionStringsSize,
+            [in, size_is(connectionStringsSize)] const LPCWSTR * connectionStrings,
+            [in] IFabricServiceNotificationEventHandler *,
+            [in] REFIID iid,
+            [out, retval] void ** fabricClient);
+
+        [entry("FabricCreateLocalClient2")] HRESULT FabricCreateLocalClient2(
+            [in] IFabricServiceNotificationEventHandler *,
+            [in] REFIID iid,
+            [out, retval] void ** fabricClient);
+
+        [entry("FabricCreateClient3")] HRESULT FabricCreateClient3(
+            [in] USHORT connectionStringsSize,
+            [in, size_is(connectionStringsSize)] const LPCWSTR * connectionStrings,
+            [in] IFabricServiceNotificationEventHandler *,
+            [in] IFabricClientConnectionEventHandler *,
+            [in] REFIID iid,
+            [out, retval] void ** fabricClient);
+
+        [entry("FabricCreateLocalClient3")] HRESULT FabricCreateLocalClient3(
+            [in] IFabricServiceNotificationEventHandler *,
+            [in] IFabricClientConnectionEventHandler *,
+            [in] REFIID iid,
+            [out, retval] void ** fabricClient);
+
+        [entry("FabricCreateLocalClient4")] HRESULT FabricCreateLocalClient4(
+            [in] IFabricServiceNotificationEventHandler *,
+            [in] IFabricClientConnectionEventHandler *,
+            [in] FABRIC_CLIENT_ROLE clientRole,
+            [in] REFIID iid,
+            [out, retval] void ** fabricClient);
+
+        [entry("FabricGetDefaultRollingUpgradeMonitoringPolicy")] HRESULT FabricGetDefaultRollingUpgradeMonitoringPolicy(
+            [out, retval] IFabricGetRollingUpgradeMonitoringPolicyResult ** result);
+    }
+
+#pragma pack (pop)
+
+}
+
+// ----------------------------------------------------------------------------
+// Interface Definitions
+
+[object, local, uuid(b0e7dee0-cf64-11e0-9572-0800200c9a66)]
+interface IFabricClientSettings : IUnknown
+{
+    [] HRESULT SetSecurityCredentials(
+        [in] const FABRIC_SECURITY_CREDENTIALS * securityCredentials);
+
+    [] HRESULT SetKeepAlive(
+        [in] ULONG keepAliveIntervalInSeconds);
+}
+
+[object, local, uuid(c6fb97f7-82f3-4e6c-a80a-021e8ffca425)]
+interface IFabricClientSettings2 : IFabricClientSettings
+{
+    [] HRESULT GetSettings(
+        [out, retval] IFabricClientSettingsResult ** result);
+
+    [] HRESULT SetSettings(
+        [in] const FABRIC_CLIENT_SETTINGS * fabricClientSettings);
+}
+
+[object, local, uuid(26e58816-b5d5-4f08-9770-dbf0410c99d6)]
+interface IFabricPropertyManagementClient : IUnknown
+{
+    [] HRESULT BeginCreateName(
+        [in] FABRIC_URI name,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCreateName(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDeleteName(
+        [in] FABRIC_URI name,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeleteName(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginNameExists(
+        [in] FABRIC_URI name,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndNameExists(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] BOOLEAN * value);
+
+    [] HRESULT BeginEnumerateSubNames(
+        [in] FABRIC_URI name,
+        [in] IFabricNameEnumerationResult * previousResult,
+        [in] BOOLEAN recursive,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndEnumerateSubNames(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricNameEnumerationResult ** result);
+
+    [] HRESULT BeginPutPropertyBinary(
+        [in] FABRIC_URI name,
+        [in] LPCWSTR propertyName,
+        [in] ULONG dataLength,
+        [in, size_is(dataLength)] const BYTE * data,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndPutPropertyBinary(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginPutPropertyInt64(
+        [in] FABRIC_URI name,
+        [in] LPCWSTR propertyName,
+        [in] LONGLONG data,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndPutPropertyInt64(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginPutPropertyDouble(
+        [in] FABRIC_URI name,
+        [in] LPCWSTR propertyName,
+        [in] double data,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndPutPropertyDouble(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginPutPropertyWString(
+        [in] FABRIC_URI name,
+        [in] LPCWSTR propertyName,
+        [in] LPCWSTR data,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndPutPropertyWString(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginPutPropertyGuid(
+        [in] FABRIC_URI name,
+        [in] LPCWSTR propertyName,
+        [in] const GUID * data,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndPutPropertyGuid(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDeleteProperty(
+        [in] FABRIC_URI name,
+        [in] LPCWSTR propertyName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeleteProperty(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetPropertyMetadata(
+        [in] FABRIC_URI name,
+        [in] LPCWSTR propertyName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPropertyMetadata(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPropertyMetadataResult ** result);
+
+    [] HRESULT BeginGetProperty(
+        [in] FABRIC_URI name,
+        [in] LPCWSTR propertyName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetProperty(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPropertyValueResult ** result);
+
+    [] HRESULT BeginSubmitPropertyBatch(
+        [in] FABRIC_URI name,
+        [in] ULONG operationCount,
+        [in, size_is(operationCount)] const FABRIC_PROPERTY_BATCH_OPERATION * operations,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndSubmitPropertyBatch(
+        [in] IFabricAsyncOperationContext * context,
+        [out] ULONG * failedOperationIndexInRequest,
+        [out, retval] IFabricPropertyBatchResult ** result);
+
+    [] HRESULT BeginEnumerateProperties(
+        [in] FABRIC_URI name,
+        [in] BOOLEAN includeValues,
+        [in] IFabricPropertyEnumerationResult * previousResult,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndEnumerateProperties(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPropertyEnumerationResult ** result);
+}
+
+[object, local, uuid(04991c28-3f9d-4a49-9322-a56d308965fd)]
+interface IFabricPropertyManagementClient2 : IFabricPropertyManagementClient
+{
+    [] HRESULT BeginPutCustomPropertyOperation(
+        [in] FABRIC_URI name,
+        [in] const FABRIC_PUT_CUSTOM_PROPERTY_OPERATION * propertyOperation,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndPutCustomPropertyOperation(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(f7368189-fd1f-437c-888d-8c89cecc57a0)]
+interface IFabricServiceManagementClient : IUnknown
+{
+    [] HRESULT BeginCreateService(
+        [in] const FABRIC_SERVICE_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCreateService(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginCreateServiceFromTemplate(
+        [in] FABRIC_URI applicationName,
+        [in] FABRIC_URI serviceName,
+        [in] LPCWSTR serviceTypeName,
+        [in] ULONG InitializationDataSize,
+        [in, size_is(InitializationDataSize)] BYTE * InitializationData,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCreateServiceFromTemplate(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDeleteService(
+        [in] FABRIC_URI name,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeleteService(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetServiceDescription(
+        [in] FABRIC_URI name,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceDescription(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricServiceDescriptionResult ** result);
+
+    [] HRESULT RegisterServicePartitionResolutionChangeHandler(
+        [in] FABRIC_URI name,
+        [in] FABRIC_PARTITION_KEY_TYPE keyType,
+        [in] const void * partitionKey,
+        [in] IFabricServicePartitionResolutionChangeHandler * callback,
+        [out, retval] LONGLONG * callbackHandle);
+
+    [] HRESULT UnregisterServicePartitionResolutionChangeHandler(
+        [in] LONGLONG callbackHandle);
+
+    [] HRESULT BeginResolveServicePartition(
+        [in] FABRIC_URI name,
+        [in] FABRIC_PARTITION_KEY_TYPE partitionKeyType,
+        [in] const void * partitionKey,
+        [in] IFabricResolvedServicePartitionResult * previousResult,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndResolveServicePartition(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricResolvedServicePartitionResult ** result);
+}
+
+[object, local, uuid(9933ed08-5d0c-4aed-bab6-f676bf5be8aa)]
+interface IFabricServiceManagementClient2 : IFabricServiceManagementClient
+{
+    [] HRESULT BeginGetServiceManifest(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR applicationTypeVersion,
+        [in] LPCWSTR serviceManifestName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceManifest(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginUpdateService(
+        [in] FABRIC_URI name,
+        [in] const FABRIC_SERVICE_UPDATE_DESCRIPTION * serviceUpdateDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpdateService(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(98EC1156-C249-4F66-8D7C-9A5FA88E8E6D)]
+interface IFabricServiceManagementClient3 : IFabricServiceManagementClient2
+{
+    [] HRESULT BeginRemoveReplica(
+        [in] const FABRIC_REMOVE_REPLICA_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRemoveReplica(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginRestartReplica(
+        [in] const FABRIC_RESTART_REPLICA_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRestartReplica(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(8180db27-7d0b-43b0-82e0-4a8e022fc238)]
+interface IFabricServiceManagementClient4 : IFabricServiceManagementClient3
+{
+    [] HRESULT BeginRegisterServiceNotificationFilter(
+        [in] const FABRIC_SERVICE_NOTIFICATION_FILTER_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRegisterServiceNotificationFilter(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] LONGLONG * filterId);
+
+    [] HRESULT BeginUnregisterServiceNotificationFilter(
+        [in] LONGLONG filterId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUnregisterServiceNotificationFilter(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(F9A70679-8CA3-4E27-9411-483E0C89B1FA)]
+interface IFabricServiceManagementClient5 : IFabricServiceManagementClient4
+{
+    [] HRESULT BeginDeleteService2(
+        [in] const FABRIC_DELETE_SERVICE_DESCRIPTION * deleteDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeleteService2(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(23E4EE1B-049A-48F5-8DD7-B601EACE47DE)]
+interface IFabricServiceManagementClient6 : IFabricServiceManagementClient5
+{
+    [] HRESULT BeginCreateServiceFromTemplate2(
+        [in] const FABRIC_SERVICE_FROM_TEMPLATE_DESCRIPTION * serviceFromTemplateDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndCreateServiceFromTemplate2(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(2061227e-0281-4baf-9b19-b2dfb2e63bbe)]
+interface IFabricServiceGroupManagementClient : IUnknown
+{
+    [] HRESULT BeginCreateServiceGroup(
+        [in] const FABRIC_SERVICE_GROUP_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCreateServiceGroup(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDeleteServiceGroup(
+        [in] FABRIC_URI name,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeleteServiceGroup(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetServiceGroupDescription(
+        [in] FABRIC_URI name,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceGroupDescription(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricServiceGroupDescriptionResult ** result);
+}
+
+[object, local, uuid(4f0dc42d-8fec-4ea9-a96b-5be1fa1e1d64)]
+interface IFabricServiceGroupManagementClient2 : IFabricServiceGroupManagementClient
+{
+    [] HRESULT BeginUpdateServiceGroup(
+        [in] FABRIC_URI name,
+        [in] const FABRIC_SERVICE_GROUP_UPDATE_DESCRIPTION * serviceGroupUpdateDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpdateServiceGroup(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(cbee0e12-b5a0-44dc-8c3c-c067958f82f6)]
+interface IFabricServiceGroupManagementClient3 : IFabricServiceGroupManagementClient2
+{
+    [] HRESULT BeginCreateServiceGroupFromTemplate(
+        [in] FABRIC_URI applicationName,
+        [in] FABRIC_URI serviceName,
+        [in] LPCWSTR serviceTypeName,
+        [in] ULONG InitializationDataSize,
+        [in, size_is(InitializationDataSize)] BYTE * InitializationData,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCreateServiceGroupFromTemplate(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(3C73B32E-9A08-48CA-B3A3-993A2029E37A)]
+interface IFabricServiceGroupManagementClient4 : IFabricServiceGroupManagementClient3
+{
+    [] HRESULT BeginCreateServiceGroupFromTemplate2(
+        [in] const FABRIC_SERVICE_GROUP_FROM_TEMPLATE_DESCRIPTION * serviceGroupFromTemplateDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndCreateServiceGroupFromTemplate2(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(7c219ae9-e58d-431f-8b30-92a40281faac)]
+interface IFabricApplicationManagementClient : IUnknown
+{
+    [] HRESULT BeginProvisionApplicationType(
+        [in] LPCWSTR applicationBuildPath,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndProvisionApplicationType(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginCreateApplication(
+        [in] const FABRIC_APPLICATION_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCreateApplication(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginUpgradeApplication(
+        [in] const FABRIC_APPLICATION_UPGRADE_DESCRIPTION * upgradeDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpgradeApplication(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetApplicationUpgradeProgress(
+        [in] FABRIC_URI applicationName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationUpgradeProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricApplicationUpgradeProgressResult2 ** result);
+
+    [] HRESULT BeginMoveNextApplicationUpgradeDomain(
+        [in] IFabricApplicationUpgradeProgressResult2 * progress,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndMoveNextApplicationUpgradeDomain(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDeleteApplication(
+        [in] FABRIC_URI applicationName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeleteApplication(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginUnprovisionApplicationType(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR applicationTypeVersion,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUnprovisionApplicationType(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(f873516f-9bfe-47e5-93b9-3667aaf19324)]
+interface IFabricApplicationManagementClient2 : IFabricApplicationManagementClient
+{
+    [] HRESULT BeginGetApplicationManifest(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR applicationTypeVersion,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationManifest(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginMoveNextApplicationUpgradeDomain2(
+        [in] FABRIC_URI applicationName,
+        [in] LPCWSTR nextUpgradeDomain,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndMoveNextApplicationUpgradeDomain2(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(108c7735-97e1-4af8-8c2d-9080b1b29d33)]
+interface IFabricApplicationManagementClient3 : IFabricApplicationManagementClient2
+{
+    [] HRESULT BeginUpdateApplicationUpgrade(
+        [in] const FABRIC_APPLICATION_UPGRADE_UPDATE_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpdateApplicationUpgrade(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginRestartDeployedCodePackage(
+        [in] const FABRIC_RESTART_DEPLOYED_CODE_PACKAGE_DESCRIPTION * restartCodePackageDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRestartDeployedCodePackage(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT CopyApplicationPackage(
+        [in] LPCWSTR imageStoreConnectionString,
+        [in] LPCWSTR applicationPackagePath,
+        [in] LPCWSTR applicationPackagePathInImageStore);
+
+    [] HRESULT RemoveApplicationPackage(
+        [in] LPCWSTR imageStoreConnectionString,
+        [in] LPCWSTR applicationPackagePathInImageStore);
+}
+
+[object, local, uuid(82c41b22-dbcb-4f7a-8d2f-f9bb94add446)]
+interface IFabricApplicationManagementClient4 : IFabricApplicationManagementClient3
+{
+    [] HRESULT BeginDeployServicePackageToNode(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR applicationTypeVersion,
+        [in] LPCWSTR serviceManifestName,
+        [in] const FABRIC_PACKAGE_SHARING_POLICY_LIST * sharingPolicy,
+        [in] LPCWSTR nodeName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeployServicePackageToNode(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(d7490e43-2217-4158-93e1-9ce4dd6f724a)]
+interface IFabricApplicationManagementClient5 : IFabricApplicationManagementClient4
+{
+    [] HRESULT BeginRollbackApplicationUpgrade(
+        [in] FABRIC_URI applicationName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRollbackApplicationUpgrade(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(b01e63ee-1ea4-4181-95c7-983b32e16848)]
+interface IFabricApplicationManagementClient6 : IFabricApplicationManagementClient5
+{
+    [] HRESULT BeginUpdateApplication(
+        [in] const FABRIC_APPLICATION_UPDATE_DESCRIPTION * applicationUpdateDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndUpdateApplication(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(26844276-25B1-4F8C-ADBE-B1B3A3083C17)]
+interface IFabricApplicationManagementClient7 : IFabricApplicationManagementClient6
+{
+    [] HRESULT BeginDeleteApplication2(
+        [in] const FABRIC_DELETE_APPLICATION_DESCRIPTION * deleteDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndDeleteApplication2(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(97b38e85-7329-47ff-a8d2-b7cbf1603689)]
+interface IFabricApplicationManagementClient8 : IFabricApplicationManagementClient7
+{
+    [] HRESULT BeginProvisionApplicationType2(
+        [in] const FABRIC_PROVISION_APPLICATION_TYPE_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndProvisionApplicationType2(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(26617b63-1350-4d7f-830c-2200978d31bb)]
+interface IFabricApplicationManagementClient9 : IFabricApplicationManagementClient8
+{
+    [] HRESULT BeginUnprovisionApplicationType2(
+        [in] const FABRIC_UNPROVISION_APPLICATION_TYPE_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndUnprovisionApplicationType2(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(67001225-d106-41ae-8bd4-5a0a119c5c01)]
+interface IFabricApplicationManagementClient10 : IFabricApplicationManagementClient9
+{
+    [] HRESULT BeginProvisionApplicationType3(
+        [in] const FABRIC_PROVISION_APPLICATION_TYPE_DESCRIPTION_BASE * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndProvisionApplicationType3(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(a3cf17e0-cf84-4ae0-b720-1785c0fb4ace)]
+interface IFabricClusterManagementClient : IUnknown
+{
+    [] HRESULT BeginNodeStateRemoved(
+        [in] LPCWSTR nodeName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndNodeStateRemoved(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginRecoverPartitions(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRecoverPartitions(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(f9493e16-6a49-4d79-8695-5a6826b504c5)]
+interface IFabricClusterManagementClient2 : IFabricClusterManagementClient
+{
+    [] HRESULT BeginDeactivateNode(
+        [in] LPCWSTR nodeName,
+        [in] FABRIC_NODE_DEACTIVATION_INTENT intent,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeactivateNode(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginActivateNode(
+        [in] LPCWSTR nodeName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndActivateNode(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginProvisionFabric(
+        [in] LPCWSTR codeFilepath,
+        [in] LPCWSTR clusterManifestFilepath,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndProvisionFabric(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginUpgradeFabric(
+        [in] const FABRIC_UPGRADE_DESCRIPTION * upgradeDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpgradeFabric(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetFabricUpgradeProgress(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetFabricUpgradeProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricUpgradeProgressResult2 ** result);
+
+    [] HRESULT BeginMoveNextFabricUpgradeDomain(
+        [in] IFabricUpgradeProgressResult2 * progress,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndMoveNextFabricUpgradeDomain(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginMoveNextFabricUpgradeDomain2(
+        [in] LPCWSTR nextUpgradeDomain,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndMoveNextFabricUpgradeDomain2(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginUnprovisionFabric(
+        [in] LPCWSTR codeVersion,
+        [in] LPCWSTR configVersion,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUnprovisionFabric(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetClusterManifest(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterManifest(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginRecoverPartition(
+        [in] FABRIC_PARTITION_ID partitionId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRecoverPartition(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginRecoverServicePartitions(
+        [in] FABRIC_URI serviceName,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRecoverServicePartitions(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginRecoverSystemPartitions(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRecoverSystemPartitions(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(c3001d74-92b6-44cb-ac2f-2ffc4a56287c)]
+interface IFabricClusterManagementClient3 : IFabricClusterManagementClient2
+{
+    [] HRESULT BeginUpdateFabricUpgrade(
+        [in] const FABRIC_UPGRADE_UPDATE_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpdateFabricUpgrade(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginStopNode(
+        [in] const FABRIC_STOP_NODE_DESCRIPTION * stopNodeDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStopNode(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginRestartNode(
+        [in] const FABRIC_RESTART_NODE_DESCRIPTION * restartNodeDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRestartNode(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginStartNode(
+        [in] const FABRIC_START_NODE_DESCRIPTION * startNodeDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartNode(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT CopyClusterPackage(
+        [in] LPCWSTR imageStoreConnectionString,
+        [in] LPCWSTR clusterManifestPath,
+        [in] LPCWSTR clusterManifestPathInImageStore,
+        [in] LPCWSTR codePackagePath,
+        [in] LPCWSTR codePackagePathInImageStore);
+
+    [] HRESULT RemoveClusterPackage(
+        [in] LPCWSTR imageStoreConnectionString,
+        [in] LPCWSTR clusterManifestPathInImageStore,
+        [in] LPCWSTR codePackagePathInImageStore);
+}
+
+[object, local, uuid(b6b12671-f283-4d71-a818-0260549bc83e)]
+interface IFabricClusterManagementClient4 : IFabricClusterManagementClient3
+{
+    [] HRESULT BeginRollbackFabricUpgrade(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRollbackFabricUpgrade(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(a6ddd816-a100-11e4-89d3-123b93f75cba)]
+interface IFabricClusterManagementClient5 : IFabricClusterManagementClient4
+{
+    [] HRESULT BeginResetPartitionLoad(
+        [in] FABRIC_PARTITION_ID partitionId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndResetPartitionLoad(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(9e454ae8-4b8c-4136-884a-37b0b92cc855)]
+interface IFabricClusterManagementClient6 : IFabricClusterManagementClient5
+{
+    [] HRESULT BeginToggleVerboseServicePlacementHealthReporting(
+        [in] BOOLEAN enabled,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndToggleVerboseServicePlacementHealthReporting(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(9B9105AC-D595-4F59-9C94-1FFDBF92A876)]
+interface IFabricClusterManagementClient7 : IFabricClusterManagementClient6
+{
+    [] HRESULT BeginUpgradeConfiguration(
+        [in] const FABRIC_START_UPGRADE_DESCRIPTION * startUpgradeDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpgradeConfiguration(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetClusterConfigurationUpgradeStatus(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterConfigurationUpgradeStatus(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricOrchestrationUpgradeStatusResult ** result);
+
+    [] HRESULT BeginGetClusterConfiguration(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterConfiguration(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginGetUpgradesPendingApproval(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetUpgradesPendingApproval(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginStartApprovedUpgrades(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartApprovedUpgrades(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(0B79641C-79A6-4162-904A-840BABD08381)]
+interface IFabricClusterManagementClient8 : IFabricClusterManagementClient7
+{
+    [] HRESULT BeginGetClusterManifest2(
+        [in] const FABRIC_CLUSTER_MANIFEST_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterManifest2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+}
+
+[object, local, uuid(C0F57578-538C-4CBE-BB55-8098B6A7CD4E)]
+interface IFabricClusterManagementClient9 : IFabricClusterManagementClient8
+{
+    [] HRESULT BeginGetUpgradeOrchestrationServiceState(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetUpgradeOrchestrationServiceState(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginSetUpgradeOrchestrationServiceState(
+        [in] LPCWSTR state,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndSetUpgradeOrchestrationServiceState(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricUpgradeOrchestrationServiceStateResult ** result);
+}
+
+[object, local, uuid(A4ACEB4F-2E2B-4BE1-9D12-44FE8CB5FB20)]
+interface IFabricClusterManagementClient10 : IFabricClusterManagementClient9
+{
+    [] HRESULT BeginGetClusterConfiguration2(
+        [in] LPCWSTR apiVersion,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterConfiguration2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+}
+
+[object, local, uuid(3d00d0be-7014-41da-9c5b-0a9ef46e2a43)]
+interface IFabricHealthClient : IUnknown
+{
+    [] HRESULT ReportHealth([in] const FABRIC_HEALTH_REPORT * healthReport);
+
+    [] HRESULT BeginGetClusterHealth(
+        [in] const FABRIC_CLUSTER_HEALTH_POLICY * healthPolicy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterHealth(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricClusterHealthResult ** result);
+
+    [] HRESULT BeginGetNodeHealth(
+        [in] LPCWSTR nodeName,
+        [in] const FABRIC_CLUSTER_HEALTH_POLICY * healthPolicy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNodeHealth(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricNodeHealthResult ** result);
+
+    [] HRESULT BeginGetApplicationHealth(
+        [in] FABRIC_URI applicationName,
+        [in] const FABRIC_APPLICATION_HEALTH_POLICY * healthPolicy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationHealth(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricApplicationHealthResult ** result);
+
+    [] HRESULT BeginGetServiceHealth(
+        [in] FABRIC_URI serviceName,
+        [in] const FABRIC_APPLICATION_HEALTH_POLICY * healthPolicy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceHealth(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricServiceHealthResult ** result);
+
+    [] HRESULT BeginGetPartitionHealth(
+        [in] FABRIC_PARTITION_ID partitionId,
+        [in] const FABRIC_APPLICATION_HEALTH_POLICY * healthPolicy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionHealth(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPartitionHealthResult ** result);
+
+    [] HRESULT BeginGetReplicaHealth(
+        [in] FABRIC_PARTITION_ID partitionId,
+        [in] FABRIC_REPLICA_ID replicaId,
+        [in] const FABRIC_APPLICATION_HEALTH_POLICY * healthPolicy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetReplicaHealth(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricReplicaHealthResult ** result);
+
+    [] HRESULT BeginGetDeployedApplicationHealth(
+        [in] FABRIC_URI applicationName,
+        [in] LPCWSTR nodeName,
+        [in] const FABRIC_APPLICATION_HEALTH_POLICY * healthPolicy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedApplicationHealth(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricDeployedApplicationHealthResult ** result);
+
+    [] HRESULT BeginGetDeployedServicePackageHealth(
+        [in] FABRIC_URI applicationName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR nodeName,
+        [in] const FABRIC_APPLICATION_HEALTH_POLICY * healthPolicy,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedServicePackageHealth(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricDeployedServicePackageHealthResult ** result);
+}
+
+[object, local, uuid(66cbc014-d7b3-4f81-a498-e580feb9a1f5)]
+interface IFabricHealthClient2 : IFabricHealthClient
+{
+    [] HRESULT BeginGetClusterHealth2(
+        [in] const FABRIC_CLUSTER_HEALTH_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterHealth2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricClusterHealthResult ** result);
+
+    [] HRESULT BeginGetNodeHealth2(
+        [in] const FABRIC_NODE_HEALTH_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNodeHealth2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricNodeHealthResult ** result);
+
+    [] HRESULT BeginGetApplicationHealth2(
+        [in] const FABRIC_APPLICATION_HEALTH_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationHealth2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricApplicationHealthResult ** result);
+
+    [] HRESULT BeginGetServiceHealth2(
+        [in] const FABRIC_SERVICE_HEALTH_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceHealth2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricServiceHealthResult ** result);
+
+    [] HRESULT BeginGetPartitionHealth2(
+        [in] const FABRIC_PARTITION_HEALTH_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionHealth2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPartitionHealthResult ** result);
+
+    [] HRESULT BeginGetReplicaHealth2(
+        [in] const FABRIC_REPLICA_HEALTH_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetReplicaHealth2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricReplicaHealthResult ** result);
+
+    [] HRESULT BeginGetDeployedApplicationHealth2(
+        [in] const FABRIC_DEPLOYED_APPLICATION_HEALTH_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedApplicationHealth2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricDeployedApplicationHealthResult ** result);
+
+    [] HRESULT BeginGetDeployedServicePackageHealth2(
+        [in] const FABRIC_DEPLOYED_SERVICE_PACKAGE_HEALTH_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedServicePackageHealth2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricDeployedServicePackageHealthResult ** result);
+}
+
+[object, local, uuid(dd3e4497-3373-458d-ad22-c88ebd27493e)]
+interface IFabricHealthClient3 : IFabricHealthClient2
+{
+    [] HRESULT BeginGetClusterHealthChunk(
+        [in] const FABRIC_CLUSTER_HEALTH_CHUNK_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterHealthChunk(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetClusterHealthChunkResult ** result);
+}
+
+[object, local, uuid(9f0401af-4909-404f-8696-0a71bd753e98)]
+interface IFabricHealthClient4 : IFabricHealthClient3
+{
+    [] HRESULT ReportHealth2(
+        [in] const FABRIC_HEALTH_REPORT * healthReport,
+        [in] const FABRIC_HEALTH_REPORT_SEND_OPTIONS * sendOptions);
+}
+
+[object, local, uuid(c629e422-90ba-4efd-8f64-cecf51bc3df0)]
+interface IFabricQueryClient : IUnknown
+{
+    [] HRESULT BeginGetNodeList(
+        [in] const FABRIC_NODE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNodeList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetNodeListResult ** result);
+
+    [] HRESULT BeginGetApplicationTypeList(
+        [in] const FABRIC_APPLICATION_TYPE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationTypeList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetApplicationTypeListResult ** result);
+
+    [] HRESULT BeginGetServiceTypeList(
+        [in] const FABRIC_SERVICE_TYPE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceTypeList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetServiceTypeListResult ** result);
+
+    [] HRESULT BeginGetApplicationList(
+        [in] const FABRIC_APPLICATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetApplicationListResult ** result);
+
+    [] HRESULT BeginGetServiceList(
+        [in] const FABRIC_SERVICE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetServiceListResult ** result);
+
+    [] HRESULT BeginGetPartitionList(
+        [in] const FABRIC_SERVICE_PARTITION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetPartitionListResult ** result);
+
+    [] HRESULT BeginGetReplicaList(
+        [in] const FABRIC_SERVICE_REPLICA_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetReplicaList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetReplicaListResult ** result);
+
+    [] HRESULT BeginGetDeployedApplicationList(
+        [in] const FABRIC_DEPLOYED_APPLICATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedApplicationList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedApplicationListResult ** result);
+
+    [] HRESULT BeginGetDeployedServicePackageList(
+        [in] const FABRIC_DEPLOYED_SERVICE_PACKAGE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedServicePackageList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedServicePackageListResult ** result);
+
+    [] HRESULT BeginGetDeployedServiceTypeList(
+        [in] const FABRIC_DEPLOYED_SERVICE_TYPE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedServiceTypeList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedServiceTypeListResult ** result);
+
+    [] HRESULT BeginGetDeployedCodePackageList(
+        [in] const FABRIC_DEPLOYED_CODE_PACKAGE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedCodePackageList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedCodePackageListResult ** result);
+
+    [] HRESULT BeginGetDeployedReplicaList(
+        [in] const FABRIC_DEPLOYED_SERVICE_REPLICA_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedReplicaList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedReplicaListResult ** result);
+}
+
+[object, local, uuid(4E6D5D61-24C8-4240-A2E8-BCB1FC15D9AF)]
+interface IFabricQueryClient2 : IFabricQueryClient
+{
+    [] HRESULT BeginGetDeployedReplicaDetail(
+        [in] const FABRIC_DEPLOYED_SERVICE_REPLICA_DETAIL_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedReplicaDetail(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedServiceReplicaDetailResult ** result);
+
+    [] HRESULT BeginGetClusterLoadInformation(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterLoadInformation(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetClusterLoadInformationResult ** result);
+
+    [] HRESULT BeginGetPartitionLoadInformation(
+        [in] const FABRIC_PARTITION_LOAD_INFORMATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionLoadInformation(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetPartitionLoadInformationResult ** result);
+
+    [] HRESULT BeginGetProvisionedFabricCodeVersionList(
+        [in] const FABRIC_PROVISIONED_CODE_VERSION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetProvisionedFabricCodeVersionList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetProvisionedCodeVersionListResult ** result);
+
+    [] HRESULT BeginGetProvisionedFabricConfigVersionList(
+        [in] const FABRIC_PROVISIONED_CONFIG_VERSION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetProvisionedFabricConfigVersionList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetProvisionedConfigVersionListResult ** result);
+}
+
+[object, local, uuid(16F563F3-4017-496E-B0E7-2650DE5774B3)]
+interface IFabricQueryClient3 : IFabricQueryClient2
+{
+    [] HRESULT BeginGetNodeLoadInformation(
+        [in] const FABRIC_NODE_LOAD_INFORMATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNodeLoadInformation(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetNodeLoadInformationResult ** result);
+
+    [] HRESULT BeginGetReplicaLoadInformation(
+        [in] const FABRIC_REPLICA_LOAD_INFORMATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetReplicaLoadInformation(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetReplicaLoadInformationResult ** result);
+}
+
+[object, local, uuid(AB92081D-0D78-410B-9777-0846DBA24C10)]
+interface IFabricQueryClient4 : IFabricQueryClient3
+{
+    [] HRESULT BeginGetServiceGroupMemberList(
+        [in] const FABRIC_SERVICE_GROUP_MEMBER_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceGroupMemberList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetServiceGroupMemberListResult ** result);
+
+    [] HRESULT BeginGetServiceGroupMemberTypeList(
+        [in] const FABRIC_SERVICE_GROUP_MEMBER_TYPE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceGroupMemberTypeList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetServiceGroupMemberTypeListResult ** result);
+}
+
+[object, local, uuid(75C35E8C-87A2-4810-A401-B50DA858FE34)]
+interface IFabricQueryClient5 : IFabricQueryClient4
+{
+    [] HRESULT BeginGetUnplacedReplicaInformation(
+        [in] const FABRIC_UNPLACED_REPLICA_INFORMATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetUnplacedReplicaInformation(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetUnplacedReplicaInformationResult ** result);
+
+}
+
+[object, local, uuid(173b2bb4-09c6-42fb-8754-caa8d43cf1b2)]
+interface IFabricQueryClient6 : IFabricQueryClient5
+{
+    [] HRESULT EndGetNodeList2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetNodeListResult2 ** result);
+
+    [] HRESULT EndGetApplicationList2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetApplicationListResult2 ** result);
+
+    [] HRESULT EndGetServiceList2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetServiceListResult2 ** result);
+
+    [] HRESULT EndGetPartitionList2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetPartitionListResult2 ** result);
+
+    [] HRESULT EndGetReplicaList2(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetReplicaListResult2 ** result);
+}
+
+[object, local, uuid(538baa81-ba97-46da-95ac-e1cdd184cc74)]
+interface IFabricQueryClient7 : IFabricQueryClient6
+{
+    [] HRESULT BeginGetApplicationLoadInformation(
+        [in] const FABRIC_APPLICATION_LOAD_INFORMATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationLoadInformation(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetApplicationLoadInformationResult ** result);
+
+}
+
+[object, local, uuid(2c850629-6a83-4fc3-8468-c868b87e9a17)]
+interface IFabricQueryClient8 : IFabricQueryClient7
+{
+    [] HRESULT BeginGetServiceName(
+        [in] const FABRIC_SERVICE_NAME_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetServiceName(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetServiceNameResult ** result);
+
+    [] HRESULT BeginGetApplicationName(
+        [in] const FABRIC_APPLICATION_NAME_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationName(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetApplicationNameResult ** result);
+}
+
+[object, local, uuid(76f0b4a5-4941-49d7-993c-ad7afc37c6af)]
+interface IFabricQueryClient9 : IFabricQueryClient8
+{
+    [] HRESULT BeginGetApplicationTypePagedList(
+        [in] const PAGED_FABRIC_APPLICATION_TYPE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationTypePagedList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetApplicationTypePagedListResult ** result);
+}
+
+[object, local, uuid(02139da8-7140-42ae-8403-79a551600e63)]
+interface IFabricQueryClient10 : IFabricQueryClient9
+{
+    [] HRESULT BeginGetDeployedApplicationPagedList(
+        [in] const FABRIC_PAGED_DEPLOYED_APPLICATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedApplicationPagedList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedApplicationPagedListResult ** result);
+}
+
+[object, local, uuid(a0cfbc71-184b-443b-b102-4b6d0a7cbc49)]
+interface IFabricInfrastructureServiceClient : IUnknown
+{
+    [] HRESULT BeginInvokeInfrastructureCommand(
+        [in] FABRIC_URI serviceName,
+        [in] const LPCWSTR command,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndInvokeInfrastructureCommand(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginInvokeInfrastructureQuery(
+        [in] FABRIC_URI serviceName,
+        [in] const LPCWSTR command,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndInvokeInfrastructureQuery(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+}
+
+[object, local, uuid(ee483ba5-9018-4c99-9804-be6185db88e6)]
+interface IFabricRepairManagementClient : IUnknown
+{
+    [] HRESULT BeginCreateRepairTask(
+        [in] const FABRIC_REPAIR_TASK * repairTask,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCreateRepairTask(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] FABRIC_SEQUENCE_NUMBER * commitVersion);
+
+    [] HRESULT BeginCancelRepairTask(
+        [in] const FABRIC_REPAIR_CANCEL_DESCRIPTION * requestDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCancelRepairTask(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] FABRIC_SEQUENCE_NUMBER * commitVersion);
+
+    [] HRESULT BeginForceApproveRepairTask(
+        [in] const FABRIC_REPAIR_APPROVE_DESCRIPTION * requestDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndForceApproveRepairTask(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] FABRIC_SEQUENCE_NUMBER * commitVersion);
+
+    [] HRESULT BeginDeleteRepairTask(
+        [in] const FABRIC_REPAIR_DELETE_DESCRIPTION * requestDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeleteRepairTask(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginUpdateRepairExecutionState(
+        [in] const FABRIC_REPAIR_TASK * repairTask,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpdateRepairExecutionState(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] FABRIC_SEQUENCE_NUMBER * commitVersion);
+
+    [] HRESULT BeginGetRepairTaskList(
+        [in] const FABRIC_REPAIR_TASK_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetRepairTaskList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetRepairTaskListResult ** result);
+}
+
+[object, local, uuid(5067d775-3baa-48e4-8c72-bb5573cc3fb8)]
+interface IFabricRepairManagementClient2 : IFabricRepairManagementClient
+{
+    [] HRESULT BeginUpdateRepairTaskHealthPolicy(
+        [in] const FABRIC_REPAIR_TASK_HEALTH_POLICY_UPDATE_DESCRIPTION * updateDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpdateRepairTaskHealthPolicy(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] FABRIC_SEQUENCE_NUMBER * commitVersion);
+}
+
+[object, local, uuid(769e1838-8726-4dcd-a3c0-211673a6967a)]
+interface IFabricFaultManagementClient : IUnknown
+{
+    [] HRESULT BeginRestartNode(
+        [in] const FABRIC_RESTART_NODE_DESCRIPTION2 * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRestartNode(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricRestartNodeResult ** result);
+
+    [] HRESULT BeginStartNode(
+        [in] const FABRIC_START_NODE_DESCRIPTION2 * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartNode(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStartNodeResult ** result);
+
+    [] HRESULT BeginStopNode(
+        [in] const FABRIC_STOP_NODE_DESCRIPTION2 * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStopNode(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStopNodeResult ** result);
+
+    [] HRESULT BeginRestartDeployedCodePackage(
+        [in] const FABRIC_RESTART_DEPLOYED_CODE_PACKAGE_DESCRIPTION2 * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRestartDeployedCodePackage(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricRestartDeployedCodePackageResult ** result);
+
+    [] HRESULT BeginMovePrimary(
+        [in] const FABRIC_MOVE_PRIMARY_DESCRIPTION2 * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndMovePrimary(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricMovePrimaryResult ** result);
+
+    [] HRESULT BeginMoveSecondary(
+        [in] const FABRIC_MOVE_SECONDARY_DESCRIPTION2 * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndMoveSecondary(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricMoveSecondaryResult ** result);
+}
+
+[object, local, uuid(0df0f63a-4da0-44fe-81e8-f80cd28e9b28)]
+interface IFabricTestManagementClient : IUnknown
+{
+    [] HRESULT BeginStartPartitionDataLoss(
+        [in] const FABRIC_START_PARTITION_DATA_LOSS_DESCRIPTION * invokeDataLossDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartPartitionDataLoss(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetPartitionDataLossProgress(
+        [in] FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionDataLossProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPartitionDataLossProgressResult ** result);
+
+    [] HRESULT BeginStartPartitionQuorumLoss(
+        [in] const FABRIC_START_PARTITION_QUORUM_LOSS_DESCRIPTION * invokeQuorumLossDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartPartitionQuorumLoss(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetPartitionQuorumLossProgress(
+        [in] FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionQuorumLossProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPartitionQuorumLossProgressResult ** result);
+
+    // Restart Partition
+    [] HRESULT BeginStartPartitionRestart(
+        [in] const FABRIC_START_PARTITION_RESTART_DESCRIPTION * restartPartitionDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartPartitionRestart(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetPartitionRestartProgress(
+        [in] FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetPartitionRestartProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricPartitionRestartProgressResult ** result);
+
+    [] HRESULT BeginGetTestCommandStatusList(
+        [in] const FABRIC_TEST_COMMAND_LIST_DESCRIPTION * operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetTestCommandStatusList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricTestCommandStatusResult ** result);
+
+    [] HRESULT BeginCancelTestCommand(
+        [in] const FABRIC_CANCEL_TEST_COMMAND_DESCRIPTION * invokeDataLossDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCancelTestCommand(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(1222b1ff-ae51-43b3-bbdf-439e7f61ca1a)]
+interface IFabricTestManagementClient2 : IFabricTestManagementClient
+{
+    // Chaos
+    [] HRESULT BeginStartChaos(
+        [in] const FABRIC_START_CHAOS_DESCRIPTION * restartPartitionDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartChaos(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginStopChaos(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStopChaos(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetChaosReport(
+        [in] const FABRIC_GET_CHAOS_REPORT_DESCRIPTION * getChaosReportDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetChaosReport(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricChaosReportResult ** result);
+}
+
+[object, local, uuid(a4b94afd-0cb5-4010-8995-e58e9b6ca373)]
+interface IFabricTestManagementClient3 : IFabricTestManagementClient2
+{
+    [] HRESULT BeginStartNodeTransition(
+        [in] const FABRIC_NODE_TRANSITION_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartNodeTransition(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetNodeTransitionProgress(
+        [in] FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNodeTransitionProgress(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricNodeTransitionProgressResult ** result);
+}
+
+[object, local, uuid(b96aa7d4-acc0-4814-89dc-561b0cbb6028)]
+interface IFabricTestManagementClient4 : IFabricTestManagementClient3
+{
+    [] HRESULT BeginGetChaos(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [retval, out] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetChaos(
+        [in] IFabricAsyncOperationContext * context,
+        [retval, out] IFabricChaosDescriptionResult ** result);
+
+    [] HRESULT BeginGetChaosSchedule(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback *callback,
+        [retval, out] IFabricAsyncOperationContext **context);
+    [] HRESULT EndGetChaosSchedule(
+        [in] IFabricAsyncOperationContext *context,
+        [retval, out] IFabricChaosScheduleDescriptionResult **result);
+
+    [] HRESULT BeginSetChaosSchedule(
+        [in] const FABRIC_CHAOS_SERVICE_SCHEDULE_DESCRIPTION* setChaosScheduleDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback *callback,
+        [retval, out] IFabricAsyncOperationContext **context);
+    [] HRESULT EndSetChaosSchedule(
+        [in] IFabricAsyncOperationContext *context);
+
+    [] HRESULT BeginGetChaosEvents(
+        [in] const FABRIC_CHAOS_EVENTS_SEGMENT_DESCRIPTION * chaosEventsDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback *callback,
+        [retval][out] IFabricAsyncOperationContext **context);
+    [] HRESULT EndGetChaosEvents(
+        [in] IFabricAsyncOperationContext *context,
+        [retval][out] IFabricChaosEventsSegmentResult **result);
+}
+
+[object, local, uuid(fdb754c6-69c5-4bcf-bba5-cb70c84a4398)]
+interface IFabricNetworkManagementClient : IUnknown
+{
+    [] HRESULT BeginCreateNetwork(
+        [in] LPCWSTR networkName,
+        [in] const FABRIC_NETWORK_DESCRIPTION * description,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCreateNetwork(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDeleteNetwork(
+        [in] const FABRIC_DELETE_NETWORK_DESCRIPTION * deleteDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndDeleteNetwork(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetNetworkList(
+        [in] const FABRIC_NETWORK_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNetworkList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetNetworkListResult ** result);
+
+    [] HRESULT BeginGetNetworkApplicationList(
+        [in] const FABRIC_NETWORK_APPLICATION_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNetworkApplicationList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetNetworkApplicationListResult ** result);
+
+    [] HRESULT BeginGetNetworkNodeList(
+        [in] const FABRIC_NETWORK_NODE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetNetworkNodeList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetNetworkNodeListResult ** result);
+
+    [] HRESULT BeginGetApplicationNetworkList(
+        [in] const FABRIC_APPLICATION_NETWORK_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetApplicationNetworkList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetApplicationNetworkListResult ** result);
+
+    [] HRESULT BeginGetDeployedNetworkList(
+        [in] const FABRIC_DEPLOYED_NETWORK_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedNetworkList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedNetworkListResult ** result);
+
+    [] HRESULT BeginGetDeployedNetworkCodePackageList(
+        [in] const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_DESCRIPTION * queryDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetDeployedNetworkCodePackageList(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricGetDeployedNetworkCodePackageListResult ** result);
+}
+
+[object, local, uuid(576b2462-5f69-4351-87c7-3ec2d1654a22)]
+interface IFabricGetRepairTaskListResult : IUnknown
+{
+    [] const FABRIC_REPAIR_TASK_LIST * get_Tasks();
+}
+
+[object, local, uuid(86b4f744-38c7-4dab-b6b4-11c23734c269)]
+interface IFabricServiceDescriptionResult : IUnknown
+{
+    [] const FABRIC_SERVICE_DESCRIPTION * get_Description();
+}
+
+[object, local, uuid(3ca814d4-e067-48b7-9bdc-9be33810416d)]
+interface IFabricServiceGroupDescriptionResult : IUnknown
+{
+    [] const FABRIC_SERVICE_GROUP_DESCRIPTION * get_Description();
+}
+
+[object, local, uuid(fd0fe113-cdf8-4803-b4a0-32b1b3ef3716)]
+interface IFabricResolvedServicePartitionResult : IUnknown
+{
+    [] const FABRIC_RESOLVED_SERVICE_PARTITION * get_Partition();
+
+    [] HRESULT GetEndpoint(
+        [out, retval] const FABRIC_RESOLVED_SERVICE_ENDPOINT ** endpoint);
+
+    [] HRESULT CompareVersion(
+        [in] IFabricResolvedServicePartitionResult * other,
+        [out, retval] LONG * compareResult);
+}
+
+[object, local, uuid(0a673dc5-2297-4fc5-a38f-482d29144fa5)]
+interface IFabricServiceEndpointsVersion : IUnknown
+{
+    [] HRESULT Compare(
+        [in] IFabricServiceEndpointsVersion * other,
+        [out, retval] LONG * compareResult);
+}
+
+[object, local, uuid(8222c825-08ad-4639-afce-a8988cbd6db3)]
+interface IFabricServiceNotification : IUnknown
+{
+    [] const FABRIC_SERVICE_NOTIFICATION * get_Notification();
+
+    [] HRESULT GetVersion(
+        [out, retval] IFabricServiceEndpointsVersion ** result);
+}
+
+[object, local, uuid(557e8105-f4f4-4fd3-9d21-075f34e2f98c)]
+interface IFabricNameEnumerationResult : IUnknown
+{
+    [] FABRIC_ENUMERATION_STATUS get_EnumerationStatus();
+
+    [] HRESULT GetNames(
+        [out] ULONG * itemCount,
+        [out, retval] const FABRIC_URI ** bufferedItems);
+}
+
+[object, local, uuid(33302306-fb8d-4831-b493-57efcc772462)]
+interface IFabricPropertyMetadataResult : IUnknown
+{
+    [] const FABRIC_NAMED_PROPERTY_METADATA * get_Metadata();
+}
+
+[object, local, uuid(9a518b49-9903-4b8f-834e-1979e9c6745e)]
+interface IFabricPropertyValueResult : IUnknown
+{
+    [] const FABRIC_NAMED_PROPERTY * get_Property();
+
+    HRESULT GetValueAsBinary(
+        [out] ULONG * byteCount,
+        [out, retval] const BYTE ** bufferedValue);
+
+    HRESULT GetValueAsInt64(
+        [out, retval] LONGLONG * value);
+
+    HRESULT GetValueAsDouble(
+        [out, retval] double * value);
+
+    HRESULT GetValueAsWString(
+        [out, retval] LPCWSTR * bufferedValue);
+
+    HRESULT GetValueAsGuid(
+        [out, retval] GUID * value);
+}
+
+[object, local, uuid(ee747ff5-3fbb-46a8-adbc-47ce09c48bbe)]
+interface IFabricPropertyBatchResult : IUnknown
+{
+    [] HRESULT GetProperty(
+        [in] ULONG operationIndexInRequest,
+        [out, retval] IFabricPropertyValueResult ** property);
+}
+
+[object, local, uuid(a42da40d-a637-478d-83f3-2813871234cf)]
+interface IFabricPropertyEnumerationResult : IUnknown
+{
+    [] FABRIC_ENUMERATION_STATUS get_EnumerationStatus();
+
+    [] ULONG get_PropertyCount();
+
+    [] HRESULT GetProperty(
+        [in] ULONG index,
+        [out, retval] IFabricPropertyValueResult ** property);
+}
+
+[object, local, uuid(1e4670f8-ede5-48ab-881f-c45a0f38413a)]
+interface IFabricApplicationUpgradeProgressResult : IUnknown
+{
+    [] FABRIC_URI get_ApplicationName();
+
+    [] LPCWSTR get_ApplicationTypeName();
+
+    [] LPCWSTR get_TargetApplicationTypeVersion();
+
+    [] FABRIC_APPLICATION_UPGRADE_STATE get_UpgradeState();
+
+    [] HRESULT GetUpgradeDomains(
+        [out] ULONG * itemCount,
+        [out, retval] const FABRIC_UPGRADE_DOMAIN_STATUS_DESCRIPTION ** bufferedItems);
+
+    [] HRESULT GetChangedUpgradeDomains(
+        [in] IFabricApplicationUpgradeProgressResult * previousProgress,
+        [out] ULONG * itemCount,
+        [out, retval]  const FABRIC_UPGRADE_DOMAIN_STATUS_DESCRIPTION ** bufferedItems);
+}
+
+[object, local, uuid(62707ee5-b625-4489-aa4d-2e54b06ea248)]
+interface IFabricApplicationUpgradeProgressResult2 : IFabricApplicationUpgradeProgressResult
+{
+    [] FABRIC_ROLLING_UPGRADE_MODE get_RollingUpgradeMode();
+
+    [] LPCWSTR get_NextUpgradeDomain();
+}
+
+[object, local, uuid(1bc1d9c3-eef5-41fe-b8a2-abb97a8ba8e2)]
+interface IFabricApplicationUpgradeProgressResult3 : IFabricApplicationUpgradeProgressResult2
+{
+    [] const FABRIC_APPLICATION_UPGRADE_PROGRESS * get_UpgradeProgress();
+}
+
+[object, local, uuid(2adb07db-f7db-4621-9afc-daabe1e53bf8)]
+interface IFabricUpgradeProgressResult : IUnknown
+{
+    [] LPCWSTR get_TargetCodeVersion();
+
+    [] LPCWSTR get_TargetConfigVersion();
+
+    [] FABRIC_UPGRADE_STATE get_UpgradeState();
+
+    [] HRESULT GetUpgradeDomains(
+        [out] ULONG * itemCount,
+        [out, retval] const FABRIC_UPGRADE_DOMAIN_STATUS_DESCRIPTION ** bufferedItems);
+
+    [] HRESULT GetChangedUpgradeDomains(
+        [in] IFabricUpgradeProgressResult * previousProgress,
+        [out] ULONG * itemCount,
+        [out, retval]  const FABRIC_UPGRADE_DOMAIN_STATUS_DESCRIPTION ** bufferedItems);
+}
+
+[object, local, uuid(2f7e9d57-fe07-4e34-93e1-01d5a6298ca9)]
+interface IFabricRestartNodeResult : IUnknown
+{
+    [] FABRIC_NODE_RESULT * get_Result();
+}
+
+[object, local, uuid(7e9f51a5-88ac-49b8-958d-329e3334802e)]
+interface IFabricStartNodeResult : IUnknown
+{
+    [] FABRIC_NODE_RESULT * get_Result();
+}
+
+[object, local, uuid(711d60a6-9623-476c-970c-83059a0b4d55)]
+interface IFabricStopNodeResult : IUnknown
+{
+    [] FABRIC_NODE_RESULT * get_Result();
+}
+
+[object, local, uuid(fe087dc4-7a6a-41e3-90e9-b734a4cef41f)]
+interface IFabricRestartDeployedCodePackageResult : IUnknown
+{
+    [] FABRIC_DEPLOYED_CODE_PACKAGE_RESULT * get_Result();
+}
+
+[object, local, uuid(66AC03F5-E61C-47A2-80FE-49309A02C92C)]
+interface IFabricMovePrimaryResult : IUnknown
+{
+    [] FABRIC_MOVE_PRIMARY_RESULT * get_Result();
+}
+
+[object, local, uuid(60FE896A-B690-4ABB-94FD-86C615D29BEE)]
+interface IFabricMoveSecondaryResult : IUnknown
+{
+    [] FABRIC_MOVE_SECONDARY_RESULT * get_Result();
+}
+
+[object, local, uuid(9cc0aaf3-0f6c-40a3-85ac-38338dd36d75)]
+interface IFabricUpgradeProgressResult2 : IFabricUpgradeProgressResult
+{
+    [] FABRIC_ROLLING_UPGRADE_MODE get_RollingUpgradeMode();
+
+    [] LPCWSTR get_NextUpgradeDomain();
+}
+
+[object, local, uuid(dc3346ef-d2ef-40c1-807b-1ca8d2388b47)]
+interface IFabricUpgradeProgressResult3 : IFabricUpgradeProgressResult2
+{
+    [] const FABRIC_UPGRADE_PROGRESS * get_UpgradeProgress();
+}
+
+[object, local, uuid(f495715d-8e03-4232-b8d6-1227b39984fc)]
+interface IFabricServicePartitionResolutionChangeHandler : IUnknown
+{
+    [] void OnChange(
+        [in] IFabricServiceManagementClient * source,
+        [in] LONGLONG handlerId,
+        [in] IFabricResolvedServicePartitionResult * partition,
+        [in] HRESULT error);
+}
+
+[object, local, uuid(a04b7e9a-daab-45d4-8da3-95ef3ab5dbac)]
+interface IFabricServiceNotificationEventHandler : IUnknown
+{
+    [] HRESULT OnNotification(
+        [in] IFabricServiceNotification *);
+}
+
+[object, local, uuid(2bd21f94-d962-4bb4-84b8-5a4b3e9d4d4d)]
+interface IFabricClientConnectionEventHandler : IUnknown
+{
+    [] HRESULT OnConnected(
+        [in] IFabricGatewayInformationResult *);
+
+    [] HRESULT OnDisconnected(
+        [in] IFabricGatewayInformationResult *);
+}
+
+[object, local, uuid(6b5dbd26-7d7a-4a3f-b8ea-1f049105e897)]
+interface IFabricClientConnectionEventHandler2 : IFabricClientConnectionEventHandler
+{
+    [] HRESULT OnClaimsRetrieval(
+        [in] const FABRIC_CLAIMS_RETRIEVAL_METADATA * metadata,
+        [out, retval] IFabricStringResult ** token);
+}
+
+[object, local, uuid(3b825afd-cb31-4589-961e-e3778aa23a60)]
+interface IFabricClientSettingsResult : IUnknown
+{
+    [] const FABRIC_CLIENT_SETTINGS * get_Settings();
+}
+
+[object, local, uuid(6b9b0f2c-6782-4a31-a256-570fa8ba32d3)]
+interface IFabricClusterHealthResult : IUnknown
+{
+    [] const FABRIC_CLUSTER_HEALTH * get_ClusterHealth();
+}
+
+[object, local, uuid(e461f70b-51b8-4b73-9f35-e38e5ac68719)]
+interface IFabricNodeHealthResult : IUnknown
+{
+    [] const FABRIC_NODE_HEALTH * get_NodeHealth();
+}
+
+[object, local, uuid(41612fab-e615-4a48-98e7-4abcc93b6049)]
+interface IFabricApplicationHealthResult : IUnknown
+{
+    [] const FABRIC_APPLICATION_HEALTH * get_ApplicationHealth();
+}
+
+[object, local, uuid(52040bd9-a78e-4308-a30e-7114e3684e76)]
+interface IFabricServiceHealthResult : IUnknown
+{
+    [] const FABRIC_SERVICE_HEALTH * get_ServiceHealth();
+}
+
+[object, local, uuid(10c9e99d-bb3f-4263-a7f7-abbaf3c03576)]
+interface IFabricPartitionHealthResult : IUnknown
+{
+    [] const FABRIC_PARTITION_HEALTH * get_PartitionHealth();
+}
+
+[object, local, uuid(b4d5f2d9-e5cc-49ae-a6c8-89e8df7b6c15)]
+interface IFabricReplicaHealthResult : IUnknown
+{
+    [] const FABRIC_REPLICA_HEALTH * get_ReplicaHealth();
+}
+
+[object, local, uuid(4df50bf4-7c28-4210-94f7-50625df6c942)]
+interface IFabricDeployedApplicationHealthResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_APPLICATION_HEALTH * get_DeployedApplicationHealth();
+}
+
+[object, local, uuid(40991ce0-cdbb-44e9-9cdc-b14a5d5ea4c1)]
+interface IFabricDeployedServicePackageHealthResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_SERVICE_PACKAGE_HEALTH * get_DeployedServicePackageHealth();
+}
+
+[object, local, uuid(7cc3eb08-0e69-4e52-81fc-0190ab997dbe)]
+interface IFabricGetNodeListResult : IUnknown
+{
+    [] const FABRIC_NODE_QUERY_RESULT_LIST * get_NodeList();
+}
+
+[object, local, uuid(944f7a70-224e-4191-8dd1-bba46dc88dd2)]
+interface IFabricGetApplicationTypeListResult : IUnknown
+{
+    [] const FABRIC_APPLICATION_TYPE_QUERY_RESULT_LIST * get_ApplicationTypeList();
+}
+
+[object, local, uuid(5d8dde9c-05e8-428d-b494-43873d7c2db8)]
+interface IFabricGetApplicationTypePagedListResult : IUnknown
+{
+    [] const FABRIC_APPLICATION_TYPE_QUERY_RESULT_LIST * get_ApplicationTypePagedList();
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(f038c61e-7059-41b6-8dea-d304a2080f46)]
+interface IFabricGetApplicationListResult : IUnknown
+{
+    [] const FABRIC_APPLICATION_QUERY_RESULT_LIST * get_ApplicationList();
+}
+
+[object, local, uuid(886e4ad2-edb8-4734-9dd4-0e9a2be5238b)]
+interface IFabricGetServiceTypeListResult : IUnknown
+{
+    [] const FABRIC_SERVICE_TYPE_QUERY_RESULT_LIST * get_ServiceTypeList();
+}
+
+[object, local, uuid(5e572763-29a9-463a-b602-1332c0f60e6b)]
+interface IFabricGetServiceGroupMemberTypeListResult : IUnknown
+{
+    [] const FABRIC_SERVICE_GROUP_MEMBER_TYPE_QUERY_RESULT_LIST * get_ServiceGroupMemberTypeList();
+}
+
+[object, local, uuid(9953e19a-ea1e-4a1f-bda4-ab42fdb77185)]
+interface IFabricGetServiceListResult : IUnknown
+{
+    [] const FABRIC_SERVICE_QUERY_RESULT_LIST * get_ServiceList();
+}
+
+[object, local, uuid(e9f7f574-fd07-4a71-9f22-9cf9ccf3c166)]
+interface IFabricGetServiceGroupMemberListResult : IUnknown
+{
+    [] const FABRIC_SERVICE_GROUP_MEMBER_QUERY_RESULT_LIST * get_ServiceGroupMemberList();
+}
+
+[object, local, uuid(afc1266c-967b-4769-9f8a-b249c5887ee6)]
+interface IFabricGetPartitionListResult : IUnknown
+{
+    [] const FABRIC_SERVICE_PARTITION_QUERY_RESULT_LIST * get_PartitionList();
+}
+
+[object, local, uuid(46f1a40c-a4f3-409e-a7ec-6fd115f7acc7)]
+interface IFabricGetPartitionLoadInformationResult : IUnknown
+{
+    [] const FABRIC_PARTITION_LOAD_INFORMATION * get_PartitionLoadInformation();
+}
+
+[object, local, uuid(e00d3761-3ac5-407d-a04f-1b59486217cf)]
+interface IFabricGetReplicaListResult : IUnknown
+{
+    [] const FABRIC_SERVICE_REPLICA_QUERY_RESULT_LIST * get_ReplicaList();
+}
+
+[object, local, uuid(5722b789-3936-4c33-9f7a-342967457612)]
+interface IFabricGetDeployedApplicationListResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_APPLICATION_QUERY_RESULT_LIST * get_DeployedApplicationList();
+}
+
+[object, local, uuid(ebd76f6f-508e-43ea-9ca2-a98ea2c0e846)]
+interface IFabricGetDeployedApplicationPagedListResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_APPLICATION_QUERY_RESULT_LIST * get_DeployedApplicationPagedList();
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(65851388-0421-4107-977b-39f4e15440d4)]
+interface IFabricGetDeployedServicePackageListResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_SERVICE_PACKAGE_QUERY_RESULT_LIST * get_DeployedServicePackageList();
+}
+
+[object, local, uuid(dba68c7a-3f77-49bb-b611-ff94df062b8d)]
+interface IFabricGetDeployedServiceTypeListResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_SERVICE_TYPE_QUERY_RESULT_LIST * get_DeployedServiceTypeList();
+}
+
+[object, local, uuid(3f390652-c0dc-4919-8a7f-8ae1e827de0c)]
+interface IFabricGetDeployedCodePackageListResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_CODE_PACKAGE_QUERY_RESULT_LIST * get_DeployedCodePackageList();
+}
+
+[object, local, uuid(29e064bf-5d78-49e5-baa6-acfc24a4a8b5)]
+interface IFabricGetDeployedReplicaListResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_SERVICE_REPLICA_QUERY_RESULT_LIST * get_DeployedReplicaList();
+}
+
+[object, local, uuid(6D9D355E-89CF-4928-B758-B11CA4664FBE)]
+interface IFabricGetDeployedServiceReplicaDetailResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_SERVICE_REPLICA_DETAIL_QUERY_RESULT_ITEM * get_ReplicaDetail();
+}
+
+[object, local, uuid(d042bdb6-4364-4818-b395-0e6b1a22cb11)]
+interface IFabricGetProvisionedCodeVersionListResult : IUnknown
+{
+    [] const FABRIC_PROVISIONED_CODE_VERSION_QUERY_RESULT_LIST * get_ProvisionedCodeVersionList();
+}
+
+[object, local, uuid(7cc3eb08-0e69-4e52-81fc-0190ab997dbf)]
+interface IFabricGetClusterLoadInformationResult : IUnknown
+{
+    [] const FABRIC_CLUSTER_LOAD_INFORMATION * get_ClusterLoadInformation();
+}
+
+[object, local, uuid(1bbb9f78-e883-49d1-a998-7eb864fd4a0e)]
+interface IFabricGetProvisionedConfigVersionListResult : IUnknown
+{
+    [] const FABRIC_PROVISIONED_CONFIG_VERSION_QUERY_RESULT_LIST * get_ProvisionedConfigVersionList();
+}
+
+[object, local, uuid(4332eb3a-aed6-86fe-c2fa-653123dea09b)]
+interface IFabricGetNodeLoadInformationResult : IUnknown
+{
+    [] const FABRIC_NODE_LOAD_INFORMATION * get_NodeLoadInformation();
+}
+
+[object, local, uuid(e4190ca0-225c-11e4-8c21-0800200c9a66)]
+interface IFabricGetReplicaLoadInformationResult : IUnknown
+{
+    [] const FABRIC_REPLICA_LOAD_INFORMATION * get_ReplicaLoadInformation();
+}
+
+[object, local, uuid(38fd0512-7586-4bd5-9616-b7070cf025c0)]
+interface IFabricGetApplicationLoadInformationResult : IUnknown
+{
+    [] const FABRIC_APPLICATION_LOAD_INFORMATION * get_ApplicationLoadInformation();
+}
+
+[object, local, uuid(a57e7740-fa33-448e-9f35-8bf802a713aa)]
+interface IFabricGatewayInformationResult : IUnknown
+{
+    [] const FABRIC_GATEWAY_INFORMATION * get_GatewayInformation();
+}
+
+[object, local, uuid(02bd6674-9c5a-4262-89a8-ac1a6a2fb5e9)]
+interface IFabricGetRollingUpgradeMonitoringPolicyResult : IUnknown
+{
+    [] const FABRIC_ROLLING_UPGRADE_MONITORING_POLICY * get_Policy();
+}
+
+[object, local, uuid(9D86A611-3FD3-451B-9495-6A831F417473)]
+interface IFabricGetUnplacedReplicaInformationResult : IUnknown
+{
+    [] const FABRIC_UNPLACED_REPLICA_INFORMATION * get_UnplacedReplicaInformation();
+}
+
+[object, local, uuid(4a0f2da7-f851-44e5-8e12-aa521076097a)]
+interface IFabricGetNodeListResult2 : IFabricGetNodeListResult
+{
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(6637a860-26bc-4f1a-902f-f418fcfe1e51)]
+interface IFabricGetApplicationListResult2 : IFabricGetApplicationListResult
+{
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(30263683-4b25-4ec3-86d7-94ed86e7a8bf)]
+interface IFabricGetServiceListResult2 : IFabricGetServiceListResult
+{
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(b131b99a-d251-47b2-9d08-24ddd6793206)]
+interface IFabricGetPartitionListResult2 : IFabricGetPartitionListResult
+{
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(0bc12f86-c157-4c0d-b274-01fb09145934)]
+interface IFabricGetReplicaListResult2 : IFabricGetReplicaListResult
+{
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(7fefcf06-c840-4d8a-9cc7-36f080e0e121)]
+interface IFabricGetClusterHealthChunkResult : IUnknown
+{
+    [] const FABRIC_CLUSTER_HEALTH_CHUNK * get_ClusterHealthChunk();
+}
+
+[object, local, uuid(614921e6-75f1-44e7-9107-ab88819136b8)]
+interface IFabricPartitionDataLossProgressResult : IUnknown
+{
+    [] const FABRIC_PARTITION_DATA_LOSS_PROGRESS * get_Progress();
+}
+
+[object, local, uuid(95A56E4A-490D-445E-865C-EF0A62F15504)]
+interface IFabricOrchestrationUpgradeStatusResult : IUnknown
+{
+    [] const FABRIC_ORCHESTRATION_UPGRADE_PROGRESS * get_Progress();
+}
+
+[object, local, uuid(413968AA-2EB7-4023-B9DC-0F2160B76A6D)]
+interface IFabricUpgradeOrchestrationServiceStateResult : IUnknown
+{
+    [] const FABRIC_UPGRADE_ORCHESTRATION_SERVICE_STATE * get_State();
+}
+
+[object, local, uuid(36d8e378-3706-403d-8d99-2afd1a120687)]
+interface IFabricPartitionQuorumLossProgressResult : IUnknown
+{
+    [] const FABRIC_PARTITION_QUORUM_LOSS_PROGRESS * get_Progress();
+}
+
+[object, local, uuid(d2cb2ee1-a1ba-4cbd-80f7-14fd3d55bb61)]
+interface IFabricPartitionRestartProgressResult : IUnknown
+{
+    [] const FABRIC_PARTITION_RESTART_PROGRESS * get_Progress();
+}
+
+[object, local, uuid(87798f5c-e600-493a-a926-16b6807378e6)]
+interface IFabricTestCommandStatusResult : IUnknown
+{
+    [] const TEST_COMMAND_QUERY_RESULT_LIST * get_Result();
+}
+
+[object, local, uuid(DE148299-C48A-4540-877B-5B1DAA518D76)]
+interface IFabricChaosEventsSegmentResult : IUnknown
+{
+    [] const FABRIC_CHAOS_EVENTS_SEGMENT * get_ChaosEventsSegmentResult();
+}
+
+[object, local, uuid(FA8AA86E-F0FA-4A14-BED7-1DCFA0980B5B)]
+interface IFabricChaosDescriptionResult : IUnknown
+{
+    [] const FABRIC_CHAOS_DESCRIPTION * get_ChaosDescriptionResult();
+}
+
+[object, local, uuid(3B93F0D9-C0A9-4DF5-9B09-B2365DE89D84)]
+interface IFabricChaosScheduleDescriptionResult : IUnknown
+{
+    [] const FABRIC_CHAOS_SCHEDULE_DESCRIPTION * get_ChaosScheduleDescriptionResult();
+}
+
+[object, local, uuid(8952E931-B2B3-470A-B982-6B415F30DBC0)]
+interface IFabricChaosReportResult : IUnknown
+{
+    [] const FABRIC_CHAOS_REPORT * get_ChaosReportResult();
+}
+
+[object, local, uuid(68a98626-6a1b-4dd8-ad93-74c0936e86aa)]
+interface IFabricNodeTransitionProgressResult : IUnknown
+{
+    [] const FABRIC_NODE_TRANSITION_PROGRESS * get_Progress();
+}
+
+[object, local, uuid(b64fb70c-fe53-4ca1-b6d9-23d1150fe76c)]
+interface IFabricGetServiceNameResult : IUnknown
+{
+    [] const FABRIC_SERVICE_NAME_QUERY_RESULT * get_ServiceName();
+}
+
+[object, local, uuid(258dbcc8-ac9a-47ff-838b-57ff506c73b1)]
+interface IFabricGetApplicationNameResult : IUnknown
+{
+    [] const FABRIC_APPLICATION_NAME_QUERY_RESULT * get_ApplicationName();
+}
+
+[object, local, uuid(fe15a879-0dbe-4841-9cc6-6e92077cd669)]
+interface IFabricSecretsResult : IUnknown
+{
+    [] const FABRIC_SECRET_LIST * get_Secrets();
+}
+
+[object, local, uuid(bb8f69de-f667-4fab-820d-274cf4303ab4)]
+interface IFabricSecretReferencesResult : IUnknown
+{
+    [] const FABRIC_SECRET_REFERENCE_LIST * get_SecretReferences();
+}
+
+[object, local, uuid(38c4c723-3815-49d8-bdf2-68bfb536b8c9)]
+interface IFabricSecretStoreClient : IUnknown
+{
+    [] HRESULT BeginGetSecrets(
+        [in] const FABRIC_SECRET_REFERENCE_LIST * secretReferences,
+        [in] BOOLEAN includeValue,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetSecrets(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricSecretsResult ** result);
+
+    [] HRESULT BeginSetSecrets(
+        [in] const FABRIC_SECRET_LIST * secrets,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndSetSecrets(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricSecretsResult ** result);
+
+    [] HRESULT BeginRemoveSecrets(
+        [in] const FABRIC_SECRET_REFERENCE_LIST * secretReferences,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndRemoveSecrets(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricSecretReferencesResult ** result);
+
+    [] HRESULT BeginGetSecretVersions(
+        [in] const FABRIC_SECRET_REFERENCE_LIST * secretReferences,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetSecretVersions(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricSecretReferencesResult ** result);
+
+}
+
+[object, local, uuid(bd777a0f-2020-40bb-8f23-8756649cce47)]
+interface IFabricGetNetworkListResult : IUnknown
+{
+    [] const FABRIC_NETWORK_QUERY_RESULT_LIST * get_NetworkList();
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(ad1f51ff-e244-498e-9f72-609b01124b84)]
+interface IFabricGetNetworkApplicationListResult : IUnknown
+{
+    [] const FABRIC_NETWORK_APPLICATION_QUERY_RESULT_LIST * get_NetworkApplicationList();
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(3ba780e9-58eb-478d-bc89-42c89e19d083)]
+interface IFabricGetNetworkNodeListResult : IUnknown
+{
+    [] const FABRIC_NETWORK_NODE_QUERY_RESULT_LIST * get_NetworkNodeList();
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(4f9d0390-aa08-4dee-ba49-62891eb47c37)]
+interface IFabricGetApplicationNetworkListResult : IUnknown
+{
+    [] const FABRIC_APPLICATION_NETWORK_QUERY_RESULT_LIST * get_ApplicationNetworkList();
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(347f5d8c-1abd-48e1-a7d1-9083556dafd3)]
+interface IFabricGetDeployedNetworkListResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_NETWORK_QUERY_RESULT_LIST * get_DeployedNetworkList();
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}
+
+[object, local, uuid(6586d264-a96e-4f46-9388-189de5d61d6d)]
+interface IFabricGetDeployedNetworkCodePackageListResult : IUnknown
+{
+    [] const FABRIC_DEPLOYED_NETWORK_CODE_PACKAGE_QUERY_RESULT_LIST * get_DeployedNetworkCodePackageList();
+    [] const FABRIC_PAGING_STATUS * get_PagingStatus();
+}

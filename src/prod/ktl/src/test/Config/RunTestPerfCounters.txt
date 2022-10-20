@@ -1,0 +1,6 @@
+\PhysicalDisk(_Total)\% Disk Time
+\PhysicalDisk(_Total)\Avg. Disk sec/Read
+\PhysicalDisk(_Total)\Avg. Disk sec/Write
+\PhysicalDisk(_Total)\Disk Transfers/sec
+\Process(_Total)\Thread Count
+\Processor(_Total)\% Processor Time

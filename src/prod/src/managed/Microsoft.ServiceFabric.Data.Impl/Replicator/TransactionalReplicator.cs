@@ -67,7 +67,7 @@ namespace Microsoft.ServiceFabric.Replicator
         /// <param name="onDataLossCallback">On data loss callback. Called when a data loss is suspected.</param>
         internal TransactionalReplicator(Func<CancellationToken, Task<bool>> onDataLossCallback)
         {
-            this.metricManager = new MetricManager();
+            this.metricManager = new MetricManager(this);
             this.stateManager = new DynamicStateManager(this);
             this.onDataLossCallback = onDataLossCallback;
         }
@@ -79,7 +79,7 @@ namespace Microsoft.ServiceFabric.Replicator
         /// <param name="onDataLossCallback">On data loss callback. Called when a data loss is suspected.</param>
         internal TransactionalReplicator(ILoggingReplicator loggingReplicator, Func<CancellationToken, Task<bool>> onDataLossCallback)
         {
-            this.metricManager = new MetricManager();
+            this.metricManager = new MetricManager(this);
             this.stateManager = new DynamicStateManager(this, loggingReplicator);
             this.onDataLossCallback = onDataLossCallback;
         }

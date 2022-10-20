@@ -1,0 +1,126 @@
+import "bond_const.bond"
+
+namespace bond
+
+struct SerializableExceptionBase
+{
+    8189: string message;
+}
+
+
+// Empty schema with no fields
+struct Void
+{
+}
+
+// Schema with the same memory layout as Windows GUID
+struct GUID
+{
+    0: uint32 Data1;
+    1: uint16 Data2;
+    2: uint16 Data3;
+    3: uint64 Data4;
+}
+
+// Field modifier enumerator
+enum Modifier
+{
+    Optional,
+    Required,
+    RequiredOptional
+}
+
+// Schema used to represent field's default value
+struct Variant
+{
+    0: uint64 uint_value;
+    1: int64 int_value;
+    2: double double_value;
+    3: string string_value;
+    4: wstring wstring_value;
+    5: bool nothing;
+}
+
+// Schema representing field or struct metadata
+struct Metadata
+{
+    // Name of the field or struct
+    0: string name;
+    
+    // Fully qualified name, used only for structs
+    1: string qualified_name;
+
+    // Attributes
+    2: map<string, string> attributes;
+
+    // Field modifier, not used for structs
+    3: Modifier modifier = Optional;
+
+    // Default value of the field, not used for structs
+    4: Variant default_value;
+}
+
+// Schema representing a type within SchemaDef
+struct TypeDef
+{
+    // Type identifier
+    0: BondDataType id = BT_STRUCT;
+    
+    // Index of struct definition in SchemaDef.structs when id == BT_STRUCT
+    1: uint16 struct_def = 0;
+    
+    // Type definition for:
+    //  list elements (id == BT_LIST),
+    //  set elements (id == BT_SET),
+    //  or mapped value (id == BT_MAP)
+    2: nullable<TypeDef> element;
+    
+    // Type definition for map key when id == BT_MAP
+    3: nullable<TypeDef> key;
+    
+    // True if the type is bonded<T>; used only when id == BT_STRUCT
+    4: bool bonded_type;
+}
+
+// Schema representing a field definition
+struct FieldDef
+{
+    // Field metadata
+    0: Metadata metadata;           
+    
+    // Field ordinal
+    1: uint16 id;
+
+    // Field type definition
+    2: TypeDef type;
+}
+
+// Schema representing a struct definition
+struct StructDef
+{
+    // Struct metadata
+    0: Metadata metadata;
+
+    // Type definition of base struct
+    1: nullable<TypeDef> base_def;
+    
+    // List of field definitions
+    2: vector<FieldDef> fields;
+}
+
+
+// Schema used to represent schema definition
+struct SchemaDef
+{
+    // List of struct definitions referenced in the schema
+    0: vector<StructDef> structs;
+
+    // Root struct of the schema
+    1: TypeDef root; 
+}
+
+// Generic schema with one field of specified type
+struct Box<T>
+{
+    0: T value;
+}

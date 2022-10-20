@@ -131,8 +131,11 @@ namespace TestCommon
                 testErrorCodeMap.insert( Type_Pair(L"DirectoryNotFound",                        ErrorCodeValue::DirectoryNotFound));
                 testErrorCodeMap.insert( Type_Pair(L"ComposeDeploymentAlreadyExists",           ErrorCodeValue::ComposeDeploymentAlreadyExists));
                 testErrorCodeMap.insert( Type_Pair(L"ComposeDeploymentNotFound",                ErrorCodeValue::ComposeDeploymentNotFound));
+                testErrorCodeMap.insert(Type_Pair(L"ComposeDeploymentNotUpgrading",             ErrorCodeValue::ComposeDeploymentNotUpgrading));
                 testErrorCodeMap.insert( Type_Pair(L"InvalidAddress",                           ErrorCodeValue::InvalidAddress));
                 testErrorCodeMap.insert( Type_Pair(L"InvalidServiceScalingPolicy",              ErrorCodeValue::InvalidServiceScalingPolicy));
+                testErrorCodeMap.insert( Type_Pair(L"NetworkNotFound",                          ErrorCodeValue::NetworkNotFound));
+                testErrorCodeMap.insert( Type_Pair(L"NetworkInUse",                             ErrorCodeValue::NetworkInUse));
             }
         }
 

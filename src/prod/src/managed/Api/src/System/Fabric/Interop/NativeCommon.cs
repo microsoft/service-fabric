@@ -802,5 +802,11 @@ namespace System.Fabric.Interop
         internal static extern void FabricSetIsSFVolumeDiskServiceEnabled2(
             [In][MarshalAs(UnmanagedType.I1)] bool isSFVolumeDiskServiceEnabled,
             [In] IntPtr machineName);
+
+#if DotNetCoreClrLinux
+        [DllImport("libFabricCommon.so", PreserveSig = false)]
+        internal static extern void FabricSetSfInstalledMoby(
+            [In] IntPtr fileContents);
+#endif
     }
 }

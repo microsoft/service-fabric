@@ -16,9 +16,14 @@ namespace Hosting2
         ~ContainerHelper();
         Common::ErrorCode GetCurrentOsBuildNumber(__out std::wstring & os);
         Common::ErrorCode GetContainerImageName(ServiceModel::ImageOverridesDescription const& images, __inout std::wstring & imageName);
+        void MarkContainerLogFolder(
+            std::wstring const & appServiceId,
+            bool forProcessing = false,
+            bool markAllDirectories = false);
 
     private:
         ContainerHelper();
+        Common::ErrorCode GetContainerLogRoot(_Out_ wstring & containerLogRoot);
 
     private:
         std::wstring osBuildNumber_;

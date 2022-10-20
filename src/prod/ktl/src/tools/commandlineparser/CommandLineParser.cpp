@@ -515,3 +515,123 @@ BOOLEAN CmdLineParser::Parse(__in_opt LPWSTR RawString)
 }
 
 
+
+//
+// Support for redirecting KTL traces to a file when running under a
+// unit test
+//
+#if defined(PLATFORM_UNIX)
+
+static const ULONG rootPathLengthInChar = 512;
+#define TraceFileName "/ktl.trace"
+static const char* traceFileName = TraceFileName; 
+static FILE* fp;
+
+//
+// Format of a trace line in a .trace file:
+// date time,Type,ThreadId,ProcessId,TraceType,TraceText
+// example: 2018-8-17 09:05:43.233,Informational,4284,4,.CHECKPOINT_WDATA_INFORMATIONAL,Checkpoint (Activity Id:0) (Message:=CloseServiceFSM) (Status:=0) (D1:=2) (D2:=ffffe0006b17d870) (D3:=0) (D4:=0) (Function:OverlayManager::CloseServiceFSM) (Line:407) (File:x:\bt\961135\repo\src\prod\src\ktllogger\sys\ktlshim\overlaymanager.cpp)
+//
+static char* levels[] =
+{
+    "Silent",
+    "Critical",
+    "Error",
+    "Warning",
+    "Informational",
+    "Noise"
+};
+
+VOID KtlTraceCallbackRoutine(
+    __in LPCWSTR TypeText,
+    __in USHORT Level,
+    __in LPCSTR Text
+   )
+{
+    KAssert(fp != NULL);
+
+    time_t rawtime;
+    struct tm* timeInfo;
+    char timeBuf[80];
+
+    time(&rawtime);
+    timeInfo = localtime(&rawtime);
+    strftime(timeBuf, 80, "%F %T", timeInfo);
+
+    char *level;
+    if (Level > 5)
+    {
+        level = "Unknown";
+    } else {
+        level = levels[Level];
+    }
+
+    char* p = (char*)Text;
+    while(*p != 0)
+    {
+        if (*p == (char)0x0a)
+        {
+            *p = ' ';
+        }
+        p++;
+    }
+    
+    fprintf(fp, "%s,%s,%d,%d,%s,%s\n", timeBuf, level, GetCurrentThreadId(), GetCurrentProcess(), Utf16To8(TypeText).c_str(), Text);
+    fflush(fp);
+}
+
+
+NTSTATUS KtlTraceRegister()
+{
+    char currentPath[rootPathLengthInChar+1];
+    char *path;
+	HRESULT hr;
+	size_t cchMax;
+
+    path = getcwd(currentPath, rootPathLengthInChar);
+    if (path == NULL)
+    {
+        printf("Ktl traces path is too long\n");
+        return(STATUS_UNSUCCESSFUL);
+    }
+
+	hr = StringCchLengthA(currentPath, rootPathLengthInChar, &cchMax);
+	if (! SUCCEEDED(hr))
+	{
+        printf("Ktl traces path is too long\n");
+        return(STATUS_UNSUCCESSFUL);
+	}
+	
+    ULONG lenNeeded = cchMax + sizeof(TraceFileName);
+    if (lenNeeded > rootPathLengthInChar)
+    {
+        printf("Ktl traces path is too long\n");
+        return(STATUS_UNSUCCESSFUL);
+    }
+	
+    char* psz = currentPath + cchMax;
+	hr = StringCchCopyA(psz, (rootPathLengthInChar - cchMax), traceFileName);
+	if (! SUCCEEDED(hr))
+	{
+        printf("Ktl traces path is too long\n");
+        return(STATUS_UNSUCCESSFUL);
+	}
+	
+    printf("Ktl traces will be saved to %s\n", path);
+
+    fp = fopen(path, "w+");
+    if (fp == NULL)
+    {
+        return(STATUS_UNSUCCESSFUL);
+    }
+
+    RegisterKtlTraceCallback(KtlTraceCallbackRoutine);
+    return(STATUS_SUCCESS);
+}
+
+VOID KtlTraceUnregister()
+{
+    fclose(fp);
+}
+
+#endif

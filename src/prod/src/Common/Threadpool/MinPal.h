@@ -115,10 +115,17 @@ namespace Threadpool{
         va_end(args);
     }
 
+#if __aarch64__
+     inline VOID DBG_DebugBreak()
+    {
+        __builtin_trap();
+    }
+#else
     inline VOID DBG_DebugBreak()
     {
         __asm__ __volatile__("int $3");
     }
+#endif
 
     #define ASSERT(args...)                                             \
     {                                                                   \

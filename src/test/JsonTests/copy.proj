@@ -3,14 +3,19 @@
   <Import Project="$(EnvironmentConfig)" />
     
   <ItemGroup>  
-	<Content Include="*.json" />
+    <Content Include="*.json" />
+    <MoreContent Include="3hour\*.json" />
   </ItemGroup>
   <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
   
   <Target Name="AfterBuild">
     <Copy
-		SourceFiles="@(Content)"
-		DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\JsonTests"
-	/>
+      SourceFiles="@(Content)"
+      DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\JsonTests"
+    />
+    <Copy
+      SourceFiles="@(MoreContent)"
+      DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\JsonTests"
+    />
   </Target>  
 </Project>

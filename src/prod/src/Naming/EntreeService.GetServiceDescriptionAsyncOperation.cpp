@@ -26,6 +26,7 @@ namespace Naming
       , psd_()
       , storeVersion_(ServiceModel::Constants::UninitializedVersion)
       , refreshCache_(true)
+      , expectsReplyMessage_(true)
     {
     }
 
@@ -42,6 +43,25 @@ namespace Naming
       , psd_()
       , storeVersion_(ServiceModel::Constants::UninitializedVersion)
       , refreshCache_(false)
+      , expectsReplyMessage_(true)
+    {
+    }
+
+    EntreeService::GetServiceDescriptionAsyncOperation::GetServiceDescriptionAsyncOperation(
+        __in GatewayProperties & properties,
+        NamingUri const & name,
+        FabricActivityHeader const & activityHeader,
+        bool expectsReplyMessage,
+        TimeSpan const timeout,
+        AsyncCallback const & callback, 
+        AsyncOperationSPtr const & parent)
+      : NamingRequestAsyncOperationBase (properties, name, activityHeader, timeout, callback, parent)
+      , cachedName_()
+      , isSystemService_(false)
+      , psd_()
+      , storeVersion_(ServiceModel::Constants::UninitializedVersion)
+      , refreshCache_(false)
+      , expectsReplyMessage_(expectsReplyMessage)
     {
     }
 
@@ -84,10 +104,17 @@ namespace Naming
         AsyncCallback const & callback, 
         AsyncOperationSPtr const & parent)
     {
+        //
+        // This cached service description api is used as a part of determining the service endpoints(resolve) for a user request
+        // or as a part of gateway logic to satisfy some queries. In these cases, we directly need to return
+        // the service description object and we dont need to create a transport message that contains the service description.
+        //
+
         auto operation = shared_ptr<AsyncOperation>(new GetServiceDescriptionAsyncOperation(
             properties,
             name,
             activityHeader,
+            false,
             timeout,
             callback,
             parent));
@@ -517,7 +544,11 @@ namespace Naming
     void EntreeService::GetServiceDescriptionAsyncOperation::SetReplyAndCompleteWithCurrentPsd(
         AsyncOperationSPtr const & thisSPtr)
     {
-        auto replyMessage = NamingMessage::GetServiceDescriptionReply(*psd_);                        
+        MessageUPtr replyMessage = nullptr;
+        if (expectsReplyMessage_)
+        {
+            replyMessage = NamingMessage::GetServiceDescriptionReply(*psd_);
+        }
 
         this->SetReplyAndComplete(thisSPtr, move(replyMessage), ErrorCodeValue::Success);
     }

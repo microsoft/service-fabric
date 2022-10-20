@@ -70,7 +70,6 @@ protected:
     vector<wstring> calculatorPackageFiles;
     vector<wstring> sandboxedPQueueAppFiles;
     vector<wstring> sandboxedPQueuePackageFiles;
-    vector<wstring> fabricUpgradeFiles;
 
     shared_ptr<TestFabricNodeHost> fabricNodeHost_;
 };
@@ -529,12 +528,6 @@ bool DownloadManagerTestFSSSetup::Setup()
     sandboxedPQueuePackageFiles.push_back(L"SandboxPersistentQueueApp_App1\\PersistentQueueServicePackage.PersistentQueueService.Code.1.0\\Common.dll.txt");
     sandboxedPQueuePackageFiles.push_back(L"SandboxPersistentQueueApp_App1\\PersistentQueueServicePackage.PersistentQueueService.Code.1.0\\SandboxPersistentQueueService.exe.txt");
 
-    fabricUpgradeFiles.push_back(L"ClusterManifest.1.0.xml");
-#if defined(PLATFORM_UNIX)
-    fabricUpgradeFiles.push_back(L"servicefabric_1.0.961.0.deb");
-#else
-    fabricUpgradeFiles.push_back(L"WindowsFabric.1.0.961.0.msi");
-#endif
     return true;
 }
 

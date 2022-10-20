@@ -119,6 +119,8 @@ namespace System.Fabric.Dca.LttConsumerHelper
 
         #endregion
 
+        private object disposeLock = new object();
+
         // Whether or not Windows Fabric traces should be organized into separate sub-folders
         internal bool OrganizeWindowsFabricTracesByType 
         {
@@ -407,6 +409,22 @@ namespace System.Fabric.Dca.LttConsumerHelper
                                                   lastEventTicks,
                                                   differentiator);
 
+            var applicationInstanceId = ContainerEnvironment.GetContainerApplicationInstanceId(this.logSourceId);
+            if (ContainerEnvironment.IsContainerApplication(applicationInstanceId))
+            {
+                // Note that the a hash of the applicationInstanceId is being used to reduce file name length in around 70 characters
+                // This is done to workaround PathTooLong exception in FileUploaderBase.cs since we don't have an interop for FileSystemWatcher
+                // and .NET 4.5 used does not support long paths yet.
+                traceFileNamePrefix = string.Format(
+                                                CultureInfo.InvariantCulture,
+                                                "{0}_{1:X8}_{2}_{3:D20}_{4}.",
+                                                this.fabricNodeId,
+                                                Path.GetFileName(applicationInstanceId).GetHashCode(),
+                                                newTraceFileName,
+                                                lastEventTicks,
+                                                differentiator);
+            }
+
             string traceFileNameWithoutPath = string.Concat(
                                                   traceFileNamePrefix,
                                                   "dtr");
@@ -467,57 +485,74 @@ namespace System.Fabric.Dca.LttConsumerHelper
 
         private void CsvMoveFilesHandler(object state)
         {
-            if (this.stopping)
+            lock (this.disposeLock)
             {
-                return;
-            }
+                if (this.stopping)
+                {
+                    return;
+                }
 
-            string sourceFolderLocal = this.sourceFolder;
+                string sourceFolderLocal = this.sourceFolder;
 
-            this.traceSource.WriteInfo(
-                this.logSourceId,
-                "Scanning directory {0} for trace files.",
-                sourceFolderLocal);
-
-            // Get the trace files that are old enough to be deleted
-            string searchPattern = string.Format(
-                                       CultureInfo.InvariantCulture,
-                                       "*.{0}",
-                                       FileExtensionToMove);
-            DirectoryInfo dirInfo = new DirectoryInfo(sourceFolderLocal);
-            List<FileInfo> lttTraceFiles = dirInfo.GetFiles(searchPattern, SearchOption.AllDirectories)
-                                   .ToList();
-
-            foreach (FileInfo file in lttTraceFiles)
-            {
                 this.traceSource.WriteInfo(
                     this.logSourceId,
-                    "Moving file {0} for upload.",
-                    file.Name);
+                    "Scanning directory {0} for trace files.",
+                    sourceFolderLocal);
+                try
+                {
+                    // Get the trace files that are old enough to be deleted
+                    string searchPattern = string.Format(
+                                            CultureInfo.InvariantCulture,
+                                            "*.{0}",
+                                            FileExtensionToMove);
+                    DirectoryInfo dirInfo = new DirectoryInfo(sourceFolderLocal);
+                    List<FileInfo> lttTraceFiles = dirInfo.GetFiles(searchPattern, SearchOption.AllDirectories)
+                                        .ToList();
 
-                // Copy the trace file to the CSV directory
-                CopyTraceFileForUpload(file.FullName);
+                    foreach (FileInfo file in lttTraceFiles)
+                    {
+                        this.traceSource.WriteInfo(
+                            this.logSourceId,
+                            "Moving file {0} for upload.",
+                            file.Name);
+
+                        // Copy the trace file to the CSV directory
+                        CopyTraceFileForUpload(file.FullName);
+                    }
+                } catch (DirectoryNotFoundException)
+                {
+                    this.traceSource.WriteError(
+                        this.logSourceId,
+                        "Unable to find trace source folder at: {0}.",
+                        sourceFolderLocal
+                    );
+                }
+                finally
+                {
+                    // Schedule the next pass
+                    this.csvMoveFilesTimer.Start();
+                }
             }
-
-            // Schedule the next pass
-            this.csvMoveFilesTimer.Start();
         }
         #endregion
         
         public void Dispose()
         {
-            if (this.disposed)
+            lock (this.disposeLock)
             {
-                return;
+                if (this.disposed)
+                {
+                    return;
+                }
+                this.disposed = true;
+
+                this.stopping = true;
+
+                this.diskSpaceManager.UnregisterFolders(this.logSourceId);
+
+                this.csvMoveFilesTimer.StopAndDispose();
+                this.csvMoveFilesTimer.DisposedEvent.WaitOne();
             }
-            this.disposed = true;
-
-            this.stopping = true;
-
-            this.diskSpaceManager.UnregisterFolders(this.logSourceId);
-
-            this.csvMoveFilesTimer.StopAndDispose();
-            this.csvMoveFilesTimer.DisposedEvent.WaitOne();
 
             GC.SuppressFinalize(this);
             return;

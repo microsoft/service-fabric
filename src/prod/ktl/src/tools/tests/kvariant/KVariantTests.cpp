@@ -1179,6 +1179,15 @@ KVariantTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
+#if defined(PLATFORM_UNIX)
+    NTSTATUS status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+
     KTestPrintf("KVariantTest: STARTED\n");
 
     NTSTATUS Result;
@@ -1216,6 +1225,11 @@ KVariantTest(
     EventUnregisterMicrosoft_Windows_KTL();
 
     KTestPrintf("KVariantTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return Result;
 }
 

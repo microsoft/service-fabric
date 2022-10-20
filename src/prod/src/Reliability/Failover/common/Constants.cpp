@@ -30,6 +30,8 @@ Common::StringLiteral const Constants::AdminApiSource("AdminAPI");
 
 Common::StringLiteral const Constants::ServiceResolverSource("ServiceResolver");
 
+Common::StringLiteral const Constants::NIMApiSource("NIMApi");
+
 int64 const Constants::InvalidConfigurationVersion = 0;
 int64 const Constants::InvalidDataLossVersion = 0;
 int64 const Constants::InvalidReplicaId = -1;

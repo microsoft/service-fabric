@@ -17,6 +17,7 @@ namespace System.Fabric.BackupRestore.DataStructures
     [Serializable]
     [KnownType(typeof(FileShareBackupStore))]
     [KnownType(typeof(AzureBlobBackupStore))]
+    [KnownType(typeof(DsmsAzureBlobBackupStore))]
     internal abstract class BackupStoreInformation
     {
         /// <summary>
@@ -58,6 +59,12 @@ namespace System.Fabric.BackupRestore.DataStructures
             {
                 return AzureBlobBackupStore.FromNative(nativeStoreInformation);
             }
+            else if (nativeStoreInformation.StoreType == 
+                NativeBackupRestoreTypes.FABRIC_BACKUP_STORE_TYPE.FABRIC_BACKUP_STORE_TYPE_DSMS_AZURE_STORE)
+            {
+                return DsmsAzureBlobBackupStore.FromNative(nativeStoreInformation);
+            }
+
 
             return null;
         }

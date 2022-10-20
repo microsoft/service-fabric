@@ -70,7 +70,7 @@ TestWorkItem::Execute(
 
     r = InterlockedDecrement(&_RefCount);
 
-	KtlSystem& system = KtlSystem::GetDefaultKtlSystem();
+    KtlSystem& system = KtlSystem::GetDefaultKtlSystem();
 
     switch (r) {
         case 0:
@@ -407,61 +407,61 @@ TestDetachThread()
 
 ktl::Awaitable<void> TestParameterizedWorkItemAsync(KtlSystem& System)
 {
-	KAllocator&         allocator = System.GlobalNonPagedAllocator();
-	KThreadPool&        threadPool = System.DefaultSystemThreadPool();
-	using				MyWorkItemType = KThreadPool::ParameterizedWorkItem<KAsyncEvent&>;
+    KAllocator&         allocator = System.GlobalNonPagedAllocator();
+    KThreadPool&        threadPool = System.DefaultSystemThreadPool();
+    using               MyWorkItemType = KThreadPool::ParameterizedWorkItem<KAsyncEvent&>;
 
-	KAsyncEvent						workItemProcessed;
-	KAsyncEvent::WaitContext::SPtr	waitContext;
+    KAsyncEvent                     workItemProcessed;
+    KAsyncEvent::WaitContext::SPtr  waitContext;
 
-	KInvariant(NT_SUCCESS(workItemProcessed.CreateWaitContext(KTL_TAG_TEST, allocator, waitContext)));
+    KInvariant(NT_SUCCESS(workItemProcessed.CreateWaitContext(KTL_TAG_TEST, allocator, waitContext)));
 
-	MyWorkItemType::WorkItemProcessor worker = [](KAsyncEvent& CompletionEvent)
-	{
-		KNt::Sleep(1000);
-		CompletionEvent.SetEvent();
-	};
+    MyWorkItemType::WorkItemProcessor worker = [](KAsyncEvent& CompletionEvent)
+    {
+        KNt::Sleep(1000);
+        CompletionEvent.SetEvent();
+    };
 
-	MyWorkItemType		workItem(workItemProcessed, worker);
-	ULONGLONG			minEndTimeExpected = KNt::GetTickCount64() + 1000;
+    MyWorkItemType      workItem(workItemProcessed, worker);
+    ULONGLONG           minEndTimeExpected = KNt::GetTickCount64() + 1000;
 
-	threadPool.QueueWorkItem(workItem);
-	NTSTATUS status = co_await waitContext->StartWaitUntilSetAsync(nullptr);
-	KInvariant(NT_SUCCESS(status));
-	KInvariant(KNt::GetTickCount64() >= minEndTimeExpected);
+    threadPool.QueueWorkItem(workItem);
+    NTSTATUS status = co_await waitContext->StartWaitUntilSetAsync(nullptr);
+    KInvariant(NT_SUCCESS(status));
+    KInvariant(KNt::GetTickCount64() >= minEndTimeExpected);
 
-	co_return;
+    co_return;
 }
 
 #endif
 
 void TestParameterizedWorkItem()
 {
-	EventUnregisterMicrosoft_Windows_KTL();
-	KAllocator&         allocator = KtlSystem::GlobalNonPagedAllocator();
-	KThreadPool&        threadPool = allocator.GetKtlSystem().DefaultSystemThreadPool();
-	using				MyWorkItemType = KThreadPool::ParameterizedWorkItem<KAutoResetEvent&>;
-	
-	KAutoResetEvent		workItemProcessed;
-	MyWorkItemType::WorkItemProcessor worker = [](KAutoResetEvent& CompletionEvent)
-	{
-		KNt::Sleep(1000);
-		CompletionEvent.SetEvent();
-	};
+    EventUnregisterMicrosoft_Windows_KTL();
+    KAllocator&         allocator = KtlSystem::GlobalNonPagedAllocator();
+    KThreadPool&        threadPool = allocator.GetKtlSystem().DefaultSystemThreadPool();
+    using               MyWorkItemType = KThreadPool::ParameterizedWorkItem<KAutoResetEvent&>;
+    
+    KAutoResetEvent     workItemProcessed;
+    MyWorkItemType::WorkItemProcessor worker = [](KAutoResetEvent& CompletionEvent)
+    {
+        KNt::Sleep(1000);
+        CompletionEvent.SetEvent();
+    };
 
-	MyWorkItemType		workItem(workItemProcessed, worker);
-	ULONGLONG			minEndTimeExpected = KNt::GetTickCount64() + 1000;
+    MyWorkItemType      workItem(workItemProcessed, worker);
+    ULONGLONG           minEndTimeExpected = KNt::GetTickCount64() + 1000;
 
-	threadPool.QueueWorkItem(workItem);
-	workItemProcessed.WaitUntilSet();
+    threadPool.QueueWorkItem(workItem);
+    workItemProcessed.WaitUntilSet();
 
-	KInvariant(KNt::GetTickCount64() >= minEndTimeExpected);
+    KInvariant(KNt::GetTickCount64() >= minEndTimeExpected);
 
-	#if defined(K_UseResumable)
-	ktl::SyncAwait(TestParameterizedWorkItemAsync(allocator.GetKtlSystem()));
-	#endif
+    #if defined(K_UseResumable)
+    ktl::SyncAwait(TestParameterizedWorkItemAsync(allocator.GetKtlSystem()));
+    #endif
 
-	EventRegisterMicrosoft_Windows_KTL();
+    EventRegisterMicrosoft_Windows_KTL();
 }
 
 #if KTL_USER_MODE
@@ -502,7 +502,7 @@ void TestCoreLoading()
         }
     };
 
-    MyWorkItemType*		workItems = _newArray<MyWorkItemType>(KTL_TAG_TEST, allocator, TestCoreLoadingThreadCount);
+    MyWorkItemType*     workItems = _newArray<MyWorkItemType>(KTL_TAG_TEST, allocator, TestCoreLoadingThreadCount);
 
     // Prime 1 WI / Core
     for (int ix = 0; ix < TestCoreLoadingThreadCount; ix++)
@@ -528,9 +528,19 @@ KThreadPoolTest(
     int argc, WCHAR* args[]
     )
 {
-    KTestPrintf("KThreadPoolTest: START\n");
     NTSTATUS status;
 
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
+    KTestPrintf("KThreadPoolTest: START\n");
+    
     status = KtlSystem::Initialize();
     if (!NT_SUCCESS(status)) 
     {
@@ -540,8 +550,8 @@ KThreadPoolTest(
     #if KTL_USER_MODE
         TestCoreLoading();
     #endif
-	TestParameterizedWorkItem();
-	status = KThreadPoolTestX(argc, args);
+    TestParameterizedWorkItem();
+    status = KThreadPoolTestX(argc, args);
     if (NT_SUCCESS(status))
     {
         #if KTL_USER_MODE 
@@ -555,6 +565,11 @@ KThreadPoolTest(
     KtlSystem::Shutdown();
 
     KTestPrintf("KThreadPoolTest: COMPLETE: Status: %u\n", status);
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return status;
 }
 

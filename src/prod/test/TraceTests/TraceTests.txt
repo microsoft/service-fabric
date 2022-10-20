@@ -1,0 +1,65 @@
+ApplicationUpgrade_ApplicationUpgradeBitsDownloadFailed:
+	[ApplicationName]	fabric:/app1
+
+ApplicationUpgrade_ApplicationUpgradeBitsDownloadStuck:
+	[ApplicationName]	fabric:/app2
+	
+FabricUpgrade_FabricUpgradeBitsUpgradeStuck:
+
+FabricUpgrade_FabricUpgradeReplicaCloseStuck:
+	
+Partition_BlockDoReconfigurationRequest:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_BlockDoReconfigurationReply:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_FMLockFailure:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_BlockGetLSNReply:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_FailPrimaryReplicatorGetLSN:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_FailSecondaryReplicatorGetLSN:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_BlockDeactivateReply:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_BlockReplicaCloseReply:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_FailSecondaryChangeRole:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_FailPrimaryChangeRole:
+	[PartitionId]	fabric:/test1
+	[end]	60
+
+Partition_FailOpenInstance:
+	[PartitionId]	fabric:/test1
+
+Partition_FailOpenReplica:
+	[PartitionId]	fabric:/test1
+
+Partition_BlockCopy:
+	[PartitionId]	fabric:/test1
+
+Partition_BlockReplicationDuringCatchUp:
+	[PartitionId]	fabric:/test1
+	
+Partition_CatchUp:	azure:xunludca;test4
+	[PartitionId]	ef642fbb-80a6-4c81-a5cf-aef828ee41eb
+	[end]	2014-7-11 19:00:00

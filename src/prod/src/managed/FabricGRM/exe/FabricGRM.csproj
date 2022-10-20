@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0"
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <Import Project="$(SrcRoot)\properties\service_fabric_managed_prod.props" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>FabricGRM</AssemblyName>
+    <AssemblyDescription>Gateway Resource Manager Service</AssemblyDescription>
+    <RootNamespace>FabricGRM</RootNamespace>
+    <ProjectGuid>{41A94A18-30B9-425C-8CD4-FEC00551311A}</ProjectGuid>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\Program.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\FabricGatewayResourceManager.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\CommunicationListener.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\FabricGatewayResourceManagerImpl.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\Manager.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\GRMSettings.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\GatewayDestination.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\GatewayResourceDescription.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\GatewayResourceProperties.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\GatewayResourceStatus.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\HttpConfig.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\HttpHostNameConfig.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\HttpRouteConfig.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\HttpRouteMatchHeader.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\HttpRouteMatchPath.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\HttpRouteMatchRule.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\NetworkRef.cs" />
+    <Compile Include="..\src\system\fabric\FabricGRM\models\TcpConfig.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgNewtonsoft_Json_6_0)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\src\system\fabric\FabricGRM\GRM.Data.Current\NAT\ApplicationManifest.xml">
+      <Link>GRM.Data.Current\NAT\ApplicationManifest.xml</Link>
+    </None>
+    <None Include="..\src\system\fabric\FabricGRM\GRM.Data.Current\NAT\Proxy\ServiceManifest.xml">
+      <Link>GRM.Data.Current\NAT\Proxy\ServiceManifest.xml</Link>
+    </None>
+    <None Include="..\src\system\fabric\FabricGRM\GRM.Data.Current\NATI\ApplicationManifest.xml">
+      <Link>GRM.Data.Current\NATI\ApplicationManifest.xml</Link>
+    </None>
+    <None Include="..\src\system\fabric\FabricGRM\GRM.Data.Current\NATI\Proxy\ServiceManifest.xml">
+      <Link>GRM.Data.Current\NATI\Proxy\ServiceManifest.xml</Link>
+    </None>
+    <None Include="..\src\system\fabric\FabricGRM\GRM.Data.Current\Open\ApplicationManifest.xml">
+      <Link>GRM.Data.Current\Open\ApplicationManifest.xml</Link>
+    </None>
+    <None Include="..\src\system\fabric\FabricGRM\GRM.Data.Current\Open\Proxy\ServiceManifest.xml">
+      <Link>GRM.Data.Current\Open\Proxy\ServiceManifest.xml</Link>
+    </None>
+    <None Include="..\src\system\fabric\FabricGRM\GRM.Data.Current\OpenI\ApplicationManifest.xml">
+      <Link>GRM.Data.Current\OpenI\ApplicationManifest.xml</Link>
+    </None>
+    <None Include="..\src\system\fabric\FabricGRM\GRM.Data.Current\OpenI\Proxy\ServiceManifest.xml">
+      <Link>GRM.Data.Current\OpenI\Proxy\ServiceManifest.xml</Link>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="FabricGRM.exe.config ">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Robocopy Include="$(OutputPath)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\GRM.Code.Current</DestinationFolder>
+      <IsRecursive>False</IsRecursive>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+
+    <Robocopy Include="$(OutputPath)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\GRM.Code.Current</DestinationFolder>
+      <IsRecursive>False</IsRecursive>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+
+    <Robocopy Include="$(OutputPath)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\symbols</DestinationFolder>
+      <IsRecursive>False</IsRecursive>
+      <FileMatch>*.pdb</FileMatch>
+    </Robocopy>
+
+    <Robocopy Include="..\src\system\fabric\FabricGRM">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileMatch>ApplicationManifest*.xml ServiceManifest*.xml</FileMatch>
+    </Robocopy>
+
+    <Robocopy Include="..\src\system\fabric\FabricGRM">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileMatch>ApplicationManifest*.xml ServiceManifest*.xml</FileMatch>
+    </Robocopy>
+  </ItemGroup>
+
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+</Project>

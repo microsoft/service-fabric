@@ -145,6 +145,12 @@
 #include "api/wrappers/ComFabricUpgradeOrchestrationServiceStateResult.h"
 #include "api/wrappers/ComFabricNodeTransitionProgressResult.h"
 #include "api/wrappers/ComDataLossHandler.h"
+#include "api/wrappers/ComGetNetworkListResult.h"
+#include "api/wrappers/ComGetNetworkApplicationListResult.h"
+#include "api/wrappers/ComGetNetworkNodeListResult.h"
+#include "api/wrappers/ComGetApplicationNetworkListResult.h"
+#include "api/wrappers/ComGetDeployedNetworkListResult.h"
+#include "api/wrappers/ComGetDeployedNetworkCodePackageListResult.h"
 
 // Chaos
 #include "api/wrappers/ComFabricChaosReportResult.h"
@@ -161,6 +167,10 @@
 
 #include "api/wrappers/ComFabricChaosDescriptionResult.h"
 #include "api/wrappers/ComFabricChaosScheduleDescriptionResult.h"
+
+// GatewayResourceManager
+#include "api/wrappers/ComGatewayResourceManagerAgent.h"
+#include "api/wrappers/ComGatewayResourceManagerAgentFactory.h"
 
 // BackupRestore
 #include "api/wrappers/ComBackupRestoreServiceAgent.h"
@@ -199,7 +209,7 @@
 #include "api/wrappers/ComFabricTransportListenerFactory.h"
 #include "api/wrappers/ComContainerActivatorServiceAgent.h"
 #include "api/wrappers/ComProxyContainerActivatorService.h"
-
+#include "api/wrappers/ComProxyGatewayResourceManager.h"
 #include "api/wrappers/WrapperFactory.h"
 
 // Secret Store Service

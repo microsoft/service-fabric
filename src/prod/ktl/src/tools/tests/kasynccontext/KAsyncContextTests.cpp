@@ -20,6 +20,7 @@ Abstract:
 #pragma once
 
 #include "KAsyncContextTests.h"
+#include <CommandLineParser.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -3229,6 +3230,15 @@ BasicStateMachine(int argc, WCHAR* args[])
 
     EventRegisterMicrosoft_Windows_KTL();
 
+#if defined(PLATFORM_UNIX)
+    NTSTATUS status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     InterceptorTests();
 
     if ((result = InternalBasicStateMachine(argc, args)) != STATUS_SUCCESS)
@@ -3247,6 +3257,11 @@ BasicStateMachine(int argc, WCHAR* args[])
 
     EventUnregisterMicrosoft_Windows_KTL();
     KTestPrintf("KAsyncContextBase BasicStateMachine Test: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+
     return result;
 }
 

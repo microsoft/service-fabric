@@ -132,32 +132,16 @@ __break(
 
 #endif // defined(_M_IA64)
 
-#elif defined(_ARM_)
+#elif defined(__aarch64__)
 
-#if defined(_M_ARM)
+#define DbgRaiseAssertionFailure() (__builtin_debugtrap()) 
 
-VOID
-__emit(
-    const unsigned __int32 opcode
-    );
-
-#pragma intrinsic(__emit)
-
-#if !defined(_PREFAST_)
-
-#define DbgRaiseAssertionFailure() __emit(0xdefc)     // THUMB_ASSERT
-
-#endif // !defined(_PREFAST_)
-
-#endif // defined(_M_ARM)
-
-#endif // _AMD64_, _X86_, _IA64_, _ARM_
+#endif // _AMD64_, _X86_, _IA64_, __aarch64__
 #endif // !defined(_DBGRAISEASSERTIONFAILURE_) && !defined(RC_INVOKED) && !defined(MIDL_PASS)
 
 #ifdef __cplusplus
 }
 #endif
-
 // end_wdm end_winnt end_ntminiport
 
 // begin_wdm begin_ntminiport

@@ -33,6 +33,9 @@ set LocalResourceManagerTestMode false
 
 set DummyPLBEnabled true
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 #All the machines we run tests on should have at least this much for them
 +10 ud=UD1 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:200
 +20 ud=UD2 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:200

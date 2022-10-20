@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">        
+
+<PropertyGroup>
+    <!-- We want the output folder to contain per-locale folders for the resx's (See Localization.targets) -->
+    <Disable_OutputFoldersAndRenaming>false</Disable_OutputFoldersAndRenaming>
+    <LocProjContacts>magitbldsup</LocProjContacts>
+    <LocProjService>CoreXT</LocProjService>
+</PropertyGroup>
+
+<!-- Enabled Languages -->
+<ItemGroup> 
+    <Lba_Locale Include="cs;de;en-us;es;fr;hu;it;ja;ko;nl;pl;pt;pt-BR;ru;sv;tr;zh-HANS;zh-HANT" /> 
+</ItemGroup> 
+
+</Project> 

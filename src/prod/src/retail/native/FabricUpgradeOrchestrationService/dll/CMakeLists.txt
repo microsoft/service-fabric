@@ -17,7 +17,7 @@ set_target_properties(${lib_FabricUpgradeOrchestrationService} PROPERTIES
 
 set_target_properties(${lib_FabricUpgradeOrchestrationService} PROPERTIES 
     LINK_FLAGS -Wl,-Bsymbolic)
-
+    
 target_link_libraries(${lib_FabricUpgradeOrchestrationService}
   ${lib_FabricNode}
   ${lib_Communication}
@@ -43,6 +43,7 @@ target_link_libraries(${lib_FabricUpgradeOrchestrationService}
   ${lib_Replication}
   ${lib_TransactionalReplicator}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}

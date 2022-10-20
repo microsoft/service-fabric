@@ -707,12 +707,27 @@ wmain(__in int argc, __in_ecount(argc) WCHAR* args[])
 #else
 int main(int argc, char* cargs[])
 {
-    NTSTATUS status = XmlBasicTest(0, nullptr);
+    NTSTATUS status;
+
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
+    status = XmlBasicTest(0, nullptr);
     KFatal(NT_SUCCESS(status));
 
     status = DomBasicTest(0, nullptr);
     KFatal(NT_SUCCESS(status));
 
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return 0;
 }
 #endif

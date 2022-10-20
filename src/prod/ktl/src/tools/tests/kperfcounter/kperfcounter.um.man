@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes'?>
+<instrumentationManifest
+    xmlns="http://schemas.microsoft.com/win/2004/08/events"
+    xmlns:trace="http://schemas.microsoft.com/win/2004/08/events/trace"
+    xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://schemas.microsoft.com/win/2004/08/events eventman.xsd"
+    >
+  <instrumentation>
+    <counters
+        xmlns="http://schemas.microsoft.com/win/2005/12/counters"
+        xmlns:auto-ns1="http://schemas.microsoft.com/win/2004/08/events"
+        schemaVersion="1.1"
+        >
+            <provider callback            = "custom"
+                      applicationIdentity = "kperfcountertests.exe"
+                      providerName        = "UsermodeCountersSample"
+                      providerType        = "userMode"
+                      symbol              = "RVDSample"
+                      providerGuid        = "{FFFFFFFF-F41B-42e6-8D58-84FA32174792}">
+
+                <counterSet    guid        = "{12F98692-8B08-408c-A93B-BB582673DCFA}"
+                               uri         = "Microsoft.Rvd.Ktl.UserModeTest.Singleton"
+                               name        = "RVD Test Singleton"
+                               description = "This counter set displays a singleton"
+                               symbol      = "RVDSingleton"
+                               instances   = "single">
+
+                    <counter id           = "1"
+                           uri          = "Microsoft.Rvd.Ktl.UserModeTest.Singleton.u1"
+                           name         = "ulong 1"
+                           description  = "This counter displays value 1"
+                           type         = "perf_counter_rawcount"
+                           detailLevel  = "standard"
+                           defaultScale = "1">
+                        <counterAttributes>
+                            <counterAttribute name = "reference" />
+                        </counterAttributes>
+                    </counter>
+
+                    <counter id           = "2"
+                             uri          = "Microsoft.Rvd.Ktl.UserModeTest.Singleton.u2"
+                             name         = "ulonglong 2"
+                             description  = "This counter displays value 2"
+                             type         = "perf_counter_large_rawcount"
+                             detailLevel  = "standard"
+                             defaultScale = "1">
+                        <counterAttributes>
+                            <counterAttribute name = "reference" />
+                        </counterAttributes>
+                    </counter>
+
+                    <counter id           = "3"
+                             uri          = "Microsoft.Rvd.Ktl.UserModeTest.Singleton.u3"
+                             name         = "ulong 3"
+                             description  = "This counter displays value 3"
+                             type         = "perf_counter_rawcount"
+                             detailLevel  = "standard"
+                             defaultScale = "1">
+                        <counterAttributes>
+                            <counterAttribute name = "reference" />
+                        </counterAttributes>
+                    </counter>
+
+                </counterSet>
+
+                <counterSet    guid        = "{76A0AFC1-F41B-42e6-8D58-84FA32174791}"
+                               uri         = "Microsoft.Rvd.Ktl.UserModeTest.Multi"
+                               name        = "RVD Test Multi"
+                               description = "This counter set displays multiple instances"
+                               symbol      = "RVDMulti"
+                               instances   = "multiple"
+                               >
+
+                    <counter id           = "1"
+                           uri          = "Microsoft.Rvd.Ktl.UserModeTest.Multi.u1"
+                           name         = "multi ulonglong 1"
+                           description  = "This counter displays value 1"
+                           type         = "perf_counter_large_rawcount"
+                           detailLevel  = "standard"
+                           defaultScale = "1">
+                        <counterAttributes>
+                            <counterAttribute name = "reference" />
+                        </counterAttributes>
+                    </counter>
+
+                    <counter id           = "2"
+                           uri          = "Microsoft.Rvd.Ktl.UserModeTest.Multi.u2"
+                           name         = "multi ulong 2"
+                           description  = "This counter displays value 1"
+                           type         = "perf_counter_rawcount"
+                           detailLevel  = "standard"
+                           defaultScale = "1">
+                        <counterAttributes>
+                            <counterAttribute name = "reference" />
+                        </counterAttributes>
+                    </counter>
+
+                    <counter id           = "3"
+                           uri          = "Microsoft.Rvd.Ktl.UserModeTest.Multi.u3"
+                           name         = "multi ulong 3"
+                           description  = "This counter displays value 3"
+                           type         = "perf_counter_rawcount"
+                           detailLevel  = "standard"
+                           defaultScale = "1">
+                        <counterAttributes>
+                            <counterAttribute name = "reference" />
+                        </counterAttributes>
+                    </counter>
+
+                    <counter id           = "4"
+                           uri          = "Microsoft.Rvd.Ktl.UserModeTest.Multi.u4"
+                           name         = "multi ulonglong 4"
+                           description  = "This counter displays value 4"
+                           type         = "perf_counter_large_rawcount"
+                           detailLevel  = "standard"
+                           defaultScale = "1">
+                        <counterAttributes>
+                            <counterAttribute name = "reference" />
+                        </counterAttributes>
+                    </counter>
+
+
+                </counterSet>
+
+            </provider>
+        </counters>
+    </instrumentation>
+</instrumentationManifest>
+
+

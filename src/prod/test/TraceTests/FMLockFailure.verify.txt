@@ -1,0 +1,7 @@
+###Partition e3def153-cf34-47df-9c99-ef3a4bca217e time range 7/23/2014 4:03:58 AM-7/23/2014 4:08:52 AM
+Partition stuck in reconfiguration for at least ###00:04:16.3460000
+Checking primary on node 50
+Reconfiguration already completed on primary
+FM side not completed
+Failed Task: ReconfigurationFMAndRAInteraction(StartReconfiguration(FMAction(LockFailure))[*3])
+

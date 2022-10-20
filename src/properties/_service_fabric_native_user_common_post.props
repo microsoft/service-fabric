@@ -1,0 +1,44 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!-- Common properties for the native projects that should be included after setting the ConfigurationType -->
+   <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.props" />
+
+   <!-- 
+      When msbuild is invoked from the command line the 64 bit version of msbuild is being used.
+      This loads the 64 bit version of FileTracker.dll from the gitcache 
+      which is used to provide support for incremental builds
+      
+      When msbuild is invoked from Visual Studio, the 32 bit version is launched (as VS is 32 bit)
+      Based on the logic in FileTrackerUtility.cs in the MSBuild source, it picks the 32 bit version of 
+      FileTracker to load. It also does loads this DLL from the C:\programfiles (x86) dir which is where 
+      the 14.0 version of MSBuild is installed by default
+      
+      This implies that when 64 bit CL actually runs it crashes.
+      
+      In order to fix for our build this there are two changes that havve been made:
+      
+      Telling MSBuild the correct location of the tracker: The props file has been updated by specifying the
+      proper location of the FileTracker.dll that is installed in the gitcache
+      
+      Using the appropriate bitness: Since there is no way to workaround 32 bit MSBuild the 64 bit file is copied
+      into 32 bit paths. This copies FileTracker.dll to FileTracker32.dll (in the MSBuild bin folder) and the
+      corresponding 64 bit FileTrackerUI.dll into FileTracker32UI.dll in the 1033 folder. 
+      See developer\aprameyr\SetupVisualStudio.bat for details
+      
+      Finally, these customizations are enabled only when building inside VS
+    -->
+   <PropertyGroup>
+      <TrackerPathBase>$(MSBuildToolsPath_140)\amd64</TrackerPathBase>
+      <BSCMakeTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</BSCMakeTrackerFrameworkPath>
+      <CLTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</CLTrackerFrameworkPath>
+      <CustomBuildTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</CustomBuildTrackerFrameworkPath>
+      <LibTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</LibTrackerFrameworkPath>
+      <LinkTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</LinkTrackerFrameworkPath>
+      <ManifestTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</ManifestTrackerFrameworkPath>
+      <MidlTrackerCFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</MidlTrackerCFrameworkPath>
+      <RCTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</RCTrackerFrameworkPath>
+      <ResGenTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</ResGenTrackerFrameworkPath>
+      <XDCMakeTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</XDCMakeTrackerFrameworkPath>
+      <XSDTrackerFrameworkPath Condition="'$(BuildingInsideVisualStudio)' == 'true'">$(TrackerPathBase)</XSDTrackerFrameworkPath>
+      <IntDir>$(IntermediateOutputPath)</IntDir>      
+   </PropertyGroup>
+</Project>

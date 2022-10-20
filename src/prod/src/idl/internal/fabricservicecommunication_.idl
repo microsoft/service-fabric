@@ -1,0 +1,211 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricTypes_.idl";
+
+// ----------------------------------------------------------------------------
+// Forward Declaration of interfaces
+interface IFabricCommunicationMessageSender;
+interface IFabricServiceCommunicationClient;
+interface IFabricServiceCommunicationClient2;
+interface IFabricServiceCommunicationListener;
+interface IFabricServiceCommunicationMessage;
+interface IFabricClientConnection;
+interface IFabricServiceConnectionEventHandler;
+interface IFabricCommunicationMessageHandler;
+interface IFabricServiceConnectionHandler;
+
+[
+    uuid(3711066b-3b42-420c-a42f-995edb7e3e11),
+    version(1.0),
+]
+
+library FabricServiceCommunication_Lib
+{   
+
+   #pragma pack (push, 8)
+
+   typedef LPCWSTR COMMUNICATION_CLIENT_ID;
+
+// ----------------------------------------------------------------------------
+// List all interfaces to be included in the type library
+      interface IFabricCommunicationMessageSender;
+      interface IFabricServiceConnectionHandler;
+      interface IFabricServiceCommunicationClient;
+      interface IFabricServiceCommunicationClient2;
+      interface IFabricServiceCommunicationListener;
+      interface IFabricServiceCommunicationMessage;
+      interface IFabricClientConnection;
+      interface IFabricServiceConnectionEventHandler;
+      interface IFabricCommunicationMessageHandler;
+// ----------------------------------------------------------------------------
+// module definitions
+
+[
+    uuid(5acd536e-202b-464a-ad14-df7a6f010f24),
+    dllname("FabricServiceCommunication.dll")
+]
+
+module FabricServiceCommunication
+{
+    [entry("CreateServiceCommunicationListener")] HRESULT CreateServiceCommunicationListener(
+        [in] REFIID interfaceId,
+        [in] FABRIC_SERVICE_TRANSPORT_SETTINGS *settings,
+        [in] FABRIC_SERVICE_LISTENER_ADDRESS *address,
+        [in] IFabricCommunicationMessageHandler *clientRequestHandler,
+        [in] IFabricServiceConnectionHandler *clientConnectionHandler,
+        [out, retval] IFabricServiceCommunicationListener **listener);
+
+    [entry("CreateServiceCommunicationClient")] HRESULT CreateServiceCommunicationClient(
+        [in] REFIID interfaceId,
+        [in] FABRIC_SERVICE_TRANSPORT_SETTINGS *settings,
+        [in] LPCWSTR connectionAddress,
+        [in] IFabricCommunicationMessageHandler *notificationHandler,
+        [in] IFabricServiceConnectionEventHandler *connectionEventHandler,
+        [out, retval] IFabricServiceCommunicationClient **client);
+}
+
+#pragma pack (pop)
+
+}
+
+// ----------------------------------------------------------------------------
+// Common interfaces
+
+[object, local, uuid(fdf2bcd7-14f9-463f-9b70-ae3b5ff9d83f)]
+interface IFabricCommunicationMessageSender : IUnknown
+{
+    [] HRESULT BeginRequest(
+        [in] IFabricServiceCommunicationMessage *message,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndRequest(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricServiceCommunicationMessage ** reply);
+
+    [] HRESULT SendMessage(
+        [in] IFabricServiceCommunicationMessage *message);
+}
+
+
+[object, local, uuid(dc6e168a-dbd4-4ce1-a3dc-5f33494f4972)]
+interface IFabricServiceCommunicationMessage : IUnknown
+{
+        FABRIC_MESSAGE_BUFFER * Get_Body();
+
+        FABRIC_MESSAGE_BUFFER * Get_Headers();
+}
+
+[object, local, uuid(7e010010-80b2-453c-aab3-a73f0790dfac)]
+interface IFabricCommunicationMessageHandler : IUnknown
+{
+    [] HRESULT BeginProcessRequest(
+        [in] COMMUNICATION_CLIENT_ID clientId,
+        [in] IFabricServiceCommunicationMessage *message,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndProcessRequest(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricServiceCommunicationMessage ** reply);
+
+    [] HRESULT HandleOneWay(
+        [in] COMMUNICATION_CLIENT_ID clientId,
+        [in] IFabricServiceCommunicationMessage *message);
+}
+
+// ----------------------------------------------------------------------------
+// Server/Service side interfaces
+
+[object, local, uuid(ad5d9f82-d62c-4819-9938-668540248e97)]
+interface IFabricServiceCommunicationListener : IUnknown
+{
+    [] HRESULT BeginOpen(
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndOpen(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** serviceAddress);
+
+    [] HRESULT BeginClose(
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndClose(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] void Abort();
+}
+
+[object, local, uuid(60ae1ab3-5f00-404d-8f89-96485c8b013e)]
+interface IFabricClientConnection : IFabricCommunicationMessageSender
+{
+    [] COMMUNICATION_CLIENT_ID  get_ClientId();
+}
+
+
+[object, local, uuid(b069692d-e8f0-4f25-a3b6-b2992598a64c)]
+interface IFabricServiceConnectionHandler : IUnknown
+{
+    [] HRESULT BeginProcessConnect(
+        [in] IFabricClientConnection *clientConnection,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndProcessConnect(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginProcessDisconnect(
+        [in] LPCWSTR clientId,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndProcessDisconnect(
+         [in] IFabricAsyncOperationContext * context);
+}
+
+//
+// Service Communication Client Interfaces
+//
+[object, local, uuid(255ecbe8-96b8-4f47-9e2c-1235dba3220a)]
+interface IFabricServiceCommunicationClient : IFabricCommunicationMessageSender
+{
+
+}
+
+[object, local, uuid(73b2cac5-4278-475b-82e6-1e33ebe20767)]
+interface IFabricServiceCommunicationClient2 : IFabricServiceCommunicationClient
+{
+    [] void Abort();
+}
+
+[object, local, uuid(77f434b1-f9e9-4cb1-b0c4-c7ea2984aa8d)]
+interface IFabricServiceConnectionEventHandler : IUnknown
+{
+    [] HRESULT OnConnected(
+         [in] LPCWSTR connectionAddress);
+
+    [] HRESULT OnDisconnected(
+        [in] LPCWSTR connectionAddress,
+        [in] HRESULT error);
+}
+
+

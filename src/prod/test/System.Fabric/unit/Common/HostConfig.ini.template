@@ -1,0 +1,6 @@
+﻿[FabricNode]
+    InstanceName = [[NODE_ID]]
+    ClientConnectionAddress = [[CLIENT_CONNECTION_ADDRESS]]
+    LeaseAgentAddress = [[LEASE_AGENT_ADDRESS]]
+    NodeAddress = [[NODE_ADDRESS]]
+    RuntimeServiceAddress = [[RUNTIME_SERVICE_ADDRESS]]

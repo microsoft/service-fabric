@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <AssemblyName>XmlDiff</AssemblyName>
+    <RootNamespace>XmlDiffTool</RootNamespace>
+    <ProjectGuid>{080464EE-7A7B-4C70-AF78-6A88D5E56B08}</ProjectGuid>
+    <UseVSHostingProcess>False</UseVSHostingProcess>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="XmlDiffPatch.dll">
+      <HintPath>$(PkgXMLDiffPatch)\lib\net\XmlDiffPatch.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\KtlTest\</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+    </Robocopy>
+  </ItemGroup>
+</Project>

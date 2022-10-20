@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClusterManifest Name="Server-Default-SingleNode" Version="2.0" xsi:schemaLocation="http://schemas.microsoft.com/2011/01/fabric .\ServiceFabricServiceModel.xsd" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <NodeTypes>
+    <NodeType Name="NodeType1" >
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000"/>
+        <LeaseDriverEndpoint Port="19001"/>
+        <ClusterConnectionEndpoint Port="19002"/>
+        <ServiceConnectionEndpoint Port="19006"/>
+        <HttpGatewayEndpoint Port="19007" Protocol="http"/>
+        <ApplicationEndpoints StartPort="30001" EndPort="31000"/>
+      </Endpoints>
+    </NodeType>
+  </NodeTypes>
+  <Infrastructure>
+    <WindowsServer IsScaleMin="false">
+      <NodeList>
+        <Node NodeTypeRef="NodeType1" IsSeedNode="true" IPAddressOrFQDN="localhost" NodeName="Node1" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1" />
+      </NodeList>
+    </WindowsServer>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="Security">
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+    </Section>
+    <Section Name="NamingService">
+      <Parameter Name="PartitionCount" Value="1"/>
+      <Parameter Name="TargetReplicaSetSize" Value="1"/>
+      <Parameter Name="MinReplicaSetSize" Value="1"/>
+    </Section>
+    <Section Name="FailoverManager">
+      <Parameter Name="TargetReplicaSetSize" Value="1"/>
+      <Parameter Name="MinReplicaSetSize" Value="1"/>
+      <Parameter Name="ClusterStableWaitDuration" Value="0"/>
+      <Parameter Name="ExpectedClusterSize" Value="1"/>
+    </Section>
+    <Section Name="ClusterManager">
+      <Parameter Name="TargetReplicaSetSize" Value="1"/>
+      <Parameter Name="MinReplicaSetSize" Value="1"/>
+    </Section>
+    <Section Name="RunAs">
+      <Parameter Name="RunAsAccountType" Value="DomainUser"/>
+      <Parameter Name="RunAsAccountName" Value="redmond\testuser"/>
+      <Parameter Name="RunAsPassword" Value="Pa55word1"/> <!--[SuppressMessage("Microsoft.Security", "CS001:SecretInline")]-->
+    </Section>
+    <Section Name="RunAs_Fabric">
+      <Parameter Name="RunAsAccountType" Value="NetworkService"/>
+    </Section>
+    <Section Name="RunAs_HttpGateway">
+      <Parameter Name="RunAsAccountType" Value="ManagedServiceAccount"/>
+      <Parameter Name="RunAsAccountName" Value="redmond\testgMSA"/>
+    </Section>
+    <Section Name="RunAs_DCA">
+      <Parameter Name="RunAsAccountType" Value="LocalSystem"/>
+    </Section>
+    <Section Name="Management">
+      <Parameter Name="ImageStoreConnectionString" Value="_default_"/>
+    </Section>
+    <Section Name="PlacementAndLoadBalancing">
+      <!-- PLBRefreshInterval is 1 by default -->
+      <!-- PlacementSearchTimeout is 50 by default -->
+    </Section>
+    <Section Name="Hosting">
+      <Parameter Name="EndpointProviderEnabled" Value="true"/>
+    </Section>
+    <Section Name="Trace/Etw">
+      <Parameter Name="Level" Value="4"/>
+    </Section>
+    <Section Name="Diagnostics">
+      <Parameter Name="ProducerInstances" Value="WinFabEtlFile, WinFabCrashDump" />
+      <Parameter Name="ConsumerInstances" Value="FileShareWinFabEtw, FileShareWinFabCrashDump" />
+    </Section>
+    <Section Name="WinFabEtlFile">
+      <Parameter Name="ProducerType" Value="EtlFileProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+    </Section>
+    <Section Name="WinFabCrashDump">
+      <Parameter Name="ProducerType" Value=" FolderProducer "/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="FolderType" Value="WindowsFabricCrashDumps"/>
+    </Section>
+    <Section Name="FileShareWinFabEtw">
+      <Parameter Name="ConsumerType" Value="FileShareEtwCsvUploader"/>
+      <Parameter Name="ProducerInstance" Value="WinFabEtlFile"/>
+      <Parameter Name="IsEnabled" Value="true "/>
+      <Parameter Name="StoreConnectionString" Value="file://myfileshare/mylogfolder"/>
+    </Section>
+    <Section Name="FileShareWinFabCrashDump">
+      <Parameter Name="ConsumerType" Value="FileShareFolderUploader "/>
+      <Parameter Name="ProducerInstance" Value="WinFabCrashDump "/>
+      <Parameter Name="IsEnabled" Value="true "/>
+      <Parameter Name="StoreConnectionString" Value="file://myfileshare/mydumpfolder"/>
+    </Section>
+    <!-- 
+         HttpGateway section
+         ===================
+         HttpGateway is disabled by default. You can enable it here by uncommenting out the section below.
+    -->
+    <!--<Section Name="HttpGateway">
+      <Parameter Name="IsEnabled" Value="true"/>
+    </Section>-->
+
+    <!-- 
+         Diagnostics section
+         ===================
+         Producer and consumer instances are specified as a comma-separated list.
+         Each item in the list is the name of a section in the manifest that 
+         contains more information about that producer/consumer instance
+         
+    -->
+    <!-- 
+    <Section Name="Diagnostics">
+      <Parameter Name="ProducerInstances" Value="WinFabEtlFile, WinFabCrashDump,WinFabPerfCtrFolder"/>
+      <Parameter Name="ConsumerInstances" Value=" FileShareWinFabEtw,FileShareWinFabCrashDump, FileShareWinFabPerfCtr "/>
+    </Section>
+    -->
+
+    <!-- 
+         Diagnostic producer instance sections
+         =====================================
+         The value for parameter "ProducerType" is one of the well-defined producer 
+         types supported by the DCA
+    -->
+    <!-- 
+    <Section Name="WinFabEtlFile">
+      <Parameter Name="ProducerType" Value="EtlFileProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="EtlReadIntervalInMinutes" Value=" 5"/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    <Section Name="WinFabCrashDump">
+      <Parameter Name="ProducerType" Value=" FolderProducer "/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="FolderType" Value="WindowsFabricCrashDumps"/>
+    </Section>
+    <Section Name="WinFabPerfCtrFolder">
+      <Parameter Name="ProducerType" Value="FolderProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="FolderType" Value="WindowsFabricPerformanceCounters"/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    -->
+
+    <!-- 
+         Diagnostic consumer instance sections
+         =====================================
+         The value for parameter "ConsumerType"  is one of the well-defined consumer 
+         types supported by the DCA
+         
+         The value for parameter "ProducerInstance" is the name of the section 
+         that contains information about the producer instance that the consumer
+         is associated with
+    -->
+    <!-- 
+    <Section Name="FileShareWinFabEtw">
+      <Parameter Name="ConsumerType" Value="FileShareEtwCsvUploader"/>
+      <Parameter Name="ProducerInstance" Value="WinFabEtlFile"/>
+      <Parameter Name="IsEnabled" Value="true "/>
+      <Parameter Name="StoreConnectionString" Value="file:[]"/>
+      <Parameter Name="UploadIntervalInMinutes" Value=" 10 "/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    <Section Name="FileShareWinFabCrashDump">
+      <Parameter Name="ConsumerType" Value="FileShareFolderUploader "/>
+      <Parameter Name="ProducerInstance" Value="WinFabCrashDump "/>
+      <Parameter Name="IsEnabled" Value="true "/>
+      <Parameter Name="StoreConnectionString" Value="file:[]"/>
+      <Parameter Name="UploadIntervalInMinutes" Value="10 "/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    <Section Name="FileShareWinFabPerfCtr">
+      <Parameter Name="ConsumerType" Value="FileShareFolderUploader "/>
+      <Parameter Name="ProducerInstance" Value="WinFabPerfCtrFolder "/>
+      <Parameter Name="IsEnabled" Value="true "/>
+      <Parameter Name="StoreConnectionString" Value="file:[]"/>
+      <Parameter Name="UploadIntervalInMinutes" Value="10 "/>
+      <Parameter Name="DataDeletionAgeInDays" Value="7"/>
+    </Section>
+    -->
+
+  </FabricSettings>
+</ClusterManifest>

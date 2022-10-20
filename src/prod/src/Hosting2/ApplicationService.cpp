@@ -51,19 +51,18 @@ protected:
     {
         if (owner_.IsContainerHost)
         {
-            auto operation = owner_.ActivationManager.containerActivator_->BeginInvokeContainerApi(
+            auto operation = owner_.ActivationManager.containerActivator_->BeginGetStats(
                 owner_.ContainerDescriptionObj,
-                L"GET",
-                L"/containers/{id}/stats?stream=false",
-                L"application/json",
-                L"",
+                owner_.ProcessDescriptionObj,
+                owner_.parentId_,
+                owner_.appServiceId_,
                 HostingConfig::GetConfig().ContainerStatsTimeout,
                 [this](AsyncOperationSPtr const & operation)
             {
-                this->OnContainerApiStatsCompleted(operation, false);
+                this->OnGetStatsCompleted(operation, false);
             },
                 thisSPtr);
-            this->OnContainerApiStatsCompleted(operation, true);
+            this->OnGetStatsCompleted(operation, true);
         }
         else
         {
@@ -143,7 +142,7 @@ protected:
 #endif
     }
 
-    void OnContainerApiStatsCompleted(
+    void OnGetStatsCompleted(
         AsyncOperationSPtr const & operation,
         bool expectedCompletedSynhronously)
     {
@@ -151,67 +150,21 @@ protected:
         {
             return;
         }
-        wstring result;
-        auto error = owner_.ActivationManager.containerActivator_->EndInvokeContainerApi(operation, result);
 
-        if (!error.IsSuccess())
+        uint64 memoryUsage;
+        uint64 totalCpuTime;
+        Common::DateTime timeRead;
+        auto error = owner_.ActivationManager.containerActivator_->EndGetStats(operation, memoryUsage, totalCpuTime, timeRead);
+
+        if (error.IsSuccess())
         {
-            TryComplete(operation->Parent, error);
-            return;
-        }
-        else
-        {
-            ContainerApiResponse containerApiResponse;
-            error = JsonHelper::Deserialize(containerApiResponse, result);
-
-            if (error.IsSuccess())
-            {
-                ContainerApiResult const & containerApiResult = containerApiResponse.Result();
-
-                if (containerApiResult.Status() == 200)
-                {
-                    ContainerStatsResponse containerStatsResponse;
-                    error = JsonHelper::Deserialize(containerStatsResponse, containerApiResult.Body());
-                    if (error.IsSuccess())
-                    {
-                        resourceMeasurement_.MemoryUsage = containerStatsResponse.MemoryStats_.MemoryUsage_;
-                        resourceMeasurement_.TotalCpuTime = containerStatsResponse.CpuStats_.CpuUsage_.TotalUsage_;
-                        resourceMeasurement_.TimeRead = containerStatsResponse.Read_;
-                    }
-                    else
-                    {
-                        WriteWarning(
-                            TraceType_ActivationManager,
-                            owner_.parentId_,
-                            "Application Service with service Id {0} ContainerStatsResponse error {1}",
-                            owner_.appServiceId_,
-                            error);
-                    }
-                }
-                else
-                {
-                    WriteWarning(
-                        TraceType_ActivationManager,
-                        owner_.parentId_,
-                        "Application Service with service Id {0} ContainerApiResult status {1}",
-                        owner_.appServiceId_,
-                        containerApiResult.Status());
-                    error = ErrorCode(ErrorCodeValue::InvalidOperation);
-                }
-            }
-            else
-            {
-                WriteWarning(
-                    TraceType_ActivationManager,
-                    owner_.parentId_,
-                    "Application Service with service Id {0} ContainerApiResponse error {1}",
-                    owner_.appServiceId_,
-                    error);
-            }
-            TryComplete(operation->Parent, error);
-            return;
+            resourceMeasurement_.MemoryUsage = memoryUsage;
+            resourceMeasurement_.TotalCpuTime = totalCpuTime;
+            resourceMeasurement_.TimeRead = timeRead;
         }
 
+        TryComplete(operation->Parent, error);
+        return;
     }
 
 private:
@@ -219,7 +172,7 @@ private:
     ResourceMeasurement resourceMeasurement_;
 };
 
-class ApplicationService::ActivateAsyncOperation : 
+class ApplicationService::ActivateAsyncOperation :
     public AsyncOperation,
     Common::TextTraceComponent<TraceTaskCodes::Hosting>
 {
@@ -234,7 +187,8 @@ public:
         : AsyncOperation(callback, parent),
         owner_(owner),
         timeoutHelper_(timeout),
-        processId_(0)
+        processId_(0),
+        lastError_(ErrorCodeValue::Success)
     {
     }
 
@@ -245,7 +199,7 @@ public:
     static ErrorCode End(AsyncOperationSPtr const & operation, DWORD & processId)
     {
         auto thisPtr = AsyncOperation::End<ActivateAsyncOperation>(operation);
-        if(thisPtr->Error.IsSuccess())
+        if (thisPtr->Error.IsSuccess())
         {
             processId = thisPtr->processId_;
         }
@@ -256,7 +210,7 @@ protected:
     void OnStart(AsyncOperationSPtr const & thisSPtr)
     {
         auto error = owner_.TransitionToStarting();
-        if(!error.IsSuccess())
+        if (!error.IsSuccess())
         {
             WriteWarning(
                 TraceType_ActivationManager,
@@ -271,18 +225,7 @@ protected:
         {
             if (owner_.isContainerHost_)
             {
-                auto operation = owner_.ActivationManager.ContainerActivatorObj->BeginActivate(
-                    owner_.IsSecurityUserLocalSystem(),
-                    owner_.ApplicationServiceId,
-                    owner_.parentId_,
-                    owner_.containerDescription_,
-                    owner_.processDescription_,
-                    owner_.fabricBinFolder_,
-                    timeoutHelper_.GetRemainingTime(),
-                    [this](AsyncOperationSPtr const & operation)
-                { this->FinishActivateContainer(operation, false); },
-                thisSPtr);
-                FinishActivateContainer(operation, true);
+                ActivateContainer(thisSPtr);
             }
             else
             {
@@ -293,7 +236,7 @@ protected:
                     timeoutHelper_.GetRemainingTime(),
                     [this](AsyncOperationSPtr const & operation)
                 { this->OnProcessActivated(operation); },
-                thisSPtr);
+                    thisSPtr);
                 if (operation->CompletedSynchronously)
                 {
                     FinishActivateProcess(operation);
@@ -324,13 +267,13 @@ protected:
 
         ErrorCode transitionResult = this->TransitionState(error);
 
-        if(!transitionResult.IsSuccess())
+        if (!transitionResult.IsSuccess())
         {
             error = transitionResult;
         }
         else
         {
-            if(error.IsSuccess())
+            if (error.IsSuccess())
             {
                 WriteInfo(
                     TraceType_ActivationManager,
@@ -341,8 +284,102 @@ protected:
                     Path::GetFileName(owner_.processDescription_.ExePath));
             }
         }
-        TryComplete(operation->Parent, error);   
+        TryComplete(operation->Parent, error);
     }
+
+    void ActivateContainer(AsyncOperationSPtr const & thisSPtr)
+    {
+#if defined(PLATFORM_UNIX)
+        if (owner_.containerDescription_.IsContainerRoot && owner_.containerDescription_.PodDescription.IsolationMode == ContainerIsolationMode::hyperv)
+        {
+            auto saveOperation = owner_.ActivationManager.ContainerActivatorObj->BeginSaveContainerNetworkParamsForLinuxIsolation(
+                owner_.containerDescription_.NetworkConfig.NodeId,
+                owner_.containerDescription_.NetworkConfig.NodeName,
+                owner_.containerDescription_.NetworkConfig.NodeIpAddress,
+                owner_.containerDescription_.ContainerName,
+                owner_.containerDescription_.NetworkConfig.OpenNetworkAssignedIp,
+                owner_.containerDescription_.NetworkConfig.OverlayNetworkResources,
+                timeoutHelper_.GetRemainingTime(),
+                [this](AsyncOperationSPtr const & saveOperation)
+            {
+                this->OnSaveContainerNetworkParamsForLinuxIsolationCompleted(saveOperation, false);
+            },
+                thisSPtr);
+            OnSaveContainerNetworkParamsForLinuxIsolationCompleted(saveOperation, true);
+        }
+        else
+        {
+            auto operation = owner_.ActivationManager.ContainerActivatorObj->BeginActivate(
+                owner_.IsSecurityUserLocalSystem(),
+                owner_.ApplicationServiceId,
+                owner_.parentId_,
+                owner_.containerDescription_,
+                owner_.processDescription_,
+                owner_.fabricBinFolder_,
+                timeoutHelper_.GetRemainingTime(),
+                [this](AsyncOperationSPtr const & operation)
+            { this->FinishActivateContainer(operation, false); },
+                thisSPtr);
+            FinishActivateContainer(operation, true);
+        }
+#else
+        auto operation = owner_.ActivationManager.ContainerActivatorObj->BeginActivate(
+            owner_.IsSecurityUserLocalSystem(),
+            owner_.ApplicationServiceId,
+            owner_.parentId_,
+            owner_.containerDescription_,
+            owner_.processDescription_,
+            owner_.fabricBinFolder_,
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation)
+        { this->FinishActivateContainer(operation, false); },
+            thisSPtr);
+        FinishActivateContainer(operation, true);
+#endif
+}
+
+#if defined(PLATFORM_UNIX)
+    void OnSaveContainerNetworkParamsForLinuxIsolationCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.ActivationManager.ContainerActivatorObj->EndSaveContainerNetworkParamsForLinuxIsolation(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType_ActivationManager,
+            owner_.parentId_,
+            "End(Container Save Network Params For Linux Isolation): ErrorCode={0}, ErrorMessage={1}, App Name={2}, Service Id={3}, ExeName={4}",
+            error,
+            error.Message,
+            owner_.ContainerDescriptionObj.ApplicationName,
+            owner_.appServiceId_,
+            owner_.processDescription_.ExePath);
+
+        if (error.IsSuccess())
+        {
+            auto activateOperation = owner_.ActivationManager.ContainerActivatorObj->BeginActivate(
+                owner_.IsSecurityUserLocalSystem(),
+                owner_.ApplicationServiceId,
+                owner_.parentId_,
+                owner_.containerDescription_,
+                owner_.processDescription_,
+                owner_.fabricBinFolder_,
+                timeoutHelper_.GetRemainingTime(),
+                [this](AsyncOperationSPtr const & activateOperation)
+            { this->FinishActivateContainer(activateOperation, false); },
+                operation->Parent);
+            FinishActivateContainer(activateOperation, true);
+        }
+        else
+        {
+            TryComplete(operation->Parent, error);
+        }
+    }
+#endif
 
     void FinishActivateContainer(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
     {
@@ -350,44 +387,298 @@ protected:
         {
             return;
         }
-        auto error = owner_.ActivationManager.ContainerActivatorObj->EndActivate(operation);
+
+        auto error = owner_.ActivationManager.ContainerActivatorObj->EndActivate(operation, owner_.containerId_);
+
         WriteTrace(
             error.ToLogLevel(),
             TraceType_ActivationManager,
             owner_.parentId_,
-            "End(Container Activate): ErrorCode={0}, ErrorMessage = {1}, Service Id ={2}, ExeName {3}",
+            "End(Container Activate): ErrorCode={0}, ErrorMessage={1}, App Name={2}, Service Id={3}, ExeName={4}",
             error,
             error.Message,
+            owner_.ContainerDescriptionObj.ApplicationName,
             owner_.appServiceId_,
             owner_.processDescription_.ExePath);
 
-        auto transitionResult = this->TransitionState(error);
-        if (!transitionResult.IsSuccess())
+        if (!error.IsSuccess())
         {
-            error = transitionResult;
+            auto transitionResult = this->TransitionState(error);
+            if (!transitionResult.IsSuccess())
+            {
+                error = transitionResult;
+            }
+        }
+        
+        if (error.IsSuccess())
+        {
+#if !defined(PLATFORM_UNIX)
+            WriteInfo(
+                TraceType_ActivationManager,
+                owner_.parentId_,
+                "Network type for App Name={0} Service Id={1} Container Id={2} is {3}.",
+                owner_.ContainerDescriptionObj.ApplicationName,
+                owner_.appServiceId_,
+                owner_.containerId_,
+                NetworkType::EnumToString(owner_.containerDescription_.NetworkConfig.NetworkType));
+
+            // If container is configured to be on an overlay network, attach to the network now.
+            if ((owner_.containerDescription_.NetworkConfig.NetworkType & NetworkType::Enum::Isolated) == NetworkType::Enum::Isolated)
+            {
+                auto attachOperation = owner_.ActivationManager.ContainerActivatorObj->BeginAttachContainerToNetwork(
+                    owner_.containerDescription_.NetworkConfig.NodeId,
+                    owner_.containerDescription_.NetworkConfig.NodeName,
+                    owner_.containerDescription_.NetworkConfig.NodeIpAddress,
+                    owner_.containerId_,
+                    owner_.containerDescription_.NetworkConfig.OverlayNetworkResources,
+                    owner_.containerDescription_.DnsServers,
+                    timeoutHelper_.GetRemainingTime(),
+                    [this](AsyncOperationSPtr const & attachOperation)
+                {
+                    this->OnAttachContainerToNetworkCompleted(attachOperation, false);
+                },
+                    operation->Parent);
+
+                OnAttachContainerToNetworkCompleted(attachOperation, true);
+            }
+            else
+            {
+                auto transitionResult = this->TransitionState(error);
+                if (!transitionResult.IsSuccess())
+                {
+                    error = transitionResult;
+                }
+
+                if (error.IsSuccess())
+                {
+                    TraceActivationCompletion();
+                }
+
+                TryComplete(operation->Parent, error);
+            }
+#else
+            auto transitionResult = this->TransitionState(error);
+            if (!transitionResult.IsSuccess())
+            {
+                error = transitionResult;
+            }
+
+            if (error.IsSuccess())
+            {
+                TraceActivationCompletion();
+            }
+
+            TryComplete(operation->Parent, error);
+#endif
+        }
+        else
+        {
+#if defined(PLATFORM_UNIX)
+            lastError_.Overwrite(error);
+            ClearContainerNetworkParamsForLinuxIsolation(operation->Parent);
+#else
+            TryComplete(operation->Parent, error);
+#endif
+        }
+    }
+
+    void OnAttachContainerToNetworkCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.ActivationManager.ContainerActivatorObj->EndAttachContainerToNetwork(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType_ActivationManager,
+            owner_.parentId_,
+            "End(Container Attach To Network): ErrorCode={0}, ErrorMessage={1}, App Name={2}, Service Id={3}, ExeName={4}",
+            error,
+            error.Message,
+            owner_.ContainerDescriptionObj.ApplicationName,
+            owner_.appServiceId_,
+            owner_.processDescription_.ExePath);
+
+        // clean up if error
+        if (!error.IsSuccess())
+        {
+            lastError_.Overwrite(error);
+
+            auto transitionResult = this->TransitionState(error);
+            if (!transitionResult.IsSuccess())
+            {
+                error = transitionResult;
+            }
+
+            // continue to clean up
+            TransitionToAborted(operation->Parent);
+
+            return;
         }
 
         if (error.IsSuccess())
         {
-            hostingTrace.ContainerActivatedOperational(
-                owner_.TraceId,
-                owner_.ContainerDescriptionObj.ContainerName,
-                ServiceModel::ContainerIsolationMode::EnumToString(owner_.ContainerDescriptionObj.IsolationMode),
-                owner_.ContainerDescriptionObj.ApplicationName,
-                owner_.ContainerDescriptionObj.ServiceName,
-                owner_.ContainerDescriptionObj.CodePackageName);
+            auto updateRoutesOperation = owner_.ActivationManager.ContainerActivatorObj->BeginContainerUpdateRoutes(
+                owner_.containerId_,
+                owner_.containerDescription_,
+                timeoutHelper_.GetRemainingTime(),
+                [this](AsyncOperationSPtr const & updateRoutesOperation)
+            {
+                this->OnContainerUpdateRoutesCompleted(updateRoutesOperation, false);
+            },
+                operation->Parent);
 
-            hostingTrace.ContainerActivated(
-                owner_.TraceId,
-                owner_.ContainerDescriptionObj.ContainerName,
-                ServiceModel::ContainerIsolationMode::EnumToString(owner_.ContainerDescriptionObj.IsolationMode),
-                owner_.ContainerDescriptionObj.ApplicationName,
-                owner_.ContainerDescriptionObj.ServiceName,
-                owner_.ContainerDescriptionObj.CodePackageName);
+            OnContainerUpdateRoutesCompleted(updateRoutesOperation, true);
+        }
+    }
+
+    void OnContainerUpdateRoutesCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.ActivationManager.ContainerActivatorObj->EndContainerUpdateRoutes(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType_ActivationManager,
+            owner_.parentId_,
+            "End(Container Update Routes): ErrorCode={0}, ErrorMessage={1}, App Name={2}, Service Id={3}, ExeName={4}",
+            error,
+            error.Message,
+            owner_.ContainerDescriptionObj.ApplicationName,
+            owner_.appServiceId_,
+            owner_.processDescription_.ExePath);
+
+        // clean up if error
+        if (!error.IsSuccess())
+        {
+            lastError_.Overwrite(error);
+
+            auto transitionResult = this->TransitionState(error);
+            if (!transitionResult.IsSuccess())
+            {
+                error = transitionResult;
+            }
+
+            // continue to clean up
+            TransitionToAborted(operation->Parent);
+
+            return;
+        }
+        else
+        {
+            auto transitionResult = this->TransitionState(error);
+            if (!transitionResult.IsSuccess())
+            {
+                error = transitionResult;
+            }
+        }
+
+        if (error.IsSuccess())
+        {
+            TraceActivationCompletion();
         }
 
         TryComplete(operation->Parent, error);
     }
+
+    void TraceActivationCompletion()
+    {
+        hostingTrace.ContainerActivatedOperational(
+            owner_.TraceId,
+            owner_.ContainerDescriptionObj.ContainerName,
+            ServiceModel::ContainerIsolationMode::EnumToString(owner_.ContainerDescriptionObj.IsolationMode),
+            owner_.ContainerDescriptionObj.ApplicationName,
+            owner_.ContainerDescriptionObj.ServiceName,
+            owner_.ContainerDescriptionObj.CodePackageName);
+
+        hostingTrace.ContainerActivated(
+            owner_.TraceId,
+            owner_.ContainerDescriptionObj.ContainerName,
+            ServiceModel::ContainerIsolationMode::EnumToString(owner_.ContainerDescriptionObj.IsolationMode),
+            owner_.ContainerDescriptionObj.ApplicationName,
+            owner_.ContainerDescriptionObj.ServiceName,
+            owner_.ContainerDescriptionObj.CodePackageName);
+    }
+
+#if defined(PLATFORM_UNIX)
+    void ClearContainerNetworkParamsForLinuxIsolation(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (owner_.ContainerDescriptionObj.IsContainerRoot && owner_.ContainerDescriptionObj.PodDescription.IsolationMode == ContainerIsolationMode::hyperv)
+        {
+            std::vector<std::wstring> networkTypesToFilter;
+            std::vector<std::wstring> networkNames;
+            std::wstring networkNameList;
+            owner_.containerDescription_.NetworkConfig.GetNetworkNames(networkTypesToFilter, networkNames, networkNameList);
+
+            if (!networkNames.empty())
+            {
+                WriteInfo(
+                    TraceType_ActivationManager,
+                    owner_.parentId_,
+                    "Clear linux isolation network params for App Name={0} Service Id={1} ExeName={2} Networks={3} as part of activation.",
+                    owner_.ContainerDescriptionObj.ApplicationName,
+                    owner_.appServiceId_,
+                    owner_.processDescription_.ExePath,
+                    networkNameList);
+
+                ContainerDescription localContainerDesc = owner_.containerDescription_;
+
+                auto clearOperation = owner_.ActivationManager.ContainerActivatorObj->BeginClearContainerNetworkParamsForLinuxIsolation(
+                    localContainerDesc.NetworkConfig.NodeId,
+                    localContainerDesc.NetworkConfig.NodeName,
+                    localContainerDesc.NetworkConfig.NodeIpAddress,
+                    localContainerDesc.ContainerName,
+                    networkNames,
+                    timeoutHelper_.GetRemainingTime(),
+                    [this](AsyncOperationSPtr const & clearOperation)
+                {
+                    this->OnClearContainerNetworkParamsForLinuxIsolationCompleted(clearOperation, false);
+                },
+                    thisSPtr);
+
+                OnClearContainerNetworkParamsForLinuxIsolationCompleted(clearOperation, true);
+            }
+            else
+            {
+                TryComplete(thisSPtr, lastError_);
+            }
+        }
+        else
+        {
+            TryComplete(thisSPtr, lastError_);
+        }
+    }
+
+    void OnClearContainerNetworkParamsForLinuxIsolationCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynhronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynhronously)
+        {
+            return;
+        }
+
+        auto error = owner_.ActivationManager.ContainerActivatorObj->EndClearContainerNetworkParamsForLinuxIsolation(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType_ActivationManager,
+            owner_.parentId_,
+            "End(Container Clear Network Params For Linux Isolation): ErrorCode={0}, ErrorMessage={1}, App Name={2}, Service Id={3}, ExeName={4}",
+            error,
+            error.Message,
+            owner_.ContainerDescriptionObj.ApplicationName,
+            owner_.appServiceId_,
+            owner_.processDescription_.ExePath);
+
+        TryComplete(operation->Parent, lastError_);
+    }
+#endif
 
     ErrorCode TransitionState(ErrorCode startedResult)
     {
@@ -419,6 +710,17 @@ protected:
         return transitionResult;
     }
 
+    void TransitionToAborted(AsyncOperationSPtr const & thisSPtr)
+    {
+        owner_.AbortAndWaitForTerminationAsync(
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->TryComplete(operation->Parent, lastError_);
+        },
+            thisSPtr);
+        return;
+    }
+
     ProcessWait::WaitCallback GetProcessTerminationHandler(DateTime startTime)
     {
         ProcessActivationManager & controller  = owner_.ActivationManager;
@@ -439,6 +741,7 @@ private:
     ApplicationService & owner_;
     TimeoutHelper timeoutHelper_;
     DWORD processId_;
+    ErrorCode lastError_;
 };
 
 class ApplicationService::DeactivateAsyncOperation
@@ -497,32 +800,18 @@ private:
     {   
         if (owner_.isContainerHost_)
         {
-            WriteInfo(
-                TraceType_ActivationManager,
-                owner_.TraceId,
-                "Removing container {0} as part of deactivation",
-                owner_.containerDescription_.ContainerName);
-            auto activationContext = static_pointer_cast<ProcessActivationContext>(owner_.activationContext_);
-            if(activationContext != nullptr &&
-               activationContext->ProcessMonitor != nullptr)
-            {  
-                activationContext->ProcessMonitor->Cancel();
+#if !defined(PLATFORM_UNIX)
+            if ((owner_.containerDescription_.NetworkConfig.NetworkType & NetworkType::Enum::Isolated) == NetworkType::Enum::Isolated)
+            {
+                DetachContainerFromNetwork(thisSPtr);
             }
-            owner_.activationContext_.reset();
-            auto operation = owner_.ActivationManager.ContainerActivatorObj->BeginDeactivate(
-                owner_.containerDescription_,
-                owner_.containerDescription_.AutoRemove,
-                owner_.containerDescription_.IsContainerRoot,
-#if defined(PLATFORM_UNIX)
-                owner_.containerDescription_.PodDescription.IsolationMode == ContainerIsolationMode::hyperv,
+            else
+            {
+                StopContainer(thisSPtr);
+            }
+#else
+            StopContainer(thisSPtr);
 #endif
-                owner_.processDescription_.CgroupName,
-                isGraceful_,
-                timeoutHelper_.GetRemainingTime(),
-                [this](AsyncOperationSPtr const & operation){ this->FinishStopCompleted(operation, false); },
-                thisSPtr);
-
-            FinishStopCompleted(operation, true);
         }
         else
         {
@@ -554,12 +843,112 @@ private:
         }
     }
 
+    void DetachContainerFromNetwork(AsyncOperationSPtr const & thisSPtr)
+    {
+        std::vector<std::wstring> networkTypesToFilter = { NetworkType::IsolatedStr };
+        std::vector<std::wstring> networkNames;
+        std::wstring networkNameList;
+        owner_.containerDescription_.NetworkConfig.GetNetworkNames(networkTypesToFilter, networkNames, networkNameList);
+
+        WriteInfo(
+            TraceType_ActivationManager,
+            owner_.TraceId,
+            "Detaching container for App Name={0} Service Id={1} ExeName={2} Container Id={3} from Networks={4} as part of deactivation",
+            owner_.containerDescription_.ApplicationName,
+            owner_.appServiceId_,
+            owner_.processDescription_.ExePath,
+            owner_.containerId_,
+            networkNameList);
+
+        ContainerDescription localContainerDesc = owner_.containerDescription_;
+        wstring containerId = owner_.containerId_;
+
+        auto operation = owner_.ActivationManager.ContainerActivatorObj->BeginDetachContainerFromNetwork(
+            localContainerDesc.NetworkConfig.NodeId,
+            localContainerDesc.NetworkConfig.NodeName,
+            localContainerDesc.NetworkConfig.NodeIpAddress,
+            containerId,
+            networkNames,
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation) { this->OnDetachContainerFromNetworkCompleted(operation, false); },
+            thisSPtr);
+
+        OnDetachContainerFromNetworkCompleted(operation, true);
+    }
+
+    void StopContainer(AsyncOperationSPtr const & thisSPtr)
+    {
+        WriteInfo(
+            TraceType_ActivationManager,
+            owner_.TraceId,
+            "Removing container for App Name={0} Service Id={1} ExeName={2} Container Id={3} as part of deactivation",
+            owner_.containerDescription_.ApplicationName,
+            owner_.appServiceId_,
+            owner_.processDescription_.ExePath,
+            owner_.containerId_);
+
+        auto activationContext = static_pointer_cast<ProcessActivationContext>(owner_.activationContext_);
+        if (activationContext != nullptr &&
+            activationContext->ProcessMonitor != nullptr)
+        {
+            activationContext->ProcessMonitor->Cancel();
+        }
+
+        owner_.activationContext_.reset();
+
+        auto operation = owner_.ActivationManager.ContainerActivatorObj->BeginDeactivate(
+            owner_.containerDescription_,
+            owner_.containerDescription_.AutoRemove,
+            owner_.containerDescription_.IsContainerRoot,
+#if defined(PLATFORM_UNIX)
+            owner_.containerDescription_.PodDescription.IsolationMode == ContainerIsolationMode::hyperv,
+#endif
+            owner_.processDescription_.CgroupName,
+            isGraceful_,
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation) { this->FinishStopCompleted(operation, false); },
+            thisSPtr);
+
+        FinishStopCompleted(operation, true);
+    }
+
+    void OnDetachContainerFromNetworkCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynhronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynhronously)
+        {
+            return;
+        }
+
+        auto error = owner_.ActivationManager.ContainerActivatorObj->EndDetachContainerFromNetwork(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType_ActivationManager,
+            owner_.parentId_,
+            "End(Container Detach From Network): ErrorCode={0}, ErrorMessage={1}, App Name={2}, Service Id={3}, ExeName={4}",
+            error,
+            error.Message,
+            owner_.ContainerDescriptionObj.ApplicationName,
+            owner_.appServiceId_,
+            owner_.processDescription_.ExePath);
+
+        if (error.IsSuccess())
+        {
+            StopContainer(operation->Parent);
+        }
+        else
+        {
+            TransitionToFailed(operation->Parent);
+        }
+    }
+
     void FinishStopCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynhronously)
     {            
         if (operation->CompletedSynchronously != expectedCompletedSynhronously)
         {
             return;
         }
+
         ErrorCode errorCode = ErrorCodeValue::Success;
         if (owner_.isContainerHost_)
         {
@@ -586,6 +975,7 @@ private:
         {
             errorCode = owner_.ActivationManager.ProcessActivatorObj->EndDeactivate(operation);
         }
+
         WriteTrace(
             errorCode.ToLogLevel(),
             TraceType_ActivationManager,
@@ -596,14 +986,98 @@ private:
 
         if (errorCode.IsSuccess())
         {  
+#if defined(PLATFORM_UNIX)
+            ClearContainerNetworkParamsForLinuxIsolation(operation->Parent);
+#else
+            TransitionToStopped(operation->Parent);
+#endif
+        }
+        else
+        {
+            TransitionToFailed(operation->Parent);
+        }
+    }
+
+#if defined(PLATFORM_UNIX)
+    void ClearContainerNetworkParamsForLinuxIsolation(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (owner_.ContainerDescriptionObj.IsContainerRoot && owner_.ContainerDescriptionObj.PodDescription.IsolationMode == ContainerIsolationMode::hyperv)
+        {
+            std::vector<std::wstring> networkTypesToFilter;
+            std::vector<std::wstring> networkNames;
+            std::wstring networkNameList;
+            owner_.containerDescription_.NetworkConfig.GetNetworkNames(networkTypesToFilter, networkNames, networkNameList);
+
+            if (!networkNames.empty())
+            {
+                WriteInfo(
+                    TraceType_ActivationManager,
+                    owner_.parentId_,
+                    "Clear linux isolation network params for App Name={0} Service Id={1} ExeName={2} Container Id={3} Networks={4} as part of deactivation.",
+                    owner_.ContainerDescriptionObj.ApplicationName,
+                    owner_.appServiceId_,
+                    owner_.processDescription_.ExePath,
+                    owner_.containerId_,
+                    networkNameList);
+
+                ContainerDescription localContainerDesc = owner_.containerDescription_;
+
+                auto clearOperation = owner_.ActivationManager.ContainerActivatorObj->BeginClearContainerNetworkParamsForLinuxIsolation(
+                    localContainerDesc.NetworkConfig.NodeId,
+                    localContainerDesc.NetworkConfig.NodeName,
+                    localContainerDesc.NetworkConfig.NodeIpAddress,
+                    localContainerDesc.ContainerName,
+                    networkNames,
+                    timeoutHelper_.GetRemainingTime(),
+                    [this](AsyncOperationSPtr const & clearOperation)
+                {
+                    this->OnClearContainerNetworkParamsForLinuxIsolationCompleted(clearOperation, false);
+                },
+                    thisSPtr);
+
+                OnClearContainerNetworkParamsForLinuxIsolationCompleted(clearOperation, true);
+            }
+            else
+            {
+                TransitionToStopped(thisSPtr);
+            }
+        }
+        else
+        {
+            TransitionToStopped(thisSPtr);
+        }
+    }
+
+    void OnClearContainerNetworkParamsForLinuxIsolationCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynhronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynhronously)
+        {
+            return;
+        }
+
+        auto error = owner_.ActivationManager.ContainerActivatorObj->EndClearContainerNetworkParamsForLinuxIsolation(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType_ActivationManager,
+            owner_.parentId_,
+            "End(Container Clear Network Params For Linux Isolation): ErrorCode={0}, ErrorMessage={1}, App Name={2}, Service Id={3}, ExeName={4}",
+            error,
+            error.Message,
+            owner_.ContainerDescriptionObj.ApplicationName,
+            owner_.appServiceId_,
+            owner_.processDescription_.ExePath);
+
+        if (error.IsSuccess())
+        {
             TransitionToStopped(operation->Parent);
         }
         else
         {
             TransitionToFailed(operation->Parent);
         }
-
     }
+#endif
 
     void TransitionToStopped(AsyncOperationSPtr const & thisSPtr)
     {
@@ -673,6 +1147,7 @@ ApplicationService::ApplicationService(
     securityUser_(runAs),
     isContainerHost_(isContainerHost),
     containerDescription_(containerDescription),
+    terminatedExternally_(false),
     fabricBinFolder_(fabricBinFolder),
     rwlock_()
 {
@@ -757,10 +1232,18 @@ void ApplicationService::OnAbort()
 {
     if (isContainerHost_)
     {
-        ActivationManager.ContainerActivatorObj->TerminateContainer(
-            containerDescription_,
-            containerDescription_.IsContainerRoot,
-            processDescription_.CgroupName);
+        // terminate should not be called again if container was terminated externally because
+        // it will remove the container regardless of any set container retention policies
+        if (!terminatedExternally_.load())
+        {
+            ActivationManager.ContainerActivatorObj->TerminateContainer(
+                containerDescription_,
+                containerDescription_.IsContainerRoot,
+                processDescription_.CgroupName);
+        }
+
+        // Clean up networks that the container is attached to.
+        CleanupContainerNetworks();
     }
     else
     {
@@ -772,6 +1255,7 @@ void ApplicationService::OnAbort()
                 activationContext = move(this->activationContext_);
             }
         }
+
         if (activationContext)
         {
             WriteInfo(
@@ -791,6 +1275,126 @@ void ApplicationService::OnAbort()
                 appServiceId_);
         }
     }
+}
+
+void ApplicationService::CleanupContainerNetworks()
+{
+    auto localContainerDesc = containerDescription_;
+    wstring containerId = containerId_;
+
+#if defined(PLATFORM_UNIX)
+    if (localContainerDesc.IsContainerRoot && localContainerDesc.PodDescription.IsolationMode == ContainerIsolationMode::hyperv)
+    {
+        std::vector<std::wstring> networkTypesToFilter;
+        std::vector<std::wstring> networkNames;
+        std::wstring networkNameList;
+        localContainerDesc.NetworkConfig.GetNetworkNames(networkTypesToFilter, networkNames, networkNameList);
+
+        if (!networkNames.empty())
+        {
+            WriteInfo(
+                TraceType_ActivationManager,
+                TraceId,
+                "Clear linux isolation network params for App Name={0} Service Id={1} ExeName={2} Container Id={3} Networks={4} as part of abort.",
+                localContainerDesc.ApplicationName,
+                appServiceId_,
+                processDescription_.ExePath,
+                containerId,
+                networkNameList);
+
+            AsyncOperationWaiterSPtr cleanupWaiter = make_shared<AsyncOperationWaiter>();
+            TimeSpan timeout = HostingConfig::GetConfig().ActivationTimeout;
+
+            auto clearOperation = ActivationManager.ContainerActivatorObj->BeginClearContainerNetworkParamsForLinuxIsolation(
+                localContainerDesc.NetworkConfig.NodeId,
+                localContainerDesc.NetworkConfig.NodeName,
+                localContainerDesc.NetworkConfig.NodeIpAddress,
+                localContainerDesc.PodDescription.HostName,
+                networkNames,
+                timeout,
+                [this, cleanupWaiter](AsyncOperationSPtr const & operation)
+            {
+                auto error = this->ActivationManager.ContainerActivatorObj->EndClearContainerNetworkParamsForLinuxIsolation(operation);
+                cleanupWaiter->SetError(error);
+                cleanupWaiter->Set();
+            },
+                this->CreateAsyncOperationRoot());
+
+            if (cleanupWaiter->WaitOne(timeout))
+            {
+                auto error = cleanupWaiter->GetError();
+                WriteTrace(
+                    error.ToLogLevel(),
+                    TraceType_ActivationManager,
+                    TraceId,
+                    "Clear linux isolation network params returned error {0}.",
+                    error);
+            }
+            else
+            {
+                WriteWarning(
+                    TraceType_ActivationManager,
+                    TraceId,
+                    "Clear linux isolation network params timed out.");
+            }
+        }
+    }
+#else
+    if ((localContainerDesc.NetworkConfig.NetworkType & NetworkType::Enum::Isolated) == NetworkType::Enum::Isolated &&
+        !containerId.empty())
+    {
+        std::vector<std::wstring> networkTypesToFilter = { NetworkType::IsolatedStr };
+        std::vector<std::wstring> networkNames;
+        wstring networkNameList;
+        localContainerDesc.NetworkConfig.GetNetworkNames(networkTypesToFilter, networkNames, networkNameList);
+
+        WriteInfo(
+            TraceType_ActivationManager,
+            TraceId,
+            "Detach network from container for App Name={0} Service Id={1} ExeName={2} Container Id={3} Networks={4} as part of abort.",
+            localContainerDesc.ApplicationName,
+            appServiceId_,
+            processDescription_.ExePath,
+            containerId,
+            networkNameList);
+
+        AsyncOperationWaiterSPtr cleanupWaiter = make_shared<AsyncOperationWaiter>();
+        TimeSpan timeout = HostingConfig::GetConfig().ActivationTimeout;
+
+        auto operation = this->ActivationManager.ContainerActivatorObj->BeginDetachContainerFromNetwork(
+            localContainerDesc.NetworkConfig.NodeId,
+            localContainerDesc.NetworkConfig.NodeName,
+            localContainerDesc.NetworkConfig.NodeIpAddress,
+            containerId,
+            networkNames,
+            timeout,
+            [this, cleanupWaiter](AsyncOperationSPtr const & operation)
+        {
+            auto error = this->ActivationManager.ContainerActivatorObj->EndDetachContainerFromNetwork(operation);
+            cleanupWaiter->SetError(error);
+            cleanupWaiter->Set();
+        },
+            this->CreateAsyncOperationRoot());
+
+        if (cleanupWaiter->WaitOne(timeout))
+        {
+            auto error = cleanupWaiter->GetError();
+            WriteTrace(
+                error.ToLogLevel(),
+                TraceType_ActivationManager,
+                TraceId,
+                "Detaching container from networks returned error {0}.",
+                error);
+        }
+        else
+        {
+            WriteWarning(
+                TraceType_ActivationManager,
+                TraceId,
+                "Detaching container from networks timed out.");
+        }
+    }
+#endif
 }
 
 ProcessActivatorUPtr const & ApplicationService::GetProcessActivator() const
@@ -1023,6 +1627,7 @@ bool ApplicationService::Test_VerifyLimitsEnforced(std::vector<double> & cpuLimi
     {
         memoryLimitCP.push_back(memoryLimit);
     }
+
     WriteNoise(
         TraceType_ActivationManager,
         TraceId,
@@ -1141,4 +1746,16 @@ bool ApplicationService::Test_VerifyContainerGroupSettings()
     {
         return false;
     }
+}
+
+void ApplicationService::SetTerminatedExternally(BOOL terminatedExternally)
+{
+    terminatedExternally_.store(terminatedExternally);
+    WriteInfo(
+        TraceType_ActivationManager,
+        TraceId,
+        "ApplicationService {0} with application name {1} set terminated externally to {2}.",
+        appServiceId_,
+        ContainerDescriptionObj.ApplicationName,
+        terminatedExternally);
 }

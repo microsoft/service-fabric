@@ -24,6 +24,7 @@ using namespace Management::FaultAnalysisService;
 using namespace Management::UpgradeOrchestrationService;
 using namespace Management::CentralSecretService;
 using namespace Management::LocalSecretService;
+using namespace Management::GatewayResourceManager;
 using namespace std;
 using namespace Api;
 using namespace Client;
@@ -39,7 +40,7 @@ namespace Management
     {
     protected:
 
-        ServiceConfigBase() 
+        ServiceConfigBase()
             : sectionName_()
             , placementConstraints_()
         {
@@ -47,10 +48,10 @@ namespace Management
 
     public:
 
-        __declspec(property(get=get_SectionName)) wstring const& SectionName;
+        __declspec(property(get = get_SectionName)) wstring const& SectionName;
         inline wstring const& get_SectionName() const { return sectionName_; }
 
-        __declspec(property(get=get_PlacementConstraints)) wstring const& PlacementConstraints;
+        __declspec(property(get = get_PlacementConstraints)) wstring const& PlacementConstraints;
         inline wstring const& get_PlacementConstraints() const { return placementConstraints_; }
 
         virtual bool TryReadFromConfig(wstring const& sectionName, StringMap const& configSection)
@@ -81,13 +82,13 @@ namespace Management
         {
         }
 
-        __declspec(property(get=get_ServiceName)) wstring const& ServiceName;
+        __declspec(property(get = get_ServiceName)) wstring const& ServiceName;
         inline wstring const& get_ServiceName() const { return serviceName_; }
 
-        __declspec(property(get=get_TargetReplicaSetSize)) int TargetReplicaSetSize;
+        __declspec(property(get = get_TargetReplicaSetSize)) int TargetReplicaSetSize;
         inline int get_TargetReplicaSetSize() const { return targetReplicaSetSize_; }
 
-        __declspec(property(get=get_MinReplicaSetSize)) int MinReplicaSetSize;
+        __declspec(property(get = get_MinReplicaSetSize)) int MinReplicaSetSize;
         inline int get_MinReplicaSetSize() const { return minReplicaSetSize_; }
 
         bool TryReadFromConfig(wstring const& sectionName, StringMap const& configSection) override
@@ -141,6 +142,54 @@ namespace Management
     {
     };
 
+    class ManagementSubsystem::EventStoreServiceConfig : public ServiceConfigBase
+    {
+    public:
+        EventStoreServiceConfig()
+            : targetReplicaSetSize_(0)
+            , minReplicaSetSize_(0)
+        {
+        }
+
+        __declspec(property(get = get_TargetReplicaSetSize)) int TargetReplicaSetSize;
+        inline int get_TargetReplicaSetSize() const { return targetReplicaSetSize_; }
+
+        __declspec(property(get = get_MinReplicaSetSize)) int MinReplicaSetSize;
+        inline int get_MinReplicaSetSize() const { return minReplicaSetSize_; }
+
+        bool TryReadFromConfig(wstring const& sectionName, StringMap const& configSection) override
+        {
+            if (!ServiceConfigBase::TryReadFromConfig(sectionName, configSection))
+            {
+                return false;
+            }
+
+            int configTargetReplicaSetSize = 0;
+            int configMinReplicaSetSize = 0;
+
+            auto it = configSection.find(L"TargetReplicaSetSize");
+            if (it == configSection.end() || !Config::TryParse<int>(configTargetReplicaSetSize, it->second))
+            {
+                return false;
+            }
+
+            it = configSection.find(L"MinReplicaSetSize");
+            if (it == configSection.end() || !Config::TryParse<int>(configMinReplicaSetSize, it->second))
+            {
+                return false;
+            }
+
+            targetReplicaSetSize_ = configTargetReplicaSetSize;
+            minReplicaSetSize_ = configMinReplicaSetSize;
+
+            return true;
+        }
+
+    private:
+        int minReplicaSetSize_;
+        int targetReplicaSetSize_;
+    };
+
     class ManagementSubsystem::Impl
         : public RootedObject
     {
@@ -161,56 +210,61 @@ namespace Management
             Transport::SecuritySettings const& clusterSecuritySettings,
             ComponentRoot const & root);
 
-        __declspec(property(get=get_IsEnabled)) bool IsEnabled;
+        __declspec(property(get = get_IsEnabled)) bool IsEnabled;
         bool get_IsEnabled() const { return this->IsCMEnabled; }
 
-        __declspec(property(get=get_IsCMEnabled)) bool IsCMEnabled;
+        __declspec(property(get = get_IsCMEnabled)) bool IsCMEnabled;
         bool get_IsCMEnabled() const { return (ManagementConfig::GetConfig().TargetReplicaSetSize > 0); }
 
-        __declspec(property(get=get_IsRMEnabled)) bool IsRMEnabled;
+        __declspec(property(get = get_IsRMEnabled)) bool IsRMEnabled;
         bool get_IsRMEnabled() const { return (RepairManagerConfig::GetConfig().TargetReplicaSetSize > 0); }
 
-        __declspec(property(get=get_IsISEnabled)) bool IsISEnabled;
+        __declspec(property(get = get_IsISEnabled)) bool IsISEnabled;
         bool get_IsISEnabled() const;
 
-        __declspec(property(get=get_IsTVSEnabled)) bool IsTVSEnabled;
+        __declspec(property(get = get_IsTVSEnabled)) bool IsTVSEnabled;
         bool get_IsTVSEnabled() const;
 
-        __declspec(property(get=get_IsImageStoreServiceEnabled)) bool IsImageStoreServiceEnabled;
+        __declspec(property(get = get_IsImageStoreServiceEnabled)) bool IsImageStoreServiceEnabled;
         bool get_IsImageStoreServiceEnabled() const;
 
-        __declspec(property(get=get_IsUpgradeServiceEnabled)) bool IsUpgradeServiceEnabled;
+        __declspec(property(get = get_IsUpgradeServiceEnabled)) bool IsUpgradeServiceEnabled;
         bool get_IsUpgradeServiceEnabled() const;
-      
-        __declspec(property(get=get_IsFaultAnalysisServiceEnabled)) bool IsFaultAnalysisServiceEnabled;
+
+        __declspec(property(get = get_IsFaultAnalysisServiceEnabled)) bool IsFaultAnalysisServiceEnabled;
         bool get_IsFaultAnalysisServiceEnabled() const { return (FaultAnalysisServiceConfig::GetConfig().TargetReplicaSetSize > 0); }
 
         __declspec(property(get = get_IsBackupRestoreServiceEnabled)) bool IsBackupRestoreServiceEnabled;
         bool get_IsBackupRestoreServiceEnabled() const { return (BackupRestoreServiceConfig::GetConfig().TargetReplicaSetSize > 0); }
 
-        __declspec(property(get=get_ClientFactory)) Api::IClientFactoryPtr ClientFactory;
+        __declspec(property(get = get_ClientFactory)) Api::IClientFactoryPtr ClientFactory;
         Api::IClientFactoryPtr get_ClientFactory() const { return clientFactoryPtr_; };
 
-        __declspec(property(get=Test_get_ClusterManagerFactory)) ClusterManager::ClusterManagerFactory & Test_ClusterManagerFactory;
+        __declspec(property(get = Test_get_ClusterManagerFactory)) ClusterManager::ClusterManagerFactory & Test_ClusterManagerFactory;
         ClusterManager::ClusterManagerFactory & Test_get_ClusterManagerFactory() const;
 
-        __declspec(property(get=get_RuntimeSharingHelper)) Hosting2::IRuntimeSharingHelper & RuntimeSharingHelper;
+        __declspec(property(get = get_RuntimeSharingHelper)) Hosting2::IRuntimeSharingHelper & RuntimeSharingHelper;
         Hosting2::IRuntimeSharingHelper & get_RuntimeSharingHelper() const;
 
-        __declspec(property(get=Test_get_ActiveServices)) Test_ReplicaMap const & Test_ActiveServices;
+        __declspec(property(get = Test_get_ActiveServices)) Test_ReplicaMap const & Test_ActiveServices;
         Test_ReplicaMap const & Test_get_ActiveServices() const;
 
         __declspec(property(get = get_IsUpgradeOrchestrationServiceEnabled)) bool IsUpgradeOrchestrationServiceEnabled;
         bool get_IsUpgradeOrchestrationServiceEnabled() const { return (UpgradeOrchestrationServiceConfig::GetConfig().TargetReplicaSetSize > 0); }
 
         __declspec(property(get = get_IsCentralSecretServiceEnabled)) bool IsCentralSecretServiceEnabled;
-        bool get_IsCentralSecretServiceEnabled() const { return (CentralSecretServiceConfig::GetConfig().TargetReplicaSetSize > 0); }
+        bool get_IsCentralSecretServiceEnabled() const { return CentralSecretServiceConfig::GetConfig().IsCentralSecretServiceEnabled(); }
 
         __declspec(property(get = get_IsLocalSecretServiceEnabled)) bool IsLocalSecretServiceEnabled;
         bool get_IsLocalSecretServiceEnabled() const;
 
         __declspec(property(get = get_IsDnsServiceEnabled)) bool IsDnsServiceEnabled;
         bool get_IsDnsServiceEnabled() const;
+
+        __declspec(property(get = get_IsEventStoreServiceEnabled)) bool IsEventStoreServiceEnabled;
+        bool get_IsEventStoreServiceEnabled() const;
+        __declspec(property(get = get_IsGatewayResourceManagerEnabled)) bool IsGatewayResourceManagerEnabled;
+        bool get_IsGatewayResourceManagerEnabled() const;
 
         AsyncOperationSPtr BeginCreateClusterManagerService(
             TimeSpan const,
@@ -253,6 +307,12 @@ namespace Management
             AsyncCallback const &,
             AsyncOperationSPtr const &);
         ErrorCode EndCreateCentralSecretService(AsyncOperationSPtr const &);
+
+        AsyncOperationSPtr BeginCreateEventStoreService(
+            TimeSpan const,
+            AsyncCallback const &,
+            AsyncOperationSPtr const &);
+        ErrorCode EndCreateEventStoreService(AsyncOperationSPtr const &);
 
         AsyncOperationSPtr BeginCreateSystemServiceWithReservedIdRange(
             bool isEnabled,
@@ -386,9 +446,9 @@ namespace Management
                 FabricActivityHeader(),
                 timeout_,
                 [this](AsyncOperationSPtr const & operation)
-                {
-                    this->OnCreateServiceCompleted(operation, false /*expectedCompletedSynchronously*/);
-                },
+            {
+                this->OnCreateServiceCompleted(operation, false /*expectedCompletedSynchronously*/);
+            },
                 thisSPtr);
             this->OnCreateServiceCompleted(operation, true /*expectedCompletedSynchronously*/);
         }
@@ -518,9 +578,9 @@ namespace Management
                 FabricActivityHeader(),
                 this->timeout_,
                 [this](AsyncOperationSPtr const & operation)
-                {
-                    this->OnDeleteServiceCompleted(operation, false /*expectedCompletedSynchronously*/);
-                },
+            {
+                this->OnDeleteServiceCompleted(operation, false /*expectedCompletedSynchronously*/);
+            },
                 thisSPtr);
 
             this->OnDeleteServiceCompleted(operation, true /*expectedCompletedSynchronously*/);
@@ -702,9 +762,9 @@ namespace Management
                 {
                     WriteInfo(TraceManagementSubsystem, "Failed to create management client. error = {0}", error);
                     ScheduleRetry(
-                        "Scheduling get cluster upgrade status", 
-                        [this](AsyncOperationSPtr const & thisSPtr) { GetClusterUpgradeStatus(thisSPtr); }, 
-                        retryTimerSPtr_, 
+                        "Scheduling get cluster upgrade status",
+                        [this](AsyncOperationSPtr const & thisSPtr) { GetClusterUpgradeStatus(thisSPtr); },
+                        retryTimerSPtr_,
                         thisSPtr);
                     return;
                 }
@@ -730,9 +790,9 @@ namespace Management
             {
                 WriteWarning(TraceManagementSubsystem, "Failed to get fabric upgrade progress. error = {0}", error);
                 ScheduleRetry(
-                    "Scheduling get cluster upgrade status", 
-                    [this](AsyncOperationSPtr const & thisSPtr) { GetClusterUpgradeStatus(thisSPtr); }, 
-                    retryTimerSPtr_, 
+                    "Scheduling get cluster upgrade status",
+                    [this](AsyncOperationSPtr const & thisSPtr) { GetClusterUpgradeStatus(thisSPtr); },
+                    retryTimerSPtr_,
                     thisSPtr);
                 return;
             }
@@ -743,9 +803,9 @@ namespace Management
             {
                 WriteInfo(TraceManagementSubsystem, "Waiting for upgrade to complete. UpgradeState: {0}", upgradeState);
                 ScheduleRetry(
-                    "Scheduling get cluster upgrade status", 
-                    [this](AsyncOperationSPtr const & thisSPtr) { GetClusterUpgradeStatus(thisSPtr); }, 
-                    retryTimerSPtr_, 
+                    "Scheduling get cluster upgrade status",
+                    [this](AsyncOperationSPtr const & thisSPtr) { GetClusterUpgradeStatus(thisSPtr); },
+                    retryTimerSPtr_,
                     thisSPtr);
                 return;
             }
@@ -771,9 +831,9 @@ namespace Management
                 {
                     WriteInfo(TraceManagementSubsystem, "Failed to create query client; error = {0}", error);
                     ScheduleRetry(
-                        "Scheduling get system service", 
-                        [this](AsyncOperationSPtr const & thisSPtr) { GetSystemService(thisSPtr); }, 
-                        retryTimerSPtr_, 
+                        "Scheduling get system service",
+                        [this](AsyncOperationSPtr const & thisSPtr) { GetSystemService(thisSPtr); },
+                        retryTimerSPtr_,
                         thisSPtr);
                     return;
                 }
@@ -784,7 +844,7 @@ namespace Management
                     NamingUri(SystemServiceApplicationNameHelper::SystemServiceApplicationAuthority),
                     NamingUri(NamingUri::RootNamingUri),
                     wstring(), /*serviceTypeNameFilter*/
-                    wstring()), /*continuationToken*/
+                    QueryPagingDescription()), /*pagingDescription*/
                 ManagementConfig::GetConfig().MaxCommunicationTimeout,
                 [this](AsyncOperationSPtr const& operation) { this->OnGetSystemServiceComplete(operation, false); },
                 thisSPtr);
@@ -807,9 +867,9 @@ namespace Management
             {
                 WriteWarning(TraceManagementSubsystem, "Failed to get service list. error = {0}", error);
                 ScheduleRetry(
-                    "Scheduling get system service", 
-                    [this](AsyncOperationSPtr const & thisSPtr) { GetSystemService(thisSPtr); }, 
-                    retryTimerSPtr_, 
+                    "Scheduling get system service",
+                    [this](AsyncOperationSPtr const & thisSPtr) { GetSystemService(thisSPtr); },
+                    retryTimerSPtr_,
                     thisSPtr);
                 return;
             }
@@ -832,13 +892,13 @@ namespace Management
             }
 
             WriteInfo(
-                TraceManagementSubsystem, 
+                TraceManagementSubsystem,
                 "Comparing system services: config={0} query={1} internal={2}",
                 serviceNamesFromConfig,
                 serviceNamesFromQuery,
                 internalNamesFromQuery);
 
-            for (auto ix=0; ix<serviceNamesFromQuery.size(); ++ix)
+            for (auto ix = 0; ix < serviceNamesFromQuery.size(); ++ix)
             {
                 auto const & serviceName = serviceNamesFromQuery[ix];
                 auto const & internalName = internalNamesFromQuery[ix];
@@ -852,7 +912,7 @@ namespace Management
                     else
                     {
                         WriteInfo(
-                            TraceManagementSubsystem, 
+                            TraceManagementSubsystem,
                             "Deletion of system service {0} ({1}) is not supported",
                             serviceName,
                             internalName);
@@ -948,9 +1008,9 @@ namespace Management
             {
                 WriteWarning(TraceManagementSubsystem, "Failed to create system service. error = {0}", error);
                 ScheduleRetry(
-                    "Scheduling create system instance", 
+                    "Scheduling create system instance",
                     [this](AsyncOperationSPtr const & thisSPtr) { CreateServiceInstance(thisSPtr); },
-                    retryTimerSPtr_, 
+                    retryTimerSPtr_,
                     thisSPtr);
                 return;
             }
@@ -980,7 +1040,7 @@ namespace Management
         {
             if (instanceDeleteIndex_ >= instancesToDelete_.size())
             {
-                WriteInfo(TraceManagementSubsystem, "Completed deletion of all Infrastructure, Token Validation, Upgrade Service instances");
+                WriteInfo(TraceManagementSubsystem, "Completed deletion of all Infrastructure, Token Validation, Upgrade Service, EventStore Service instances");
                 auto count = --pendingCount_;
                 if (count < 0)
                 {
@@ -1036,9 +1096,9 @@ namespace Management
             {
                 WriteWarning(TraceManagementSubsystem, "Failed to delete system service. error = {0}", error);
                 ScheduleRetry(
-                    "Scheduling delete system instance", 
-                    [this](AsyncOperationSPtr const & thisSPtr) { DeleteServiceInstance(thisSPtr); }, 
-                    retryTimerSPtr2_, 
+                    "Scheduling delete system instance",
+                    [this](AsyncOperationSPtr const & thisSPtr) { DeleteServiceInstance(thisSPtr); },
+                    retryTimerSPtr2_,
                     thisSPtr);
                 return;
             }
@@ -1059,9 +1119,9 @@ namespace Management
         }
 
         void ScheduleRetry(
-            StringLiteral const & msg, 
-            RetryCallback const & callback, 
-            TimerSPtr & retryTimerSPtr, 
+            StringLiteral const & msg,
+            RetryCallback const & callback,
+            TimerSPtr & retryTimerSPtr,
             AsyncOperationSPtr const & thisSPtr)
         {
             {
@@ -1090,7 +1150,7 @@ namespace Management
         }
 
         _Requires_lock_held_(timerLock_)
-        void TryCancelTimer(TimerSPtr const& retryTimerSPtr)
+            void TryCancelTimer(TimerSPtr const& retryTimerSPtr)
         {
             if (retryTimerSPtr.get() != nullptr)
             {
@@ -1154,7 +1214,7 @@ namespace Management
     {
         vector<ServiceDescription> serviceDescriptions;
         ManagementSubsystem::LoadSystemServiceDescriptions(
-            serviceDescriptions, 
+            serviceDescriptions,
             SystemServiceApplicationNameHelper::InternalInfrastructureServiceName);
         return (!serviceDescriptions.empty());
     }
@@ -1163,22 +1223,22 @@ namespace Management
     {
         vector<ServiceDescription> dstsDescriptions;
         ManagementSubsystem::LoadSystemServiceDescriptions(
-            dstsDescriptions, 
+            dstsDescriptions,
             SystemServiceApplicationNameHelper::InternalDSTSTokenValidationServiceName);
 
         vector<ServiceDescription> tvsDescriptions;
         ManagementSubsystem::LoadSystemServiceDescriptions(
-            tvsDescriptions, 
+            tvsDescriptions,
             SystemServiceApplicationNameHelper::InternalTokenValidationServiceName);
 
         return (!dstsDescriptions.empty() || !tvsDescriptions.empty());
     }
 
     bool ManagementSubsystem::Impl::get_IsImageStoreServiceEnabled() const
-    {        
+    {
         return (this->IsCMEnabled
             && (StringUtility::StartsWith<wstring>(ManagementConfig::GetConfig().ImageStoreConnectionString.GetPlaintext(), *Management::ImageStore::Constants::NativeImageStoreSchemaTag)
-            || Management::ImageStore::ImageStoreServiceConfig::GetConfig().Enabled)
+                || Management::ImageStore::ImageStoreServiceConfig::GetConfig().Enabled)
             && ImageStoreServiceConfig::GetConfig().TargetReplicaSetSize > 0);
     }
 
@@ -1186,7 +1246,7 @@ namespace Management
     {
         vector<ServiceDescription> serviceDescriptions;
         ManagementSubsystem::LoadSystemServiceDescriptions(
-            serviceDescriptions, 
+            serviceDescriptions,
             SystemServiceApplicationNameHelper::InternalUpgradeServiceName);
         return (!serviceDescriptions.empty());
     }
@@ -1210,13 +1270,33 @@ namespace Management
 
         return (!serviceDescriptions.empty());
     }
- 
+
+    bool ManagementSubsystem::Impl::get_IsEventStoreServiceEnabled() const
+    {
+        EventStoreServiceConfig serviceConfig;
+        StringMap configSection;
+        ManagementConfig::GetConfig().GetKeyValues(
+            *SystemServiceApplicationNameHelper::InternalEventStoreServiceName,
+            configSection);
+
+        return serviceConfig.TryReadFromConfig(SystemServiceApplicationNameHelper::InternalEventStoreServiceName, configSection);
+    }
+
+    bool ManagementSubsystem::Impl::get_IsGatewayResourceManagerEnabled() const
+    {
+        vector<ServiceDescription> serviceDescriptions;
+        ManagementSubsystem::LoadSystemServiceDescriptions(
+            serviceDescriptions,
+            SystemServiceApplicationNameHelper::InternalGatewayResourceManagerName);
+        return (!serviceDescriptions.empty());
+    }
+
     ClusterManager::ClusterManagerFactory & ManagementSubsystem::Impl::Test_get_ClusterManagerFactory() const
     {
         ComPointer<Api::ComStatefulServiceFactory> snap;
         {
             AcquireReadLock lock(serviceFactoryLock_);
-            
+
             snap = clusterManagerFactoryCPtr_;
         }
 
@@ -1226,7 +1306,7 @@ namespace Management
         }
 
         return *dynamic_cast<ClusterManager::ClusterManagerFactory*>(snap->get_Impl().get());
-    }    
+    }
 
     Hosting2::IRuntimeSharingHelper & ManagementSubsystem::Impl::get_RuntimeSharingHelper() const
     {
@@ -1347,7 +1427,7 @@ namespace Management
     {
         return EndCreateSystemServiceWithReservedIdRange(IsImageStoreServiceEnabled, operation);
     }
-  
+
     AsyncOperationSPtr ManagementSubsystem::Impl::BeginCreateFaultAnalysisService(
         TimeSpan const timeout,
         AsyncCallback const & callback,
@@ -1441,6 +1521,25 @@ namespace Management
     ErrorCode ManagementSubsystem::Impl::EndCreateUpgradeOrchestrationService(AsyncOperationSPtr const & operation)
     {
         return EndCreateSystemServiceWithReservedIdRange(IsUpgradeOrchestrationServiceEnabled, operation);
+    }
+
+    AsyncOperationSPtr ManagementSubsystem::Impl::BeginCreateEventStoreService(
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+    {
+        return BeginCreateSystemServiceWithReservedIdRange(
+            IsEventStoreServiceEnabled,
+            CreateEventStoreServiceDescription(),
+            *ConsistencyUnitId::EventStoreServiceIdRange,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode ManagementSubsystem::Impl::EndCreateEventStoreService(AsyncOperationSPtr const & operation)
+    {
+        return EndCreateSystemServiceWithReservedIdRange(IsEventStoreServiceEnabled, operation);
     }
 
     AsyncOperationSPtr ManagementSubsystem::Impl::BeginCreateSystemServiceInstance(
@@ -1537,14 +1636,14 @@ namespace Management
                 AcquireWriteLock lock(serviceFactoryLock_);
 
                 clusterManagerFactoryCPtr_.SetNoAddRef(new Api::ComStatefulServiceFactory(IStatefulServiceFactoryPtr(
-                    factorySPtr.get(), 
+                    factorySPtr.get(),
                     factorySPtr->CreateComponentRoot())));
 
                 snap = clusterManagerFactoryCPtr_;
             }
 
             auto hr = fabricRuntimeCPtr->RegisterStatefulServiceFactory(
-                ServiceModel::ServiceTypeIdentifier::ClusterManagerServiceTypeId->ServiceTypeName.c_str(),  
+                ServiceModel::ServiceTypeIdentifier::ClusterManagerServiceTypeId->ServiceTypeName.c_str(),
                 snap.GetRawPointer());
 
             if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
@@ -1626,18 +1725,18 @@ namespace Management
         ComponentRoot const & root)
         : RootedObject(root)
         , impl_(make_unique<Impl>(
-        federation,
-        runtime,
-        fabricActivatorClient,
-        adminClient,
-        resolver,
-        clientConnectionAddress,
-        move(clientFactory),
-        clusterManagerReplicatorAddress,
-        workingDir,
-        nodeName,
-        clusterSecuritySettings,
-        root))
+            federation,
+            runtime,
+            fabricActivatorClient,
+            adminClient,
+            resolver,
+            clientConnectionAddress,
+            move(clientFactory),
+            clusterManagerReplicatorAddress,
+            workingDir,
+            nodeName,
+            clusterSecuritySettings,
+            root))
     {
         REGISTER_MESSAGE_HEADER(CreateComposeDeploymentRequestHeader);
     }
@@ -1659,7 +1758,7 @@ namespace Management
     bool ManagementSubsystem::get_IsImageStoreServiceEnabled() const { return impl_->IsImageStoreServiceEnabled; }
 
     bool ManagementSubsystem::get_IsUpgradeServiceEnabled() const { return impl_->IsUpgradeServiceEnabled; }
-    
+
     bool ManagementSubsystem::get_IsFaultAnalysisServiceEnabled() const { return impl_->IsFaultAnalysisServiceEnabled; }
 
     bool ManagementSubsystem::get_IsBackupRestoreServiceEnabled() const { return impl_->IsBackupRestoreServiceEnabled; }
@@ -1671,6 +1770,9 @@ namespace Management
     bool ManagementSubsystem::get_IsDnsServiceEnabled() const { return impl_->IsDnsServiceEnabled; }
 
     bool ManagementSubsystem::get_IsLocalSecretServiceEnabled() const { return impl_->IsLocalSecretServiceEnabled; }
+
+    bool ManagementSubsystem::get_IsEventStoreServiceEnabled() const { return impl_->IsEventStoreServiceEnabled; }
+    bool ManagementSubsystem::get_IsGatewayResourceManagerEnabled() const { return impl_->IsGatewayResourceManagerEnabled; }
 
     ClusterManager::ClusterManagerFactory & ManagementSubsystem::Test_get_ClusterManagerFactory() const
     {
@@ -1719,8 +1821,8 @@ namespace Management
     }
 
     ServiceDescription ManagementSubsystem::CreateClusterManagerServiceDescription(
-        int targetReplicaSetSize, 
-        int minReplicaSetSize, 
+        int targetReplicaSetSize,
+        int minReplicaSetSize,
         TimeSpan replicaRestartWaitDuration,
         TimeSpan quorumLossWaitDuration,
         TimeSpan standByReplicaKeepDuration,
@@ -1839,7 +1941,7 @@ namespace Management
     }
 
     ServiceDescription ManagementSubsystem::CreateImageStoreServiceDescription()
-    {        
+    {
         vector<Reliability::ServiceLoadMetricDescription> serviceMetricDescriptions;
         serviceMetricDescriptions.push_back(Reliability::ServiceLoadMetricDescription(
             FileStoreService::Constants::FileStoreServicePrimaryCountName,
@@ -1853,7 +1955,7 @@ namespace Management
             1));
 
         vector<Reliability::ServiceCorrelationDescription> serviceCorrelationDescList;
-        if(ImageStoreServiceConfig::GetConfig().EnableClusterManagerAffinity)
+        if (ImageStoreServiceConfig::GetConfig().EnableClusterManagerAffinity)
         {
             // Co-locate CM and FileStoreService primaries to optimize application package transfers
             //
@@ -1910,8 +2012,8 @@ namespace Management
         LoadSystemServiceDescriptions(descriptions, L"");
     }
 
-    void ManagementSubsystem::LoadSystemServiceDescriptions( 
-        vector<ServiceDescription> & descriptions, 
+    void ManagementSubsystem::LoadSystemServiceDescriptions(
+        vector<ServiceDescription> & descriptions,
         wstring const & nameFilter)
     {
         StringCollection sectionNames;
@@ -1921,23 +2023,23 @@ namespace Management
         {
             if ((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalInfrastructureServiceName)) &&
                 (StringUtility::AreEqualCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalInfrastructureServiceName) ||
-                StringUtility::StartsWithCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalInfrastructureServicePrefix)))
+                    StringUtility::StartsWithCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalInfrastructureServicePrefix)))
             {
                 AddInfrastructureServiceDescription(sectionName, descriptions);
             }
-            else if((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalDSTSTokenValidationServiceName)) &&
+            else if ((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalDSTSTokenValidationServiceName)) &&
                 (StringUtility::AreEqualCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalDSTSTokenValidationServiceName) ||
-                StringUtility::StartsWithCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalDSTSTokenValidationServicePrefix)))
+                    StringUtility::StartsWithCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalDSTSTokenValidationServicePrefix)))
             {
                 AddTokenValidationServiceDescription(sectionName, descriptions);
             }
-            else if((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalTokenValidationServiceName)) &&
+            else if ((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalTokenValidationServiceName)) &&
                 (StringUtility::AreEqualCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalTokenValidationServiceName) ||
-                StringUtility::StartsWithCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalTokenValidationServicePrefix)))
+                    StringUtility::StartsWithCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalTokenValidationServicePrefix)))
             {
                 AddTokenValidationServiceDescription(sectionName, descriptions);
             }
-            else if((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalUpgradeServiceName )) &&
+            else if ((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalUpgradeServiceName)) &&
                 StringUtility::AreEqualCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalUpgradeServiceName))
             {
                 descriptions.push_back(CreateUpgradeServiceDescription(sectionName));
@@ -1962,6 +2064,16 @@ namespace Management
             {
                 AddResourceMonitorServiceDescription(sectionName, descriptions);
             }
+            else if ((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalEventStoreServiceName)) &&
+                (StringUtility::AreEqualCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalEventStoreServiceName)))
+            {
+                descriptions.push_back(CreateEventStoreServiceDescription());
+            }
+            else if ((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(nameFilter, SystemServiceApplicationNameHelper::InternalGatewayResourceManagerName)) &&
+                (StringUtility::AreEqualCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalGatewayResourceManagerName)))
+            {
+                AddGatewayResourceManagerServiceDescription(sectionName, descriptions);
+            }
         }
     }
 
@@ -1978,7 +2090,7 @@ namespace Management
                 "Contents of configuration section '{0}' are invalid; ignoring this instance",
                 serviceName);
 
-                return;
+            return;
         }
 
         if ((serviceConfig.MinReplicaSetSize <= 0) || (serviceConfig.MinReplicaSetSize > serviceConfig.TargetReplicaSetSize))
@@ -2052,9 +2164,9 @@ namespace Management
                 "Contents of configuration section '{0}' are invalid; ignoring this instance",
                 serviceName);
 
-                return;
+            return;
         }
-        
+
         // Provide the config section name for this service instance as initialization data to the service,
         // so that the managed service code can read additional settings from the same section later.
         const byte *configSectionNameBuffer = reinterpret_cast<const byte *>(serviceName.c_str());
@@ -2224,6 +2336,67 @@ namespace Management
             SystemServiceApplicationNameHelper::SystemServiceApplicationName));
     }
 
+    void ManagementSubsystem::AddGatewayResourceManagerServiceDescription(wstring const & serviceName, __in vector<ServiceDescription> & descriptions)
+    {
+        GatewayResourceManagerConfig const & serviceConfig = GatewayResourceManagerConfig::GetConfig();
+        if ((serviceConfig.MinReplicaSetSize <= 0) || (serviceConfig.MinReplicaSetSize > serviceConfig.TargetReplicaSetSize))
+        {
+            WriteInfo(
+                TraceManagementSubsystem,
+                "Configuration section '{0}' specifies replica set min = {1}, target = {2}; ignoring this instance",
+                serviceName,
+                serviceConfig.MinReplicaSetSize,
+                serviceConfig.TargetReplicaSetSize);
+
+            return;
+        }
+
+        // ensure this service is isolated to other services
+        vector<Reliability::ServiceLoadMetricDescription> serviceMetricDescriptions;
+        serviceMetricDescriptions.push_back(Reliability::ServiceLoadMetricDescription(
+            GatewayResourceManager::Constants::GatewayResourceManagerPrimaryCountName,
+            FABRIC_SERVICE_LOAD_METRIC_WEIGHT_HIGH,
+            1,
+            0));
+        serviceMetricDescriptions.push_back(Reliability::ServiceLoadMetricDescription(
+            GatewayResourceManager::Constants::GatewayResourceManagerReplicaCountName,
+            FABRIC_SERVICE_LOAD_METRIC_WEIGHT_MEDIUM,
+            1,
+            1));
+
+        // Provide the config section name for this service instance as initialization data to the service,
+        // so that the managed service code can read additional settings from the same section later.
+        const byte *configSectionNameBuffer = reinterpret_cast<const byte *>(serviceName.c_str());
+        vector<byte> configSectionNameSerialized(
+            configSectionNameBuffer,
+            configSectionNameBuffer + serviceName.size() * sizeof(wchar_t));
+
+        descriptions.push_back(ServiceDescription(
+            serviceName,
+            0,  // instance
+            0,  // update version
+            1,  // partition count
+            serviceConfig.TargetReplicaSetSize,
+            serviceConfig.MinReplicaSetSize,
+            true,   // is stateful
+            true,   // has persisted state
+            ServiceModelConfig::GetConfig().SystemReplicaRestartWaitDuration,
+            ServiceModelConfig::GetConfig().QuorumLossWaitDuration,
+            ServiceModelConfig::GetConfig().SystemStandByReplicaKeepDuration,
+            ServiceTypeIdentifier(
+                ServicePackageIdentifier(
+                    ApplicationIdentifier::FabricSystemAppId->ToString(),
+                    SystemServiceApplicationNameHelper::GatewayResourceManagerPackageName),
+                SystemServiceApplicationNameHelper::GatewayResourceManagerType),
+            vector<Reliability::ServiceCorrelationDescription>(),
+            serviceConfig.PlacementConstraints, // placement constraints
+            0, // scaleout count
+            move(serviceMetricDescriptions),
+            FABRIC_MOVE_COST_LOW,
+            move(configSectionNameSerialized),
+            SystemServiceApplicationNameHelper::SystemServiceApplicationName));
+    }
+
     ServiceDescription ManagementSubsystem::CreateUpgradeServiceDescription(wstring const & serviceName)
     {
         // Provide the config section name for this service instance as initialization data to the service,
@@ -2284,7 +2457,7 @@ namespace Management
             vector<byte>(),
             SystemServiceApplicationNameHelper::SystemServiceApplicationName);
     }
-    
+
     AsyncOperationSPtr ManagementSubsystem::BeginCreateBackupRestoreService(
         TimeSpan const timeout,
         AsyncCallback const & callback,
@@ -2458,6 +2631,60 @@ namespace Management
             config.PlacementConstraints,
             0, // scaleout count
             move(serviceMetricDescriptions),
+            FABRIC_MOVE_COST_LOW,
+            vector<byte>(),
+            SystemServiceApplicationNameHelper::SystemServiceApplicationName);
+    }
+
+    AsyncOperationSPtr ManagementSubsystem::BeginCreateEventStoreService(
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & asyncOperation)
+    {
+        return impl_->BeginCreateEventStoreService(
+            timeout,
+            callback,
+            asyncOperation);
+    }
+
+    ErrorCode ManagementSubsystem::EndCreateEventStoreService(AsyncOperationSPtr const & asyncOperation)
+    {
+        return impl_->EndCreateEventStoreService(asyncOperation);
+    }
+
+    ServiceDescription ManagementSubsystem::CreateEventStoreServiceDescription()
+    {
+        wstring serviceName = *SystemServiceApplicationNameHelper::InternalEventStoreServiceName;
+        EventStoreServiceConfig serviceConfig;
+
+        StringMap configSection;
+        ManagementConfig::GetConfig().GetKeyValues(serviceName, configSection);
+
+        if (!serviceConfig.TryReadFromConfig(serviceName, configSection))
+        {
+                WriteInfo(
+                    TraceManagementSubsystem,
+                    "Configuration section '{0}' is not found or has invalid parameters; ignoring this instance",
+                    serviceName);
+        }
+
+        return ServiceDescription(
+            SystemServiceApplicationNameHelper::InternalEventStoreServiceName,
+            0, // instance
+            0, // update version
+            1, // partition count
+            serviceConfig.TargetReplicaSetSize, // Target replica size
+            serviceConfig.MinReplicaSetSize, // Min replica size
+            true, // Is stateful
+            true, // Is persisted
+            ServiceModelConfig::GetConfig().SystemReplicaRestartWaitDuration,
+            ServiceModelConfig::GetConfig().QuorumLossWaitDuration,
+            ServiceModelConfig::GetConfig().SystemStandByReplicaKeepDuration,
+            *ServiceTypeIdentifier::EventStoreServiceTypeId,
+            vector<Reliability::ServiceCorrelationDescription>(),
+            serviceConfig.PlacementConstraints, // placement constraints
+            0, // scaleout count
+            vector<Reliability::ServiceLoadMetricDescription>(),
             FABRIC_MOVE_COST_LOW,
             vector<byte>(),
             SystemServiceApplicationNameHelper::SystemServiceApplicationName);

@@ -26,6 +26,8 @@ wstring const ApplicationBuilder::ApplicationBuilderSetGroup = L"app.group";
 wstring const ApplicationBuilder::ApplicationBuilderRunAs = L"app.runas";
 wstring const ApplicationBuilder::ApplicationBuilderSharedPackage = L"app.sharedpackage";
 wstring const ApplicationBuilder::ApplicationBuilderHealthPolicy = L"app.healthpolicy";
+wstring const ApplicationBuilder::ApplicationBuilderNetwork = L"app.network";
+wstring const ApplicationBuilder::ApplicationBuilderEndpoint = L"app.endpoint";
 wstring const ApplicationBuilder::ApplicationBuilderUpload = L"app.upload";
 wstring const ApplicationBuilder::ApplicationBuilderDelete = L"app.delete";
 wstring const ApplicationBuilder::ApplicationBuilderClear = L"app.clear";
@@ -173,6 +175,14 @@ bool ApplicationBuilder::ExecuteCommand(
     else if(command == ApplicationBuilder::ApplicationBuilderSharedPackage)
     {
         return applicationBuilder.SetSharedPackage(params);
+    }
+    else if (command == ApplicationBuilder::ApplicationBuilderNetwork)
+    {
+        return applicationBuilder.SetNetwork(params);
+    }
+    else if (command == ApplicationBuilder::ApplicationBuilderEndpoint)
+    {
+        return applicationBuilder.SetEndpoint(params);
     }
     else
     {
@@ -544,6 +554,7 @@ bool ApplicationBuilder::Clear()
     spRGPolicies_.clear();
     containerHosts_.clear();
     defaultRunAsPolicy_.clear();
+    networkPolicies_.clear();
     return true;
 }
 
@@ -747,6 +758,91 @@ bool ApplicationBuilder::SetHealthPolicy(StringCollection const& params)
     {
         return false;
     }
+
+    return true;
+}
+
+bool ApplicationBuilder::SetNetwork(StringCollection const& params)
+{
+    if (params.size() < 2)
+    {
+        FABRICSESSION.PrintHelp(ApplicationBuilder::ApplicationBuilderNetwork);
+        return false;
+    }
+
+    if (params[1] == L"clearall")
+    {
+        networkPolicies_.clear();
+        return true;
+    }
+
+    CommandLineParser parser(params, 1);
+
+    wstring json;
+    if (parser.TryGetString(L"jsondescription", json))
+    {
+        NetworkPoliciesDescription networkPoliciesDescription;
+        auto error = NetworkPoliciesDescription::FromString(json, networkPoliciesDescription);
+        TestSession::FailTestIfNot(error.IsSuccess(), "Failed to parse network policies {0}", error);
+
+        wstring const& serviceManifestName = params[1];
+        networkPolicies_.insert(make_pair(serviceManifestName, networkPoliciesDescription));
+    }
+    else
+    {
+        FABRICSESSION.PrintHelp(ApplicationBuilder::ApplicationBuilderNetwork);
+        return false;
+    }
+
+    return true;
+}
+
+bool ApplicationBuilder::SetEndpoint(StringCollection const& params)
+{
+    if (params.size() < 2)
+    {
+        FABRICSESSION.PrintHelp(ApplicationBuilder::ApplicationBuilderEndpoint);
+        return false;
+    }
+
+    if (params[1] == L"clearall")
+    {
+        for (auto iter1 = serviceManifestImports_.begin(); iter1 != serviceManifestImports_.end(); iter1++)
+        {
+            iter1->second.Resources.Endpoints.clear();
+        }
+
+        return true;
+    }
+
+    wstring const& serviceManifestName = params[1];
+    auto iter2 = serviceManifestImports_.find(serviceManifestName);
+    TestSession::FailTestIf(iter2 == serviceManifestImports_.end(), "serviceManifestName {0} not found", serviceManifestName);
+
+    CommandLineParser parser(params, 1);
+
+    wstring name;
+    if (!parser.TryGetString(L"name", name))
+    {
+        FABRICSESSION.PrintHelp(ApplicationBuilder::ApplicationBuilderEndpoint);
+        return false;
+    }
+
+    wstring protocolTypeStr;
+    wstring endpointTypeStr;
+    ProtocolType::Enum protocolType;
+    EndpointType::Enum endpointType;
+    parser.TryGetString(L"protocol", protocolTypeStr, L"tcp");
+    parser.TryGetString(L"type", endpointTypeStr, L"input");
+    protocolType = ProtocolType::GetProtocolType(protocolTypeStr);
+    endpointType = EndpointType::GetEndpointType(endpointTypeStr);
+
+    EndpointDescription endpointDescription;
+    endpointDescription.Name = name;
+    endpointDescription.Protocol = protocolType;
+    endpointDescription.Type = endpointType;
+
+    iter2->second.Resources.Endpoints.push_back(endpointDescription);
 
     return true;
 }
@@ -1886,9 +1982,20 @@ void ApplicationBuilder::GetServiceManifestString(wstring & serviceManifest, Ser
             iter->Name,
             iter->Version);
     }
-    serviceManifestWriter.WriteLine(L"</ServiceManifest>");
 
-    // Do not support Resources yet
+    if (serviceManifestDescription.Resources.Endpoints.size() > 0)
+    {
+        serviceManifestWriter.WriteLine(L"<Resources>");
+        serviceManifestWriter.WriteLine(L"<Endpoints>");
+        for (auto iter = serviceManifestDescription.Resources.Endpoints.begin(); iter != serviceManifestDescription.Resources.Endpoints.end(); iter++)
+        {
+            serviceManifestWriter.WriteLine("<Endpoint Name='{0}' Protocol='{1}' Type='{2}' />", iter->Name, ProtocolType::EnumToString(iter->Protocol), EndpointType::EnumToString(iter->Type));
+        }
+        serviceManifestWriter.WriteLine(L"</Endpoints>");
+        serviceManifestWriter.WriteLine(L"</Resources>");
+    }
+
+    serviceManifestWriter.WriteLine(L"</ServiceManifest>");
 }
 
 void ApplicationBuilder::GetApplicationManifestString(wstring & applicationManifest)
@@ -1921,6 +2028,7 @@ void ApplicationBuilder::GetApplicationManifestString(wstring & applicationManif
         auto rgPoliciesIter = rgPolicies_.find(iter->second.Name);
         auto spRGPoliciesIter = spRGPolicies_.find(iter->second.Name);
         auto containerHostIter = containerHosts_.find(iter->second.Name);
+        auto networkPoliciesIter = networkPolicies_.find(iter->second.Name);
         auto repositoryAccountName = "sftestcontainerreg";
         auto repositoryAccountPassword = "";
 
@@ -1928,7 +2036,8 @@ void ApplicationBuilder::GetApplicationManifestString(wstring & applicationManif
             packageSharingIter != sharedPackagePolicies_.end() ||
             rgPoliciesIter != rgPolicies_.end() ||
             spRGPoliciesIter != spRGPolicies_.end() ||
-            containerHostIter != containerHosts_.end())
+            containerHostIter != containerHosts_.end() ||
+            networkPoliciesIter != networkPolicies_.end())
         {
             appManifestWriter.WriteLine(L"<Policies>");
 
@@ -1996,6 +2105,21 @@ void ApplicationBuilder::GetApplicationManifestString(wstring & applicationManif
                         repositoryAccountName, repositoryAccountPassword);
                     appManifestWriter.WriteLine("</ContainerHostPolicies>");
                 }
+            }
+            if (networkPoliciesIter != networkPolicies_.end())
+            {
+                appManifestWriter.WriteLine(L"<NetworkPolicies>");
+                for (auto containerNetworkPoliciesIter = networkPoliciesIter->second.ContainerNetworkPolicies.begin(); containerNetworkPoliciesIter != networkPoliciesIter->second.ContainerNetworkPolicies.end(); containerNetworkPoliciesIter++)
+                {
+                    appManifestWriter.WriteLine("<ContainerNetworkPolicy NetworkRef='{0}'>", containerNetworkPoliciesIter->NetworkRef);
+                    for (auto endpointBindingsIter = containerNetworkPoliciesIter->EndpointBindings.begin(); endpointBindingsIter != containerNetworkPoliciesIter->EndpointBindings.end(); endpointBindingsIter++)
+                    {
+                        appManifestWriter.WriteLine("<EndpointBinding EndpointRef='{0}' />", endpointBindingsIter->EndpointRef);
+                    }
+
+                    appManifestWriter.WriteLine("</ContainerNetworkPolicy>");
+                }
+                appManifestWriter.WriteLine(L"</NetworkPolicies>");
             }
             appManifestWriter.WriteLine(L"</Policies>");
         }

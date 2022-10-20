@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{2F245B79-7DBC-4957-9BE5-E4A58F8C68D0}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>EventStore.Service</RootNamespace>
+    <AssemblyName>EventStore.Service</AssemblyName>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationPackageName>EventStoreServiceAppPkg</ApplicationPackageName>
+    <ApplicationPackagePath>.\$(ApplicationPackageName)</ApplicationPackagePath>
+    <ServicePackageName>EventStoreServicePkg</ServicePackageName>
+    <ServicePackagePath>$(ApplicationPackagePath)\$(ServicePackageName)</ServicePackagePath>
+    <ApplicationPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\EventStore\$(ApplicationPackageName)</ApplicationPackageDropPath>
+    <CodePackageDropPath>$(ApplicationPackageDropPath)\$(ServicePackageName)\Code</CodePackageDropPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="$(PkgMicrosoft_Owin_Host_HttpListener)\lib\net45\Microsoft.Owin.Host.HttpListener.dll" />
+    <Reference Include="$(PkgMicrosoft_Owin)\lib\net45\Microsoft.Owin.dll" />
+    <Reference Include="$(PkgMicrosoft_Owin_Hosting)\lib\net45\Microsoft.Owin.Hosting.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(PkgOwin)\lib\net40\Owin.dll" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Core)\lib\net45\System.Web.Http.dll" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Owin)\lib\net45\System.Web.Http.Owin.dll" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Client)\lib\net45\System.Net.Http.Formatting.dll" />
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\EventsStore\EventsStore.EventsModels\EventsStore.EventsModels.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\Common\ClusterAnalysis.Common.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\TraceAccessLayer\ClusterAnalysis.TraceAccessLayer.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Readers\Microsoft.ServiceFabric.Instrumentation.Tracing.Readers.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Parsers\Microsoft.ServiceFabric.Instrumentation.Tracing.Parsers.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ApiEndpoints\Common\UriConverters.cs" />
+    <Compile Include="ApiEndpoints\Common\X509CertificateUtility.cs" />
+    <Compile Include="ApiEndpoints\Controllers\ApplicationEventsController.cs" />
+    <Compile Include="ApiEndpoints\Controllers\BaseController.cs" />
+    <Compile Include="ApiEndpoints\Controllers\ClusterEventsController.cs" />
+    <Compile Include="ApiEndpoints\Controllers\CorreleatedEventsController.cs" />
+    <Compile Include="ApiEndpoints\Controllers\NodeEventsController.cs" />
+    <Compile Include="ApiEndpoints\Controllers\PartitionEventsController.cs" />
+    <Compile Include="ApiEndpoints\Controllers\ServiceEventsController.cs" />
+    <Compile Include="ApiEndpoints\Handlers\ClientCertAuthorizationHandler.cs" />
+    <Compile Include="ApiEndpoints\Handlers\ClientIdentityAuthorizationHandler.cs" />
+    <Compile Include="ApiEndpoints\Handlers\XContentTypeHandler.cs" />
+    <Compile Include="ApiEndpoints\Operations\GetApplicationEventsOperation.cs" />
+    <Compile Include="ApiEndpoints\Operations\GetClusterEventsOperation.cs" />
+    <Compile Include="ApiEndpoints\Operations\GetCorrelatedEventsOperation.cs" />
+    <Compile Include="ApiEndpoints\Operations\GetNodeEventsOperation.cs" />
+    <Compile Include="ApiEndpoints\Operations\GetPartitionEventsOperation.cs" />
+    <Compile Include="ApiEndpoints\Operations\GetReplicaEventsOperation.cs" />
+    <Compile Include="ApiEndpoints\Operations\GetServiceEventsOperation.cs" />
+    <Compile Include="ApiEndpoints\Operations\BaseOperation.cs" />
+    <Compile Include="ApiEndpoints\Server\ControllerDependencyResolver.cs" />
+    <Compile Include="ApiEndpoints\Server\ControllerSetting.cs" />
+    <Compile Include="ApiEndpoints\Server\OwinCommunicationListener.cs" />
+    <Compile Include="ApiEndpoints\Server\OwinHttpServer.cs" />
+    <Compile Include="ApiEndpoints\Server\SecuritySetting.cs" />
+    <Compile Include="ApiEndpoints\Server\Startup.cs" />
+    <Compile Include="Assert.cs" />
+    <Compile Include="Cache\AzureTableCacheValue.cs" />
+    <Compile Include="Cache\Cache.cs" />
+    <Compile Include="Cache\AzureTableCacheKey.cs" />
+    <Compile Include="Cache\CachePolicy.cs" />
+    <Compile Include="Cache\DataFetcher.cs" />
+    <Compile Include="Cache\AzureTableCachedStorageAccess.cs" />
+    <Compile Include="Cache\ICacheKey.cs" />
+    <Compile Include="Cache\ICacheValue.cs" />
+    <Compile Include="Cache\InMemorySortedStore.cs" />
+    <Compile Include="Cache\ISortedStore.cs" />
+    <Compile Include="Cache\ITimeComparable.cs" />
+    <Compile Include="ConfigReader\AzureConsumerType.cs" />
+    <Compile Include="ConfigReader\AzureTableConsumer.cs" />
+    <Compile Include="ConfigReader\ClusterSettingsReader.cs" />
+    <Compile Include="ConfigReader\ProtectedAccountKeyHelper.cs" />
+    <Compile Include="ConfigReader\StorageConnection.cs" />
+    <Compile Include="DataReaderMode.cs" />
+    <Compile Include="DataReader\EntityType.cs" />
+    <Compile Include="DataReader\EventStoreReader.cs" />
+    <Compile Include="DataReader\FilterFactory.cs" />
+    <Compile Include="DataReader\Mapping.cs" />
+    <Compile Include="ErrorCodes.cs" />
+    <Compile Include="EventStoreRuntime.cs" />
+    <Compile Include="Exceptions\ConnectionParsingException.cs" />
+    <Compile Include="Exceptions\EventStoreException.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="LogProvider\EventStoreLogger.cs" />
+    <Compile Include="LogProvider\EventStoreLogProvider.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="EventStoreService.cs" />
+    <Compile Include="ReaderConstants.cs" />
+    <Compile Include="ServiceConfig.cs" />
+    <Compile Include="TaskRunner.cs" />
+    <Compile Include="Types\FabricError.cs" />
+    <Compile Include="Types\FabricErrorError.cs" />
+    <Compile Include="ValidatedNotNullAttribute.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(ServicePackagePath)\Config\Settings.xml" />
+    <Content Include="$(ServicePackagePath)\ServiceManifest.xml" />
+    <Content Include="$(ApplicationPackagePath)\ApplicationManifest.xml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Robocopy Include="$(ApplicationPackagePath)">
+      <DestinationFolder>$(ApplicationPackageDropPath)</DestinationFolder>
+    </Robocopy>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(CodePackageDropPath)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Types\Events\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(OutputPath)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\ES.Code.Current</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileExclude>.pdb</FileExclude>
+    </Robocopy>
+    <Robocopy Include="$(OutputPath)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\ES.Code.Current</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileExclude>.pdb</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

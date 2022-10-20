@@ -15,6 +15,7 @@ bool ServicePropertiesBase::operator==(ServicePropertiesBase const & other) cons
 {
     if (osType_ == other.osType_
         && codePackages_ == other.codePackages_
+        && autoScalingPolicies_ == other.autoScalingPolicies_
         && networkRefs_ == other.networkRefs_)
     {
         return true;

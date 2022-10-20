@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{4ED2B9F1-639E-465D-8200-CD05E499232F}</ProjectGuid>
+    <RootNamespace>TelemetryAggregation</RootNamespace>
+    <AssemblyName>TelemetryAggregation</AssemblyName>
+    <AssemblyDescription>Library for aggregating data for Telemetry</AssemblyDescription>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Aggregation.cs">
+      <Link>AggregationType.cs</Link>
+    </Compile>
+    <Compile Include="..\Field.cs" >
+      <Link>Field.cs</Link>
+    </Compile>
+    <Compile Include="..\ITelemetryWriter.cs">
+      <Link>ITelemetryWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryCollection.cs">
+      <Link>TelemetryCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryIdentifiers.cs">
+      <Link>TelemetryIdentifiers.cs</Link>
+    </Compile>
+    <Compile Include="..\DictionaryAsArrayResolver.cs">
+      <Link>DictionaryAsArrayResolver.cs</Link>
+    </Compile>
+    <Compile Include="..\FieldAggregationConfig.cs">
+      <Link>FieldAggregationConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\FieldAggregator.cs">
+      <Link>FieldAggregator.cs</Link>
+    </Compile>
+    <Compile Include="..\TraceAggregationConfig.cs">
+      <Link>TraceAggregationConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\TraceAggregator.cs">
+      <Link>TraceAggregator.cs</Link>
+    </Compile>
+    <Compile Include="..\TraceAggregationKey.cs">
+      <Link>TraceAggregationKey.cs</Link>
+    </Compile>
+    <Reference Include="$(PkgNewtonsoft_Json_6_0)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

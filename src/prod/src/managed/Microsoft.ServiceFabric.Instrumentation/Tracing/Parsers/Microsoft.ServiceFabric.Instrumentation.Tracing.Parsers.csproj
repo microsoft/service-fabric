@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{FEE00FC6-0246-4450-9D19-04FAFA4A61E9}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.Instrumentation.Tracing.Parsers</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Instrumentation.Tracing.Parsers</AssemblyName>
+    <AssemblyDescription>Service Fabric Tracing Parsers</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BinaryPackagePath>.\$(BinaryPackageName)</BinaryPackagePath>
+    <BinaryPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\Tracing</BinaryPackageDropPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <Compile Include="EventStoreTraceRecordParser.cs" />
+    <Compile Include="HostingTraceRecordParser.cs" />
+    <Compile Include="QueryStoreTraceRecordParser.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinaryPackageDropPath)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+</Project>

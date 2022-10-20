@@ -18,6 +18,7 @@ ContainerActivationArgs::ContainerActivationArgs()
     , ProcessDescriptionObj()
     , FabricBinPath()
     , GatewayIpAddress()
+    , GatewayIpAddresses()
 {
 }
 
@@ -28,14 +29,15 @@ ContainerActivationArgs::ContainerActivationArgs(
     ContainerDescription const & containerDesc,
     ProcessDescription const & processDesc,
     wstring const & fabricBinPath,
-    wstring const & gatewayIpAddress)
+    vector<wstring> const & gatewayIpAddresses)
     : IsUserLocalSystem(isUserLocalSystem)
     , AppHostId(appHostId)
     , NodeId(nodeId)
     , ContainerDescriptionObj(containerDesc)
     , ProcessDescriptionObj(processDesc)
     , FabricBinPath(fabricBinPath)
-    , GatewayIpAddress(gatewayIpAddress)
+    , GatewayIpAddress()
+    , GatewayIpAddresses(gatewayIpAddresses)
 {
 }
 
@@ -64,11 +66,17 @@ ErrorCode ContainerActivationArgs::ToPublicApi(
     }
 
     fabricActivationArgs.ProcessDescription = processDesc.GetRawPointer();
-
+    
     fabricActivationArgs.FabricBinPath = heap.AddString(this->FabricBinPath);
     fabricActivationArgs.GatewayIpAddress = heap.AddString(this->GatewayIpAddress);
 
-    fabricActivationArgs.Reserved = nullptr;
+    auto fabricActivationArgsEx1 = heap.AddItem<FABRIC_CONTAINER_ACTIVATION_ARGS_EX1>();
+    auto gatewayIpAddresses = heap.AddItem<FABRIC_STRING_LIST>();
+    StringList::ToPublicAPI(heap, this->GatewayIpAddresses, gatewayIpAddresses);
+    fabricActivationArgsEx1->GatewayIpAddresses = gatewayIpAddresses.GetRawPointer();
+
+    fabricActivationArgs.Reserved = fabricActivationArgsEx1.GetRawPointer();
+    fabricActivationArgsEx1->Reserved = nullptr;
 
     return ErrorCode::Success();
 }
@@ -76,13 +84,17 @@ ErrorCode ContainerActivationArgs::ToPublicApi(
 void ContainerActivationArgs::WriteTo(TextWriter & w, FormatOptions const &) const
 {
     w.Write("ContainerActivationArgs { ");
-    w.Write("IsUserLocalSystem = {0}", IsUserLocalSystem);
-    w.Write("AppHostId = {0}", AppHostId);
-    w.Write("NodeId = {0}", NodeId);
+    w.Write("IsUserLocalSystem = {0} ", IsUserLocalSystem);
+    w.Write("AppHostId = {0} ", AppHostId);
+    w.Write("NodeId = {0} ", NodeId);
     w.Write("ContainerDescription = {0}, ", ContainerDescriptionObj);
-    w.Write("ProcessDescriptionObj = {0}", ProcessDescriptionObj);
-    w.Write("FabricBinPath = {0}", FabricBinPath);
-    w.Write("GatewayIpAddress = {0}", GatewayIpAddress);
+    w.Write("ProcessDescriptionObj = {0} ", ProcessDescriptionObj);
+    w.Write("FabricBinPath = {0} ", FabricBinPath);
+    w.Write("GatewayIpAddresses { ");
+    for (auto const & gatewayIpAddress : GatewayIpAddresses)
+    {
+        w.Write("GatewayIpAddress = {0} ", gatewayIpAddress);
+    }
+    w.Write("}");
     w.Write("}");
 }
-

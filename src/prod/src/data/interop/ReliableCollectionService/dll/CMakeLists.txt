@@ -1,5 +1,3 @@
-set (lib_ReliableCollectionService "ReliableCollectionService" CACHE STRING "ReliableCollectionService")
-
 set( LINUX_SOURCES
     ../stdafx.cpp
     ../ComFactory.cpp
@@ -7,6 +5,7 @@ set( LINUX_SOURCES
     ../Helpers.cpp
     ../StatefulServiceBase.cpp
     ../TestComProxyDataLossHandler.cpp
+    ../EndpointsDescription.cpp
 )
 
 include_directories("..")
@@ -21,7 +20,7 @@ add_precompiled_header(objects_ReliableCollectionService ../stdafx.h)
 add_library(${lib_ReliableCollectionService} SHARED $<TARGET_OBJECTS:objects_ReliableCollectionService>)
 
 set_target_properties(${lib_ReliableCollectionService} PROPERTIES 
-    ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR}) 
+    LIBRARY_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR}) 
 
 set(EXPORTS_FILE ${CMAKE_CURRENT_BINARY_DIR}/${lib_ReliableCollectionService}.exports)
 generate_exports_file(${lib_ReliableCollectionService} "${CMAKE_CURRENT_SOURCE_DIR}/ReliableCollectionService.def" ${EXPORTS_FILE})
@@ -45,6 +44,7 @@ target_link_libraries(
   ${lib_InternalFabricUUID}
   ${lib_FabricUUID}
   ${lib_FabricResources}
+  ${lib_DnsServiceConfig}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}

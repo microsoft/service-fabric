@@ -2086,6 +2086,21 @@ _Use_decl_annotations_ ErrorCode CryptoUtility::CreateSelfSignedCertificate(
 
 _Use_decl_annotations_ ErrorCode CryptoUtility::CreateSelfSignedCertificate(
     wstring const & subjectName,
+    wstring const & keyContainerName,
+    bool fMachineKeyset,
+    CertContextUPtr & cert)
+{
+    return CreateSelfSignedCertificate(
+        subjectName,
+        nullptr,
+        DateTime::Now() + TimeSpan::FromMinutes(60.0 * 24 * 365 * 10),//aka.ms/sre-codescan/disable
+        keyContainerName,
+        fMachineKeyset,
+        cert);
+}
+
+_Use_decl_annotations_ ErrorCode CryptoUtility::CreateSelfSignedCertificate(
+    wstring const & subjectName,
     DateTime expiration,
     CertContextUPtr & cert)
 {
@@ -2117,15 +2132,33 @@ _Use_decl_annotations_ ErrorCode CryptoUtility::CreateSelfSignedCertificate(
     wstring const & keyContainerName,
     CertContextUPtr & cert)
 {
+    return CreateSelfSignedCertificate(
+        subjectName,
+        subjectAltNames,
+        expiration,
+        keyContainerName,
+        true,
+        cert);
+}
+
+_Use_decl_annotations_ ErrorCode CryptoUtility::CreateSelfSignedCertificate(
+    wstring const & subjectName,
+    const vector<wstring> * subjectAltNames,
+    DateTime expiration,
+    wstring const & keyContainerName,
+    bool fMachineKeyset,
+    CertContextUPtr & cert)
+{
     if (subjectAltNames)
     {
         TraceInfo(
             TraceTaskCodes::Common,
             TraceType_CryptoUtility,
-            "CreateSelfSignedCertificate: subjectName='{0}', expiration={1}, keyContainerName='{2}', subjectAltNames='{3}'",
+            "CreateSelfSignedCertificate: subjectName='{0}', expiration={1}, keyContainerName='{2}', fMachineKeyset='{3}', subjectAltNames='{4}'",
             subjectName,
             expiration,
             keyContainerName,
+            fMachineKeyset,
             *subjectAltNames);
     }
     else
@@ -2133,10 +2166,11 @@ _Use_decl_annotations_ ErrorCode CryptoUtility::CreateSelfSignedCertificate(
         TraceInfo(
             TraceTaskCodes::Common,
             TraceType_CryptoUtility,
-            "CreateSelfSignedCertificate: subjectName='{0}', expiration={1}, keyContainerName='{2}'",
+            "CreateSelfSignedCertificate: subjectName='{0}', expiration={1}, keyContainerName='{2}', fMachineKeyset='{3}'",
             subjectName,
             expiration,
-            keyContainerName);
+            keyContainerName,
+            fMachineKeyset);
     }
 
     // Initialize out parameters
@@ -2161,7 +2195,10 @@ _Use_decl_annotations_ ErrorCode CryptoUtility::CreateSelfSignedCertificate(
     keyProvInfo.pwszContainerName = (LPWSTR)(keyContainerName.c_str());
     keyProvInfo.pwszProvName = MS_ENHANCED_PROV_W;
     keyProvInfo.dwProvType = AZURE_SERVICE_FABRIC_CRYPT_RPOVIDER_TYPE;
-    keyProvInfo.dwFlags = CRYPT_MACHINE_KEYSET;
+    if (fMachineKeyset)
+    {
+        keyProvInfo.dwFlags = CRYPT_MACHINE_KEYSET;
+    }
     keyProvInfo.dwKeySpec = AT_KEYEXCHANGE;
 
     //CRYPT_ALGORITHM_IDENTIFIER signatureAlgorithm = {};
@@ -3109,18 +3146,29 @@ ErrorCode CryptoUtility::ImportCertKey(wstring const& keyContainerName, wstring 
 
 ErrorCode CryptoUtility::GenerateExportableKey(wstring const& keyContainerName, _Out_ SecureString & key)
 {
+    return GenerateExportableKey(keyContainerName, true, key);
+}
+
+ErrorCode CryptoUtility::GenerateExportableKey(wstring const& keyContainerName, bool fMachineKeyset, _Out_ SecureString & key)
+{
 #ifdef PLATFORM_UNIX
         return ErrorCodeValue::NotImplemented; // LINUXTODO implement create cert from key.
 #else
 
     HCRYPTPROV hCryptProv;
+    DWORD dwFlags = CRYPT_NEWKEYSET;
+
+    if (fMachineKeyset)
+    {
+        dwFlags |= CRYPT_MACHINE_KEYSET;
+    }
 
     if (!::CryptAcquireContext(
         &hCryptProv,
         (LPWSTR)(keyContainerName.c_str()),
         NULL,
         PROV_RSA_FULL,
-        CRYPT_NEWKEYSET | CRYPT_MACHINE_KEYSET))
+        dwFlags))
     {
         auto error = ErrorCode::FromWin32Error();
         TraceWarning(

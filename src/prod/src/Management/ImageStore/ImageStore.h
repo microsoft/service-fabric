@@ -31,6 +31,7 @@
 #include "Management/ImageStore/ImageStoreAccessDescription.h"
 #include "Management/ImageStore/ImageStoreUtility.h"
 #include "Management/ImageStore/IImageStore.h"
+#include "Management/ImageStore/ImageCacheConstants.h"
 #include "Management/ImageStore/FileImageStore.h"
 #include "Management/ImageStore/AzureImageStore.h"
 #include "Management/ImageStore/NativeImageStoreProgressState.h"

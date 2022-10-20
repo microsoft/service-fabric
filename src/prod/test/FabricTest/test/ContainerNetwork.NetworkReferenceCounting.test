@@ -1,0 +1,43 @@
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+enableunsupportedpreviewfeatures true
+networkinventorymanager true
+cleantest
+
++10
++20
++30
+verify
+
+# Create the networks needed for the test cases
+shownetworks expectedCount=0
+
+createnetwork networkName=testNetwork1 networkAddressPrefix=10.0.0.4/22
+
+createnetwork networkName=testNetwork2 networkAddressPrefix=10.0.0.8/22
+
+shownetworks expectedCount=2
+
+# Test case 1: Add an application to a container network and try to delete the container network 
+!string networkPolicies1 {"ContainerNetworkPolicies":[{"NetworkRef":"testNetwork1","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]}]}
+app.add appType1
+app.clear appType1
+app.servicepack appType1 ServicePackageA version=1.0
+app.servicetypes appType1 ServicePackageA ServiceTypeA stateless implicit
+app.codepack appType1 ServicePackageA CodePackageA types=ServiceTypeA version=1.0 entrytype=ContainerHost
+app.endpoint appType1 ServicePackageA name=GatewayEndpoint1 protocol=http type=Input
+app.network appType1 ServicePackageA jsondescription=<string.networkPolicies1>
+app.upload appType1 compress
+provisionapp appType1
+createapp fabric:/app1 appType1 1.0
+
+deletenetwork networkName=testNetwork1 error=NetworkInUse
+
+
+#verify
+
+-*
+
+!q

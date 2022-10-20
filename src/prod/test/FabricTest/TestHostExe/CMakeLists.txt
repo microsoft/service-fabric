@@ -83,4 +83,4 @@ target_link_libraries(${exe_FabricTestHost}
 
 add_custom_command(TARGET ${exe_FabricTestHost} 
                    POST_BUILD 
-                   COMMAND ${PROJECT_SOURCE_DIR}/linuxsetup/scripts/symsplit.sh ${TEST_OUTPUT_DIR} FabricTestHost.exe ${TEST_OUTPUT_DIR}/symbols)
+                   COMMAND ${PROJECT_SOURCE_DIR}/linuxsetup/scripts/symsplit.sh ${TEST_OUTPUT_DIR} FabricTestHost.exe ${TEST_OUTPUT_DIR}/symbols ${CMAKE_STRIP})

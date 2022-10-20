@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test_taef.props" />
+  <PropertyGroup>
+    <ProjectGuid>{83746794-611F-439C-ABF5-15DF52CC9C96}</ProjectGuid>
+    <RootNamespace>System.Fabric.InfrastructureService.Test</RootNamespace>
+    <AssemblyName>FabricIS.common.Test</AssemblyName>
+    <AssemblyDescription>Fabric Infrastructure Service Common</AssemblyDescription>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="DelayLoadCoordinatorTest.cs" />
+    <Compile Include="JobBlockingPolicyManagerTest.cs" />
+    <Compile Include="MockVersionedPropertyStore.cs" />
+    <Compile Include="Mock\MockConfigStore.cs" />
+    <Compile Include="Mock\MockCoordinator.cs" />
+    <Compile Include="Mock\MockHealthClient.cs" />
+    <Compile Include="Mock\MockInfrastructureAgentWrapper.cs" />
+    <Compile Include="Mock\MockJobBlockingPolicyManager.cs" />
+    <Compile Include="Mock\MockNamedPropertyWrapper.cs" />
+    <Compile Include="Mock\MockPropertyBatchResultWrapper.cs" />
+    <Compile Include="Mock\MockPropertyManagerWrapper.cs" />
+    <Compile Include="RetryPolicyTest.cs" />
+    <Compile Include="RoleInstanceStatusPolicyTest.cs" />
+    <Compile Include="VersionedPropertyStoreTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-c075-40a4-99dd-71800412191c}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\dll\FabricIS.common.csproj">
+      <Project>{b2c86537-979a-473a-b5a0-f9d1082a7e22}</Project>
+      <Name>FabricIS.common</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll">
+      <!--
+      This binary needs to be explicitly copied for private cloud tests to work on http://testinfra1 by setting <Private>True</Private>
+      This copy is not necessary for official builds
+      Reason:
+      For executing private cloud test runs on http://testinfra1, we upload our dev box's local build. The dev box build does not copy
+      $(PkgMsTest_Corext)\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll to the FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current
+      folder. This is because CoreXT/MSBuild detects that we have a dll with the same name present in the GAC (due to Visual Studio being installed on
+      our dev boxes). So, it skips the copying. However, on http://testinfra1 VMs which uses our uploaded local build, Visual Studio is not installed,
+      and hence this dll is not found in the GAC. Now since this dll isn't copied too, FabricIS.Test.dll fails.
+      On official build machines, Visual Studio isn't installed. So, Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll is correctly copied
+      to the required folder during the build. Hence FabricIS.Test.dll on http://testinfra1 from the official build succeeds.
+      -->
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

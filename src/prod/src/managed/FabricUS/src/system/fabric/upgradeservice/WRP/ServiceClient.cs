@@ -284,7 +284,7 @@ namespace System.Fabric.UpgradeService
             {
                 foreach (var metric in serviceOperationDescription.ServiceLoadMetrics)
                 {
-                    serviceDescription.Metrics.Add(this.GetServiceLoadMetricDescription(metric));
+                    serviceDescription.Metrics.Add(this.GetServiceLoadMetricDescription(serviceOperationDescription.ServiceKind, metric));
                 }
             }
 
@@ -405,7 +405,7 @@ namespace System.Fabric.UpgradeService
                 serviceUpdateDescription.Metrics = new KeyedItemCollection<string, ServiceLoadMetricDescription>(n => n.Name);
                 foreach (var metric in serviceOperationDescription.ServiceLoadMetrics)
                 {
-                    serviceUpdateDescription.Metrics.Add(this.GetServiceLoadMetricDescription(metric));
+                    serviceUpdateDescription.Metrics.Add(this.GetServiceLoadMetricDescription(serviceOperationDescription.ServiceKind, metric));
                 }
             }
 
@@ -421,16 +421,26 @@ namespace System.Fabric.UpgradeService
             return serviceUpdateDescription;
         }
 
-        private ServiceLoadMetricDescription GetServiceLoadMetricDescription(ArmServiceLoadMetrics metric)
+        private ServiceLoadMetricDescription GetServiceLoadMetricDescription(
+            ArmServiceKind serviceKind, 
+            ArmServiceLoadMetrics metric)
         {
-            return new ServiceLoadMetricDescription()
-            {
-                Name = metric.Name,
-                Weight =
-                    (ServiceLoadMetricWeight)Enum.Parse(
+            var weight = (ServiceLoadMetricWeight)Enum.Parse(
                         typeof(ServiceLoadMetricWeight),
-                        metric.Weight.ToString())
-            };
+                        metric.Weight.ToString());
+
+            switch (serviceKind)
+            {
+                case ArmServiceKind.Stateful:
+                    return new StatefulServiceLoadMetricDescription(metric.Name, 0, 0, weight);
+                case ArmServiceKind.Stateless:
+                    return new StatelessServiceLoadMetricDescription(metric.Name, 0, weight);
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(serviceKind),
+                        serviceKind,
+                        $"{this.TraceType}: Unexpected ArmServiceKind");
+            }            
         }
 
         private ServiceCorrelationDescription GetServiceCorrelationDescription(ArmServiceCorrelationDescription scheme)

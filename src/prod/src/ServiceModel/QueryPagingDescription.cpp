@@ -22,6 +22,13 @@ Common::ErrorCode QueryPagingDescription::FromPublicApi(FABRIC_QUERY_PAGING_DESC
     TRY_PARSE_PUBLIC_STRING_ALLOW_NULL(pagingDescription.ContinuationToken, continuationToken_);
     maxResults_ = pagingDescription.MaxResults;
 
+    if (maxResults_ < 0)
+    {
+        return ErrorCode(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(GET_COMMON_RC(Invalid_Max_Results), maxResults_));
+    }
+
     return ErrorCode::Success();
 }
 
@@ -33,7 +40,7 @@ void QueryPagingDescription::ToPublicApi(
     result.MaxResults = (long)maxResults_;
 }
 
-void QueryPagingDescription::SetQueryArguments(__out QueryArgumentMap & argMap) const
+void QueryPagingDescription::SetQueryArguments(__inout QueryArgumentMap & argMap) const
 {
     if (!continuationToken_.empty())
     {

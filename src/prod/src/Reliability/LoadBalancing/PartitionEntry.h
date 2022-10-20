@@ -64,6 +64,9 @@ namespace Reliability
 
             PartitionEntry & operator = (PartitionEntry && other);
 
+            // True if this partition has existing replica on the node.
+            bool HasReplicaOnNode(NodeEntry const* node) const;
+
             PlacementReplica const* GetReplica(NodeEntry const* node) const;
 
             PlacementReplica const* SelectSecondary(Common::Random & rand) const;

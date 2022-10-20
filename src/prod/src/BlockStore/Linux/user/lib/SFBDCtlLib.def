@@ -1,0 +1,16 @@
+LIBRARY SFBlkdev
+EXPORTS
+    ReadFromUserBuffer
+    ReadFromSRBBuffer
+    ConnectToDevice
+    CloseLinuxHandle
+    ProvisionLUN
+    ShutdownVolumesForService
+    RefreshServiceLUList
+    IsDriverAvailable
+    sfblkdev_create_disk
+    sfblkdev_delete_disk
+    sfblkdev_get_disks_local
+    sfblkdev_get_disks
+    sfblkdev_read_data
+    sfblkdev_write_data

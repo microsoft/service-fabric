@@ -48,9 +48,10 @@ namespace TStoreTests
         void Setup(
             ULONG replicaCount = 1,
             KDelegate<ULONG(const TKey & Key)> hashFunc = DefaultHash,
-            KString::CSPtr startDirectory = nullptr) override
+            KString::CSPtr startDirectory = nullptr,
+            bool hasPersistedState = true) override
         {
-            TStoreTestBase<TKey, TValue, TKeyComparer, TKeySerializer, TValueSerializer>::Setup(replicaCount, hashFunc, startDirectory);
+            TStoreTestBase<TKey, TValue, TKeyComparer, TKeySerializer, TValueSerializer>::Setup(replicaCount, hashFunc, startDirectory, hasPersistedState);
             this->Replicator->ShouldSynchronizePrepareAndApply = false;
         }
 

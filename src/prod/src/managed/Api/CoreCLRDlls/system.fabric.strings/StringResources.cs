@@ -939,6 +939,18 @@ internal class StringResources {
 
     /// <summary>
     ///   Looks up a localized string similar to 
+    ///    Compose deployment is not upgrading.
+    ///  
+    /// </summary>
+    internal static string Error_ComposeDeploymentNotUpgrading {
+        get {
+            return ResourceManager.GetString("Error_ComposeDeploymentNotUpgrading", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
     ///    Single instance application already exists
     ///  
     /// </summary>
@@ -957,6 +969,18 @@ internal class StringResources {
     internal static string Error_SingleInstanceApplicationNotFound {
         get {
             return ResourceManager.GetString("Error_SingleInstanceApplicationNotFound", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Single instance application upgrade is in progress.
+    ///  
+    /// </summary>
+    internal static string Error_SingleInstanceApplicationUpgradeInProgress {
+        get {
+            return ResourceManager.GetString("Error_SingleInstanceApplicationUpgradeInProgress", resourceCulture);
         }
     }
 
@@ -3303,7 +3327,7 @@ internal class StringResources {
 
     /// <summary>
     ///   Looks up a localized string similar to 
-    ///    Either ImageStoreConnectionString must be provided explicitly or connect to the cluster to attempt automatically fetching the value.
+    ///    Make sure you are connected to the cluster or use 'Connect-ServiceFabricCluster' cmdlet to connect to cluster.
     ///  
     /// </summary>
     internal static string Error_MissingImageStoreConnectionStringArgument {
@@ -4323,7 +4347,7 @@ internal class StringResources {
 
     /// <summary>
     ///   Looks up a localized string similar to 
-    ///    Exception while parsing XML file: {0}
+    ///    Exception while parsing XML file: {0}. Check if XML content is well formed by comparing against the service model schema (ServiceFabricServiceModel.xsd) which is shipped with the SDK. By default, the schema file is installed to 'C:\Program Files\Microsoft SDKs\Service Fabric\schemas\ServiceFabricServiceModel.xsd'.
     ///  
     /// </summary>
     internal static string ImageBuilderError_ErrorParsingXmlFile {
@@ -8955,6 +8979,18 @@ internal class StringResources {
 
     /// <summary>
     ///   Looks up a localized string similar to 
+    ///    Current cluster manifest at '{0}' was invalid; deleting to mitigate. Contents:{1}
+    ///  
+    /// </summary>
+    internal static string ClusterManifestInvalidDeleting_Formatted {
+        get {
+            return ResourceManager.GetString("ClusterManifestInvalidDeleting_Formatted", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
     ///    The update of '{0}' is not allowed.
     ///  
     /// </summary>
@@ -10095,7 +10131,7 @@ internal class StringResources {
 
     /// <summary>
     ///   Looks up a localized string similar to 
-    ///    Your cluster is successfully created! You can connect and manage your cluster using Microsoft Azure Service Fabric Explorer or Powershell. To connect through Powershell, run 'Connect-ServiceFabricCluster [ClusterConnectionEndpoint]'.
+    ///    Your cluster is successfully created! You can connect and manage your cluster using Microsoft Azure Service Fabric Explorer or Powershell. To connect through Powershell, use any machine client connection endpoint, for example: 'Connect-ServiceFabricCluster {0}:{1}'.
     ///  
     /// </summary>
     internal static string Info_CreateServiceFabricClusterSucceeded {
@@ -11541,6 +11577,18 @@ internal class StringResources {
     internal static string Error_SFOpenRegNamedPipeAnotherClientAlreadyConnected {
         get {
             return ResourceManager.GetString("Error_SFOpenRegNamedPipeAnotherClientAlreadyConnected", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Machine {0} failed CheckRPCAccess with unexpected error. HRESULT={0}
+    ///  
+    /// </summary>
+    internal static string Error_SFRpcUnexpectedCodeError {
+        get {
+            return ResourceManager.GetString("Error_SFRpcUnexpectedCodeError", resourceCulture);
         }
     }
 
@@ -15293,12 +15341,24 @@ internal class StringResources {
 
     /// <summary>
     ///   Looks up a localized string similar to 
-    ///    Repository Credentials for Account Name:{0} cannot have a blank password and have encryption set to true.
+    ///    Repository Credentials for Account Name:{0} cannot have a blank password if you have PasswordEncrypted set to True or Type set to Encrypted/SecretsStoreRef.
     ///  
     /// </summary>
-    internal static string ImageBuilderError_RepositoryCredentialsBlankPasswordWithEncryption {
+    internal static string ImageBuilderError_RepositoryCredentialsBlankPassword {
         get {
-            return ResourceManager.GetString("ImageBuilderError_RepositoryCredentialsBlankPasswordWithEncryption", resourceCulture);
+            return ResourceManager.GetString("ImageBuilderError_RepositoryCredentialsBlankPassword", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Repository Credentials for Account Name:{0} cannot have PasswordEncrypted set to True and Type set to PlainText/SecretsStoreRef.
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_InvalidRepositoryCredentialsType {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_InvalidRepositoryCredentialsType", resourceCulture);
         }
     }
 
@@ -15701,6 +15761,42 @@ internal class StringResources {
 
     /// <summary>
     ///   Looks up a localized string similar to 
+    ///    The secret already has the specified version.
+    ///  
+    /// </summary>
+    internal static string Error_SecretVersionAlreadyExists {
+        get {
+            return ResourceManager.GetString("Error_SecretVersionAlreadyExists", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    The specified secret is invalid.
+    ///  
+    /// </summary>
+    internal static string Error_SecretInvalid {
+        get {
+            return ResourceManager.GetString("Error_SecretInvalid", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    The operation is not supported.
+    ///  
+    /// </summary>
+    internal static string Error_OperationNotSupported {
+        get {
+            return ResourceManager.GetString("Error_OperationNotSupported", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
     ///    UseDefaultRepositoryCredential and UseTokenAuthenticationCredentials are both true.  Only one type of repository credentials can be used.
     ///  
     /// </summary>
@@ -16085,7 +16181,7 @@ internal class StringResources {
 
     /// <summary>
     ///   Looks up a localized string similar to 
-    ///    Deleing Service Fabric Network.
+    ///    Deleting Service Fabric Network.
     ///  
     /// </summary>
     internal static string Info_DeletingServiceFabricNetwork {
@@ -16115,6 +16211,30 @@ internal class StringResources {
     internal static string Error_DeleteServiceFabricNetworkFailed {
         get {
             return ResourceManager.GetString("Error_DeleteServiceFabricNetworkFailed", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    The specified network is currently being used.
+    ///  
+    /// </summary>
+    internal static string Error_NetworkInUse {
+        get {
+            return ResourceManager.GetString("Error_NetworkInUse", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    The specified network is not found.
+    ///  
+    /// </summary>
+    internal static string Error_NetworkNotFound {
+        get {
+            return ResourceManager.GetString("Error_NetworkNotFound", resourceCulture);
         }
     }
 
@@ -16365,6 +16485,199 @@ internal class StringResources {
     internal static string ImageBuilderError_MultipleActivatorCodePackage {
         get {
             return ResourceManager.GetString("ImageBuilderError_MultipleActivatorCodePackage", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    The endpoint {0} is exposed on more than one container networks: {1}, {2}.
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_EndpointOnMultipleNetworks {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_EndpointOnMultipleNetworks", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    The service package {0} is associated with a container network while its code package {1} has a non-container-host entrypoint of type {2}. For a service package associated with a container network, all its code packages have to be container-based.
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_InvalidCodePackageEntryPointHost {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_InvalidCodePackageEntryPointHost", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Container network policies cannot be used together with network config in container host policies. It is recommended to use only container network policies whenever possible.
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_NetworkConfigConflict {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_NetworkConfigConflict", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    The service package {0} is associated with both Open and NAT network which are incompatible with each other. 
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_IncompatibleNetworkPolicies {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_IncompatibleNetworkPolicies", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    NetworkRef in a container network policy has to be an actual or a parameterized network name.
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_InvalidNetworkReference {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_InvalidNetworkReference", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Invalid ApplicationManifest.xml due to missing 'Partition' entries under 'NamedPartition' tag.
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_MissingNamedPartitionChildEntries {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_MissingNamedPartitionChildEntries", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Unable to get client connection to the provided Azure storage. Check the xstore connection string provided in the image store connection string. These connection strings '{0}' and '{1}' were tried to connect to the Azure storage. Make sure Azure storage is reachable from the cluster and there is no Azure storage outage.
+    ///  
+    /// </summary>
+    internal static string XStore_CheckConnectionString {
+        get {
+            return ResourceManager.GetString("XStore_CheckConnectionString", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Provided image store connection string '{0}' didn't start with 'xstore:', which is expected for Azure storage.
+    ///  
+    /// </summary>
+    internal static string XStore_InvalidConnectionStringPrefix {
+        get {
+            return ResourceManager.GetString("XStore_InvalidConnectionStringPrefix", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Provided image store connection string '{0}' is not well formed. The expected format is '{connection string};Container=<container>'.
+    ///    Do not localize the format string provided in quotes
+    ///  
+    /// </summary>
+    internal static string XStore_MalformedConnectionString {
+        get {
+            return ResourceManager.GetString("XStore_MalformedConnectionString", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Unable to locate account key in the provided image store connection string '{0}'.
+    ///  
+    /// </summary>
+    internal static string XStore_MissingAccountKey {
+        get {
+            return ResourceManager.GetString("XStore_MissingAccountKey", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Provided image store connection string '{0}' is missing storage account required to connect to Azure storage.
+    ///  
+    /// </summary>
+    internal static string XStore_MissingConnectionString {
+        get {
+            return ResourceManager.GetString("XStore_MissingConnectionString", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Provided image store connection string '{0}' is missing container name required to connect to Azure storage.
+    ///  
+    /// </summary>
+    internal static string XStore_MissingContainer {
+        get {
+            return ResourceManager.GetString("XStore_MissingContainer", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Provided image store connection string '{0}' is missing endpoint required to connect to Azure storage.
+    ///  
+    /// </summary>
+    internal static string XStore_MissingEndpoint {
+        get {
+            return ResourceManager.GetString("XStore_MissingEndpoint", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Provided image store connection string '{0}' contains whitespace character(s) which is unexpected.
+    ///  
+    /// </summary>
+    internal static string XStore_UnexpectedWhitespaceCharInConnectionString {
+        get {
+            return ResourceManager.GetString("XStore_UnexpectedWhitespaceCharInConnectionString", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Failed to download application package '{0}' from the store. Make sure the application package exists and it's not empty.
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_UnableToDownloadApplicationPackage {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_UnableToDownloadApplicationPackage", resourceCulture);
+        }
+    }
+
+
+    /// <summary>
+    ///   Looks up a localized string similar to 
+    ///    Failed to donwload application package '{0}' from the store. Make sure Azure storage (XSTORE) is reachable from the cluster and there is no Azure storage outage.
+    ///  
+    /// </summary>
+    internal static string ImageBuilderError_UnableToDownloadApplicationPackageFromXStore {
+        get {
+            return ResourceManager.GetString("ImageBuilderError_UnableToDownloadApplicationPackageFromXStore", resourceCulture);
         }
     }
 

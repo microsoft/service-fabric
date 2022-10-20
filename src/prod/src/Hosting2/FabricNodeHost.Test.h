@@ -44,6 +44,7 @@ private:
     std::wstring imageCacheRoot_;
     std::wstring deploymentRoot_;
     std::wstring fabricUpgradeDeploymentRoot_;
+    std::wstring fabricLogFolderRoot_;
     int retryCount_;
     int retryDelayInMilliSec_;
 };

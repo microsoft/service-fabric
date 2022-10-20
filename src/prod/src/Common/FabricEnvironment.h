@@ -28,6 +28,10 @@ namespace Common
         static Common::GlobalWString WindowsFabricRemoveNodeConfigurationRegValue;
 
         static Common::GlobalWString FabricDnsServerIPAddressEnvironmentVariable;
+        static Common::GlobalWString FabricIsolatedNetworkInterfaceNameEnvironmentVariable;
+
+        static Common::GlobalWString FabricHostServicePathEnvironmentVariable;
+        static Common::GlobalWString UpdaterServicePathEnvironmentVariable;
 
         static Common::ErrorCode GetStoreTypeAndLocation(HMODULE dllModule,
             __out ConfigStoreType::Enum & storeType,
@@ -85,6 +89,24 @@ namespace Common
         static Common::ErrorCode GetFabricDnsServerIPAddress(
             LPCWSTR machineName, __out std::wstring &);
 
+        static Common::ErrorCode GetFabricIsolatedNetworkInterfaceName(
+            __out std::wstring &);
+
+        static Common::ErrorCode GetFabricIsolatedNetworkInterfaceName(
+            LPCWSTR machineName, __out std::wstring &);
+
+        static Common::ErrorCode GetFabricHostServicePath(
+            __out std::wstring &);
+
+        static Common::ErrorCode GetFabricHostServicePath(
+            LPCWSTR machineName, __out std::wstring &);
+
+        static Common::ErrorCode GetUpdaterServicePath(
+            __out std::wstring &);
+
+        static Common::ErrorCode GetUpdaterServicePath(
+            LPCWSTR machineName, __out std::wstring &);
+
         static Common::ErrorCode SetFabricRoot(
             const std::wstring &);
 
@@ -139,6 +161,9 @@ namespace Common
 
 #if defined(PLATFORM_UNIX)
         static Common::ErrorCode GetLinuxPackageManagerType(__out Common::LinuxPackageManagerType::Enum &);
+
+        static Common::ErrorCode SetSfInstalledMoby(
+            LPCWSTR fileContents);
 #endif
 
     private:

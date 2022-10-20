@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</ProjectGuid>
+    <AssemblyName>System.Fabric.Management.ServiceModel</AssemblyName>
+    <RootNamespace>System.Fabric.Management.ServiceModel</RootNamespace>
+    <AssemblyDescription>Fabric Service Model Library</AssemblyDescription>
+    <AssemblyTitle>Fabric Service Model Library</AssemblyTitle>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
+    <SGenUseProxyTypes>false</SGenUseProxyTypes>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- This referenced project is just used to produce the ServiceFabricServiceModel.cs file that is being compiled in the current project -->
+    <ProjectReference Include="..\System.Fabric.Management.ServiceModel.CsFileBuilder\System.Fabric.Management.ServiceModel.CsFileBuilder.csproj">
+      <Project>{245CA2BD-5F90-4C0B-848E-3F7056C04F37}</Project>
+      <Name>System.Fabric.Management.ServiceModel.CsFileBuilder</Name>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(BinariesBuildTypeArchDirectory)\WindowsFabricServiceModel\ServiceFabricServiceModel.cs" />
+    <Compile Include="..\..\src\System\Fabric\Management\ServiceModel\RolloutVersion.cs" />
+    <Compile Include="..\..\src\System\Fabric\Management\ServiceModel\FabricVersion.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTestInfra\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

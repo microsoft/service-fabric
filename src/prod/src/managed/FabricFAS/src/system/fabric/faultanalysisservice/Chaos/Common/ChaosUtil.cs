@@ -344,6 +344,13 @@ namespace System.Fabric.FaultAnalysis.Service.Chaos
                     JObject chaosEventWrapper = new JObject();
                     JObject chaosEventDTO = (JObject)((JArray)eventsDTO["History"])[i];
 
+                    // Reason needs to be no multiple of four so it doesnt cause decompression error
+                    IDictionary<string, JToken> chaosEventDict = chaosEventDTO;
+                    if (chaosEventDict.ContainsKey("Reason"))
+                    {
+                        chaosEventDTO["Reason"] = ChaosUtility.MakeLengthNotMultipleOfFourIgnoreReasonLength(chaosEventDTO.GetValue("Reason").Value<string>());
+                    }
+
                     JProperty kindProperty = new JProperty(chaosEventDTO.Property("Kind"));
                     chaosEventDTO.Property("Kind").Remove();
                     chaosEventDTO.AddFirst(kindProperty);
@@ -526,7 +533,7 @@ namespace System.Fabric.FaultAnalysis.Service.Chaos
             CancellationToken ctok)
         {
             IReliableDictionary<string, byte[]> dictionary = await stateManager.GetOrAddAsync<IReliableDictionary<string, byte[]>>(dictionaryName).ConfigureAwait(false);
-            
+
             using (var tx = stateManager.CreateTransaction())
             {
                 await dictionary.TryRemoveAsync(tx, keyToRemove).ConfigureAwait(false);

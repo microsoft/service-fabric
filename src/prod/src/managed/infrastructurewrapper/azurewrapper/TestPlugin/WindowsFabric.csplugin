@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<RoleModule xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition" namespace="WindowsFabric">
+  <Startup>
+    <Task commandLine="EnableTestMode.cmd" executionContext="elevated" taskType="simple" />
+    <Task commandLine="DisableStrongNameVerification.cmd" executionContext="elevated" taskType="simple" />
+    <Task commandLine="WindowsFabricAzureWrapperServiceInstallUtil.exe" executionContext="elevated" taskType="simple"/>
+    <Task commandLine="CopyDebugCRT.cmd" executionContext="elevated" taskType="simple" />
+  </Startup>
+  <ConfigurationSettings>
+  </ConfigurationSettings>
+</RoleModule>

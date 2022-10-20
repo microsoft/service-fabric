@@ -60,6 +60,7 @@ _spFabricPropertyClient(pFabricPropertyClient)
 
 FabricResolve::~FabricResolve()
 {
+    Tracer().Trace(DnsTraceLevel_Noise, "Destructing FabricResolve.");
 }
 
 void FabricResolve::Open(
@@ -126,13 +127,16 @@ void FabricResolve::OnStart()
 
 void FabricResolve::OnCompleted()
 {
+    Tracer().Trace(DnsTraceLevel_Info, "FabricResolve OnCompleted called.");
 }
 
 void FabricResolve::OnReuse()
 {
+    Tracer().Trace(DnsTraceLevel_Noise, "FabricResolve OnReuse called.");
 }
 
 void FabricResolve::OnCancel()
 {
+    Tracer().Trace(DnsTraceLevel_Info, "FabricResolve OnCancel called.");
     Complete(STATUS_CANCELLED);
 }

@@ -8,6 +8,8 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
     using Globalization;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text.RegularExpressions;
+    using System.Fabric;
     using System.Fabric.Management.ServiceModel;
 
     internal class ApplicationPackageGenerator
@@ -17,7 +19,10 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
         public string applicationTypeVersion;
         public bool generateDnsNames;
         public bool useOpenNetworkConfig;
+        public bool useLocalNatNetworkConfig;
+        public string mountPointForSettings;
         GenerationConfig generationConfig;
+        private List<CodePackageDebugParameters> debugParameters;
 
         const string DefaultReplicatorEndpoint = "ReplicatorEndpoint";
 
@@ -26,6 +31,8 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             string applicationTypeVersion,
             Application application,
             bool useOpenNetworkConfig,
+            bool useLocalNatNetworkConfig,
+            string mountPointForSettings,
             bool generateDnsNames = false,
             GenerationConfig generationConfig = null)
         {
@@ -35,21 +42,27 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             this.generateDnsNames = generateDnsNames;
             this.generationConfig = generationConfig ?? new GenerationConfig();
             this.useOpenNetworkConfig = useOpenNetworkConfig;
+            this.useLocalNatNetworkConfig = useLocalNatNetworkConfig;
+            this.mountPointForSettings = mountPointForSettings;
         }
 
         public void Generate(
             out ApplicationManifestType applicationManifest,
-            out IList<ServiceManifestType> serviceManifests)
+            out IList<ServiceManifestType> serviceManifests,
+            out Dictionary<string, Dictionary<string, SettingsType>> settingsType)
         {
-            this.CreateManifests(out applicationManifest, out serviceManifests);
+            this.CreateManifests(out applicationManifest, out serviceManifests, out settingsType);
         }
 
         private void CreateManifests(
             out ApplicationManifestType applicationManifest,
-            out IList<ServiceManifestType> serviceManifests)
+            out IList<ServiceManifestType> serviceManifests,
+            out Dictionary<string, Dictionary<string, SettingsType>> settingsType)
         {
-            int serviceInstanceCount = application.services.Count;
+            settingsType = new Dictionary<string, Dictionary<string, SettingsType>>();
 
+            int serviceInstanceCount = application.services.Count;
+            
             applicationManifest = new ApplicationManifestType()
             {
                 ApplicationTypeName = this.applicationTypeName,
@@ -72,13 +85,17 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                         DefaultValue = application.debugParams
                     }
                 };
+
+                debugParameters = CodePackageDebugParameters.CreateFrom(application.debugParams);
             }
 
             var index = 0;
             serviceManifests = new List<ServiceManifestType>();
+
             foreach (var service in this.application.services)
             {
                 string serviceName = service.name;
+                service.dnsName = this.GetServiceDnsName(this.application.name, serviceName);
 
                 ServiceManifestType serviceManifest;
                 DefaultServicesTypeService defaultServices;
@@ -87,7 +104,8 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                     serviceName,
                     service,
                     out defaultServices,
-                    out serviceManifest);
+                    out serviceManifest,
+                    settingsType);
 
                 applicationManifest.ServiceManifestImport[index] = serviceManifestImport;
                 applicationManifest.DefaultServices.Items[index] = defaultServices;
@@ -102,17 +120,29 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             string serviceName,
             Service service,
             out DefaultServicesTypeService defaultServiceEntry,
-            out ServiceManifestType serviceManifest)
+            out ServiceManifestType serviceManifest,
+            Dictionary<string, Dictionary<string, SettingsType>> settingsTypeDictionary)
         {
             if (service == null)
             {
                 throw new FabricApplicationException(String.Format("Service description is not specified"));
             }
 
+            if (this.debugParameters != null)
+            {
+                foreach (var codePackage in service.codePackages)
+                {
+                    string codePackageName = codePackage.name;
+                    CodePackageDebugParameters serviceDebugParams = this.debugParameters.Find(param => codePackageName.Equals(param.CodePackageName, StringComparison.InvariantCultureIgnoreCase));
+                    service.SetDebugParameters(serviceDebugParams);
+                }
+            }
+            bool isNATBindingUsed = IsNATBindingUsed(service);
             Dictionary<string, List<PortBindingType>> portBindingList;
             serviceManifest = this.CreateServiceManifest(
                 serviceName,
                 service,
+                isNATBindingUsed,
                 out portBindingList);
 
             var serviceManifestImport = new ApplicationManifestTypeServiceManifestImport()
@@ -126,14 +156,14 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
 
             // Includes SF Runtime access policy.
             int policyCount = 1;
-
+            string containerIsolationLevel = GetContainerIsolationLevel(service);
 #if DotNetCoreClrLinux
             // include ServicePackageContainerPolicy if isolationlevel is set to hyperv.
-            if (generationConfig.IsolationLevel == "hyperv")
+            if (containerIsolationLevel == "hyperv")
             {
                 ++policyCount;
             }
-#endif            
+#endif
             // Resource governance policies
             List<ResourceGovernancePolicyType> codepackageResourceGovernancePolicies;
             ServicePackageResourceGovernancePolicyType servicePackageResourceGovernancePolicy;
@@ -147,12 +177,46 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                 ++policyCount;
             }
 
+            // Network Policies
+            var networkPolicies = this.GetNetworkPolicies(
+                service,
+                serviceManifest,
+                isNATBindingUsed
+            );
+            policyCount += networkPolicies.Count;
+
             // Container Host policies
             var containerHostPolicies = this.GetContainerHostPolicies(
                 service,
                 serviceManifest,
-                portBindingList);
+                portBindingList,
+                isNATBindingUsed);
             policyCount += containerHostPolicies.Count;
+
+            Dictionary<string, SettingsType> settingsTypesInService = new Dictionary<string, SettingsType>();
+            // Config Package Policies
+            List<ConfigPackagePoliciesType> configPackagePolicies = this.GetConfigPackagePolicies(
+                service,
+                serviceManifest,
+                settingsTypesInService);
+            if (settingsTypesInService.Count() > 0)
+            {
+                // Add ConfigPackage in ServiceManifest
+                serviceManifest.ConfigPackage = new ConfigPackageType[settingsTypesInService.Count()];
+                int configPackageCount = 0;
+                foreach (var settingsType in settingsTypesInService)
+                {
+                    serviceManifest.ConfigPackage[configPackageCount++] = new ConfigPackageType()
+                    {
+                        Name = settingsType.Key,
+                        Version = this.applicationTypeVersion
+                    };
+                }
+                // Add settings to Dictionary
+                settingsTypeDictionary.Add(serviceManifest.Name, settingsTypesInService);
+            }
+
+            policyCount += configPackagePolicies.Count;
 
             serviceManifestImport.Policies = new object[policyCount];
 
@@ -171,10 +235,10 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             // across windows and linux. Bug# 12703576.
             //
 
-            if (generationConfig.IsolationLevel == "hyperv")
+            if (containerIsolationLevel == "hyperv")
             {
                 var servicePackageContainerPolicy = new ServicePackageContainerPolicyType();
-                servicePackageContainerPolicy.Isolation = generationConfig.IsolationLevel;
+                servicePackageContainerPolicy.Isolation = containerIsolationLevel;
                 servicePackageContainerPolicy.Hostname = "ccvm1";
 
                 int portBindingsCount = 0;
@@ -217,6 +281,18 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                 index += containerHostPolicies.Count;
             }
 
+            if (networkPolicies.Count > 0)
+            {
+                networkPolicies.ToArray().CopyTo(serviceManifestImport.Policies, index);
+                index += networkPolicies.Count;
+            }
+
+            if (configPackagePolicies.Count > 0)
+            {
+                configPackagePolicies.ToArray().CopyTo(serviceManifestImport.Policies, index);
+                index += configPackagePolicies.Count;
+            }
+
             defaultServiceEntry = this.GetDefaultServiceTypeEntry(
                 serviceName,
                 service,
@@ -228,6 +304,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
         private ServiceManifestType CreateServiceManifest(
             string serviceName,
             Service service,
+            bool isNATBindingUsed,
             out Dictionary<string, List<PortBindingType>> portBindings)
         {
             var serviceManifestType = new ServiceManifestType()
@@ -257,9 +334,18 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
 
                 codePackage.Validate();
 
-                serviceManifestType.CodePackage[index] = this.GetCodePackage(codePackage, codePackage.imageRegistryCredential);
+                if (service.UsesReliableCollection())
+                {
+                    codePackage.environmentVariables.Add(new EnvironmentVariable()
+                    {
+                        name = "Fabric_UseReliableCollectionReplicationMode",
+                        value = "true"
+                    });
+                }
 
-                var endpointResources = this.GetEndpointResources(service, codePackage, portBindings);
+                serviceManifestType.CodePackage[index] = this.GetCodePackage(service, codePackage);
+
+                var endpointResources = this.GetEndpointResources(service, codePackage, isNATBindingUsed, portBindings);
                 endpointResourceList.AddRange(endpointResources);
 
                 ++index;
@@ -276,10 +362,210 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             return serviceManifestType;
         }
 
+        private bool IsNATBindingUsed(Service service)
+        {
+            if (service.networkRefs != null)
+            {
+                foreach (var networkRef in service.networkRefs)
+                {
+                    var name = networkRef.name;
+
+                    // For the local one box scenario, open is not supported so we convert this to nat for testing.
+                    if (!this.useOpenNetworkConfig)
+                    {
+                        if (name.Equals(StringConstants.OpenNetworkName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            name = StringConstants.NatNetworkName;
+                        }
+                    }
+                    if (name.Equals(StringConstants.NatNetworkName, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private List<NetworkPoliciesType> GetNetworkPolicies(Service service, ServiceManifestType serviceManifest, bool isNATBindingUsed)
+        {
+            List<NetworkPoliciesType> networkPoliciesList = new List<NetworkPoliciesType>();
+            List<ContainerNetworkPolicyType> containerNetworkPolicies = new List<ContainerNetworkPolicyType>();
+
+            if (service.networkRefs != null)
+            {
+                foreach (var networkRef in service.networkRefs)
+                {
+                    var name = networkRef.name;
+
+#if DotNetCoreClrLinux
+                    // Isolated networks are not supported for reliable collections for mesh in release 6.4 on Linux Cluster.
+                    // For reliable collections in mesh, assert that reliable service is using Open Network / NAT only.
+                    if (service.UsesReliableCollection() || service.UsesReplicatedStoreVolume())
+                    {
+                        if (!name.Equals(StringConstants.OpenNetworkName, StringComparison.InvariantCultureIgnoreCase) && !name.Equals(StringConstants.NatNetworkName, StringComparison.InvariantCultureIgnoreCase))
+                            throw new FabricComposeException("Local network is not supported for reliable collections and volumes for mesh on Linux Clusters.");
+                    }
+#endif
+
+                    // For the local one box scenario, open is not supported so we convert this to nat for testing.
+                    if (!this.useOpenNetworkConfig)
+                    {
+                        if (name.Equals(StringConstants.OpenNetworkName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            name = StringConstants.NatNetworkName;
+                        }
+                    }
+                    // For the local one box scenario, isolated is converted to open for testing.
+                    if (this.useLocalNatNetworkConfig)
+                    {
+                        if (!name.Equals(StringConstants.OpenNetworkName, StringComparison.InvariantCultureIgnoreCase) &&
+                            !name.Equals(StringConstants.NatNetworkName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            name = StringConstants.OpenNetworkName;
+                        }
+                    }
+
+                    ContainerNetworkPolicyType internalNetworkPolicy = new ContainerNetworkPolicyType()
+                    {
+                        NetworkRef = name
+                    };
+
+                    if (serviceManifest.Resources != null && serviceManifest.Resources.Endpoints != null)
+                    {
+                        var containerNetworkPolicyEndpointBindingType = new List<ContainerNetworkPolicyEndpointBindingType>();
+
+                        // Use all endpoints specified if no endpointRef is explicitly stated.
+                        if (networkRef.endpointRefs == null)
+                        {
+                            foreach (var currentEndpoint in serviceManifest.Resources.Endpoints)
+                            {
+                                ContainerNetworkPolicyEndpointBindingType endpointBinding = new ContainerNetworkPolicyEndpointBindingType()
+                                {
+                                    EndpointRef = currentEndpoint.Name
+                                };
+                                containerNetworkPolicyEndpointBindingType.Add(endpointBinding);
+                            }
+                        }
+                        else
+                        {
+                            if (service.UsesReliableCollection())
+                            {
+                                EndpointRef replicatorEndpointRef = new EndpointRef();
+                                replicatorEndpointRef.name = DefaultReplicatorEndpoint;
+                                networkRef.endpointRefs.Add(replicatorEndpointRef);
+                            }
+
+                            foreach (var currentNetworkEndpoint in networkRef.endpointRefs)
+                            {
+                                foreach (var currentEndpoint in serviceManifest.Resources.Endpoints)
+                                {
+                                    if (currentEndpoint.Name == currentNetworkEndpoint.name)
+                                    {
+                                        ContainerNetworkPolicyEndpointBindingType endpointBinding = new ContainerNetworkPolicyEndpointBindingType()
+                                        {
+                                            EndpointRef = currentEndpoint.Name
+                                        };
+                                        containerNetworkPolicyEndpointBindingType.Add(endpointBinding);
+                                    }
+                                }
+                            }
+                        }
+                        internalNetworkPolicy.Items = containerNetworkPolicyEndpointBindingType.ToArray();
+                    }
+                    containerNetworkPolicies.Add(internalNetworkPolicy);
+                }
+
+                NetworkPoliciesType networkPolicies = new NetworkPoliciesType();
+                if (containerNetworkPolicies.Count != 0)
+                {
+                    networkPolicies.Items = new ContainerNetworkPolicyType[containerNetworkPolicies.Count];
+                    containerNetworkPolicies.ToArray().CopyTo(networkPolicies.Items, 0);
+                }
+
+                networkPoliciesList.Add(networkPolicies);
+            }
+
+            return networkPoliciesList;
+        }
+
+        private string GetConfigPackageName(string codePackageName) { return string.Format("{0}Config", codePackageName); }
+
+        private List<ConfigPackagePoliciesType> GetConfigPackagePolicies(
+            Service service,
+            ServiceManifestType serviceManifest,
+            Dictionary<string, SettingsType> settingsTypesInService) // Key is ConfigPackageName
+        {
+            List<ConfigPackagePoliciesType> configPackagePolicies = new List<ConfigPackagePoliciesType>();
+            foreach (SingleInstance.CodePackage codePackage in service.codePackages.Where(c => c.settings.Count != 0))
+            {
+                var settingsBySection = codePackage.settings.GroupBy(s => s.SectionName);
+
+                var configPackagePoliciesType = new ConfigPackagePoliciesType()
+                {
+                    CodePackageRef = codePackage.name,
+                    ConfigPackage = new ConfigPackageDescriptionType[settingsBySection.Count()]
+                };
+                configPackagePolicies.Add(configPackagePoliciesType);
+
+                // Setting files and config package are per each code package
+                SettingsType settingsType = new SettingsType()
+                {
+                    Section = new SettingsTypeSection[settingsBySection.Count()]
+                };
+                settingsTypesInService.Add(GetConfigPackageName(codePackage.name), settingsType);
+
+                int settingsTypeCount = 0;
+                foreach (var section in settingsBySection)
+                {
+                    ConfigPackageDescriptionType configPackage = new ConfigPackageDescriptionType()
+                    {
+                        Name = GetConfigPackageName(codePackage.name),
+                        SectionName = section.Key,
+                        MountPoint = section.Key.Equals(Setting.DefaultSectionName) ? this.mountPointForSettings : System.IO.Path.Combine(this.mountPointForSettings, section.Key)
+                    };
+                    SettingsTypeSection settingSection = new SettingsTypeSection()
+                    {
+                        Name = section.Key,
+                        Parameter = new SettingsTypeSectionParameter[section.Count()]
+                    };
+                    configPackagePoliciesType.ConfigPackage[settingsTypeCount] = configPackage;
+                    settingsType.Section[settingsTypeCount++] = settingSection;
+
+                    int ParameterCount = 0;
+                    foreach (Setting setting in section)
+                    {
+                        SettingsTypeSectionParameter parameter = new SettingsTypeSectionParameter()
+                        {
+                            Name = setting.ParameterName
+                        };
+
+                        if (TryMatchEncryption(ref setting.value))
+                        {
+                            parameter.IsEncrypted = true;
+                            parameter.Type = "Encrypted";
+                        }
+                        else if (TryMatchSecretRef(ref setting.value))
+                        {
+                            parameter.Type = "SecretsStoreRef";
+                        }
+                        
+                        parameter.Value = setting.value;
+
+                        settingSection.Parameter[ParameterCount++] = parameter;
+                    }
+                }
+            }
+
+            return configPackagePolicies;
+        }
+
         private List<ContainerHostPoliciesType> GetContainerHostPolicies(
             Service service,
             ServiceManifestType serviceManifest,
-            Dictionary<string, List<PortBindingType>> portBindings)
+            Dictionary<string, List<PortBindingType>> portBindings,
+            bool isNATBindingUsed)
         {
             List<ContainerHostPoliciesType> containerHostPolicies = new List<ContainerHostPoliciesType>();
             foreach (var codePackage in serviceManifest.CodePackage)
@@ -290,20 +576,16 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                     ContainersRetentionCount = generationConfig.ContainersRetentionCount
                 };
 
-#if !DotNetCoreClrLinux
                 //
                 // On Linux the isolation policy and the portbindings are given at service package level when isolation level is hyperv.
                 // TODO: Windows behavior should change to match this once hosting changes are made to make this consistent
                 // across windows and linux. Bug# 12703576.
                 //
-                if (generationConfig.IsolationLevel != null)
+                string containerIsolationLevel = GetContainerIsolationLevel(service);
+                if (containerIsolationLevel != null)
                 {
-                    containerHostPolicy.Isolation = generationConfig.IsolationLevel;
+                    containerHostPolicy.Isolation = containerIsolationLevel;
                 }
-#endif
-
-                // This is not code package specific - for CG, all code package share the same network configuration.
-                var containerNetworkTypes = this.GetContainerNetworkTypes();
 
                 // Each container in the CG can have different volume mounts and labels.
                 var codePackageInput = service.codePackages.Find(elem => codePackage.Name == elem.name);
@@ -324,11 +606,6 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                     ++containerHostPolicyCount;
                 }
 
-                if (containerNetworkTypes.Count != 0)
-                {
-                    containerHostPolicyCount += containerNetworkTypes.Count;
-                }
-
                 if (containerVolumeTypes.Count != 0)
                 {
                     containerHostPolicyCount += containerVolumeTypes.Count;
@@ -345,28 +622,26 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                 // TODO: Windows behavior should change to match this once hosting changes are made to make this consistent
                 // across windows and linux. Bug# 12703576.
                 //
-                if (generationConfig.IsolationLevel != "hyperv")
+                if (containerIsolationLevel != "hyperv")
                 {
 
-# endif
-                if (portBindings.ContainsKey(codePackage.Name) &&
-                    portBindings[codePackage.Name].Count != 0)
+#endif
+                if (isNATBindingUsed)
                 {
-                    containerHostPolicyCount += portBindings[codePackage.Name].Count;
+                    if (portBindings.ContainsKey(codePackage.Name) &&
+                        portBindings[codePackage.Name].Count != 0)
+                    {
+                        containerHostPolicyCount += portBindings[codePackage.Name].Count;
+                    }
                 }
 
 #if DotNetCoreClrLinux
                 }
-# endif
+#endif
                 if (containerHostPolicyCount != 0)
                 {
                     containerHostPolicy.Items = new object[containerHostPolicyCount];
                     int nextIndex = 0;
-                    if (containerNetworkTypes.Count != 0)
-                    {
-                        containerNetworkTypes.ToArray().CopyTo(containerHostPolicy.Items, nextIndex);
-                        nextIndex += containerNetworkTypes.Count;
-                    }
 
                     if (containerVolumeTypes.Count != 0)
                     {
@@ -383,13 +658,24 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                     if (codePackageInput.imageRegistryCredential != null &&
                         codePackageInput.imageRegistryCredential.IsCredentialsSpecified())
                     {
+                        string password = codePackageInput.imageRegistryCredential.password;
                         var repositoryCredentialsType = new RepositoryCredentialsType()
                         {
                             AccountName = codePackageInput.imageRegistryCredential.username,
-                            Password = codePackageInput.imageRegistryCredential.password,
                             PasswordEncrypted = false,
                             PasswordEncryptedSpecified = false
                         };
+
+                        if (TryMatchEncryption(ref password))
+                        {
+                            repositoryCredentialsType.Type = "Encrypted";
+                        }
+                        else if (TryMatchSecretRef(ref password))
+                        {
+                            repositoryCredentialsType.Type = "SecretsStoreRef";
+                        }
+
+                        repositoryCredentialsType.Password = password;
 
                         containerHostPolicy.Items[nextIndex] = repositoryCredentialsType;
                         ++nextIndex;
@@ -402,15 +688,18 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                     // across windows and linux. Bug# 12703576.
                     //
 
-                    if (generationConfig.IsolationLevel != "hyperv")
+                    if (containerIsolationLevel != "hyperv")
                     {
 
 #endif
-                    if (portBindings.ContainsKey(codePackage.Name) &&
-                        portBindings[codePackage.Name].Count != 0)
+                    if (isNATBindingUsed)
                     {
-                        portBindings[codePackage.Name].ToArray().CopyTo(containerHostPolicy.Items, nextIndex);
-                        nextIndex += portBindings[codePackage.Name].Count;
+                        if (portBindings.ContainsKey(codePackage.Name) &&
+                        portBindings[codePackage.Name].Count != 0)
+                        {
+                            portBindings[codePackage.Name].ToArray().CopyTo(containerHostPolicy.Items, nextIndex);
+                            nextIndex += portBindings[codePackage.Name].Count;
+                        }
                     }
 
 #if DotNetCoreClrLinux
@@ -424,7 +713,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
 
             return containerHostPolicies;
         }
-
+        
         private void GetResourceGovernancePolicies(
             Service service,
             out List<ResourceGovernancePolicyType> codepackageResourceGovernancePolicies,
@@ -454,7 +743,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             {
                 servicePackageResourceGovernancePolicy = new ServicePackageResourceGovernancePolicyType()
                 {
-                    CpuCores = totalLimitCPU.ToString()
+                    CpuCores = ImageBuilderUtility.ConvertToString(totalLimitCPU)
                 };
             }
 
@@ -490,6 +779,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
         private IEnumerable<EndpointType> GetEndpointResources(
             Service service,
             CodePackage codePackage,
+            bool isNATBindingUsed,
             Dictionary<string, List<PortBindingType>> portBindings)
         {
             var endpoints = new List<EndpointType>();
@@ -502,53 +792,56 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             foreach (var codePackageEndpoint in codePackage.endpoints)
             {
                 // TODO: what is port is not specified?, private network should be treated same as open.
+                
+                // 1. Always use specified port for services not using reliable collections
+                // 2. Use specied port for services using reliable collections only if not using NAT
+                bool useSpecifiedPort = !service.UsesReliableCollection() || !isNATBindingUsed;
                 var endpoint = new EndpointType()
                 {
                     Name = codePackageEndpoint.name,
                     CodePackageRef = codePackage.name,
-                    Port = service.UsesReliableCollection() ? 0 : codePackageEndpoint.port,
-                    PortSpecified = !service.UsesReliableCollection(),
-                    // RDBug 12797515:Allow user to specify Protocol to be used for Service Enpoints
-                    // Current workaround is to always use "http" protocol for stateful services.
-                    UriScheme = service.UsesReliableCollection() ? "http" : ""
+                    Port = useSpecifiedPort ? codePackageEndpoint.port : 0,
+                    UriScheme = service.GetUriScheme(),
+                    PortSpecified = useSpecifiedPort 
                 };
 
-                if (!this.useOpenNetworkConfig)
+                var portBinding = new PortBindingType()
                 {
-                    var portBinding = new PortBindingType()
-                    {
-                        ContainerPort = codePackageEndpoint.port,
-                        EndpointRef = endpoint.Name
-                    };
-                    portBindings[codePackage.name].Add(portBinding);
-                }
+                    ContainerPort = codePackageEndpoint.port,
+                    EndpointRef = endpoint.Name
+                };
+                portBindings[codePackage.name].Add(portBinding);
 
                 endpoints.Add(endpoint);
             }
 
-            if ((service.UsesReliableCollection() || service.UsesReplicatedStoreVolume()) && 
+            if ((service.UsesReliableCollection() || service.UsesReplicatedStoreVolume()) &&
                 endpoints.FirstOrDefault(endpoint => endpoint.Name.Equals(DefaultReplicatorEndpoint, StringComparison.CurrentCultureIgnoreCase)) == null)
             {
                 // If ReliableCollectionsRef is specified, insert a ReplicatorEndpoint with dynamic host port assignment by default
-                endpoints.Add(new EndpointType() 
+                var endpoint = new EndpointType()
                 {
                     Name = DefaultReplicatorEndpoint,
                     PortSpecified = false,
                     Type = EndpointTypeType.Internal
-                });
+                };
 
-                if (!this.useOpenNetworkConfig)
+                if (!isNATBindingUsed)
                 {
-                    //Adding a port binding for the ReplicatorEndpoint would result in passing it via "-p" to docker when activating the container,
-                    //resulting in docker attempting to use it, which would conflict with the Replicator already listening on that port.
-                    if (!service.UsesReplicatedStoreVolume())
+                    endpoint.CodePackageRef = codePackage.name;
+                }
+
+                endpoints.Add(endpoint);
+
+                //Adding a port binding for the ReplicatorEndpoint would result in passing it via "-p" to docker when activating the container,
+                //resulting in docker attempting to use it, which would conflict with the Replicator already listening on that port.
+                if (!service.UsesReplicatedStoreVolume())
+                {
+                    portBindings[codePackage.name].Add(new PortBindingType()
                     {
-                        portBindings[codePackage.name].Add(new PortBindingType()
-                        {
-                            ContainerPort = 0,
-                            EndpointRef = DefaultReplicatorEndpoint,
-                        });
-                    }
+                        ContainerPort = 0,
+                        EndpointRef = DefaultReplicatorEndpoint,
+                    });
                 }
             }
 
@@ -727,13 +1020,54 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             }
             else
             {
-               throw new FabricComposeException("No sink references provided for diagnostics defined.");
+                throw new FabricComposeException("No sink references provided for diagnostics defined.");
+            }
+        }
+
+        // Expected encryption string: [encrypted(ENCRYPTEDSTRING)]
+        private bool TryMatchEncryption(ref string value)
+        {
+            Match match = Regex.Match(value, @"\[encrypted\((.+)\)\]");
+            if (match.Success)
+            {
+                value = match.Groups[1].Value;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Check if the value is following secret reference format (case-insensitive).
+        /// Expected secret reference string: [reference('secrets/{secretName}/values/{secretVersion}')]
+        /// The format follows the SFRP/ARM format.
+        /// </summary>
+        /// <param name="value">The value to check on. 
+        /// If function returns true, the value will be replaced with the cluster resource reference ({secretName}:{secretValue}) to secret.</param>
+        /// <returns>True if the value string follows the secret reference format. Otherwise, false.</returns>
+        internal static bool TryMatchSecretRef(ref string value)
+        {
+            var match = Regex.Match(
+                value,
+                @"\[reference\(\'secrets\/(?<secretName>[a-zA-Z0-9_\-]+)\/values\/(?<secretVersion>[a-zA-Z0-9_\-\.]+)\'\)\]",
+                RegexOptions.IgnoreCase);
+
+            if (match.Success)
+            {
+                value = string.Format("{0}:{1}", match.Groups["secretName"].Value, match.Groups["secretVersion"].Value);
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
         private CodePackageType GetCodePackage(
-            CodePackage codePackage,
-            ImageRegistryCredential registryCredentials)
+            Service service,
+            CodePackage codePackage)
         {
             var containerCodePackage = new CodePackageType()
             {
@@ -745,27 +1079,58 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                 }
             };
 
-            int count = 1;
-            if (codePackage.environmentVariables != null && codePackage.environmentVariables.Count > 0)
+            if (codePackage.settings.Count > 0)
+            {
+                // Reserved environment variable for setting path
+                codePackage.environmentVariables.Add(new EnvironmentVariable()
+                {
+                    name = "Fabric_SettingPath",
+                    value = this.mountPointForSettings
+                });
+            }
+
+            //
+            // Account for the environment variables that we set here.
+            //
+            int count = 5;
+            if (codePackage.environmentVariables.Count > 0)
             {
                 count += codePackage.environmentVariables.Count;
             }
 
             containerCodePackage.EnvironmentVariables = new EnvironmentVariableType[count];
-            containerCodePackage.EnvironmentVariables[0] = new EnvironmentVariableType() { Name = "Fabric_Id", Value = "@PartitionId@"};
+            containerCodePackage.EnvironmentVariables[0] = new EnvironmentVariableType() { Name = "Fabric_Id", Value = "@PartitionId@" };
+            containerCodePackage.EnvironmentVariables[1] = new EnvironmentVariableType() { Name = "Fabric_ServiceName", Value = service.name };
+            containerCodePackage.EnvironmentVariables[2] = new EnvironmentVariableType() { Name = "Fabric_ApplicationName", Value = this.application.name };
+            containerCodePackage.EnvironmentVariables[3] = new EnvironmentVariableType() { Name = "Fabric_CodePackageName", Value = codePackage.name };
+            containerCodePackage.EnvironmentVariables[4] = new EnvironmentVariableType() { Name = "Fabric_ServiceDnsName", Value = service.dnsName };
 
-
-            if (codePackage.environmentVariables != null)
+            //
+            // Account for the environment variables that we set here.
+            //
+            var index = 5;
+            foreach (var environmentVariable in codePackage.environmentVariables)
             {
-                var index = 1;
-                foreach (var environmentVariable in codePackage.environmentVariables)
+                var codePackageEnv = new EnvironmentVariableType()
                 {
-                    var codePackageEnv = new EnvironmentVariableType();
+                    Name = environmentVariable.name
+                };
 
-                    codePackageEnv.Name = environmentVariable.name;
-                    codePackageEnv.Value = environmentVariable.value;
-                    containerCodePackage.EnvironmentVariables[index++] = codePackageEnv;
+                // The input would be changed as ref here.
+                if (TryMatchEncryption(ref environmentVariable.value))
+                {
+                    codePackageEnv.Type = EnvironmentVariableTypeType.Encrypted;
                 }
+                // TODO: #11905876 Integrate querying SecretStoreService in Hosting
+                // TODO [dragosav]: look into aligning the type of the variable/setting type - env vars
+                // use an enum (EnvVarTypeType) whereas settings use a string value.
+                else if (TryMatchSecretRef(ref environmentVariable.value))
+                {
+                    codePackageEnv.Type = EnvironmentVariableTypeType.SecretsStoreRef;
+                }
+
+                codePackageEnv.Value = environmentVariable.value;
+                containerCodePackage.EnvironmentVariables[index++] = codePackageEnv;
             }
 
             return containerCodePackage;
@@ -826,10 +1191,70 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                 // Partition name is generated
                 partitionList.Add(new ServiceTypeNamedPartitionPartition()
                 {
-                    Name = index.ToString()
+                    Name = ImageBuilderUtility.ConvertToString(index)
                 });
             }
 
+            List<ScalingPolicyType> scalingPolicies = new List<ScalingPolicyType>();
+            if (service.autoScalingPolicies != null) {
+                foreach (var autoScalingPolicy in service.autoScalingPolicies)
+                {
+                    string metricName = null;
+                    string lowerLoadThreshold = null;
+                    string upperLoadThreshold = null;
+                    if (String.Equals(autoScalingPolicy.trigger.metric.name, "cpu", StringComparison.OrdinalIgnoreCase)
+                        && (  String.Equals(autoScalingPolicy.trigger.metric.kind, "Resource", StringComparison.OrdinalIgnoreCase)
+                            || String.Equals(autoScalingPolicy.trigger.metric.kind, "0", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        metricName = "servicefabric:/_CpuCores";
+                        lowerLoadThreshold = autoScalingPolicy.trigger.lowerLoadThreshold;
+                        upperLoadThreshold = autoScalingPolicy.trigger.upperLoadThreshold;
+                    }
+                    else if (String.Equals(autoScalingPolicy.trigger.metric.name, "memoryInGB", StringComparison.OrdinalIgnoreCase)
+                        && (   String.Equals(autoScalingPolicy.trigger.metric.kind, "Resource", StringComparison.OrdinalIgnoreCase)
+                            || String.Equals(autoScalingPolicy.trigger.metric.kind, "0", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        metricName = "servicefabric:/_MemoryInMB";
+
+                        double threshold = 0;
+                        if(Double.TryParse(autoScalingPolicy.trigger.lowerLoadThreshold, out threshold))
+                        {
+                            threshold *= 1024;
+                        }
+                        lowerLoadThreshold = ImageBuilderUtility.ConvertToString(threshold);
+
+                        threshold = 0;
+                        if (Double.TryParse(autoScalingPolicy.trigger.upperLoadThreshold, out threshold))
+                        {
+                            threshold *= 1024;
+                        }
+                        upperLoadThreshold = ImageBuilderUtility.ConvertToString(threshold);
+                    }
+                    else
+                    {
+                        //currently only those 2 metrics are allowed for autoscaling
+                        continue;
+                    }
+                    scalingPolicies.Add(new ScalingPolicyType()
+                    {
+                        AverageServiceLoadScalingTrigger = new ScalingPolicyTypeAverageServiceLoadScalingTrigger()
+                        {
+                            MetricName = metricName,
+                            LowerLoadThreshold = lowerLoadThreshold,
+                            UpperLoadThreshold = upperLoadThreshold,
+                            ScaleIntervalInSeconds = autoScalingPolicy.trigger.scaleIntervalInSeconds,
+                            UseOnlyPrimaryLoad = "false"
+                        },
+
+                        AddRemoveIncrementalNamedPartitionScalingMechanism = new ScalingPolicyTypeAddRemoveIncrementalNamedPartitionScalingMechanism()
+                        {
+                            MinPartitionCount = autoScalingPolicy.mechanism.minCount,
+                            MaxPartitionCount = autoScalingPolicy.mechanism.maxCount,
+                            ScaleIncrement = autoScalingPolicy.mechanism.scaleIncrement
+                        }
+                    });
+                }
+            }
             ServiceTypeNamedPartition partition = new ServiceTypeNamedPartition()
             {
                 Partition = partitionList.ToArray()
@@ -839,27 +1264,23 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             // TEMPORARY: This configuration should come from a settings object
             // that is part of the ReliableCollections/BlockStore configuration.
             //
+            // TargetReplicaSetSize of FM is used to decide the replica count of the application.
+            // TargetReplicaSetSize of FM is 1 for 1 node cluster and non 1 value for a multi node cluster.
+            //
+
             string minReplicaSetSize = "1";
             string targetReplicaSetSize = "1";
-            if (service.UsesReplicatedStoreVolume() ||
-                service.UsesReliableCollection())
+            if (generationConfig.TargetReplicaCount != 1 && 
+               (service.UsesReplicatedStoreVolume() || service.UsesReliableCollection()))
             {
                 minReplicaSetSize = "2";
                 targetReplicaSetSize = "3";
             }
 
-            var defaultServiceType = new DefaultServicesTypeService
+            StatefulServiceType type;
+            if(scalingPolicies.Count != 0)
             {
-                Name = serviceName,
-                ServiceDnsName = this.GetServiceDnsName(this.application.name, serviceName),
-                ServicePackageActivationMode = "ExclusiveProcess",
-
-                //
-                // Specifying limits at the service package level is sufficient. Need
-                // not specify default load metrics.
-                //
-
-                Item = new StatefulServiceType()
+                type = new StatefulServiceType()
                 {
                     MinReplicaSetSize = minReplicaSetSize,
                     TargetReplicaSetSize = targetReplicaSetSize,
@@ -867,33 +1288,40 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                     NamedPartition = partition,
                     DefaultMoveCost = ServiceTypeDefaultMoveCost.High,
                     DefaultMoveCostSpecified = true,
-                    ReplicaRestartWaitDurationSeconds = generationConfig.ReplicaRestartWaitDurationSeconds.ToString(),
-                    QuorumLossWaitDurationSeconds = generationConfig.QuorumLossWaitDurationSeconds.ToString()
-                },
+                    ReplicaRestartWaitDurationSeconds = ImageBuilderUtility.ConvertToString(generationConfig.ReplicaRestartWaitDurationSeconds),
+                    QuorumLossWaitDurationSeconds = ImageBuilderUtility.ConvertToString(generationConfig.QuorumLossWaitDurationSeconds),
+                    ServiceScalingPolicies = scalingPolicies.ToArray()
+                };
+            }
+            else
+            {
+                type = new StatefulServiceType()
+                {
+                    MinReplicaSetSize = minReplicaSetSize,
+                    TargetReplicaSetSize = targetReplicaSetSize,
+                    ServiceTypeName = serviceTypeName,
+                    NamedPartition = partition,
+                    DefaultMoveCost = ServiceTypeDefaultMoveCost.High,
+                    DefaultMoveCostSpecified = true,
+                    ReplicaRestartWaitDurationSeconds = ImageBuilderUtility.ConvertToString(generationConfig.ReplicaRestartWaitDurationSeconds),
+                    QuorumLossWaitDurationSeconds = ImageBuilderUtility.ConvertToString(generationConfig.QuorumLossWaitDurationSeconds)
+                };
+            }
+            var defaultServiceType = new DefaultServicesTypeService
+            {
+                Name = serviceName,
+                ServiceDnsName = service.dnsName,
+                ServicePackageActivationMode = "ExclusiveProcess",
+
+                //
+                // Specifying limits at the service package level is sufficient. Need
+                // not specify default load metrics.
+                //
+
+                Item = type,
             };
 
             return defaultServiceType;
-        }
-
-        private List<ContainerNetworkConfigType> GetContainerNetworkTypes()
-        {
-            var containerNetworkTypes = new List<ContainerNetworkConfigType>();
-
-            // In isolated mode, always use private network.
-            //if (!generationConfig.IsolationLevel.Equals("hyperv", StringComparison.CurrentCultureIgnoreCase) && this.useOpenNetworkConfig)
-
-            // Otherwise, check useOpenNetworkConfig to use NAT(scalemin) vs openNetwork
-            if (this.useOpenNetworkConfig)
-            {
-                var containerNetworkType = new ContainerNetworkConfigType()
-                {
-                    NetworkType = DockerComposeConstants.OpenExternalNetworkServiceManifestValue
-                };
-
-                containerNetworkTypes.Add(containerNetworkType);
-            }
-
-            return containerNetworkTypes;
         }
 
         private ServiceTypeType GetContainerServiceType(string namePrefix, Service service)
@@ -902,7 +1330,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             {
                 ServiceTypeName = String.Format(CultureInfo.InvariantCulture, "{0}Type", namePrefix),
                 UseImplicitHost = !service.UsesReliableCollection(), // Stateful service should have UseImplicitHost=false
-                HasPersistedState = true,
+                HasPersistedState = service.HasPersistedState()
             };
         }
 
@@ -913,8 +1341,8 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
 
         private string GetMemoryInMBString(double memoryInGB)
         {
-            var memoryInMB = Convert.ToInt64(memoryInGB*1024);
-            return memoryInMB.ToString();
+            var memoryInMB = Convert.ToInt64(memoryInGB * 1024);
+            return ImageBuilderUtility.ConvertToString(memoryInMB);
         }
 
         private void UpdateCPUShares(
@@ -938,8 +1366,8 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                 containerCpuLimit = codePackage.resources.limits.cpu;
             }
 
-            var containerCPUPercent = Convert.ToUInt32(((containerCpuLimit / totalCPULimit)*100));
-            resourceGovernancePolicy.CpuShares = containerCPUPercent.ToString();
+            var containerCPUPercent = Convert.ToUInt32(((containerCpuLimit / totalCPULimit) * 100));
+            resourceGovernancePolicy.CpuShares = ImageBuilderUtility.ConvertToString(containerCPUPercent);
         }
 
         private string GetServiceDnsName(string applicationName, string serviceName)
@@ -961,7 +1389,7 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
                 // Each of the path segment in the application name becomes a domain label in the service Dns Name, With the first path segment
                 // becoming the top level domain label.
                 //
-                var appNameUri = new Uri("fabric:/"+applicationName);
+                var appNameUri = new Uri("fabric:/" + applicationName);
                 var appNameSegments = appNameUri.AbsolutePath.Split('/');
                 for (int i = appNameSegments.Length - 1; i >= 0; --i)
                 {
@@ -1004,6 +1432,19 @@ namespace System.Fabric.Management.ImageBuilder.SingleInstance
             {
                 throw new FabricApplicationException(String.Format("Resource requests not specified for code package {0}", codePackageName));
             }
+        }
+
+        private string GetContainerIsolationLevel(Service service)
+        {
+#if DotNetCoreClrLinux
+            //  RDBug 14037954:[Mesh][Linux] Stateful services are not supported with Clear/Kata containers
+            //  Isolation mode "hyperv" is not supported today on linux as we do not have support for Clear/Kata containers.
+            if (service.UsesReliableCollection() || service.UsesReplicatedStoreVolume())
+            {
+                return "process";
+            }
+#endif
+            return generationConfig.IsolationLevel;
         }
     }
 }

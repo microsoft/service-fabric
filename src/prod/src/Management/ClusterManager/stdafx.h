@@ -56,6 +56,7 @@
 #include "Management/ClusterManager/DeleteSingleInstanceDeploymentAsyncOperation.h"
 #include "Management/ClusterManager/UpgradeApplicationAsyncOperation.h"
 #include "Management/ClusterManager/RollbackApplicationUpgradeAsyncOperation.h"
+#include "Management/ClusterManager/RollbackComposeDeploymentAsyncOperation.h"
 #include "Management/ClusterManager/UpgradeFabricAsyncOperation.h"
 #include "Management/ClusterManager/UpdateApplicationUpgradeAsyncOperation.h"
 #include "Management/ClusterManager/UpdateFabricUpgradeAsyncOperation.h"
@@ -155,3 +156,6 @@
 
 // DNS
 #include "Management/DnsService/config/DnsServiceConfig.h"
+
+// NetworkInventoryManager
+#include "Management/NetworkInventoryManager/common/NetworkInventoryManagerConfig.h"

@@ -7,52 +7,60 @@
 
 namespace Management
 {
-	namespace CentralSecretService
-	{
-		class SecretDataItem : public Store::StoreData
-		{
-		public:
-			SecretDataItem() : StoreData() {}
-			SecretDataItem(std::wstring const & key);
-			SecretDataItem(std::wstring const & key, Secret & secret);
+    namespace CentralSecretService
+    {
+        class SecretDataItem : public SecretDataItemBase
+        {
+            DENY_COPY_ASSIGNMENT(SecretDataItem)
 
-			SecretDataItem(std::wstring const & name, std::wstring const & version);
-			SecretDataItem(SecretReference &);
-			SecretDataItem(Secret &);
+        public:
+            SecretDataItem();
+            
+            SecretDataItem(std::wstring const & name, std::wstring const & version);
+            SecretDataItem(
+                std::wstring const & name,
+                std::wstring const & version,
+                std::wstring const & value,
+                std::wstring const & kind,
+                std::wstring const & contentType,
+                std::wstring const & description);
+            SecretDataItem(SecretReference const &);
+            SecretDataItem(Secret const &);
 
-			virtual ~SecretDataItem();
+            virtual ~SecretDataItem();
 
-			SecretDataItem& operator=(Secret &);
+            __declspec(property(get = get_Version)) std::wstring const & Version;
+            std::wstring const & get_Version() const { return version_; }
 
-			__declspec(property(get = get_Name)) std::wstring const & Name;
-			std::wstring const & get_Name() const { return name_; }
+            __declspec(property(get = get_Value)) std::wstring const & Value;
+            std::wstring const & get_Value() const { return value_; }
 
-			__declspec(property(get = get_Version)) std::wstring const & Version;
-			std::wstring const & get_Version() const { return version_; }
+            std::wstring const & get_Type() const override { return Constants::StoreType::Secrets; }
 
-			__declspec(property(get = get_Value)) std::wstring const & Value;
-			std::wstring const & get_Value() const { return value_; }
+            void WriteTo(__in Common::TextWriter & w, Common::FormatOptions const &) const override;
 
-			std::wstring const & get_Type() const override { return Constants::StoreType::Secrets; }
+            SecretReference ToSecretReference() const override;
+            Secret ToSecret() const override;
 
-			void WriteTo(__in Common::TextWriter & w, Common::FormatOptions const &) const override;
+            static std::wstring ToKeyName(wstring const & secretName, wstring const & secretVersion = L"");
 
-			SecretReference ToSecretReference();
-			Secret ToSecret();
+            inline bool operator == (SecretDataItem const & rhs)
+            {
+                return (((SecretDataItemBase &)*this) == (SecretDataItemBase const &)rhs)
+                    && (0 == version_.compare(rhs.version_))
+                    && (0 == value_.compare(rhs.value_));
+            }
 
-			FABRIC_FIELDS_03(
-				name_,
-				version_,
-				value_)
+            FABRIC_FIELDS_02(
+                version_,
+                value_)
 
-		protected:
-			std::wstring ConstructKey() const override { return key_; }
+        protected:
+            std::wstring ConstructKey() const override;
 
-		private:
-			std::wstring key_;
-			std::wstring name_;
-			std::wstring version_;
-			std::wstring value_;
-		};
-	}
+        private:
+            std::wstring version_;
+            std::wstring value_;
+        };
+    }
 }

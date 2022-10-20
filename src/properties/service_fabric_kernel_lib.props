@@ -1,0 +1,16 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_kernel_common_pre.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <TargetVersion>Windows8</TargetVersion>
+    <DriverType>KMDF</DriverType>
+
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(SRCROOT)\properties\_service_fabric_kernel_common_post.props" />
+  <Import Project="$(SRCROOT)\properties\_service_fabric_kernel_compile.props" />
+  <Import Project="$(SRCROOT)\properties\_service_fabric_kernel_link.props" />
+</Project>

@@ -1,0 +1,11 @@
+{
+  "Comment": "The new tenant job should create a repair task in Preparing state",
+  "Items": [
+    {
+      "Id": "3cbd5a8b-1fa9-42b0-a4b1-aba8f0ded836",
+      "Actions": [
+        "CreateInPreparingAction"
+      ]
+    }
+  ]
+}

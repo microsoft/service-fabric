@@ -73,10 +73,26 @@ void PendingTask::CheckFailoverUnit(LockedFailoverUnitPtr & lockedFailoverUnit, 
                  (failoverUnit.PreviousConfiguration.IsEmpty || 
                   failoverUnit.PreviousConfiguration.DeletedCount >= failoverUnit.PreviousConfiguration.ReadQuorumSize)))
             {
-                actions.push_back(make_unique<DeleteServiceAction>(failoverUnit.ServiceInfoObj, failoverUnit.Id));
+                bool isFTMarkedForRepartitionRemove = false;
+                if (failoverUnit.ServiceInfoObj->RepartitionInfo)
+                {
+                    // Service is under repartition. Check if the current failover unit is being removed.
+                    auto it = failoverUnit.ServiceInfoObj->RepartitionInfo->Removed.find(failoverUnit.Id);
+                    if (it != failoverUnit.ServiceInfoObj->RepartitionInfo->Removed.end())
+                    {
+                        isFTMarkedForRepartitionRemove = true;
+                    }
+                }
 
-                lockedFailoverUnit.EnableUpdate();
-                failoverUnit.SetOrphaned(fm_);
+                bool partitionCountsMatch = failoverUnit.ServiceInfoObj->FailoverUnitIds.size() == failoverUnit.ServiceInfoObj->ServiceDescription.PartitionCount;
+
+                if(partitionCountsMatch || isFTMarkedForRepartitionRemove || failoverUnit.ServiceInfoObj->IsForceDelete)
+                {
+                    actions.push_back(make_unique<DeleteServiceAction>(failoverUnit.ServiceInfoObj, failoverUnit.Id));
+
+                    lockedFailoverUnit.EnableUpdate();
+                    failoverUnit.SetOrphaned(fm_);
+                }
             }
             else if (failoverUnit.CurrentConfiguration.DroppedCount == failoverUnit.CurrentConfiguration.ReplicaCount)
             {

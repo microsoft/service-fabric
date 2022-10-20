@@ -16,14 +16,24 @@ namespace Hosting2
         ServicePackageInstanceEnvironmentContext(ServicePackageInstanceIdentifier const & servicePackageInstanceId);
         ~ServicePackageInstanceEnvironmentContext();
 
+        void AddNetworks(ServiceModel::NetworkType::Enum networkType, std::vector<std::wstring> networkNames);
+        void GetNetworks(ServiceModel::NetworkType::Enum networkType, std::vector<std::wstring> & networkNames);
+        bool NetworkExists(ServiceModel::NetworkType::Enum networkType);
         void AddEndpoint(EndpointResourceSPtr && endpointResource);
         void AddEtwProviderGuid(std::wstring const & etwProviderGuid);
         void AddAssignedIpAddresses(
             std::wstring const & codePackageName,
             std::wstring const & ipAddress);
+        void AddAssignedOverlayNetworkResources(
+            std::wstring const & codePackageName,
+            std::map<std::wstring, std::wstring> & overlayNetworkResources);
         void AddCertificatePaths(std::map<std::wstring, std::wstring> const & certificatePaths, std::map<std::wstring, std::wstring> const & certificatePasswordPaths);
         void AddGroupContainerName(std::wstring const & containerName);
-        std::wstring GetGroupAssignedIp();
+        void GetGroupAssignedNetworkResource(
+            std::wstring & openNetworkIpAddress,
+            std::map<std::wstring, std::wstring> & overlayNetworkResources,
+            ServiceModel::NetworkType::Enum & networkType,
+            std::wstring & networkResourceList);
 #if defined(PLATFORM_UNIX)
         void SetContainerGroupIsolatedFlag(bool isIsolated);
 #endif
@@ -45,6 +55,9 @@ namespace Hosting2
         __declspec(property(get = get_HasIpsAssigned)) bool HasIpsAssigned;
         bool get_HasIpsAssigned() { return !this->ipAddresses_.empty(); }
 
+        __declspec(property(get = get_HasOverlayNetworkResourcesAssigned)) bool HasOverlayNetworkResourcesAssigned;
+        bool get_HasOverlayNetworkResourcesAssigned() { return !this->overlayNetworkResources_.empty(); }
+
         __declspec(property(get = get_SetupContainerGroup)) bool SetupContainerGroup;
         bool get_SetupContainerGroup() { return this->setupContainerGroup_; }
 
@@ -65,10 +78,19 @@ namespace Hosting2
 
         Common::ErrorCode GetIpAddressAssignedToCodePackage(std::wstring const & codePackageName, __out std::wstring & ipAddress);
 
+        Common::ErrorCode GetNetworkResourceAssignedToCodePackage(
+            std::wstring const & codePackageName,
+            __out std::wstring & openNetworkIpAddress,
+            __out std::map<std::wstring, std::wstring> & overlayNetworkResources);
+
+        void GetCodePackageOverlayNetworkNames(__out std::map<wstring, vector<wstring>> & codePackageNetworkNames);
+
     private:
         std::vector<EndpointResourceSPtr> endpointResources_;    
         std::vector<std::wstring> etwProviderGuids_;
         std::map<std::wstring, std::wstring> ipAddresses_;
+        std::map<std::wstring, std::map<std::wstring, std::wstring>> overlayNetworkResources_;
+        std::map<ServiceModel::NetworkType::Enum, std::vector<std::wstring>> associatedNetworks_;
         ServicePackageInstanceIdentifier servicePackageInstanceId_;
         std::map<std::wstring, std::wstring> certificatePaths_;
         std::map<std::wstring, std::wstring> certificatePasswordPaths_;

@@ -1,0 +1,15 @@
+﻿<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Import Project="$(EnvironmentConfig)" />
+<ItemGroup>
+    <PostBuildCopy Include="..\Settings.xml">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\RepairPolicyEngineApplication\RepairPolicyEnginePackage\RepairPolicyEngineService.Config\</DestinationFolder>		
+    </PostBuildCopy>
+    <FabricVerFile Include="..\ApplicationManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\RepairPolicyEngineApplication</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="..\ServiceManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\RepairPolicyEngineApplication\RepairPolicyEnginePackage</TargetPath>
+    </FabricVerFile>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+</Project>

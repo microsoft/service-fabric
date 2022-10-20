@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ClusterManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Test Generated ClusterManifest" Version="v1" Description="Test Generated ClusterManifest" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <NodeTypes>
+    <NodeType Name="Nodes">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="10545" />
+        <ClusterConnectionEndpoint Port="10546" />
+        <HttpGatewayEndpoint Port="19080" Protocol="http" />
+        <ServiceConnectionEndpoint Port="10547" />
+        <ClusterManagerReplicatorEndpoint Port="10548" />
+        <NamingReplicatorEndpoint Port="10548" />
+        <FailoverManagerReplicatorEndpoint Port="10548" />
+        <ImageStoreServiceReplicatorEndpoint Port="10551" />
+        <ApplicationEndpoints StartPort="10552" EndPort="10584" />
+      </Endpoints>
+    </NodeType>
+  </NodeTypes>
+  <Infrastructure>
+    <WindowsServer IsScaleMin="true">
+      <NodeList>
+        <Node NodeName="Node1" IPAddressOrFQDN="148.151.88.173" IsSeedNode="true" NodeTypeRef="Nodes" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1"/>
+        <Node NodeName="Node2" IPAddressOrFQDN="148.151.88.173" IsSeedNode="true" NodeTypeRef="Nodes" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1"/>
+        <Node NodeName="Node3" IPAddressOrFQDN="148.151.88.173" IsSeedNode="true" NodeTypeRef="Nodes" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1"/>
+        <Node NodeName="Node4" IPAddressOrFQDN="148.151.88.173" IsSeedNode="true" NodeTypeRef="Nodes" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1"/>
+      </NodeList>
+    </WindowsServer>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="Trace/Console">
+        <Parameter Name="Level" Value="3" />
+    </Section>
+    <Section Name="Trace/Etw">
+        <Parameter Name="Level" Value="5" />
+    </Section>
+    <Section Name="Trace/File">
+        <Parameter Name="Level" Value="4" />
+        <Parameter Name="Option" Value="p,m,i" />
+        <Parameter Name="Path" Value="Fabric.trace" />
+    </Section>
+    <Section Name="Federation">
+      <Parameter Name="NodeIdGeneratorVersion" Value="V3" />
+    </Section>
+    <Section Name="ClusterManager">
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="ReplicaRestartWaitDuration" Value="5" />
+      <Parameter Name="UpgradeStatusPollInterval" Value="5" />
+      <Parameter Name="FabricUpgradeStatusPollInterval" Value="5" />
+      <Parameter Name="UpgradeHealthCheckInterval" Value="5" />
+      <Parameter Name="FabricUpgradeHealthCheckInterval" Value="5" />
+    </Section>
+    <Section Name="FailoverManager">
+      <Parameter Name="ClusterStableWaitDuration" Value="0" />
+      <Parameter Name="PeriodicStateScanInterval" Value="2" />
+      <Parameter Name="MinActionRetryIntervalPerReplica" Value="5" />
+      <Parameter Name="PeriodicStateCleanupScanInterval" Value="15" />
+      <Parameter Name="SystemReplicaRestartWaitDuration" Value="5" />
+      <Parameter Name="DeletedReplicaKeepDuration" Value="5" />
+      <Parameter Name="ExpectedClusterSize" Value="1" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="ReplicaRestartWaitDuration" Value="5" />
+      <Parameter Name="UserReplicaRestartWaitDuration" Value="5" />
+    </Section>
+    <Section Name="Hosting">
+      <Parameter Name="EnableActivateNoWindow" Value="True" />
+      <Parameter Name="ActivatedProcessDieOnUnhandledExceptionEnabled" Value="False" />
+      <Parameter Name="RunAsPolicyEnabled" Value="True" />
+      <Parameter Name="EndpointProviderEnabled" Value="True" />
+    </Section>
+    <Section Name="HttpGateway">
+      <Parameter Name="IsEnabled" Value="True" />
+      <Parameter Name="VersionCheck" Value="True" />
+    </Section>
+    <Section Name="Management">
+        <Parameter Name="ImageStoreConnectionString" Value="file:REPLACE_DROPPATH/ImageStore" />
+    </Section>
+    <Section Name="NamingService">
+      <Parameter Name="PartitionCount" Value="1" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="ReplicaRestartWaitDuration" Value="5" />
+    </Section>
+    <Section Name="PerformanceCounterLocalStore">
+      <Parameter Name="IsEnabled" Value="False" />
+    </Section>
+    <Section Name="PlacementAndLoadBalancing">
+      <Parameter Name="LoadBalancingEnabled" Value="False" />
+    </Section>
+    <Section Name="ReconfigurationAgent">
+      <Parameter Name="ReplicaUpMessageRetryInterval" Value="5" />
+      <Parameter Name="RAUpgradeProgressCheckInterval" Value="2" />
+      <Parameter Name="FabricUpgradeReplicaCloseCompleteCheckInterval" Value="1" />
+      <Parameter Name="IsDeactivationInfoEnabled" Value="True" />
+      <Parameter Name="ReplicaOpenFailureWarningReportThreshold" Value="1" />
+    </Section>
+    <Section Name="FabricClient">
+      <Parameter Name="HealthReportSendInterval" Value="1" />
+    </Section>
+    <Section Name="Security">
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+      <Parameter Name="NegotiateForWindowsSecurity" Value="True" />
+    </Section>
+  </FabricSettings>
+</ClusterManifest>

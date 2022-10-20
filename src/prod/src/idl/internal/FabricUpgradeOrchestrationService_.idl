@@ -1,0 +1,139 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricTypes_.idl";
+import "FabricRuntime.idl";
+import "FabricClient_.idl";
+
+//
+// Forward Declarations
+//
+
+interface IFabricUpgradeOrchestrationService;
+interface IFabricUpgradeOrchestrationServiceAgent;
+
+[
+    uuid(4E40C24A-B5B0-424E-A799-2F9C8510F381),
+    version(1.0),
+]
+library FabricUpgradeOrchestrationServiceLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricUpgradeOrchestrationService;
+    interface IFabricUpgradeOrchestrationServiceAgent;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(7F05BCD1-C206-485D-A4A4-175FBB587A62),
+        noncreatable
+    ]
+    coclass FabricUpgradeOrchestrationServiceAgent
+    {
+        [default] interface IFabricUpgradeOrchestrationServiceAgent;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(053757E7-6F7E-4F3F-A177-173767E31236),
+        dllname("FabricUpgradeOrchestrationService.dll")
+    ]
+    module FabricUpgradeOrchestrationService{
+        [entry("CreateFabricUpgradeOrchestrationServiceAgent")] HRESULT CreateFabricUpgradeOrchestrationServiceAgent(
+            [in] REFIID riid,
+            [out, retval] void ** fabricUpgradeOrchestrationServiceAgent);
+    }
+
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(41695A06-EC43-4F96-A785-A38872FC39BC)]
+interface IFabricUpgradeOrchestrationService : IUnknown
+{
+    [] HRESULT BeginUpgradeConfiguration(
+        [in] FABRIC_START_UPGRADE_DESCRIPTION * startUpgradeDescription,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndUpgradeConfiguration(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginGetClusterConfigurationUpgradeStatus(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterConfigurationUpgradeStatus(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricOrchestrationUpgradeStatusResult ** result);
+
+    [] HRESULT BeginGetClusterConfiguration(
+        [in] LPCWSTR apiVersion,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetClusterConfiguration(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginGetUpgradesPendingApproval(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndGetUpgradesPendingApproval(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginStartApprovedUpgrades(
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndStartApprovedUpgrades(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginCallSystemService(
+        [in] LPCWSTR action,
+        [in] LPCWSTR inputBlob,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+    [] HRESULT EndCallSystemService(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** outputBlob);
+}
+
+[object, local, uuid(F035ECFB-00F7-4316-9645-ED46D7E1D725)]
+interface IFabricUpgradeOrchestrationServiceAgent : IUnknown
+{
+    [] HRESULT RegisterUpgradeOrchestrationService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID,
+        [in] IFabricUpgradeOrchestrationService *,
+        [out, retval] IFabricStringResult ** serviceAddress);
+
+    [] HRESULT UnregisterUpgradeOrchestrationService(
+        [in] FABRIC_PARTITION_ID,
+        [in] FABRIC_REPLICA_ID);
+}

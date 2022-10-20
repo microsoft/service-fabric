@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="IS" 
+    ManifestVersion="Current" 
+    RolloutVersion="1.0" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>A Microsoft Azure Service Fabric system service that interacts with the underlying Infrastructure.</Description>
+    <DigestedServiceTypes RolloutVersion="1.0">
+        <ServiceTypes>
+            <StatefulServiceType ServiceTypeName="InfrastructureServiceType" HasPersistedState="false" />
+        </ServiceTypes>
+    </DigestedServiceTypes>
+    <DigestedCodePackage RolloutVersion="1.0">
+        <CodePackage Name="Code" Version="Current">
+            <EntryPoint>
+                <ExeHost>
+                    <Program>FabricIS.exe</Program>
+                </ExeHost>
+            </EntryPoint>
+        </CodePackage>
+        <!--
+        The name "ISMain" is referenced in the application manifest (App.1.0.xml). FabricIS.exe needs to run
+        under LocalSystem account context to communicate with Azure management endpoints.
+
+        EntryPointType="Main" implcitly refers to the  EntryPoint xml element above. Please see the foll. for more
+        - https://azure.microsoft.com/en-us/documentation/articles/service-fabric-application-model/
+        - https://azure.microsoft.com/en-us/documentation/articles/service-fabric-application-runas-security/
+        -->
+        <RunAsPolicy CodePackageRef="Code" UserRef="ISMain" EntryPointType="Main"/>
+    </DigestedCodePackage>
+    <DigestedResources RolloutVersion="1.0">
+      <!-- This causes activation in FabricTest to fail with an 'EndpointProvider is not enabled on this node' error.
+      <DigestedEndpoints>
+        <DigestedEndpoint>
+          <Endpoint Name="ReplicatorEndpoint" Type="Internal" Protocol="tcp" />
+        </DigestedEndpoint>
+      </DigestedEndpoints>
+      -->
+    </DigestedResources>
+  <Diagnostics />
+</ServicePackage>

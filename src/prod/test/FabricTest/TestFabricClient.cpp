@@ -7645,6 +7645,214 @@ void TestFabricClient::InfrastructureCommandIS(
     commandsEvent.WaitOne();
 }
 
+bool TestFabricClient::CreateNetwork(StringCollection const & params)
+{
+    CommandLineParser parser(params, 0);
+
+    wstring networkName;
+    wstring networkAddressPrefix;
+    if (!parser.TryGetString(L"networkName", networkName) || !parser.TryGetString(L"networkAddressPrefix", networkAddressPrefix))
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::CreateNetworkCommand);
+        return false;
+    }
+
+    wstring errorString;
+    parser.TryGetString(L"error", errorString, L"Success");
+    ErrorCodeValue::Enum error = FABRICSESSION.FabricDispatcher.ParseErrorCode(errorString);
+    HRESULT expectedError = ErrorCode(error).ToHResult();
+
+    // Currently we only support local network. It would be extended when we support federated.
+    ScopedHeap heap;
+    FABRIC_LOCAL_NETWORK_CONFIGURATION_DESCRIPTION localNetworkConfiguration = { 0 };
+    localNetworkConfiguration.NetworkAddressPrefix = heap.AddString(networkAddressPrefix);
+    
+    FABRIC_LOCAL_NETWORK_DESCRIPTION localNetworkDescription = { 0 };
+    localNetworkDescription.NetworkConfiguration = &localNetworkConfiguration;
+
+    FABRIC_NETWORK_DESCRIPTION networkDescription;
+    networkDescription.NetworkType = FABRIC_NETWORK_TYPE_LOCAL;
+    networkDescription.Value = reinterpret_cast<void*>(&localNetworkDescription);
+
+    TestSession::WriteNoise(TraceSource, "CreateNetwork called with networkName = {0}, networkAddressPrefix = {1}, expectedError = {2}", networkName, networkAddressPrefix, expectedError);
+
+    ComPointer<IFabricNetworkManagementClient> networkClient = this->CreateNetworkClient();
+
+    this->PerformFabricClientOperation(
+        L"CreateNetwork",
+        FabricTestSessionConfig::GetConfig().NamingOperationTimeout,
+        [&](DWORD const timeout, ComPointer<ComCallbackWaiter> const & callback, ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+        {
+            return networkClient->BeginCreateNetwork(
+                networkName.c_str(),
+                &networkDescription,
+                timeout,
+                callback.GetRawPointer(),
+                context.InitializationAddress());
+        },
+        [&](ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+        {
+            return networkClient->EndCreateNetwork(context.GetRawPointer());
+        },
+        expectedError,
+        FABRIC_E_NAME_ALREADY_EXISTS);
+
+    return true;
+}
+
+bool TestFabricClient::DeleteNetwork(StringCollection const & params)
+{
+    CommandLineParser parser(params, 0);
+
+    wstring networkName;
+    if (!parser.TryGetString(L"networkName", networkName))
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::DeleteNetworkCommand);
+        return false;
+    }
+
+    wstring errorString;
+    parser.TryGetString(L"error", errorString, L"Success");
+    ErrorCodeValue::Enum error = FABRICSESSION.FabricDispatcher.ParseErrorCode(errorString);
+    HRESULT expectedError = ErrorCode(error).ToHResult();
+
+    ScopedHeap heap;
+    FABRIC_DELETE_NETWORK_DESCRIPTION deleteNetworkDescription = { 0 };
+    deleteNetworkDescription.NetworkName = heap.AddString(networkName);
+
+    TestSession::WriteNoise(TraceSource, "DeleteNetwork called with networkName = {0}, expectedError = {1}", networkName, expectedError);
+
+    ComPointer<IFabricNetworkManagementClient> networkClient = this->CreateNetworkClient();
+
+    this->PerformFabricClientOperation(
+        L"DeleteNetwork",
+        FabricTestSessionConfig::GetConfig().NamingOperationTimeout,
+        [&](DWORD const timeout, ComPointer<ComCallbackWaiter> const & callback, ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+    {
+        return networkClient->BeginDeleteNetwork(
+            &deleteNetworkDescription,
+            timeout,
+            callback.GetRawPointer(),
+            context.InitializationAddress());
+    },
+        [&](ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+    {
+        return networkClient->EndDeleteNetwork(context.GetRawPointer());
+    },
+        expectedError,
+        FABRIC_E_NETWORK_NOT_FOUND);
+
+    return true;
+}
+
+bool TestFabricClient::GetNetwork(StringCollection const & params)
+{
+    CommandLineParser parser(params, 0);
+
+    wstring networkName;
+    if (!parser.TryGetString(L"networkName", networkName))
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::GetNetworkCommand);
+        return false;
+    }
+
+    bool networkExists = parser.GetBool(L"networkExists");
+    int expectedResultCount = networkExists ? 1 : 0;
+
+    ScopedHeap heap;
+    FABRIC_NETWORK_QUERY_DESCRIPTION networkQueryDescription = { 0 };
+    networkQueryDescription.NetworkNameFilter = heap.AddString(networkName);
+
+    TestSession::WriteNoise(TraceSource, "GetNetwork called with networkNameFilter = {0}, networkExists = {1}", networkName, networkExists);
+
+    ComPointer<IFabricNetworkManagementClient> networkClient = this->CreateNetworkClient();
+
+    auto resultPtr = GetNetworkList(L"GetNetwork", networkClient, networkQueryDescription);
+
+    TestSession::FailTestIf(
+        (int)resultPtr->get_NetworkList()->Count != expectedResultCount,
+        "Expected {0} network in query result, returned {1}",
+        expectedResultCount,
+        resultPtr->get_NetworkList()->Count);
+
+    // TODO: add options to verify the result items.
+
+    return true;
+}
+
+bool TestFabricClient::ShowNetworks(StringCollection const & params)
+{
+    CommandLineParser parser(params, 0);
+
+    int expectedResultCount;
+    parser.TryGetInt(L"expectedCount", expectedResultCount, -1);
+
+    ScopedHeap heap;
+    FABRIC_NETWORK_QUERY_DESCRIPTION networkQueryDescription = { 0 };    
+
+    TestSession::WriteNoise(TraceSource, "ShowNetworks called with expectedResultCount = {0}", expectedResultCount);
+
+    ComPointer<IFabricNetworkManagementClient> networkClient = this->CreateNetworkClient();
+
+    auto resultPtr = GetNetworkList(L"ShowNetworks", networkClient, networkQueryDescription);
+
+    if (expectedResultCount != -1)
+    {
+        TestSession::FailTestIf(
+            (int)resultPtr->get_NetworkList()->Count != expectedResultCount,
+            "Expected {0} networks in query result, returned {1}",
+            expectedResultCount,
+            resultPtr->get_NetworkList()->Count);
+    }
+
+    for (ULONG i = 0; i < resultPtr->get_NetworkList()->Count; ++i)
+    {
+        ServiceModel::NetworkInformation networkResultItem;
+        networkResultItem.FromPublicApi(resultPtr->get_NetworkList()->Items[i]);
+        TestSession::WriteInfo(TraceSource, "[{0}] : {1}", i, networkResultItem);
+    }       
+
+    return true;
+}
+
+ComPointer<IFabricNetworkManagementClient> TestFabricClient::CreateNetworkClient()
+{
+    ComPointer<IFabricNetworkManagementClient> networkClient;
+    FabricTestFederation & testFederation = FABRICSESSION.FabricDispatcher.Federation;
+    auto comFabricClient = TestFabricClient::FabricCreateComFabricClient(testFederation);
+
+    HRESULT hr = comFabricClient->QueryInterface(IID_IFabricNetworkManagementClient, (void**)networkClient.InitializationAddress());
+    TestSession::FailTestIfNot(SUCCEEDED(hr), "ComFabricClient does not support IFabricNetworkManagementClient");
+
+    return networkClient;    
+}
+
+ComPointer<IFabricGetNetworkListResult> TestFabricClient::GetNetworkList(
+    __in wstring const & operationName,
+    __in ComPointer<IFabricNetworkManagementClient> const & networkClient,
+    __in FABRIC_NETWORK_QUERY_DESCRIPTION const & queryDescription) const
+{
+    ComPointer<IFabricGetNetworkListResult> resultPtr;
+
+    this->PerformFabricClientOperation(
+        operationName,
+        FabricTestSessionConfig::GetConfig().NamingOperationTimeout,
+        [&](DWORD const timeout, ComPointer<ComCallbackWaiter> const & callback, ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+    {
+        return networkClient->BeginGetNetworkList(
+            &queryDescription,
+            timeout,
+            callback.GetRawPointer(),
+            context.InitializationAddress());
+    },
+        [&](ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+    {
+        return networkClient->EndGetNetworkList(context.GetRawPointer(), resultPtr.InitializationAddress());
+    });
+
+    return resultPtr;
+}
+
 void TestFabricClient::DeployServicePackageToNode(
     wstring const & applicationTypeName,
     wstring const & applicationTypeVersion,

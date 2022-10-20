@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build;PublishSFVolumeDriverApp" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" InitialTargets=";ValidateMSBuildFiles">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>ae44fab1-e121-4e1a-974a-21b3f4cef8fc</ProjectGuid>
+    <ProjectVersion>1.6</ProjectVersion>
+    <MinToolsVersion>1.5</MinToolsVersion>
+
+    <!-- Service Fabric Package target requires the nuget package version to be passed in. Not doing so will result in "PackageVersion" not specified error. -->
+    <ApplicationMSBuildNuGetPackageVersion>1.0.0</ApplicationMSBuildNuGetPackageVersion>
+  </PropertyGroup>
+
+  <Import Project="$(NugetMachineInstallRoot)\Microsoft.VisualStudio.Azure.Fabric.MSBuild.1.6.0\build\Microsoft.VisualStudio.Azure.Fabric.Application.targets" />
+
+  <ItemGroup>
+    <None Include="ApplicationPackageRoot\ApplicationManifest.xml" />
+    <None Include="ApplicationParameters\Cloud.xml" />
+    <None Include="ApplicationParameters\VM.xml" />
+    <None Include="ApplicationParameters\Local.1Node.xml" />
+    <None Include="ApplicationParameters\Local.5Node.xml" />
+    <None Include="PublishProfiles\Cloud.xml" />
+    <None Include="PublishProfiles\Local.1Node.xml" />
+    <None Include="PublishProfiles\Local.5Node.xml" />
+    <None Include="Scripts\Deploy-FabricApplication.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="packages.config" />
+    <Content Include="PublishProfiles\VM.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SFBlockStoreService\SFBlockStoreService.csproj" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+  
+  <Import Project="$(ApplicationProjectTargetsPath)" Condition="Exists('$(ApplicationProjectTargetsPath)')" />
+  
+  <Target Name="ValidateMSBuildFiles" />
+
+  <!-- This target will be invoked after the build and publish the application package -->
+  <Target Name="PublishSFVolumeDriverApp" DependsOnTargets="Package" >
+    <ItemGroup>
+      <SFVolumeDriverPackageManagedFiles Include="$(MSBuildThisFileDirectory)pkg\$(Configuration)\**\*.*" />
+      <SFVolumeDriverPackageNativeFiles Include="$(MSBuildThisFileDirectory)pkg\$(Configuration)\**\*.*" Exclude="$(MSBuildThisFileDirectory)pkg\$(Configuration)\**\*.pdb;$(MSBuildThisFileDirectory)pkg\$(Configuration)\**\*.dll;$(MSBuildThisFileDirectory)pkg\$(Configuration)\**\*.exe*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SFVolumeDriverPackageManagedFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\BlockStore\Service\Managed\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SFVolumeDriverPackageNativeFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\BlockStore\Service\Native\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

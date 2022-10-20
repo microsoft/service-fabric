@@ -55,6 +55,10 @@ namespace Hosting2
             __in Transport::Message & message,
             __in Transport::IpcReceiverContextUPtr & context);
 
+        void ProcessContainerUpdateRoutesMessage(
+            __in Transport::Message & message,
+            __in Transport::IpcReceiverContextUPtr & context);
+
         void ProcessInvokeContainerApiMessage(
             __in Transport::Message & message,
             __in Transport::IpcReceiverContextUPtr & context);
@@ -73,6 +77,7 @@ namespace Hosting2
         class DeleteContainerImagesAsyncOperation;
         class InvokeContainerApiAsyncOperation;
         class NotifyContainerEventAsyncOperation;
+        class ContainerUpdateRoutesAsyncOperation;
 
     private:
         DWORD processId_;

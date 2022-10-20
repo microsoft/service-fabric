@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{BC6F4AB9-040F-4B1F-ABFA-EE19F86745B9}</ProjectGuid>
+    <RootNamespace>FabricFAS</RootNamespace>
+    <AssemblyName>FabricFAS</AssemblyName>
+    <AssemblyDescription>Fabric Fault Analysis Service</AssemblyDescription>
+    <OutputType>Exe</OutputType>
+    <StyleCopOverrideSettingsFile>Settings.StyleCop</StyleCopOverrideSettingsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="..\..\Api\src\System\Fabric\JsonSerializerImpl\ChaosParametersJsonConverter.cs">
+      <Link>Chaos\ChaosParametersJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Api\src\System\Fabric\JsonSerializerImpl\DictionaryAsArrayResolver.cs">
+      <Link>Chaos\DictionaryAsArrayResolver.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Api\src\System\Fabric\JsonSerializerImpl\Constants.cs">
+      <Link>Chaos\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\ChaosSchedulerState.cs">
+      <Link>Chaos\ChaosSchedulerState.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\ChaosScheduleItem.cs">
+      <Link>Chaos\ChaosScheduleItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\ChaosScheduleEventInstance.cs">
+      <Link>Chaos\ChaosScheduleEventInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\ChaosScheduleEventInstancesEnumerator.cs">
+      <Link>Chaos\ChaosScheduleEventInstancesEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\ChaosScheduler.cs">
+      <Link>Chaos\ChaosScheduler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\ChaosMessageProcessor.cs">
+      <Link>Chaos\ChaosMessageProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\ChaosScenario.cs">
+      <Link>Chaos\ChaosScenario.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\Common\ChaosUtil.cs">
+      <Link>Chaos\Common\ChaosUtil.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\Common\ChaosSchedulerUtil.cs">
+      <Link>Chaos\Common\ChaosSchedulerUtil.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\Common\ValidationHelper.cs">
+      <Link>Chaos\Common\ValidationHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\Services\PersistentStore.cs">
+      <Link>ClusterAnalysisService\Services\PersistentStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\Services\ResolveServiceEndpoint.cs">
+      <Link>ClusterAnalysisService\Services\ResolveServiceEndpoint.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\Services\PerformanceSessionManager.cs">
+      <Link>ClusterAnalysisService\Services\PerformanceSessionManager.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\Services\TaskRunner.cs">
+      <Link>ClusterAnalysisService\Services\TaskRunner.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\Services\ClusterAnalysisLogProvider.cs">
+      <Link>ClusterAnalysisService\Services\ClusterAnalysisLogProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\ClusterAnalysisApiHandler.cs">
+      <Link>ClusterAnalysisService\ClusterAnalysisApiHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\AnalysisFeatureStatus.cs">
+      <Link>ClusterAnalysisService\AnalysisFeatureStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\ClusterAnalysisRunner.cs">
+      <Link>ClusterAnalysisService\ClusterAnalysisRunner.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\TraceAnalysisConsumer.cs">
+      <Link>ClusterAnalysisService\TraceAnalysisConsumer.cs</Link>
+    </Compile>
+	<Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\AnalysisEventWriter.cs">
+      <Link>ClusterAnalysisService\AnalysisEventWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\Configuration\AnalysisAgentConfiguration.cs">
+      <Link>ClusterAnalysisService\Configuration\AnalysisAgentConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\ClusterAnalysisService\Configuration\ClusterAnalysisConfiguration.cs">
+      <Link>ClusterAnalysisService\Configuration\ClusterAnalysisConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\Common\ChaosTraceEventWriter.cs">
+      <Link>Chaos\Common\ChaosTraceEventWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Chaos\Common\ChaosStopReason.cs">
+      <Link>Chaos\Common\ChaosStopReason.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\Program.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisService.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceImpl.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FASCommunicationListener.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\ActionState.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\ActionType.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\FabricTestAction.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeDataLossAction.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeDataLossInfo.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeDataLossState.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeQuorumLossAction.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeQuorumLossInfo.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeQuorumLossState.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\NodeCommandInfo.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\NodeCommandState.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\RestartPartitionAction.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\RestartPartitionInfo.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\RestartPartitionState.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\RollbackState.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StartNodeFromFASAction.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StepBase.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StopNodeFromFASAction.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StuckAction.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StuckState.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\TestRetryStepAction.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\TestRetryStepState.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\InvokeDataLossSteps.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\InvokeQuorumLossSteps.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\RestartPartitionSteps.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\StartNodeSteps.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\StepStateNames.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\StopNodeSteps.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\StuckStep.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\TestRetryStepFactory.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\TestRetryStepStepOne.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\TestRetryStepStepTwo.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Client\MockClient.cs">
+      <Link>Client\MockClient.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\FASConstants.cs">
+      <Link>Common\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\FatalException.cs">
+      <Link>Common\FatalException.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\FaultAnalysisServiceUtility.cs">
+      <Link>Common\FaultAnalysisServiceUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\RetrySameStepException.cs">
+      <Link>Common\RetrySameStepException.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\RollbackAndRetryCommandException.cs">
+      <Link>Common\RollbackAndRetryCommandException.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\TestMode.cs">
+      <Link>Common\TestMode.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\ActionCompletionInfo.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\ActionStore.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\KeyPrefixes.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\ReliableFaultsEngine.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\FaultAnalysisServiceMessageProcessor.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\EntitySynchronizer.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\NodeCommandSynchronizer.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Test\ActionTest.cs" />
+    <Compile Include="..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Test\ServiceInternalFault.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\ClusterAnalysis\TraceAccessLayer\ClusterAnalysis.TraceAccessLayer.csproj">
+      <Project>{CA28055D-8D21-4BE9-AEBB-B90A72F1C385}</Project>
+      <Name>ClusterAnalysis.TraceAccessLayer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ClusterAnalysis\Common\ClusterAnalysis.Common.csproj">
+      <Project>{2A57DBD9-3F75-4D08-B215-0A4BF3118FEF}</Project>
+      <Name>ClusterAnalysis.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ClusterAnalysis\AnalysisCore\ClusterAnalysis.Core.csproj">
+      <Project>{9A8BCB7D-AE32-42A2-9DB5-529A81B932C1}</Project>
+      <Name>ClusterAnalysis.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.ServiceFabric.Instrumentation\Tracing\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj">
+      <Project>{EAEB4646-0308-4321-A87B-003D6C58F8FF}</Project>
+      <Name>Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj">
+      <Project>{55863F7A-3839-49B2-8A39-7B0653BD7500}</Project>
+      <Name>Microsoft.ServiceFabric.Instrumentation.Tracing.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Project>{EB728138-47AC-41CB-A2C7-53521B396AFD}</Project>
+      <Name>Microsoft.ServiceFabric.Internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj">
+      <Project>{3869599B-43ED-46EE-B2AC-FBE66657B858}</Project>
+      <Name>Microsoft.ServiceFabric.Internal.Strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj">
+      <Project>{0454FA10-771F-4734-BB4F-00AAC3B7D56E}</Project>
+      <Name>Microsoft.ServiceFabric.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj">
+      <Name>Microsoft.ServiceFabric.Data.Impl</Name>
+      <Project>{0454FA10-771F-4734-BB4F-00AAC3B7D56E}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj">
+      <Project>{6244C9FE-DC97-4783-A63E-94CE833196B4}</Project>
+      <Name>Microsoft.ServiceFabric.Data.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="$(PkgWinFab_Azure_Libs)\Microsoft.WindowsAzure.ServiceRuntime.Management\Microsoft.WindowsAzure.ServiceRuntime.Management.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="FabricFAS.exe.config ">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\FAS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\FAS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

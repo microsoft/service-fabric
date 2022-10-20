@@ -31,6 +31,7 @@ StringLiteral const FailedTraceComponent("ReplicaFailed");
 StringLiteral const TraceComponentOpen("Open");
 StringLiteral const TraceComponentChangeRole("ChangeRole");
 StringLiteral const TraceComponentClose("Close");
+StringLiteral const CleanupAppTypeTimerTag("AppTypeCleanupTimer");
 
 // **************
 // Helper classes
@@ -139,6 +140,10 @@ ClusterManagerReplica::ClusterManagerReplica(
     , queryMessageHandler_(nullptr)
     , healthManagerReplica_()
     , currentClusterManifest_(nullptr)
+    , cleanupAppTypejobQueue_()
+    , cleanupApplicationTypeTimer_()
+    , cleanupApplicationTypeTimerLock_()
+    , callbackLock_()
 {
     WriteInfo(
         TraceComponent,
@@ -256,6 +261,308 @@ Common::ErrorCode ClusterManagerReplica::CheckApplicationTypeNameAndVersion(
     }
 
     return ErrorCode::Success();
+}
+
+
+Common::ErrorCode Management::ClusterManager::ClusterManagerReplica::CloseAutomaticCleanupApplicationType()
+{
+    Common::TimerSPtr timer;
+    {
+        AcquireWriteLock lock(cleanupApplicationTypeTimerLock_);
+        if (cleanupApplicationTypeTimer_)
+        {
+            timer = cleanupApplicationTypeTimer_;
+        }
+    }
+
+    if (timer)
+    {
+        timer->Cancel();
+    }
+
+    if (cleanupAppTypejobQueue_)
+    {
+        cleanupAppTypejobQueue_->Close();
+    }
+
+    return ErrorCodeValue::Success;
+}
+
+bool Management::ClusterManager::ClusterManagerReplica::QueueAutomaticCleanupApplicationType(std::wstring const & appTypeName, Common::ActivityId const & activityId) const
+{
+    if (!ManagementConfig::GetConfig().CleanupUnusedApplicationTypes)
+    {
+        return true;
+    }
+
+    auto jobItem = DefaultJobItem<ClusterManagerReplica>(
+        [this, appTypeName, activityId](ClusterManagerReplica &) mutable
+    {
+        auto replica = const_cast<ClusterManagerReplica *>(this);
+        auto error = replica->CheckAndDeleteUnusedApplicationTypes(appTypeName, activityId);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(
+                TraceComponent,
+                TraceId,
+                "Failed to cleanup apptype for {0} resulted in error:{1}.",
+                appTypeName,
+                error);
+        }
+    });
+
+    bool ret = cleanupAppTypejobQueue_->Enqueue(move(jobItem));
+    if (!ret)
+    {
+        WriteWarning(
+            TraceComponent,
+            TraceId,
+            "{0}: Failed to enqueue the operation to cleanupAppTypejobQueue for activityId:{1}.",
+            appTypeName,
+            activityId);
+    }
+
+    return ret;
+}
+
+void ClusterManagerReplica::MarkUsedAppTypeVersions(
+    vector<ApplicationTypeContext> const & tempAppTypeContexts,
+    std::wstring const &targetVersion, 
+    __out vector<bool> &usedApplicationVersions)
+{
+    auto it = std::find_if(tempAppTypeContexts.begin(), tempAppTypeContexts.end(),
+        [&targetVersion](const ApplicationTypeContext & v) { return v.TypeVersion.Value == targetVersion; });
+
+    if (it != tempAppTypeContexts.end())
+    {
+        auto idx = std::distance(tempAppTypeContexts.begin(), it);
+        usedApplicationVersions[idx] = true;
+    }
+}
+
+Common::ErrorCode ClusterManagerReplica::FindUsedAppTypeVersionVersion(
+    vector<ApplicationTypeContext> const & tempAppTypeContexts,
+    vector<ApplicationContext> const & appContexts,
+    wstring const &appTypeName,
+    __out vector<bool> &usedApplicationVersions)
+{
+    ErrorCode error(ErrorCodeValue::Success);
+    for (auto const & appContext : appContexts)
+    {
+        // filter out application contexts that do not match the type being unprovisioned
+        if (appContext.TypeName.Value != appTypeName) { continue; }
+
+        // check for active application upgrades against this target version
+        if (appContext.IsUpgrading)
+        {
+            auto upgradeContext = make_unique<ApplicationUpgradeContext>(appContext.ApplicationName);
+            error = ReadExact<ApplicationUpgradeContext>(*upgradeContext);
+            if (error.IsSuccess() && !upgradeContext->IsComplete)
+            {
+                MarkUsedAppTypeVersions(tempAppTypeContexts, upgradeContext->UpgradeDescription.TargetApplicationTypeVersion, usedApplicationVersions);
+            }
+        }
+
+        // Current target version
+        MarkUsedAppTypeVersions(tempAppTypeContexts, appContext.TypeVersion.Value, usedApplicationVersions);
+    }
+
+    return error;
+}
+
+Common::ErrorCode Management::ClusterManager::ClusterManagerReplica::CheckAndDeleteUnusedApplicationTypes()
+{
+    ActivityId activityId;
+
+    WriteInfo(
+        TraceComponent,
+        "{0} Periodic cleanup for all app types triggered with activityId:{1}",
+        this->TraceId,
+        activityId);
+
+    vector<ApplicationTypeContext> appTypeContexts;
+    auto error = ReadPrefix<ApplicationTypeContext>(Constants::StoreType_ApplicationTypeContext, appTypeContexts);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    set<wstring> uniqueAppTypeNames;
+    for (auto const &appTypeContext : appTypeContexts)
+    {
+        uniqueAppTypeNames.insert(appTypeContext.TypeName.Value);
+    }
+
+    bool ret = true;
+    // Trigger automatic cleanup for each app type
+    for (auto const &appTypeName : uniqueAppTypeNames)
+    {
+        if (!QueueAutomaticCleanupApplicationType(appTypeName, activityId))
+        {
+            ret = false;
+            break;
+        }
+
+        activityId.IncrementIndex();
+    }
+
+    if (!ret)
+    {
+        WriteInfo(
+            TraceComponent,
+            "{0} Triggering periodic cleanup again since previous enqueue unsuccessful for activityId:{1}",
+            this->TraceId,
+            activityId);
+
+        AcquireWriteLock lock(this->cleanupApplicationTypeTimerLock_);
+        this->cleanupApplicationTypeTimer_->Change(ManagementConfig::GetConfig().InitialPeriodicAppTypeCleanupInterval, ManagementConfig::GetConfig().PeriodicAppTypeCleanupInterval);
+    }
+
+    return error;
+}
+
+Common::ErrorCode Management::ClusterManager::ClusterManagerReplica::CheckAndDeleteUnusedApplicationTypes(wstring const & appTypeName, Common::ActivityId const & activityId)
+{
+    // Ignore compose deployment
+    if (StringUtility::StartsWith(appTypeName, *Constants::ComposeDeploymentTypePrefix))
+    {
+        return ErrorCodeValue::Success;
+    }
+
+    vector<ApplicationTypeContext> appTypeContexts;
+    auto error = ReadPrefix<ApplicationTypeContext>(Constants::StoreType_ApplicationTypeContext, appTypeName, appTypeContexts);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    int numberOfVersionsToSkip = ManagementConfig::GetConfig().MaxUnusedAppTypeVersionsToKeep;
+    if (appTypeContexts.size() <= numberOfVersionsToSkip)
+    {
+        return ErrorCodeValue::Success;
+    }
+
+    vector<ApplicationContext> appContexts;
+    error = ReadPrefix<ApplicationContext>(Constants::StoreType_ApplicationContext, appContexts);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    WriteInfo(
+        TraceComponent,
+        "{0} Current number of applicationTypes/versions {1} appTypeName:{2} applicationContexts:{3} activityId:{4}",
+        this->TraceId,
+        appTypeContexts.size(),
+        appTypeName,
+        appContexts.size(),
+        activityId);
+
+    // Consider applicationtype that are in Completed state only
+    vector<ApplicationTypeContext> tempAppTypeContexts;
+    std::copy_if(appTypeContexts.begin(), appTypeContexts.end(), std::back_inserter(tempAppTypeContexts),
+        [&appTypeName](const ApplicationTypeContext& item)
+    {
+        return item.IsComplete;
+    });
+
+    // To sort by latest version
+    sort(tempAppTypeContexts.begin(), tempAppTypeContexts.end(), [](const ApplicationTypeContext& lhs, const ApplicationTypeContext& rhs)
+    {
+        return lhs.SequenceNumber > rhs.SequenceNumber;
+    });
+
+    vector<bool> usedApplicationVersion(tempAppTypeContexts.size(), false);
+    error = FindUsedAppTypeVersionVersion(tempAppTypeContexts, appContexts, appTypeName, usedApplicationVersion);
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "{0} Unable to get app type in use for appTypeName:{1} activityId:{2}",
+            this->TraceId,
+            appTypeName,
+            activityId);
+
+        return error;
+    }
+
+    vector<ApplicationTypeContext> versionsToRemove;
+    int numVersionsSkipped = 0;
+    for (int i = 0; i < usedApplicationVersion.size(); ++i)
+    {
+        if (!usedApplicationVersion[i])
+        {
+            if (numVersionsSkipped >= numberOfVersionsToSkip)
+            {
+                versionsToRemove.emplace_back(tempAppTypeContexts[i]);
+            }
+            else
+            {
+                ++numVersionsSkipped;
+            }
+        }
+    }
+
+    for (auto &v : versionsToRemove)
+    {
+        auto descriptionSPtr = make_shared<UnprovisionApplicationTypeDescription>(
+            v.TypeName.Value,
+            v.TypeVersion.Value,
+            true);
+
+        WriteNoise(
+            TraceComponent,
+            "{0} Trying to Unprovision application type for typename:{1} typeversion:{2} during automatic application type cleanup. ActivityId:{3}",
+            this->TraceId,
+            descriptionSPtr->ApplicationTypeName,
+            descriptionSPtr->ApplicationTypeVersion,
+            activityId);
+
+        auto unprovOperation = Client.BeginUnprovisionApplicationType(
+            *descriptionSPtr,
+            ManagementConfig::GetConfig().AutomaticUnprovisionInterval,
+            [this, descriptionSPtr, activityId](AsyncOperationSPtr const& operation)
+        {
+            this->OnUnprovisionAcceptComplete(descriptionSPtr, activityId, operation, false);
+        },
+            this->CreateAsyncOperationRoot());
+
+        OnUnprovisionAcceptComplete(descriptionSPtr, activityId, unprovOperation, true);
+    }
+
+    return error;
+}
+
+void ClusterManagerReplica::OnUnprovisionAcceptComplete(
+    std::shared_ptr<UnprovisionApplicationTypeDescription> const & descriptionSPtr,
+    ActivityId const & activityId,
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto error = Client.EndUnprovisionApplicationType(operation);
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "{0} Unprovision application type failed to be accepted during automatic cleanup with error {1} for typename:{2} typeversion:{3} activityId:{4}",
+            this->TraceId,
+            error,
+            descriptionSPtr->ApplicationTypeName,
+            descriptionSPtr->ApplicationTypeVersion,
+            activityId);
+    }
+    else
+    {
+        WriteInfo(
+            TraceComponent,
+            "{0} Unprovision application type accepted during automatic cleanup for typename:{1} typeversion:{2} activityId:{3}",
+            this->TraceId,
+            descriptionSPtr->ApplicationTypeName,
+            descriptionSPtr->ApplicationTypeVersion,
+            activityId);
+    }
 }
 
 AsyncOperationSPtr ClusterManagerReplica::BeginAcceptProvisionApplicationType(
@@ -528,7 +835,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptCreateComposeDeployment(
     {
         return RejectRequest(move(clientRequest), move(error), callback, root);
     }
-    
+
     //
     // TODO:
     // If the context has been marked as failed, this path allow restarting the context. It would mean that when a context is marked failed,
@@ -579,7 +886,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptCreateComposeDeployment(
             return RejectRequest(move(clientRequest), ErrorCodeValue::CMRequestAlreadyProcessing, callback, root);
         }
     }
-    
+
     //
     // Update the status in the compose application context and the rollout context.
     //
@@ -588,7 +895,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptCreateComposeDeployment(
     {
         error = instanceCounter.UpdateNextApplicationId(storeTx);
     }
-    
+
     auto storeDataComposeDeploymentInstance = make_unique<StoreDataComposeDeploymentInstance>(
         deploymentName,
         applicationTypeVersion,
@@ -597,12 +904,12 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptCreateComposeDeployment(
         registryUserName,
         registryPassword,
         isPasswordEncrypted);
-    
+
     if (error.IsSuccess())
     {
         error = storeTx.UpdateOrInsertIfNotFound(*storeDataComposeDeploymentInstance);
     }
-    
+
     return FinishAcceptRequest(
         move(storeTx),
         move(composeDeploymentContext),
@@ -723,13 +1030,13 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptCreateSingleInstanceApplica
                         this->TraceId,
                         volumeName);
 
-                    return this->RejectRequest(move(clientRequest), ErrorCode(ErrorCodeValue::VolumeNotFound, GET_RC(Volume_Not_Found)), callback, root);
+                    return this->RejectRequest(move(clientRequest), ErrorCode(ErrorCodeValue::VolumeNotFound, wformatString(GET_RC(Volume_Not_Found), volumeName)), callback, root);
                 }
             }
         }
     }
 
-   if (readExisting)
+    if (readExisting)
     {
          WriteInfo(
             TraceComponent,
@@ -740,7 +1047,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptCreateSingleInstanceApplica
         auto storeDataSingleInstanceApplicationInstance = make_shared<StoreDataSingleInstanceApplicationInstance>(
             deploymentName,
             context->TypeVersion);
-        
+
         bool storeDataExists = storeTx.ReadExact(*storeDataSingleInstanceApplicationInstance).IsSuccess();
         bool dupRequest = storeDataExists
             && storeDataSingleInstanceApplicationInstance->ApplicationDescription == description;
@@ -927,7 +1234,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginReplaceSingleInstanceApplication(
         newVersion.Value);
 
     context->ReInitializeContext(*this, clientRequest);
-    
+
     context->NewTypeVersion = newVersion;
     error = context->StartReplacing(storeTx);
     if (!error.IsSuccess())
@@ -993,7 +1300,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginProcessUpgradeSingleInstanceAppli
         auto error = this->TraceAndGetErrorDetails(ErrorCodeValue::InvalidArgument, wformatString("{0} {1}",
             GET_RC(Invalid_Upgrade_Mode2),
             upgradeDescription.UpgradeMode));
-        
+
         return RejectRequest(move(clientRequest), move(error), callback, root);
     }
 
@@ -1090,9 +1397,9 @@ AsyncOperationSPtr ClusterManagerReplica::BeginProcessUpgradeSingleInstanceAppli
             case SingleInstanceDeploymentUpgradeState::Enum::Failed:
 			case SingleInstanceDeploymentUpgradeState::Enum::Invalid:
 				break;
-                
+
             default:
-				return this->RejectRequest(move(clientRequest), ErrorCodeValue::CMRequestAlreadyProcessing, callback, root);
+                return this->RejectRequest(move(clientRequest), ErrorCodeValue::CMRequestAlreadyProcessing, callback, root);
         }
 
         auto seqNumber = singleInstanceDeploymentUpgradeContext->SequenceNumber;
@@ -2122,7 +2429,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptDeleteComposeDeployment(
 
     auto composeDeploymentContext = make_unique<ComposeDeploymentContext>(deploymentName);
     auto error = this->GetDeletableComposeDeploymentContext(storeTx, *composeDeploymentContext);
-    
+
     if (error.IsError(ErrorCodeValue::SingleInstanceApplicationUpgradeInProgress))
     {
         ComposeDeploymentUpgradeContext upgradeContext(deploymentName);
@@ -2416,14 +2723,14 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
     // Check the compose deployment db to confirm that this deployment is compose and is in ready state. We dont need to
     // check the application context here since compose deployment being ready is sufficient.
     //
-    auto composeApplicationContext = make_unique<ComposeDeploymentContext>(composeUpgradeDescription.DeploymentName);
-    auto error = this->GetCompletedOrUpgradingComposeDeploymentContext(storeTx, *composeApplicationContext);
+    auto composeDeploymentContext = make_unique<ComposeDeploymentContext>(composeUpgradeDescription.DeploymentName);
+    auto error = this->GetCompletedOrUpgradingComposeDeploymentContext(storeTx, *composeDeploymentContext);
     if (!error.IsSuccess())
     {
         return RejectRequest(move(clientRequest), move(error), callback, parent);
     }
 
-    if (composeApplicationContext->IsUpgrading)
+    if (composeDeploymentContext->IsUpgrading)
     {
         //
         // Reject the upgrade since we are already upgrading. Upgrades can be canceled or updated only by using
@@ -2441,8 +2748,8 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
     ServiceModelVersion applicationTypeVersion;
     error = this->dockerComposeAppTypeVersionGenerator_->GetNextVersion(
         storeTx,
-        composeApplicationContext->ApplicationName.ToString(),
-        composeApplicationContext->TypeVersion,
+        composeDeploymentContext->DeploymentName,
+        composeDeploymentContext->TypeVersion,
         applicationTypeVersion);
     if (!error.IsSuccess())
     {
@@ -2461,8 +2768,8 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
         "{0} BeginAcceptUpgradeComposeDeployment {1}. type name {2}, current version {3}, target version {4}",
         this->TraceId,
         composeUpgradeDescription.DeploymentName,
-        composeApplicationContext->TypeName,
-        composeApplicationContext->TypeVersion.Value,
+        composeDeploymentContext->TypeName,
+        composeDeploymentContext->TypeVersion.Value,
         applicationTypeVersion.Value);
 
     if (isGettingApplicationTypeInfo_.exchange(true))
@@ -2473,8 +2780,8 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
     // ImageBuilder.ValidateYml
     error = imageBuilder_.ValidateComposeFile(
         composeUpgradeDescription.ComposeFiles[0],
-        composeApplicationContext->ApplicationName,
-        composeApplicationContext->TypeName,
+        composeDeploymentContext->ApplicationName,
+        composeDeploymentContext->TypeName,
         applicationTypeVersion,
         timeout);
 
@@ -2491,9 +2798,9 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
         *this,
         clientRequest,
         composeUpgradeDescription.DeploymentName,
-        composeApplicationContext->ApplicationName,
+        composeDeploymentContext->ApplicationName,
         make_shared<ApplicationUpgradeDescription>(
-            composeApplicationContext->ApplicationName,
+            composeDeploymentContext->ApplicationName,
             applicationTypeVersion.Value,
             applicationParameters,
             composeUpgradeDescription.UpgradeType,
@@ -2502,8 +2809,8 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
             composeUpgradeDescription.MonitoringPolicy,
             composeUpgradeDescription.HealthPolicy,
             composeUpgradeDescription.HealthPolicyValid),
-        composeApplicationContext->TypeName,
-        composeApplicationContext->TypeVersion,
+        composeDeploymentContext->TypeName,
+        composeDeploymentContext->TypeVersion,
         applicationTypeVersion);
 
     error = storeTx.TryReadOrInsertIfNotFound(*composeUpgradeContext, readExistingUpgradeContext);
@@ -2539,9 +2846,9 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
             *this,
             clientRequest,
             composeUpgradeDescription.DeploymentName,
-            composeApplicationContext->ApplicationName,
+            composeDeploymentContext->ApplicationName,
             make_shared<ApplicationUpgradeDescription>(
-                composeApplicationContext->ApplicationName,
+                composeDeploymentContext->ApplicationName,
                 applicationTypeVersion.Value,
                 applicationParameters,
                 composeUpgradeDescription.UpgradeType,
@@ -2550,8 +2857,8 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
                 composeUpgradeDescription.MonitoringPolicy,
                 composeUpgradeDescription.HealthPolicy,
                 composeUpgradeDescription.HealthPolicyValid),
-            composeApplicationContext->TypeName,
-            composeApplicationContext->TypeVersion,
+            composeDeploymentContext->TypeName,
+            composeDeploymentContext->TypeVersion,
             applicationTypeVersion);
 
         composeUpgradeContext->SetSequenceNumber(seqNumber);
@@ -2562,7 +2869,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
         }
     }
 
-    error = composeApplicationContext->StartUpgrading(storeTx);
+    error = composeDeploymentContext->StartUpgrading(storeTx);
 
     return FinishAcceptRequest(
         move(storeTx),
@@ -2573,6 +2880,86 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeComposeDeployment(
         timeout,
         callback,
         parent);
+}
+
+AsyncOperationSPtr ClusterManagerReplica::BeginAcceptRollbackComposeDeployment(
+    wstring const &deploymentName,
+    ClientRequestSPtr && clientRequest,
+    TimeSpan const timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & root)
+{
+    if (!this->TryAcceptRequestByString(deploymentName, clientRequest))
+    {
+        return RejectRequest(move(clientRequest), ErrorCodeValue::Success, callback, root);
+    }
+
+    auto storeTx = StoreTransaction::Create(this->ReplicatedStore, this->PartitionedReplicaId, clientRequest->ActivityId);
+
+    auto composeDeploymentContext = make_unique<ComposeDeploymentContext>(deploymentName);
+    auto error = this->GetComposeDeploymentContext(storeTx, *composeDeploymentContext);
+    if (!error.IsSuccess())
+    {
+        return RejectRequest(move(clientRequest), move(error), callback, root);
+    }
+
+    auto composeUpgradeContext = make_unique<ComposeDeploymentUpgradeContext>(deploymentName);
+    error = storeTx.ReadExact(*composeUpgradeContext);
+
+    bool shouldCommit = false;
+    if (error.IsSuccess())
+    {
+        if (!composeUpgradeContext->IsPending)
+        {
+            WriteInfo(
+                TraceComponent,
+                "{0} compose deployment {1} not upgrading",
+                this->TraceId,
+                deploymentName);
+
+            return RejectRequest(move(clientRequest), ErrorCodeValue::ComposeDeploymentNotUpgrading, callback, root);
+        } 
+
+        error = composeUpgradeContext->TryInterrupt(storeTx);
+        if (error.IsSuccess())
+        {
+            WriteInfo(
+                TraceComponent,
+                "{0} interrupted compose deployment upgrade {1} for rollback: {2}",
+                this->TraceId,
+                deploymentName,
+                *composeUpgradeContext);
+            shouldCommit = true;
+        }
+        else
+        {
+            WriteInfo(
+                TraceComponent,
+                "{0} failed to interrupt compose deployment upgrade {1} for rollback. Error: {2}",
+                this->TraceId,
+                deploymentName,
+                error);
+        }
+    }
+    else if (error.IsError(ErrorCodeValue::NotFound))
+    {
+        WriteInfo(
+            TraceComponent,
+            "{0} upgrade compose deployment context not found {1}",
+            this->TraceId,
+            deploymentName);
+        error = ErrorCodeValue::ComposeDeploymentNotUpgrading;
+    }
+
+    return FinishAcceptRequest(
+        move(storeTx),
+        move(composeUpgradeContext),
+        move(error),
+        shouldCommit,
+        true,
+        timeout,
+        callback,
+        root);
 }
 
 AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeApplication(
@@ -2614,7 +3001,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeApplication(
         {
             return RejectRequest(move(clientRequest),
                 ErrorCode(
-                    ErrorCodeValue::OperationFailed, 
+                    ErrorCodeValue::OperationFailed,
                     wformatString(GET_RC(Invalid_Application_Definition_Kind_Operation), appContext->ApplicationDefinitionKind)),
                     callback, root);
         }
@@ -3603,7 +3990,7 @@ AsyncOperationSPtr ClusterManagerReplica::BeginAcceptUpgradeFabric(
             if (CommonConfig::GetConfig().EnableUnsupportedPreviewFeatures)
             {
                 auto errorToReturn = this->TraceAndGetErrorDetails(
-                    ErrorCodeValue::FabricUpgradeValidationError, 
+                    ErrorCodeValue::FabricUpgradeValidationError,
                     wformatString(GET_RC(UnsupportedPreviewFeature_Upgrade_Failed), upgradeDescription.Version));
 
                 return RejectRequest(move(clientRequest), move(errorToReturn), callback, root);
@@ -4847,6 +5234,37 @@ ErrorCode ClusterManagerReplica::OnChangeRole(::FABRIC_REPLICA_ROLE newRole, __o
 
             return error;
         }
+
+        if (cleanupAppTypejobQueue_)
+        {
+            auto cleanupAppTypejobQueue = move(cleanupAppTypejobQueue_);
+            cleanupAppTypejobQueue->Close();
+        }
+
+        cleanupAppTypejobQueue_ = make_unique<AppTypeCleanupJobQueue<ClusterManagerReplica>>(
+            L"CM.AppTypeCleanupQueue",
+            *this,
+            false /* forceEnqueue*/,
+            ManagementConfig::GetConfig().NamingJobQueueThreadCount,
+            ManagementConfig::GetConfig().NamingJobQueueSize);
+
+        // Automatic unprovision check
+        {
+            AcquireWriteLock lock(cleanupApplicationTypeTimerLock_);
+            cleanupApplicationTypeTimer_ = Timer::Create(
+                CleanupAppTypeTimerTag,
+                [this](TimerSPtr const &)
+            {
+                if (ManagementConfig::GetConfig().PeriodicCleanupUnusedApplicationTypes)
+                {
+                    AcquireWriteLock callbackLock(callbackLock_);
+                    CheckAndDeleteUnusedApplicationTypes();
+                }
+            },
+                false);
+
+            this->cleanupApplicationTypeTimer_->Change(ManagementConfig::GetConfig().InitialPeriodicAppTypeCleanupInterval, ManagementConfig::GetConfig().PeriodicAppTypeCleanupInterval);
+        }
     }
     else
     {
@@ -4859,6 +5277,8 @@ ErrorCode ClusterManagerReplica::OnChangeRole(::FABRIC_REPLICA_ROLE newRole, __o
         {
             applicationTypeTrackerUPtr_->Clear();
         }
+
+        CloseAutomaticCleanupApplicationType();
 
         imageBuilder_.Disable();
 
@@ -4933,6 +5353,8 @@ ErrorCode ClusterManagerReplica::OnClose()
     {
         namingJobQueue_->Close();
     }
+
+    CloseAutomaticCleanupApplicationType();
 
     auto callback = this->OnCloseReplicaCallback;
     if (callback)
@@ -5010,6 +5432,7 @@ void ClusterManagerReplica::InitializeRequestHandlers()
     this->AddHandler(t, ContainerOperationTcpMessage::CreateComposeDeploymentAction, CreateHandler<CreateComposeDeploymentAsyncOperation>);
     this->AddHandler(t, ContainerOperationTcpMessage::DeleteComposeDeploymentAction, CreateHandler<DeleteComposeDeploymentAsyncOperation>);
     this->AddHandler(t, ContainerOperationTcpMessage::UpgradeComposeDeploymentAction, CreateHandler<UpgradeComposeDeploymentAsyncOperation>);
+    this->AddHandler(t, ContainerOperationTcpMessage::RollbackComposeDeploymentUpgradeAction, CreateHandler<RollbackComposeDeploymentAsyncOperation>);
     this->AddHandler(t, ContainerOperationTcpMessage::DeleteSingleInstanceDeploymentAction, CreateHandler<DeleteSingleInstanceDeploymentAsyncOperation>);
     this->AddHandler(t, ClusterManagerTcpMessage::CreateApplicationResourceAction, CreateHandler<CreateSingleInstanceApplicationAsyncOperation>);
     this->AddHandler(t, VolumeOperationTcpMessage::CreateVolumeAction, CreateHandler<CreateVolumeAsyncOperation>);
@@ -5243,6 +5666,9 @@ ErrorCode ClusterManagerReplica::ProcessQuery(
     case QueryNames::GetVolumeResourceList:
         queryResult = GetVolumeResources(queryArgs, replicaActivityId);
         break;
+    case QueryNames::GetClusterVersion:
+        queryResult = GetClusterVersion();
+        break;
     default:
         reply = nullptr;
         return ErrorCodeValue::InvalidConfiguration;
@@ -5362,9 +5788,9 @@ ServiceModel::QueryResult ClusterManagerReplica::GetApplications(QueryArgumentMa
     }
 
     ListPager<ApplicationQueryResult> applicationList;
-    applicationList.SetMaxResults(queryDescription.QueryPagingDescriptionUPtr->MaxResults);
+    applicationList.SetMaxResults(queryDescription.PagingDescription->MaxResults);
 
-    bool hasContinuationToken = !queryDescription.QueryPagingDescriptionUPtr->ContinuationToken.empty();
+    bool hasContinuationToken = !queryDescription.PagingDescription->ContinuationToken.empty();
 
     wstring appName(L"");
     queryArgs.TryGetValue(QueryResourceProperties::Application::ApplicationName, appName);
@@ -5373,7 +5799,7 @@ ServiceModel::QueryResult ClusterManagerReplica::GetApplications(QueryArgumentMa
     // Filter by application name
     if (!appName.empty())
     {
-        if (hasContinuationToken && (appName <= queryDescription.QueryPagingDescriptionUPtr->ContinuationToken))
+        if (hasContinuationToken && (appName <= queryDescription.PagingDescription->ContinuationToken))
         {
             // Application name doesn't respect continuation token
             return QueryResult(move(applicationList));
@@ -5437,7 +5863,7 @@ ServiceModel::QueryResult ClusterManagerReplica::GetApplications(QueryArgumentMa
     for (auto itApplicationContext = applicationContexts.begin(); itApplicationContext != applicationContexts.end(); ++itApplicationContext)
     {
         wstring applicationName = itApplicationContext->ApplicationName.ToString();
-        if (hasContinuationToken && applicationName <= queryDescription.QueryPagingDescriptionUPtr->ContinuationToken)
+        if (hasContinuationToken && applicationName <= queryDescription.PagingDescription->ContinuationToken)
         {
             // Item doesn't respect continuation token
             continue;
@@ -5845,9 +6271,9 @@ QueryResult ClusterManagerReplica::GetApplicationResources(QueryArgumentMap cons
     // TODO: Consistency: Make the name to uri translation happen only on the server side. Client side should be passing the name without fabric:
     wstring appUri = queryDescription.GetApplicationNameString();
     ListPager<ModelV2::ApplicationDescriptionQueryResult> applicationResourceList;
-    applicationResourceList.SetMaxResults(queryDescription.QueryPagingDescriptionUPtr->MaxResults);
+    applicationResourceList.SetMaxResults(queryDescription.PagingDescription->MaxResults);
 
-    bool hasContinuationToken = !queryDescription.QueryPagingDescriptionUPtr->ContinuationToken.empty();
+    bool hasContinuationToken = !queryDescription.PagingDescription->ContinuationToken.empty();
 
     wstring deploymentName(L"");
     if (!appUri.empty())
@@ -5857,7 +6283,7 @@ QueryResult ClusterManagerReplica::GetApplicationResources(QueryArgumentMap cons
 
     if (!deploymentName.empty())
     {
-        if (hasContinuationToken && (deploymentName <= queryDescription.QueryPagingDescriptionUPtr->ContinuationToken))
+        if (hasContinuationToken && (deploymentName <= queryDescription.PagingDescription->ContinuationToken))
         {
             // Application name doesn't respect continuation token
             return QueryResult(move(applicationResourceList));
@@ -5928,7 +6354,7 @@ QueryResult ClusterManagerReplica::GetApplicationResources(QueryArgumentMap cons
         {
             deploymentName = context.DeploymentName;
             if ((context.DeploymentType != DeploymentType::Enum::V2Application) ||
-                (hasContinuationToken && (deploymentName <= queryDescription.QueryPagingDescriptionUPtr->ContinuationToken)))
+                (hasContinuationToken && (deploymentName <= queryDescription.PagingDescription->ContinuationToken)))
             {
                 continue;
             }
@@ -6564,7 +6990,15 @@ QueryResult ClusterManagerReplica::GetComposeDeploymentUpgradeProgress(QueryArgu
 
 ServiceModel::QueryResult ClusterManagerReplica::GetServices(QueryArgumentMap const & queryArgs, Store::ReplicaActivityId const & replicaActivityId)
 {
+    int64 maxResults;
+    auto error = QueryPagingDescription::TryGetMaxResultsFromArgumentMap(queryArgs, maxResults, replicaActivityId.TraceId, L"ClusterManagerReplica::GetNodes");
+    if (!error.IsSuccess())
+    {
+        return QueryResult(move(error));
+    }
+
     ListPager<ServiceQueryResult> serviceResultList;
+    serviceResultList.SetMaxResults(maxResults);
 
     // Find the ApplicationName argument. We expect this to be available as it is mandatory argument.
     wstring applicationNameArgument;
@@ -6591,7 +7025,7 @@ ServiceModel::QueryResult ClusterManagerReplica::GetServices(QueryArgumentMap co
     wstring serviceTypeNameArgument;
     queryArgs.TryGetValue(QueryResourceProperties::ServiceType::ServiceTypeName, serviceTypeNameArgument);
 
-    // Filtering by both service name and service type name is now allowed
+    // Filtering by both service name and service type name is not allowed
     if (!serviceNameArgument.empty() && !serviceTypeNameArgument.empty())
     {
         WriteInfo(
@@ -6609,7 +7043,7 @@ ServiceModel::QueryResult ClusterManagerReplica::GetServices(QueryArgumentMap co
     // Create applicationContext with the application name and ReadExact using it.
     ApplicationContext appContext(applicationNameUri);
     auto storeTx = StoreTransaction::Create(this->ReplicatedStore, this->PartitionedReplicaId);
-    ErrorCode error = this->GetValidApplicationContext(storeTx, appContext);
+    error = this->GetValidApplicationContext(storeTx, appContext);
     if (!error.IsSuccess())
     {
         storeTx.Rollback();
@@ -6759,15 +7193,9 @@ ServiceModel::QueryResult ClusterManagerReplica::GetServices(QueryArgumentMap co
         error = serviceResultList.TryAdd(
             serviceContext->ToQueryResult(serviceTypeManifestVersion));
 
-        if (error.IsError(ErrorCodeValue::EntryTooLarge))
+        if (!error.IsSuccess() && serviceResultList.IsBenignError(error))
         {
-            WriteInfo(
-                TraceComponent,
-                "{0}: TryAdd ServiceQueryResult for {1} returned error {2} {3}",
-                replicaActivityId.TraceId,
-                serviceContext->ServiceName.Value,
-                error,
-                error.Message);
+            serviceResultList.TraceErrorFromTryAdd(error, TraceComponent, replicaActivityId.TraceId, L"GetServices@" + serviceContext->ServiceName.Value);
             break;
         }
     }
@@ -7009,6 +7437,60 @@ void ClusterManagerReplica::InitializeCachedFilePtrs()
             this->TraceId,
             error);
     }
+}
+
+ServiceModel::QueryResult ClusterManagerReplica::GetClusterVersion()
+{
+    auto storeTx = StoreTransaction::Create(this->ReplicatedStore, this->PartitionedReplicaId);
+    auto upgradeContext = make_unique<FabricUpgradeContext>();
+    ErrorCode error = storeTx.ReadExact(*upgradeContext);
+
+    // An item should be found any time after a cluster has been upgraded - either code or config.
+    // Will return ErrorCodeValue::NotFound if there is no entry.
+    if (error.IsSuccess())
+    {
+        storeTx.CommitReadOnly();
+        bool upgradeCompleted = upgradeContext->IsComplete;
+        auto & currentVersion = upgradeContext->CurrentVersion;
+        auto & targetVersion = upgradeContext->UpgradeDescription.Version;
+
+        // If the value is 0.0.0.0, then it should not be valid. This happens when an upgrade has started for the first time in the cluster, but not yet completed.
+        // In production clusters, there is a baseline upgrade, so this should not be an issue.
+        // In dev clusters, while possible, it is not a supported case, so return an error telling the user to check back after the upgrade.
+        if (currentVersion.IsValid)
+        {
+            // Return the lesser of the code versions.
+            // Type FabricCodeVersion has custom compare operators (overridden > == and <)
+            // Type FabricCodeVersion has a overridden to string method
+            if ((currentVersion < targetVersion || upgradeCompleted))
+            {
+                return QueryResult(make_unique<wstring>(currentVersion.CodeVersion.ToString()));
+            }
+            else
+            {
+                return QueryResult(make_unique<wstring>(targetVersion.CodeVersion.ToString()));
+            }
+        }        
+    }
+    else if (!error.IsError(ErrorCodeValue::NotFound))
+    {
+        return QueryResult(move(error));
+    }
+
+    // If code reaches here, it means that error code was NotFound
+
+    // If version is not valid, then it means that an upgrade is happening - the first ever upgrade, so that
+    // the cluster version is 0.0.0.0 according to CM.
+    // In this case, return NotFound. Only dev clusters should reach this path, and fabric upgrades are not supported.
+    // Since it will be a config only upgrade, all nodes will have the same version.
+    wstring currentVersion;
+    error = FabricEnvironment::GetFabricVersion(currentVersion);
+
+    if (error.IsSuccess())
+    {
+        return QueryResult(make_unique<wstring>(currentVersion));
+    }
+    return QueryResult(move(error));
 }
 
 ServiceModel::QueryResult ClusterManagerReplica::GetClusterManifest(
@@ -8170,6 +8652,24 @@ ErrorCode ClusterManagerReplica::ReadPrefix(std::wstring const & storeType, std:
     return error;
 }
 
+template <class T>
+ErrorCode ClusterManagerReplica::ReadExact(__inout T & context) const
+{
+    auto storeTx = StoreTransaction::Create(this->ReplicatedStore, this->PartitionedReplicaId);
+    Common::ErrorCode error = storeTx.ReadExact(context);
+
+    if (error.IsSuccess())
+    {
+        storeTx.CommitReadOnly();
+    }
+    else
+    {
+        storeTx.Rollback();
+    }
+
+    return error;
+}
+
 
 // ****************
 // Helper functions
@@ -9270,17 +9770,81 @@ bool ClusterManagerReplica::IsDnsServiceEnabled()
     return config.IsEnabled;
 }
 
+
+bool ClusterManagerReplica::IsPartitionedDnsQueryFeatureEnabled()
+{
+    DNS::DnsServiceConfig& config = DNS::DnsServiceConfig::GetConfig();
+    return config.EnablePartitionedQuery;
+}
+
+
 Common::ErrorCode ClusterManagerReplica::ValidateServiceDnsName(std::wstring const & serviceDnsName)
 {
-    ErrorCode error;
-
     DNS::DNSNAME_STATUS status = DNS::IsDnsNameValid(serviceDnsName.c_str());
     if ((status != DNS::DNSNAME_VALID) && (status != DNS::DNSNAME_NON_RFC_NAME))
     {
-        error = ErrorCode::FromWin32Error(status);
+        return ErrorCode::FromWin32Error(status);
     }
 
-    return error;
+    return ValidateServiceDnsNameForPartitionedQueryCompliance(serviceDnsName);
+}
+
+Common::ErrorCode ClusterManagerReplica::ValidateServiceDnsNameForPartitionedQueryCompliance(std::wstring const & serviceDnsName)
+{
+    // Check if partitioned dns query feature is enabled or not? 
+    // If not, return early.
+    // If yes, we need to make sure original DNS name doesn't meet partitioned dns query format.
+    if (!IsPartitionedDnsQueryFeatureEnabled())
+    {
+        return ErrorCodeValue::Success;
+    }
+
+    wstring const & prefix = DNS::DnsServiceConfig::GetConfig().PartitionPrefix;
+    wstring const & suffix = DNS::DnsServiceConfig::GetConfig().PartitionSuffix;
+
+    if (prefix.empty())
+    {
+        return ErrorCodeValue::Success;
+    }
+
+    wstring dnsName;
+    wstring labelDelimiter(L".");
+
+    // Locate first Label
+    if (StringUtility::Contains<wstring>(serviceDnsName, labelDelimiter))
+    {
+        std::vector<wstring> labels;
+        StringUtility::SplitOnString(serviceDnsName, labels, labelDelimiter);
+        dnsName = labels[0]; //Starting with dot is taken care off by ValidDnsName check
+    }
+    else
+    {
+        dnsName = serviceDnsName;
+    }
+
+    // First label has to end with suffix, if suffix is non-empty.
+    size_t suffixPos = dnsName.length();
+    if (!suffix.empty())
+    {
+        suffixPos = dnsName.rfind(suffix);
+        if ((suffixPos == wstring::npos) || ((suffixPos + suffix.length()) != dnsName.length()))
+        {
+            return ErrorCodeValue::Success;
+        }
+    }
+ 
+    size_t prefixPos = dnsName.rfind(prefix);
+    if (prefixPos != wstring::npos)
+    {
+        // check for partition name of non-zero length.
+        if ((prefixPos != 0) && (suffixPos > (prefixPos + prefix.length())))
+        {
+            auto msg = wformatString(GET_CM_RC(InvalidDnsName_PatitionedQueryFormatInCompliance), serviceDnsName);
+            return ErrorCode(ErrorCodeValue::InvalidDnsName, move(msg));
+        }
+    }
+
+    return ErrorCodeValue::Success;
 }
 
 ErrorCode ClusterManagerReplica::ValidateAndGetComposeDeploymentName(wstring const &applicationName, __out NamingUri &appNameUri)
@@ -9309,10 +9873,12 @@ wstring ClusterManagerReplica::GetDeploymentNameFromAppName(wstring const &appli
     return applicationNameAuthority;
 }
 
+
+
 ErrorCode ClusterManagerReplica::GetApplicationResourceQueryResult(
     Store::StoreTransaction const & storeTx,
-    SingleInstanceDeploymentContext const &deploymentContext, 
-    Store::ReplicaActivityId const & replicaActivityId, 
+    SingleInstanceDeploymentContext const &deploymentContext,
+    Store::ReplicaActivityId const & replicaActivityId,
     ModelV2::ApplicationDescriptionQueryResult &result)
 {
     auto storeData = make_shared<StoreDataSingleInstanceApplicationInstance>(

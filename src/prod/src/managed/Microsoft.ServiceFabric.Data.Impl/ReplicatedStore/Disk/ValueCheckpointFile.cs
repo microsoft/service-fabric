@@ -103,8 +103,14 @@ namespace System.Fabric.Store
         private ValueCheckpointFile(string filename, Kernel32Types.PRIORITY_HINT priorityHint = Kernel32Types.PRIORITY_HINT.IoPriorityHintNormal)
         {
             // Open the file for read with asynchronous flag and 4096 cache size (C# default).
+
+            // Because of the issue at https://github.com/dotnet/corefx/issues/6007
+            // where asynchonous reads can internally be synchronous reads with wait calls, we can be
+            // bottlenecked by the limited number of I/O completion ports in overlapped I/O
+            // causing a lot of blocked threads and extreme slowdown when met with a large number
+            // of concurrent reads. Due to this, we chose to disable the FileOptions.Asynchronous option.
             this.ReaderPool = new StreamPool(
-                    () => FabricFile.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.RandomAccess));
+                    () => FabricFile.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.RandomAccess));
 
             this.priorityHint = priorityHint;
         }

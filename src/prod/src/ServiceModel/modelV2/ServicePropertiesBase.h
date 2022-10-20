@@ -28,6 +28,10 @@ namespace ServiceModel
             std::vector<ContainerCodePackageDescription> & get_CodePackages() { return codePackages_; }
             void put_CodePackages(std::vector<ContainerCodePackageDescription> const & value) { codePackages_ = value; }
 
+            __declspec(property(get = get_AutoScalingPolicies, put = put_AutoScalingPolicies)) std::vector<AutoScalingPolicy> & AutoScalingPolicies;
+            std::vector<AutoScalingPolicy> & get_AutoScalingPolicies() { return autoScalingPolicies_; }
+            void put_AutoScalingPolicies(std::vector<AutoScalingPolicy> const & value) { autoScalingPolicies_ = value; }
+
             __declspec(property(get=get_NetworkRefs, put=put_NetworkRefs)) std::vector<NetworkRef> const & NetworkRefs;
             std::vector<NetworkRef> const & get_NetworkRefs() const { return networkRefs_; }
             void put_NetworkRefs(std::vector<NetworkRef> const & value) { networkRefs_ = value; }
@@ -39,15 +43,17 @@ namespace ServiceModel
             BEGIN_JSON_SERIALIZABLE_PROPERTIES()
                 SERIALIZABLE_PROPERTY(ServiceModel::Constants::osType, osType_)
                 SERIALIZABLE_PROPERTY(L"codePackages", codePackages_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::autoScalingPolicies, autoScalingPolicies_)
                 SERIALIZABLE_PROPERTY(L"networkRefs", networkRefs_)
                 SERIALIZABLE_PROPERTY(L"diagnostics", diagnostics_)
             END_JSON_SERIALIZABLE_PROPERTIES()
 
-            FABRIC_FIELDS_04(osType_, codePackages_, networkRefs_, diagnostics_);
+            FABRIC_FIELDS_05(osType_, codePackages_, networkRefs_, diagnostics_, autoScalingPolicies_);
 
             BEGIN_DYNAMIC_SIZE_ESTIMATION()
                 DYNAMIC_SIZE_ESTIMATION_MEMBER(osType_)
                 DYNAMIC_SIZE_ESTIMATION_MEMBER(codePackages_)
+                DYNAMIC_SIZE_ESTIMATION_MEMBER(autoScalingPolicies_)
                 DYNAMIC_SIZE_ESTIMATION_MEMBER(networkRefs_)
                 DYNAMIC_SIZE_ESTIMATION_MEMBER(diagnostics_)
             END_DYNAMIC_SIZE_ESTIMATION()
@@ -60,6 +66,7 @@ namespace ServiceModel
         protected:
             std::wstring osType_;
             std::vector<ContainerCodePackageDescription> codePackages_;
+            std::vector<AutoScalingPolicy> autoScalingPolicies_;
             std::vector<NetworkRef> networkRefs_;
             std::shared_ptr<DiagnosticsRef> diagnostics_;
         };

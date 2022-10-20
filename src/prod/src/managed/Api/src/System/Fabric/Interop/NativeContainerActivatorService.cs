@@ -73,6 +73,73 @@ namespace System.Fabric.Interop
         }
 
         [ComImport]
+        [Guid("8fdba659-674c-4464-ac64-21d410313b96")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        internal interface IFabricContainerActivatorService2 : IFabricContainerActivatorService
+        {
+            // ----------------------------------------------------------------
+            // IFabricContainerActivatorService methods
+            // Base interface methods must come first to reserve vtable slots
+            new void StartEventMonitoring(
+                [In] BOOLEAN isContainerServiceManaged,
+                [In] UInt64 sinceTime);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginActivateContainer(
+                [In] IntPtr activationParams,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new NativeCommon.IFabricStringResult EndActivateContainer(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginDeactivateContainer(
+                [In] IntPtr deactivationParams,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new void EndDeactivateContainer(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginDownloadImages(
+                [In] IntPtr images,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new void EndDownloadImages(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginDeleteImages(
+                [In] IntPtr images,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new void EndDeleteImages(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            new NativeCommon.IFabricAsyncOperationContext BeginInvokeContainerApi(
+                [In] IntPtr apiExecArgs,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            new IFabricContainerApiExecutionResult EndInvokeContainerApi(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+
+            [return: MarshalAs(UnmanagedType.Interface)]
+            NativeCommon.IFabricAsyncOperationContext BeginContainerUpdateRoutes(
+                [In] IntPtr updateRouteArgs,
+                [In] UInt32 timeoutMilliseconds,
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationCallback callback);
+
+            void EndContainerUpdateRoutes(
+                [In, MarshalAs(UnmanagedType.Interface)] NativeCommon.IFabricAsyncOperationContext context);
+        }
+
+        [ComImport]
         [Guid("b40b7396-5d2a-471a-b6bc-6cfad1cb2061")]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         internal interface IFabricContainerActivatorServiceAgent
@@ -82,6 +149,24 @@ namespace System.Fabric.Interop
 
             void RegisterContainerActivatorService(
                 [In, MarshalAs(UnmanagedType.Interface)] IFabricContainerActivatorService activatorService);
+        }
+
+        [ComImport]
+        [Guid("ac2bcdde-3987-4bf0-ac91-989948faac85")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)] 
+        internal interface IFabricContainerActivatorServiceAgent2 : IFabricContainerActivatorServiceAgent
+        {
+            // ----------------------------------------------------------------
+            // IFabricContainerActivatorServiceAgent methods
+            // Base interface methods must come first to reserve vtable slots
+            new void ProcessContainerEvents(
+                [In] IntPtr notifiction);
+
+            new void RegisterContainerActivatorService(
+                [In, MarshalAs(UnmanagedType.Interface)] IFabricContainerActivatorService activatorService);
+
+            void RegisterContainerActivatorService(
+                [In, MarshalAs(UnmanagedType.Interface)] IFabricContainerActivatorService2 activatorService);
         }
 
         [ComImport]
@@ -113,7 +198,7 @@ namespace System.Fabric.Interop
         [DllImport("FabricContainerActivatorService.dll", PreserveSig = false)]
 #endif
         [return: MarshalAs(UnmanagedType.Interface)]
-        internal static extern IFabricContainerActivatorServiceAgent CreateFabricContainerActivatorServiceAgent(
+        internal static extern IFabricContainerActivatorServiceAgent2 CreateFabricContainerActivatorServiceAgent(
             ref Guid iid);
 
 #if DotNetCoreClrLinux

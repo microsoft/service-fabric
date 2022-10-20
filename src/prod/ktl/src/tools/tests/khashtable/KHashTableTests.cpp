@@ -214,14 +214,14 @@ Test3()
 
         ULONG Count = Table.Count();
         ULONG Saturation = Table.Saturation();
-		Count;
-		Saturation;
+        Count;
+        Saturation;
 
        // KTestPrintf("Adding %S [Count=%u Saturation=%u \n", PWSTR(GuidStr), Count, Saturation);
         List.Append(g);
     }
 
-	KInvariant(Table.Saturation() == 100);
+    KInvariant(Table.Saturation() == 100);
 
     ULONG Worst = 0;
     ULONG S1, S2, S3;
@@ -432,7 +432,7 @@ ResizeTest()
     KInvariant(ht1.Size() == 1);
     KInvariant(ht1.Count() == targetSize);
     ULONG   saturation = ht1.Saturation();
-	KInvariant(saturation == (targetSize * 100));
+    KInvariant(saturation == (targetSize * 100));
 
     for (ULONG newSize = ht1.Size() * 2; newSize < (targetSize * 20); newSize += (newSize >> 1))
     {
@@ -1072,31 +1072,31 @@ Hash_KUriSmartPointer_Deterministic()
 
 void SaturationTest()
 {
-	KHashTable<ULONG, ULONG> table(100, MyHashFunction, *gp_Allocator);
+    KHashTable<ULONG, ULONG> table(100, MyHashFunction, *gp_Allocator);
 
-	for (ULONG i = 0; i < 50; i++)
-	{
-		KInvariant(table.Saturation() == i);		// S/B i% sat
-		KInvariant(NT_SUCCESS(table.Put(i, i)));
-	}
+    for (ULONG i = 0; i < 50; i++)
+    {
+        KInvariant(table.Saturation() == i);        // S/B i% sat
+        KInvariant(NT_SUCCESS(table.Put(i, i)));
+    }
 
-	KInvariant(table.Saturation() == 50);		// S/B 50% sat
-	for (ULONG x = 50; x < 100; x++) KInvariant(NT_SUCCESS(table.Put(x, x)));
-	KInvariant(table.Saturation() == 100);		// S/B 100% sat
-	for (ULONG x = 100; x < 200; x++) KInvariant(NT_SUCCESS(table.Put(x, x)));
-	KInvariant(table.Saturation() == 200);		// S/B 200% sat
+    KInvariant(table.Saturation() == 50);       // S/B 50% sat
+    for (ULONG x = 50; x < 100; x++) KInvariant(NT_SUCCESS(table.Put(x, x)));
+    KInvariant(table.Saturation() == 100);      // S/B 100% sat
+    for (ULONG x = 100; x < 200; x++) KInvariant(NT_SUCCESS(table.Put(x, x)));
+    KInvariant(table.Saturation() == 200);      // S/B 200% sat
 
-	KInvariant(NT_SUCCESS(table.Resize(2 * 200)));
-	KInvariant(table.Saturation() == 50);		// S/B 50% sat
-	KInvariant(table.Saturation(100) == 200);	// S/B 200% sat
-	KInvariant(table.Saturation(800) == 25);	// S/B 25% sat
-	KInvariant(table.Saturation(20000) == 1);	// S/B 1% sat
-	KInvariant(NT_SUCCESS(table.Resize(20000)));
-	KInvariant(table.Saturation() == 1);		// S/B 1% sat
-	KInvariant(NT_SUCCESS(table.Resize(1)));
-	KInvariant(table.Saturation() == 20000);	// S/B 20000% sat
-	table.Clear();
-	KInvariant(table.Saturation() == 0);		// S/B 0% sat
+    KInvariant(NT_SUCCESS(table.Resize(2 * 200)));
+    KInvariant(table.Saturation() == 50);       // S/B 50% sat
+    KInvariant(table.Saturation(100) == 200);   // S/B 200% sat
+    KInvariant(table.Saturation(800) == 25);    // S/B 25% sat
+    KInvariant(table.Saturation(20000) == 1);   // S/B 1% sat
+    KInvariant(NT_SUCCESS(table.Resize(20000)));
+    KInvariant(table.Saturation() == 1);        // S/B 1% sat
+    KInvariant(NT_SUCCESS(table.Resize(1)));
+    KInvariant(table.Saturation() == 20000);    // S/B 20000% sat
+    table.Clear();
+    KInvariant(table.Saturation() == 0);        // S/B 0% sat
 }
 
 NTSTATUS
@@ -1110,7 +1110,7 @@ TestSequence()
 #endif
 
     SaturationTest();
-	
+    
     for (ULONG i = 0; i < Iterations; i++)
     {
         Result = Test1();
@@ -1636,8 +1636,18 @@ KHashTableTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
-    KTestPrintf("KHashTableTest: STARTED\n");
     NTSTATUS Status;
+    
+#if defined(PLATFORM_UNIX)
+    Status = KtlTraceRegister();
+    if (! NT_SUCCESS(Status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(Status);
+    }
+#endif
+
+    KTestPrintf("KHashTableTest: STARTED\n");
 
     EventRegisterMicrosoft_Windows_KTL();
     KTestPrintf("Starting KHashTableTest test");
@@ -1647,6 +1657,11 @@ KHashTableTest(
     EventUnregisterMicrosoft_Windows_KTL();
 
     KTestPrintf("KHashTableTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif      
+    
     return Status;
 }
 

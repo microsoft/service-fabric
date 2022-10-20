@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <Import Project="$(PkgMicrosoft_Cloud_InstrumentationFramework)\build\Microsoft.Cloud.InstrumentationFramework.targets" />
+  <PropertyGroup>
+    <ProjectGuid>{D5F70BAC-1B98-4424-968D-A80DD8E33D9D}</ProjectGuid>
+    <AssemblyName>Microsoft.ServiceFabric.Monitoring.Internal</AssemblyName>
+    <AssemblyDescription>Module that writes health data to local MDS tables</AssemblyDescription>
+    <RootNamespace>Microsoft.ServiceFabric.Monitoring.Internal</RootNamespace>
+    <OutputType>Library</OutputType>
+    <DefineConstants>TRACE;INTERNAL_COMMON_ASSEMBLY</DefineConstants>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="EventSource\MonitoringEventWriter.cs" />
+    <Compile Include="EventSource\MonitoringEventSource.cs" />
+    <Compile Include="ServiceConfiguration.cs" />
+    <Compile Include="IInternalServiceConfiguration.cs" />
+    <Compile Include="IfxHealthDataConsumer.cs" />
+    <Compile Include="MetricsEmitter.cs" />
+    <Compile Include="Test\FakeEventWriter.cs" />
+    <Compile Include="Test\FakeMetricsEmitter.cs" />
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HealthDataProducer\Microsoft.ServiceFabric.Monitoring.csproj">
+      <Project>{ac5a6453-2c75-4e83-baa0-322b76eb454a}</Project>
+      <Name>Microsoft.ServiceFabric.Monitoring</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\Microsoft.ServiceFabric.Internal.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\Microsoft.ServiceFabric.Internal.Strings.dll" />
+    <Reference Include="$(PkgMicrosoft_ServiceFabric_5_1)\lib\net45\System.Fabric.dll">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgMicrosoft_Cloud_InstrumentationFramework)\lib\net40\Microsoft.Cloud.InstrumentationFramework.Metrics.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json_6_0)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(PkgMicrosoft_Diagnostics_Tracing_EventRegister)\build\Microsoft.Diagnostics.Tracing.EventRegister.targets" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\MonitoringServiceApplication\MonitoringServicePackage\MonitoringService.Code" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

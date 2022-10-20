@@ -181,6 +181,17 @@ void SystemState::CreatePlacementAndChecker(PartitionClosureType::Enum closureTy
     GetPlacement(closureType);
 }
 
+void SystemState::CreatePlacementAndChecker(PLBSchedulerActionType::Enum action) const
+{
+    GetPlacement(PartitionClosureType::FromPLBSchedulerAction(action));
+    if (placement_->Action != action)
+    {
+        // It is possible that placement was created with another action, so checker needs to be updated.
+        placement_->UpdateAction(action);
+        checker_ = make_unique<Checker>(&(*placement_), trace_, plbDiagnosticsSPtr_);
+    }
+}
+
 /////////////////////////////////////////////////////////
 // private members
 /////////////////////////////////////////////////////////

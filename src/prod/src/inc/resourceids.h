@@ -61,12 +61,15 @@
 #define IDS_COMMON_InvalidNameQueryCharacter                IDS_COMMON( 26 ) // The name '{0}' is invalid: character '?' is not supported.
 #define IDS_COMMON_InvalidNameServiceGroupCharacter         IDS_COMMON( 27 ) // The name '{0}' is invalid: character '#' is reserved by Service Groups.
 #define IDS_COMMON_InvalidNameExceedsMaxSize                IDS_COMMON( 28 ) // The name '{0}' (size {1}) exceeds the max allowed size, {2}.
-#define IDS_COMMON_FileNotFound                             IDS_COMMON( 29 ) // The file '{0}' doesn't exist.
-#define IDS_COMMON_Invalid_Sfpkg_Name                       IDS_COMMON( 30 ) // The file '{0}' doesn't have the required '.sfpkg' extension.
-#define IDS_COMMON_ZipToChildDirectoryFails                 IDS_COMMON( 31 ) // Zip to directory '{0}' fails because it's a child of the source directory '{1}'.
-#define IDS_COMMON_ExpandSfpkgDirectoryNotEmpty             IDS_COMMON( 32 ) // The directory '{0}' is not empty. Please delete the content or provide another directory as application package root.
-#define IDS_COMMON_DirectoryNotFound                        IDS_COMMON( 33 ) // The directory '{0}' doesn't exist.
-
+#define IDS_COMMON_Invalid_Node_Instance                    IDS_COMMON( 29 ) // Invalid node instance id '{0}' passed in. The value must be a uint64.
+#define IDS_COMMON_Invalid_Guid                             IDS_COMMON( 30 ) // Invalid value '{0}' passed in. The value must be a GUID.
+#define IDS_COMMON_Invalid_Int64                            IDS_COMMON( 31 ) // Invalid value '{0}' passed in. The value must be a int64.
+#define IDS_COMMON_FileNotFound                             IDS_COMMON( 32 ) // The file '{0}' doesn't exist.
+#define IDS_COMMON_Invalid_Sfpkg_Name                       IDS_COMMON( 33 ) // The file '{0}' doesn't have the required '.sfpkg' extension.
+#define IDS_COMMON_ZipToChildDirectoryFails                 IDS_COMMON( 34 ) // Zip to directory '{0}' fails because it's a child of the source directory '{1}'.
+#define IDS_COMMON_ExpandSfpkgDirectoryNotEmpty             IDS_COMMON( 35 ) // The directory '{0}' is not empty. Please delete the content or provide another directory as application package root.
+#define IDS_COMMON_DirectoryNotFound                        IDS_COMMON( 36 ) // The directory '{0}' doesn't exist.
+#define IDS_COMMON_Resource_Name_Mismatch                   IDS_COMMON( 37 ) // {0} name specified in the request Uri {1} doesn't match the name specified in the body {2}.
 
 #define IDS_EXE( Index )                                    RESOURCE_ID( 11000, Index )
 #define IDS_FABRICHOST( Index )                             RESOURCE_ID( IDS_EXE( 0 ), Index )
@@ -102,7 +105,7 @@
 
 #define IDS_FAILOVER( Index )                               RESOURCE_ID( 12000, Index )
 #define IDS_FAILOVER_Node_Up                                IDS_FAILOVER( 1 )  // Fabric node is up.
-#define IDS_FAILOVER_Node_Down                              IDS_FAILOVER( 2 )  // Fabric node is down.
+#define IDS_FAILOVER_Node_Down                              IDS_FAILOVER( 2 )  // Fabric node is down. For more information see: 
 #define IDS_FAILOVER_Node_Down_During_Upgrade               IDS_FAILOVER( 3 )  // Fabric node is taking longer than expected to complete upgrade.
 #define IDS_FAILOVER_Partition_Healthy                      IDS_FAILOVER( 4 )  // Partition is healthy.
 #define IDS_FAILOVER_Partition_PlacementStuck               IDS_FAILOVER( 5 )  // Partition is below target replica or instance count.
@@ -114,6 +117,58 @@
 #define IDS_FAILOVER_Invalid_Node_Upgrade_Phase             IDS_FAILOVER( 11 )  // Invalid node upgrade phase:
 #define IDS_FAILOVER_Partition_RebuildStuck                 IDS_FAILOVER( 12 )  // Partition rebuild is taking longer than expected.
 #define IDS_FAILOVER_Node_DeactivateStuck                   IDS_FAILOVER( 13 )  // Fabric node is taking longer than expected to deactivate.
+#define IDS_FAILOVER_Seed_Node_Down                         IDS_FAILOVER( 14 )  // Fabric seed node is down. Loss of a majority of seed nodes can cause cluster failure. For more information see: 
+#define IDS_FAILOVER_ServiceDescription_InitializationData_Size_Changed                   IDS_FAILOVER( 15 )  // Service initialization data size changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_InitializationData_Changed                   IDS_FAILOVER( 16 )  // {0}-th byte of service initialization data changed from '{1}' to '{2}'
+#define IDS_FAILOVER_ServiceDescription_Load_Metric_Description_Count_Changed                   IDS_FAILOVER( 17 )  // Service load metric description count changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_Load_Metric_Removed                   IDS_FAILOVER( 18 )  // Service load metric description '{0}' was removed
+#define IDS_FAILOVER_ServiceDescription_Load_Metric_Added                   IDS_FAILOVER( 19 )  // Service load metric description '{0}' was added
+#define IDS_FAILOVER_ServiceDescription_ServiceName_Changed                   IDS_FAILOVER( 20 )  // Service name changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_ServiceType_Changed                   IDS_FAILOVER( 21 )  // Service type changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_ApplicationName_Changed                   IDS_FAILOVER( 22 )  // Application name changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_Partition_Count_Changed                   IDS_FAILOVER( 23 )  // Partition count changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_TargetReplicaSetSize_Changed                   IDS_FAILOVER( 24 )  // TargetReplicaSetSize has changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_Changed_To_Stateful                   IDS_FAILOVER( 25 )  // Service changed from being stateless to stateful
+#define IDS_FAILOVER_ServiceDescription_Changed_To_Stateless                   IDS_FAILOVER( 26 )  // Service changed from being stateful to stateless
+#define IDS_FAILOVER_ServiceDescription_Changed_To_Persisted                   IDS_FAILOVER( 27 )  // Service changed from being non-persisted to persisted
+#define IDS_FAILOVER_ServiceDescription_Changed_To_NonPersisted                   IDS_FAILOVER( 28 )  // Service changed from being persisted to non-persisted
+#define IDS_FAILOVER_ServiceDescription_ReplicaRestartWaitDuration_Changed                   IDS_FAILOVER( 29 )  // ReplicaRestartWaitDuration changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_QuorumLossWaitDuration_Changed                   IDS_FAILOVER( 30 )  // QuorumLossWaitDuration changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_StandByReplicaKeepDuration_Changed                   IDS_FAILOVER( 31 )  // StandByReplicaKeepDuration changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_PlacementConstraints_Changed                   IDS_FAILOVER( 32 )  // PlacementConstraints changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_PlacementPolicy_Count_Changed                   IDS_FAILOVER( 33 )  // PlacementPolicy count changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_ScaleoutCount_Changed                   IDS_FAILOVER( 34 )  // ScaleoutCount changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_DefaultMoveCost_Changed                   IDS_FAILOVER( 35 )  // DefaultMoveCost changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_ServicePackageActivationMode_Changed                   IDS_FAILOVER( 36 )  // ServicePackageActivationMode changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_ServiceDnsName_Changed                   IDS_FAILOVER( 37 )  // ServiceDnsName changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_PackageVersionInstance_Changed                   IDS_FAILOVER( 38 )  // PackageVersionInstance changed from '{0}' to '{1}'
+#define IDS_FAILOVER_ServiceDescription_ScalingPolicies_Size_Changed                   IDS_FAILOVER( 39 )  // Scaling policy count changed from '{0}' to '{1}' in ServiceDescription
+#define IDS_FAILOVER_ServiceDescription_MinReplicaSetSize_Changed                   IDS_FAILOVER( 40 )  // MinReplicaSetSize changed from '{0}' to '{1}' in ServiceDescription
+#define IDS_FAILOVER_ServiceDescription_Changed_To_Lone_Service                   IDS_FAILOVER( 41 )  // Service is no longer a member of a ServiceGroup
+#define IDS_FAILOVER_ServiceDescription_Changed_To_ServiceGroup                   IDS_FAILOVER( 42 )  // Service has become a member of a ServiceGroup
+#define IDS_FAILOVER_ServiceScalingPolicyDescription_ScalingTrigger_Changed                   IDS_FAILOVER( 43 )  // Scaling trigger has changed from '{0}' to '{1}' in ServiceScalingPolicyDescription
+#define IDS_FAILOVER_ServiceScalingPolicyDescription_ScalingTrigger_Removed                   IDS_FAILOVER( 44 )  // Scaling trigger '{0}' was removed from ServiceScalingPolicyDescription
+#define IDS_FAILOVER_ServiceScalingPolicyDescription_ScalingTrigger_Added                   IDS_FAILOVER( 45 )  // Scaling trigger '{0}' was added to ServiceScalingPolicyDescription
+#define IDS_FAILOVER_ServiceScalingPolicyDescription_ScalingMechanism_Changed                   IDS_FAILOVER( 46 )  // Scaling mechanism changed from '{0}' to '{1}' in ServiceScalingPolicyDescription
+#define IDS_FAILOVER_ServiceScalingPolicyDescription_ScalingMechanism_Removed                   IDS_FAILOVER( 47 )  // Scaling mechanism '{0}' was removed from ServiceScalingPolicyDescription
+#define IDS_FAILOVER_ServiceScalingPolicyDescription_ScalingMechanism_Added                   IDS_FAILOVER( 48 )  // Scaling mechanism '{0}' was added to ServiceScalingPolicyDescription
+#define IDS_FAILOVER_ServicePlacementPolicyDescription_DomainName_Changed                   IDS_FAILOVER( 49 )  // Domain name changed from '{0}' to '{1}' in ServicePlacementPolicyDescription
+#define IDS_FAILOVER_ServicePlacementPolicyDescription_Type_Changed                   IDS_FAILOVER( 50 )  // Description type changed from '{0}' to '{1}' in ServicePlacementPolicyDescription
+#define IDS_FAILOVER_ServiceGroupMemberLoadMetricDescription_Name_Changed                   IDS_FAILOVER( 51 )  // Name changed from '{0}' to '{1}' in ServiceGroupMemberLoadMetricDescription
+#define IDS_FAILOVER_ServiceGroupMemberLoadMetricDescription_Weight_Changed                   IDS_FAILOVER( 52 )  // Weight changed from '{0}' to '{1}' in ServiceGroupMemberLoadMetricDescription
+#define IDS_FAILOVER_ServiceGroupMemberLoadMetricDescription_PrimaryDefaultLoad_Changed                   IDS_FAILOVER( 53 )  // PrimaryDefaultLoad changed from '{0}' to '{1}' in ServiceGroupMemberLoadMetricDescription
+#define IDS_FAILOVER_ServiceGroupMemberLoadMetricDescription_SecondaryDefaultLoad_Changed                   IDS_FAILOVER( 54 )  // SecondaryDefaultLoad changed from '{0}' to '{1}' in ServiceGroupMemberLoadMetricDescription
+#define IDS_FAILOVER_ServiceGroupMemberDescription_Member_Identifier_Changed                   IDS_FAILOVER( 55 )  // Member identifier changed from '{0}' to '{1}' in ServiceGroupMemberDescription
+#define IDS_FAILOVER_ServiceGroupMemberDescription_ServiceDescriptionType_Changed                   IDS_FAILOVER( 56 )  // ServiceDescriptionType changed from '{0}' to '{1}' in ServiceGroupMemberDescription
+#define IDS_FAILOVER_ServiceGroupMemberDescription_ServiceType_Changed                   IDS_FAILOVER( 57 )  // ServiceType changed from '{0}' to '{1}' in ServiceGroupMemberDescription
+#define IDS_FAILOVER_ServiceGroupMemberDescription_ServiceName_Changed                   IDS_FAILOVER( 58 )  // ServiceName changed from '{0}' to '{1}' in ServiceGroupMemberDescription
+#define IDS_FAILOVER_ServiceGroupMemberDescription_Load_Metric_Count_Changed                   IDS_FAILOVER( 59 )  // Count of load metrics changed from '{0}' to '{1}' in ServiceGroupMemberDescription
+#define IDS_FAILOVER_ServiceGroupDescription_ServiceGroupInitializationData_Size_Changed                   IDS_FAILOVER( 60 )  // Size of ServiceGroupInitializationData changed from '{0}' to '{1}' in ServiceGroupMemberDescription
+#define IDS_FAILOVER_ServiceGroupDescription_ServiceGroupInitializationData_Changed                   IDS_FAILOVER( 61 )  // {0}-th byte of ServiceGroupInitializationData changed from '{1}' to '{2}' in ServiceGroupMemberDescription
+#define IDS_FAILOVER_ServiceGroupDescription_Changed_To_NonPersisted                  IDS_FAILOVER( 62 )  // ServiceGroupDescription changed from persisted to non-Persisted
+#define IDS_FAILOVER_ServiceGroupDescription_Changed_To_Persisted                  IDS_FAILOVER( 63 )  // ServiceGroupDescription changed from non-persisted to persisted
+#define IDS_FAILOVER_ServiceGroupDescription_ServiceGroupMemberData_Size_Changed                  IDS_FAILOVER( 64 )  // Size of ServiceGroupMemberData changed from '{0}' to '{1}' in ServiceGroupDescription
+
 
 #define IDS_FM( Index )                                     RESOURCE_ID( 27000, Index )
 #define IDS_FM_Rebuild_Stuck                                IDS_FM( 1 ) // FM rebuild is taking longer than expected. 
@@ -179,7 +234,7 @@
 #define IDS_NAMING_Update_Service_Kind                      IDS_NAMING( 29 ) // Service kind can not be updated. Updated service: {0}.
 #define IDS_NAMING_Update_Service_ServicePackageActivationMode      IDS_NAMING( 30 ) // Service 'ServicePackageActivationMode' can not be updated. Updated service: {0}.
 #define IDS_NAMING_Update_Service_ServiceDnsName                    IDS_NAMING( 31 ) // Service 'ServiceDnsName' can not be updated. Updated service: {0}.
-#define IDS_NAMING_Update_Service_Partition_Count                   IDS_NAMING( 32 ) // Service partition count can not be updated. Updated service: {0}.
+#define IDS_NAMING_Update_Service_Partition_Count                   IDS_NAMING( 32 ) // Partition count can be updated only for services using NamedPartitioningScheme, for details about different partitioning schemes please refer to the https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-concepts-partitioning. Updated service: {0}.
 #define IDS_NAMING_Update_Service_Has_Persisted_State               IDS_NAMING( 33 ) // Service 'HasPersistedState' can not be updated. Updated service: {0}.
 #define IDS_NAMING_Update_Service_Is_Service_Group                  IDS_NAMING( 34 ) // Service 'IsServiceGroup' can not be updated. Updated service: {0}.
 #define IDS_NAMING_Update_Service_Partition_Scheme                  IDS_NAMING( 35 ) // Service partition scheme can not be updated. Updated service: {0}.
@@ -208,6 +263,14 @@
 #define IDS_NAMING_ScalingPolicy_MaxPartitionCount                  IDS_NAMING( 58 ) // Maximum partition count {0} must be either equal to -1 (unlimited) or greater than zero.
 #define IDS_NAMING_Invalid_Flags                                    IDS_NAMING( 59 ) // Invalid flags: 0x{0:x}
 #define IDS_NAMING_ScalingPolicy_UseOnlyPrimaryLoad                 IDS_NAMING( 60 ) // Use of primary load for auto scaling is allowed only for stateful services.
+#define IDS_NAMING_ScalingPolicy_ScaleIntervalInSeconds             IDS_NAMING( 61 ) // Scaling interval set to: {0} seconds, must be greater than zero seconds.
+#define IDS_NAMING_PartitionName_Count_Changed                      IDS_NAMING( 62 ) // Partition names count changed from '{0}' to '{1}'.
+#define IDS_NAMING_PartitionName_Removed                            IDS_NAMING( 63 ) // Partition name '{0}' has been removed.
+#define IDS_NAMING_PartitionName_Inserted                           IDS_NAMING( 64 ) // Partition name '{0}' has been inserted.
+#define IDS_NAMING_PartitionScheme_Changed                          IDS_NAMING( 65 ) // Partition scheme changed from '{0}' to '{1}'.
+#define IDS_NAMING_PSD_Version_Changed                              IDS_NAMING( 66 ) // PSD version changed from '{0}' to '{1}'.
+#define IDS_NAMING_PSD_LowRange_Changed                             IDS_NAMING( 67 ) // PSD low range changed from '{0}' to '{1}'.
+#define IDS_NAMING_PSD_HighRange_Changed                            IDS_NAMING( 68 ) // PSD high range changed from '{0}' to '{1}'.
 
 #define IDS_STORE( Index )                                  RESOURCE_ID( IDS_NAMING( 500 ), Index )
 #define IDS_STORE_Slow_Commit                               IDS_STORE( 1 ) // Slow commits detected: count={0} time=[{1}, {2}]
@@ -262,7 +325,7 @@
 #define IDS_CM_ServiceType_Removal                                      IDS_CM( 13 ) // Services must be explicitly deleted before removing their Service Types. Removed Service Type:
 #define IDS_CM_ServiceType_Move                                         IDS_CM( 14 ) // Services must be explicitly deleted before moving their Service Types between packages. Moved Service Type:
 #define IDS_CM_Default_ServiceType                                      IDS_CM( 15 ) // Service Type must exist before creating a default service. Requested default service and Service Type:
-#define IDS_CM_Default_Service_Description                              IDS_CM( 16 ) // Default service descriptions can not be modified as part of upgrade. Modified default service: {0}. To allow it, set EnableDefaultServicesUpgrade to true. Refer to: https://aka.ms/upgrade-defaultservices
+#define IDS_CM_Default_Service_Description                              IDS_CM( 16 ) // The default service description for '{0}' was modified as part of upgrade, which is not allowed. {1}. To allow the modification, set EnableDefaultServicesUpgrade to true following https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-fabric-settings. Note, at the start of the application upgrade, there may be three descriptions of a default service: (1) the description with which it was last created (2) the description with which it is currently running, which could diverge from (1) because of Update-ServiceFabricService API call and (3) the description in the target manifest. This error is about the difference between the descriptions (1) and (3). For more details, refer to https://aka.ms/upgrade-defaultservices
 #define IDS_CM_Invalid_Upgrade_Failure_Action                           IDS_CM( 17 ) // Invalid upgrade failure action.
 #define IDS_CM_Invalid_Overall_Timeout                                  IDS_CM( 18 ) // Overall upgrade timeout must be greater than the combined health check wait and retry timeouts. Requested values (overall timeout, wait, retry):
 #define IDS_CM_Invalid_Domain_Timeout                                   IDS_CM( 19 ) // Upgrade domain timeout must be greater than the combined health check wait and retry timeouts. Requested values (domain timeout, wait, retry):
@@ -345,40 +408,41 @@
 #define IDS_CM_VolumeDescriptionMissing                                 IDS_CM( 96 ) // Volume description missing
 #define IDS_CM_UnsupportedPreviewFeature_Upgrade_Failed                 IDS_CM( 97 ) // Cannot upgrade cluster with unsupported preview features enabled : version {0}
 #define IDS_CM_AzureFileVolumeAccountKeyNotDisplayed                    IDS_CM( 98 ) // AccountKeyNotDisplayed
+#define IDS_CM_InvalidDnsName_PatitionedQueryFormatInCompliance         IDS_CM( 99 ) // Service DNS name {0} should not match partitioned query format.
 
 
 #define IDS_HM( Index )                                     RESOURCE_ID( IDS_MANAGEMENT( 200 ), Index )
-#define IDS_HM_Health_Evaluation_Error_Event                IDS_HM( 1 ) // Error event:
-#define IDS_HM_Health_Evaluation_Expired_Event              IDS_HM( 2 ) // Expired event:
-#define IDS_HM_Health_Evaluation_Unhealthy_Event            IDS_HM( 3 ) // Unhealthy event:
-#define IDS_HM_Health_Evaluation_Unhealthy_Replicas         IDS_HM( 4 ) // Unhealthy replicas:
-#define IDS_HM_Health_Evaluation_Unhealthy_Partitions       IDS_HM( 5 ) // Unhealthy partitions:
-#define IDS_HM_Health_Evaluation_Unhealthy_Deployed_Service_Packages    IDS_HM( 6 ) // Unhealthy deployed service packages:
-#define IDS_HM_Health_Evaluation_Unhealthy_DeployedApplications         IDS_HM( 7 ) // Unhealthy deployed applications:
-#define IDS_HM_Health_Evaluation_Unhealthy_ServiceType_Services         IDS_HM( 8 ) // Unhealthy services:
-#define IDS_HM_Health_Evaluation_Unhealthy_Nodes                        IDS_HM( 9 ) // Unhealthy nodes:
-#define IDS_HM_Health_Evaluation_Unhealthy_Applications                 IDS_HM( 10 ) // Unhealthy applications:
-#define IDS_HM_Health_Evaluation_Unhealthy_UD_Deployed_Applications     IDS_HM( 11 ) // Unhealthy upgrade domain deployed applications:
-#define IDS_HM_Health_Evaluation_Unhealthy_UD_Nodes                     IDS_HM( 12 ) // Unhealthy upgrade domain nodes:
-#define IDS_HM_Health_Evaluation_Unhealthy_System_Application           IDS_HM( 13 ) // System application is unhealthy.
+#define IDS_HM_Health_Evaluation_Unhealthy_Event                        IDS_HM( 1 ) // '{0}' reported {1} for property '{2}'.
+#define IDS_HM_Health_Evaluation_Expired_Event                          IDS_HM( 2 ) // The {0} reported by '{1}' for property '{2}' is expired. The report was applied at {3} with TTL {4}.
+#define IDS_HM_Health_Evaluation_Unhealthy_EventPerPolicy               IDS_HM( 3 ) // '{0}' reported {1} for property '{2}'. The evaluation treats Warning as Error.
+#define IDS_HM_Health_Evaluation_Unhealthy_Replicas                     IDS_HM( 4 ) // {0}% ({1}/{2}) replicas are unhealthy. The evaluation tolerates {3}% unhealthy replicas per partition.
+#define IDS_HM_Health_Evaluation_Unhealthy_Partitions                   IDS_HM( 5 ) // {0}% ({1}/{2}) partitions are unhealthy. The evaluation tolerates {3}% unhealthy partitions per service.
+#define IDS_HM_Health_Evaluation_Unhealthy_Deployed_Service_Packages    IDS_HM( 6 ) // {0}% ({1}/{2}) deployed service packages are unhealthy.
+#define IDS_HM_Health_Evaluation_Unhealthy_DeployedApplications         IDS_HM( 7 ) // {0}% ({1}/{2}) deployed applications are unhealthy. The evaluation tolerates {3}% unhealthy deployed applications.
+#define IDS_HM_Health_Evaluation_Unhealthy_ServiceType_Services         IDS_HM( 8 ) // {0}% ({1}/{2}) services of service type '{3}' are unhealthy. The evaluation tolerates {4}% unhealthy services for the service type.
+#define IDS_HM_Health_Evaluation_Unhealthy_Nodes                        IDS_HM( 9 ) // {0}% ({1}/{2}) nodes are unhealthy. The evaluation tolerates {3}% unhealthy nodes.
+#define IDS_HM_Health_Evaluation_Unhealthy_Applications                 IDS_HM( 10 ) // {0}% ({1}/{2}) applications are unhealthy. The evaluation tolerates {3}% unhealthy applications.
+#define IDS_HM_Health_Evaluation_Unhealthy_UD_Deployed_Applications     IDS_HM( 11 ) // {0}% ({1}/{2}) deployed applications in upgrade domain '{3}' are unhealthy. The evaluation tolerates {4}% unhealthy deployed applications per upgrade domain.
+#define IDS_HM_Health_Evaluation_Unhealthy_UD_Nodes                     IDS_HM( 12 ) // {0}% ({1}/{2}) nodes in upgrade domain '{3}' are unhealthy. The evaluation tolerates {4}% unhealthy nodes per upgrade domain.
+#define IDS_HM_Health_Evaluation_Unhealthy_System_Application           IDS_HM( 13 ) // System application is in {0}.
 #define IDS_HM_Health_Report_Reserved_SourceId                          IDS_HM( 14 ) // SourceId is a reserved name:
 #define IDS_HM_Health_Report_Invalid_Empty_Input                        IDS_HM( 15 ) // Input parameter must be a non-empty string:
 #define IDS_HM_Health_Report_Invalid_SourceId                           IDS_HM( 16 ) // SourceId must be a non-empty string with less characters than max length of
 #define IDS_HM_Health_Report_Invalid_Property                           IDS_HM( 17 ) // Property must be a non-empty string with less characters than max length of
 #define IDS_HM_Health_Report_Invalid_Description                        IDS_HM( 18 ) // Description must have less characters than max length of
 #define IDS_HM_Health_Report_Invalid_Health_State                       IDS_HM( 19 ) // Specified health state is invalid:
-#define IDS_HM_Health_Evaluation_Unhealthy_Node                         IDS_HM( 20 ) // Unhealthy node:
-#define IDS_HM_Health_Evaluation_Unhealthy_Replica                      IDS_HM( 21 ) // Unhealthy replica:
-#define IDS_HM_Health_Evaluation_Unhealthy_Partition                    IDS_HM( 22 ) // Unhealthy partition:
-#define IDS_HM_Health_Evaluation_Unhealthy_Service                      IDS_HM( 23 ) // Unhealthy service:
-#define IDS_HM_Health_Evaluation_Unhealthy_Application                  IDS_HM( 24 ) // Unhealthy application:
-#define IDS_HM_Health_Evaluation_Unhealthy_DeployedApplication          IDS_HM( 25 ) // Unhealthy deployed application:
-#define IDS_HM_Health_Evaluation_Unhealthy_DeployedServicePackage       IDS_HM( 26 ) // Unhealthy deployed service package:
+#define IDS_HM_Health_Evaluation_Unhealthy_Node                         IDS_HM( 20 ) // Node '{0}' is in {1}.
+#define IDS_HM_Health_Evaluation_Unhealthy_Replica                      IDS_HM( 21 ) // Replica '{0}' is in {1}.
+#define IDS_HM_Health_Evaluation_Unhealthy_Partition                    IDS_HM( 22 ) // Partition '{0}' is in {1}.
+#define IDS_HM_Health_Evaluation_Unhealthy_Service                      IDS_HM( 23 ) // Service '{0}' is in {1}.
+#define IDS_HM_Health_Evaluation_Unhealthy_Application                  IDS_HM( 24 ) // Application '{0}' is in {1}.
+#define IDS_HM_Health_Evaluation_Unhealthy_DeployedApplication          IDS_HM( 25 ) // Deployed application on node '{0}' is in {1}.
+#define IDS_HM_Health_Evaluation_Unhealthy_DeployedServicePackage       IDS_HM( 26 ) // Service package for manifest '{0}' and service package activation ID '{1}' is in {2}.
 #define IDS_HM_Health_Stale_Report_SequenceNumber                       IDS_HM( 27 ) // There is a health event with same SourceId and Property with equal or higher sequence number. Health report versus existing sequence numbers:
 #define IDS_HM_Health_Stale_Report_Instance                             IDS_HM( 28 ) // The entity instance is stale. Health report versus existing instance:
 #define IDS_HM_Health_Stale_Report_Entity_Deleted                       IDS_HM( 29 ) // The entity with the same instance {0} has been deleted.
-#define IDS_HM_Health_Evaluation_Unhealthy_DeltaNodesCheck              IDS_HM( 30 ) // Delta nodes health check failed. Baseline and current status:
-#define IDS_HM_Health_Evaluation_Unhealthy_UpgradeDomainDeltaNodesCheck IDS_HM( 31 ) // Upgrade domain delta nodes health check failed. Upgrade domain, baseline and current status:
+#define IDS_HM_Health_Evaluation_Unhealthy_DeltaNodesCheck              IDS_HM( 30 ) // Delta nodes health check failed. There are {0}% ({1}/{2}) unhealthy nodes. Baseline: {3}% ({4}/{5}). MaxPercentDeltaUnhealthyNodes: {6}%.
+#define IDS_HM_Health_Evaluation_Unhealthy_UpgradeDomainDeltaNodesCheck IDS_HM( 31 ) // Delta nodes health check for upgrade domain '{0}' failed. There are {1}% ({2}/{3}) unhealthy nodes. Baseline: {4}% ({5}/{6}). MaxPercentUpgradeDomainDeltaUnhealthyNodes: {7}%.
 #define IDS_HM_QueryJobQueueFull                                        IDS_HM( 32 ) // Drop incoming query because of too many queued health queries:
 #define IDS_HM_ApplicationNotFound                                      IDS_HM( 33 ) // Application is not found in Health Store:
 #define IDS_HM_ApplicationPolicyNotSet                                  IDS_HM( 34 ) // Application policy is not set for application
@@ -399,7 +463,7 @@
 #define IDS_HM_EntityNotFound                                           IDS_HM( 49 ) // Entity not found in Health Store.
 #define IDS_HM_MissingRequiredReport                                    IDS_HM( 50 ) // Entity doesn't have a report from the System authority component {0}. This is usually transient, caused by message delays or timing issues. If it persists, check the authority component regarding this entity.
 #define IDS_HM_SystemApplicationEvaluationError                         IDS_HM( 51 ) // There was an error evaluating fabric:/System application health.
-#define IDS_HM_Health_Evaluation_Unhealthy_ApplicationTypeApplications  IDS_HM( 52 ) // Unhealthy application type applications:
+#define IDS_HM_Health_Evaluation_Unhealthy_ApplicationTypeApplications  IDS_HM( 52 ) // {0}% ({1}/{2}) applications of type '{3}' are unhealthy. The evaluation tolerates {4}% unhealthy applications for this application type.
 #define IDS_HM_Invalid_ApplicationTypeHealthPolicyMapItem               IDS_HM( 53 ) // Invalid application health policy map item at position
 #define IDS_HM_Health_Report_Reserved_Property                          IDS_HM( 54 ) // Property is a reserved name:
 #define IDS_HM_DuplicateNodeFilters                                     IDS_HM( 55 ) // The specified node filter list contains multiple entries for the same key. Node filter information:
@@ -428,6 +492,8 @@
 #define IDS_QUERY_Query_Not_Supported                       IDS_QUERY( 1 ) // Query '{0}' is not supported. This can happen when the cluster is running an older version and does not recognize the newer query, or does not support the query configuration.
 #define IDS_QUERY_Query_Missing_Required_Argument           IDS_QUERY( 2 ) // Query '{0}' is missing required argument {1}.
 #define IDS_QUERY_Query_Unknown_Argument                    IDS_QUERY( 3 ) // Query '{0}' can't process argument {1}.
+#define IDS_QUERY_Query_Arg_Not_Found                       IDS_QUERY( 4 ) // Required query arg '{1}' not found.
+#define IDS_QUERY_Query_Arg_Invalid_Character               IDS_QUERY( 5 ) // Query arg {1} : '{2}' contains an invalid character {3}.
 
 #define IDS_HTTP_GATEWAY( Index )                           RESOURCE_ID( IDS_MANAGEMENT( 800 ), Index )
 #define IDS_HTTP_GATEWAY_Deserialization_Error              IDS_HTTP_GATEWAY( 1 ) // The request body can't be deserialized. Make sure it contains a valid {0} object.
@@ -436,6 +502,7 @@
 #define IDS_HTTP_GATEWAY_Invalid_ReplicaId_Parameter        IDS_HTTP_GATEWAY( 4 ) // The specified replica ID is invalid: {0}.
 #define IDS_HTTP_GATEWAY_Invalid_Filter_Parameter           IDS_HTTP_GATEWAY( 5 ) // The specified filter value is invalid: {0}. Please specify a valid number.
 #define IDS_HTTP_GATEWAY_Missing_Parameter                  IDS_HTTP_GATEWAY( 6 ) // The specified parameter is missing: {0}.
+#define IDS_HTTP_GATEWAY_Multiple_Entries                   IDS_HTTP_GATEWAY( 7 ) // The result contains multiple entries for the same name: {0}.
 
 #define IDS_FEDERATION( Index )                             RESOURCE_ID( 16000, Index )
 #define IDS_FEDERATION_Neighborhood_Lost                    IDS_FEDERATION( 1 )  // Neighborhood loss detected:
@@ -446,7 +513,7 @@
 #define IDS_FABRIC_NODE_SecurityApi                         IDS_FABRIC_NODE( 3 )  // Security API:
 
 #define IDS_HOSTING( Index )                                RESOURCE_ID( 18000, Index )
-#define IDS_HOSTING_Download_Failed                         IDS_HOSTING( 1 )  // There was an error during download.
+#define IDS_HOSTING_Download_Failed                         IDS_HOSTING( 1 )  // There was an error during download. 
 #define IDS_HOSTING_Activation_Failed                       IDS_HOSTING( 2 )  // There was an error during activation.
 #define IDS_HOSTING_Application_Activated                   IDS_HOSTING( 3 )  // The application was activated successfully.
 #define IDS_HOSTING_ServicePackage_Activated                IDS_HOSTING( 4 )  // The ServicePackage was activated successfully.
@@ -497,6 +564,11 @@
 #define IDS_HOSTING_DllLoadFailed                          IDS_HOSTING(47)  // Failed to load Dll {0}.
 #define IDS_HOSTING_RtlGetVersionFailed                    IDS_HOSTING(48)  // Failed to execute RtlGetVersion to determine OS Build Number. Status {0}.
 #define IDS_HOSTING_CertificateBindingAlreadyExists        IDS_HOSTING(49)  // There is already a certificate with thumbprint {0} bound to port {1}. New certificate thumbprint specified: {2}.
+#define IDS_HOSTING_SecretStoreReferenceDecryptionFailed        IDS_HOSTING(50)  // Failed to retrieve SecreteStore Values for section:{0}, Ref:{1}.
+#define IDS_HOSTING_FailedToLoadConfigSettingsFile         IDS_HOSTING(51)  // Couldn't find file Settings.xml {0}.
+#define IDS_HOSTING_SecretStoreIsUnavailable               IDS_HOSTING(52)  // SecretService is not enabled. Please make sure you have IsEnabled set to true in ClusterManifest for section CentralSecretService.
+#define IDS_HOSTING_DownloadFromStoreFailed                IDS_HOSTING(53)  // Failed to download '{0}' from ImageStore. Error '{1}'. Check if the file or folder is present in ImageStore by using 'Get-ServiceFabricImageStoreContent -RemoteRelativePath {2}'.
+#define IDS_HOSTING_ExtractArchiveFailed                   IDS_HOSTING(54)  // Failed extracting '{0}' to '{1}' with Error: '{2}' while trying to {3}.
 
 #define IDS_PLB( Index )                                    RESOURCE_ID( 19000, Index )
 #define IDS_PLB_Node_Capacity_Violation                     IDS_PLB( 1 )  // The Cluster Resource Manager has detected a capacity violation for:
@@ -522,6 +594,10 @@
 #define IDS_FSS_Invalid_SecurityPrincipalAccountType        IDS_FSS( 1 ) // The security principal account type '{0}' is not recognized as a valid value.
 #define IDS_FSS_Staging_SMBCopy_NetworkFailure              IDS_FSS( 2 ) // Unable to copy file to the image store service primary's staging location due to network error '{0}'. Please make sure SMB port 445 is enabled in the cluster's Network Security Group(NSG).
 #define IDS_FSS_Staging_SMBCopyFailure                      IDS_FSS( 3 ) // Unable to copy file to the image store service primary's staging location due to error '{0}'. Please retry.
+#define IDS_FSS_CloseTo_OutOfDiskSpace                      IDS_FSS( 4 ) // Disk {0} on node {1} has {2}% free space ({3} free bytes / {4} total bytes), which is less than desired limit of {5} bytes. Image store size is {6} bytes ({7}% of total disk space). Potential ways to reduce space are removing unused application packages and application types.
+#define IDS_FSS_DiskSpaceOk                                 IDS_FSS( 5 ) // Enough disk space available on node:{0} volume:{1}
+#define IDS_FSS_UnexpectedMergeSize                         IDS_FSS( 6 ) // Upload failed due to an internal error. Image store file {0} has {1} bytes, which doesn't match expected value of {2} bytes. Please retry.
+#define IDS_FSS_UnexpectedStagingChunkSize                  IDS_FSS( 7 ) // Upload failed due to an internal error. File chunk received has {0} bytes, which doesn't match expected value of {1} bytes. Please retry.
 
 #define IDS_FSS_CLIENT( Index )                             RESOURCE_ID( IDS_FSS( 500 ), Index )
 #define IDS_FSS_CLIENT_SendChunkFailure                     IDS_FSS_CLIENT( 1 ) // Unable to send file chunks to the image store. Please retry after network congestion is reduced.
@@ -752,6 +828,7 @@
 #define IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_WITH_REPLICAID_MISMATCH                       IDS_ERROR_MESSAGE( 184 )  // Cannot close replica as provided ReplicaId do not match.
 #define IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_WITH_INVALID_REPLICA_STATE                    IDS_ERROR_MESSAGE( 185 )  // Cannot close replica that is not open or has close in progress.
 #define IDS_ERROR_MESSAGE_FABRIC_E_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS            IDS_ERROR_MESSAGE( 186 )  // Single Instance application upgrade in progress.
+#define IDS_ERROR_MESSAGE_FABRIC_E_COMPOSE_DEPLOYMENT_NOT_UPGRADING                           IDS_ERROR_MESSAGE( 187 )  // Compose deployment is not upgrading.
 
 #define IDS_MODELV2( Index )                                        RESOURCE_ID( 26000, Index )
 #define IDS_MODELV2_ContainerImageNotSpecified                      IDS_MODELV2( 1 ) // '{0}': 'image' not specified.
@@ -772,3 +849,18 @@
 #define IDS_MODELV2_VolumeCreationParametersNotSpecified            IDS_MODELV2( 16 ) // '{0}': 'creationParameters' not specified in application-scoped volume ref.
 #define IDS_MODELV2_InvalidCharactersInName                         IDS_MODELV2( 17 ) // '{0}': characters '{1}' are not allowed in name '{2}'
 #define IDS_MODELV2_ServiceNotSpecified                             IDS_MODELV2( 18 ) // '{0}': At least one service description should be specified.
+#define IDS_MODELV2_TriggerNotSupported                             IDS_MODELV2( 19 ) // '{0}': Only AverageLoad trigger kind is supported in this version.
+#define IDS_MODELV2_MechanismNotSupported                           IDS_MODELV2( 20 ) // '{0}': Only AddRemoveReplica mechanism kind is supported in this version.
+#define IDS_MODELV2_AutoScalingPolicy_MinMaxReplicas                IDS_MODELV2( 21 ) // Minimum number of replicas {0} cannot be greater than maximum number of replicas {1}.
+#define IDS_MODELV2_AutoScalingPolicy_MinReplicaCount               IDS_MODELV2( 22 ) // Minimum replica count {0} must be greater than or equal to zero.
+#define IDS_MODELV2_AutoScalingPolicy_MaxReplicaCount               IDS_MODELV2( 23 ) // Maximum replica count {0} must be either equal to -1 (unlimited) or greater than zero.
+#define IDS_MODELV2_InvalidNetworkType                              IDS_MODELV2( 24 ) // '{0}': NetworkType {1} is invalid or not supported.
+#define IDS_MODELV2_InvalidNetworkProperties                        IDS_MODELV2( 25 ) // '{0}': Network properties are invalid for networkType {1}.
+#define IDS_MODELV2_HttpHostsNotSpecified                           IDS_MODELV2( 26 ) // '{0}': HttpConfig hosts not specified.
+#define IDS_MODELV2_ServiceNameNotSpecified                         IDS_MODELV2( 27 ) // '{0}': Service name not specified.
+#define IDS_MODELV2_ApplicationNameNotSpecified                     IDS_MODELV2( 28 ) // '{0}': Application name not specified.
+#define IDS_MODELV2_PortNotSpecified                                IDS_MODELV2( 29 ) // '{0}': Listen Port not specified.
+#define IDS_MODELV2_HttpRoutesNotSpecified                          IDS_MODELV2( 30 ) // '{0}': Http config routes not specified.
+#define IDS_MODELV2_PathMatchTypeNotSpecified                       IDS_MODELV2( 31 ) // '{0}': Http path match type not specified.
+#define IDS_MODELV2_PortNotUnique                                   IDS_MODELV2( 32 ) // '{0}': Port '{1}' not unique.
+#define IDS_MODELV2_EndpointNotReferenced                           IDS_MODELV2( 33 ) // '{0}': Endpoint '{1}' not referenced in networkRefs.

@@ -22,6 +22,9 @@ set NamingOperationRetryTimeout 60
 set SendLoadReportInterval 1
 set PeriodicLoadPersistInterval 1
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 +10 ud=UD4 cap=CPU:200
 +20 ud=UD3 cap=CPU:100
 +30 ud=UD2 cap=CPU:200

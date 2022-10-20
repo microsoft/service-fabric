@@ -72,6 +72,12 @@ namespace System.Fabric.Store
         /// </summary>
         private LockManager lockManager;
 
+        /// <summary>
+        /// The oldest grantee of the resource at the time this lock was expired
+        /// If not expired, then this is -1
+        /// </summary>
+        internal long oldestGrantee;
+
         #endregion
 
         /// <summary>
@@ -84,6 +90,7 @@ namespace System.Fabric.Store
         /// <param name="timeout">Specifies for how long a pending request is kept alive.</param>
         /// <param name="status">Current lock status.</param>
         /// <param name="isUpgraded"></param>
+        /// <param name="oldestGrantee">The oldest grantee of the lock when this is expired</param>
         [SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors", Justification = "By design.")]
         internal LockControlBlock(
             LockManager lockManager,
@@ -92,7 +99,8 @@ namespace System.Fabric.Store
             LockMode mode,
             int timeout,
             LockStatus status,
-            bool isUpgraded)
+            bool isUpgraded,
+            long oldestGrantee = -1)
         {
             this.lockManager = lockManager;
             this.LockOwner = owner;
@@ -103,6 +111,7 @@ namespace System.Fabric.Store
             this.LockCount = 1;
             this.GrantTime = long.MinValue;
             this.IsUpgradedLock = isUpgraded;
+            this.oldestGrantee = oldestGrantee;
         }
 
         #region ILockResult Members
@@ -169,6 +178,11 @@ namespace System.Fabric.Store
         public LockManager LockManager
         {
             get { return this.lockManager; }
+        }
+
+        public long OldestGrantee
+        {
+            get { return this.oldestGrantee; }
         }
 
         #endregion

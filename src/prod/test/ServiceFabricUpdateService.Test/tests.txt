@@ -1,0 +1,2 @@
+SingleMachine-CIT.json
+    TESTS:ServiceFabricUpdateService.Test.dll

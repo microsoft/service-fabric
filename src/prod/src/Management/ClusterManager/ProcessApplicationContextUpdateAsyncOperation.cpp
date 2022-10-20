@@ -38,12 +38,6 @@ void ProcessApplicationContextUpdateAsyncOperation::OnStart(AsyncOperationSPtr c
 
     if (error.IsSuccess())
     {
-        if (context_.IsCommitPending)
-        {
-            this->CommitContexts(thisSPtr);
-            return;
-        }
-
         // Get the application context from the store
         auto storeTx = this->CreateTransaction();
         error = this->Replica.GetCompletedOrUpgradingApplicationContext(storeTx, applicationContext_);
@@ -194,7 +188,6 @@ void ProcessApplicationContextUpdateAsyncOperation::DeleteUpdateContext(Common::
 
 void ProcessApplicationContextUpdateAsyncOperation::CommitContexts(Common::AsyncOperationSPtr const & thisSPtr)
 {
-    context_.IsCommitPending = true;
     auto storeTx = this->CreateTransaction();
 
     auto appContextUPtr = make_unique<ApplicationContext>(std::move(applicationContext_));

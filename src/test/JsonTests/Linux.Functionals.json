@@ -33,7 +33,7 @@
     {
       "Name": "Linux.FSSCursor.test",
       "Type": "Linux_ScriptTest",
-      "Owners": "iyyappam,mialu,oanapl",
+      "Owners": "iyyappam,jeongham",
       "ResourcesRequired": "Server:1&Azure:1",
       "Tags": "Admin,ImageStore,EndToEnd",
       "TestExecutionParameters": {
@@ -75,23 +75,9 @@
       }
     },
     {
-      "Name": "SfrpLinuxRedhat.Smoke.Test",
-      "Type": "LinuxRedhat_SFRP_ScriptTest",
-      "Owners": "lemai,maburlik,chenxu",
-      "ResourcesRequired": "Server:1&Azure:1",
-      "TestExecutionParameters": {
-        "SetupType": "XCopy",
-        "SetupTimeout": "900",
-        "TaskName": "SfrpLinuxRedHat.Smoke.Test",
-        "ExecutionTimeout": "7200",
-        "CleanupType": "XCopy",
-        "CleanupTimeout": "2100"
-      }
-    },
-    {
       "Name": "Linux.AppProvisionTest",
       "Type": "Linux_ScriptTest",
-      "Owners": "oanapl,iyyappam",
+      "Owners": "iyyappam,jeongham",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",

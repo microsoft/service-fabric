@@ -181,6 +181,14 @@ namespace Management
                 Common::AsyncOperationSPtr const &) const;
             Common::ErrorCode EndReportTaskFailure(Common::AsyncOperationSPtr const &) const;
 
+            Common::AsyncOperationSPtr BeginUnprovisionApplicationType(
+                Management::ClusterManager::UnprovisionApplicationTypeDescription const &,
+                Common::TimeSpan const timeout,
+                Common::AsyncCallback const & callback,
+                Common::AsyncOperationSPtr const &) const;
+            Common::ErrorCode EndUnprovisionApplicationType(
+                Common::AsyncOperationSPtr const &) const;
+
         private:
             class ServiceAsyncOperationBase;
             class CreateServiceAsyncOperation;
@@ -191,6 +199,7 @@ namespace Management
             Api::IServiceManagementClientPtr serviceMgmtClient_;
             Api::IPropertyManagementClientPtr propertyMgmtClient_;
             Api::IClusterManagementClientPtr clusterMgmtClient_;
+            Api::IApplicationManagementClientPtr applicationManagementClient_;
         };
     }
 }

@@ -128,7 +128,7 @@ Common::ErrorCode AverageServiceLoadScalingTrigger::Validate(bool isStateful) co
             ErrorCodeValue::InvalidServiceScalingPolicy,
             wformatString(GET_NS_RC(ScalingPolicy_MinMaxInstances), lowerLoadThreshold_, upperLoadThreshold_));
     }
-    // Setting UseOnlyPrimaryLoad to ture doesn't make sense for stateless services, since all replicas are modeled as secondaries
+    // Setting UseOnlyPrimaryLoad to true doesn't make sense for stateless services, since all replicas are modeled as secondaries
     if (!isStateful && useOnlyPrimaryLoad_)
     {
         return ErrorCode(

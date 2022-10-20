@@ -67,6 +67,7 @@ IpcClient::IpcClient(
 
     this->transport_->DisableThrottle();
     this->transport_->SetMaxOutgoingFrameSize(TransportConfig::GetConfig().IpcMaxMessageSize);
+    this->transport_->SetKeepAliveTimeout(TransportConfig::GetConfig().IpcKeepaliveIdleTime);
     this->demuxer_.SetReplyHandler(this->requestReply_);
         
     //If Unreliable transport is disabled for request reply over IPC

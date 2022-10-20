@@ -28,6 +28,7 @@ namespace Data
             DECLARE_RCR_STRUCTURED_TRACE(ConfigPackageLoadFailed, Common::Guid, LONG64, std::wstring, std::wstring, std::wstring, LONG64);
             DECLARE_RCR_STRUCTURED_TRACE(CreateTransactionalReplicator, Common::Guid, LONG64, bool, std::wstring, std::wstring, std::wstring);
             DECLARE_RCR_STRUCTURED_TRACE(Warning, Common::Guid, LONG64, std::wstring);
+            DECLARE_RCR_STRUCTURED_TRACE(Info, Common::Guid, LONG64, std::wstring);
 
             // CompatRDStateProvider
             DECLARE_RCR_STRUCTURED_TRACE(CompatRDStateProviderCtor, Common::Guid, LONG64, LONGLONG, Common::WStringLiteral);
@@ -47,6 +48,7 @@ namespace Data
                 RCR_STRUCTURED_TRACE(ConfigPackageLoadFailed, 5, Error, "{1}: Failed to load replicator settings from ConfigPackage: {2} ConfigSection: {3} ConfigSecuritySection: {4} ErrorCode: {5}", "id", "ReplicaId", "ConfigPackage", "ConfigSection", "ConfigSecuritySection", "ErrorCode"),
                 RCR_STRUCTURED_TRACE(CreateTransactionalReplicator, 6, Info, "{1}: IsReplicatorSettingsPresent: {2} ReplicatorConfigPackage: {3} ReplicatorConfigSection: {4} ReplicatorSecuritySection: {5}", "id", "ReplicaId", "ReplicatorSettingsProvided", "ReplicatorConfigPackage", "ReplicatorConfigSection", "ReplicatorSecuritySection"),
                 RCR_STRUCTURED_TRACE(Warning, 7, Warning, "{1}: {2}", "id", "ReplicaId", "Message"),
+                RCR_STRUCTURED_TRACE(Info, 8, Info, "{1}: {2}", "id", "ReplicaId", "Message"),
 
                 // CompatRDStateProvider
                 RCR_STRUCTURED_TRACE(CompatRDStateProviderCtor, 10, Info, "{1}: SpId: {2} SpName: {3}", "id", "ReplicaId", "SpId", "SpName"),

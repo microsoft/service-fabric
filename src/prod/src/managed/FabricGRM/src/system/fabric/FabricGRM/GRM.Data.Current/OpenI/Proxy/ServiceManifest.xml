@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="Proxy" Version="1.0"
+  xmlns="http://schemas.microsoft.com/2011/01/fabric"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <ServiceTypes>
+    <StatelessServiceType ServiceTypeName="GatewayProxyServiceType" UseImplicitHost="true"/>
+  </ServiceTypes>
+
+  <CodePackage Name="GatewayProxyService.Code" Version="1.0">
+    <EntryPoint>
+      <ContainerHost>
+        <ImageName>microsoft/service-fabric-reverse-proxy:0.20.0</ImageName>
+        <Commands></Commands>
+      </ContainerHost>
+    </EntryPoint>
+
+    <EnvironmentVariables>
+      <EnvironmentVariable Name="Gateway_Listen_Network" Value=""/>
+      <EnvironmentVariable Name="Gateway_Config" Value=""/>
+      <EnvironmentVariable Name="GatewayMode" Value="true"/>
+      <EnvironmentVariable Name="Gateway_Resolver_Uses_Dynamic_Port" Value=""/>
+      <EnvironmentVariable Name="Fabric_Endpoint_GatewayProxyResolverEndpoint" Value="19079"/>
+
+        <EnvironmentVariable Name="SF_ClientCertCommonName" Value=""/>
+      <EnvironmentVariable Name="SF_ClientCertIssuerThumbprints" Value=""/>
+      <EnvironmentVariable Name="SF_ClusterCertCommonNames" Value=""/>
+      <EnvironmentVariable Name="SF_ClusterCertIssuerThumbprints" Value=""/>
+    </EnvironmentVariables>
+  </CodePackage>
+
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="GatewayProxyEndpoint" CodePackageRef="GatewayProxyService.Code" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

@@ -14,6 +14,7 @@ namespace System.Fabric.UpgradeService
         public static readonly TimeSpan MaxOperationTimeout = TimeSpan.FromMinutes(2);
         public static readonly TimeSpan MaxTimeoutForWaitTasksExit = TimeSpan.FromSeconds(10);
         public static readonly TimeSpan KvsCommitTimeout = TimeSpan.FromSeconds(30);
+        public static readonly TimeSpan KvsCreateTransactionRetryTime = TimeSpan.FromSeconds(5);
         public const int PartitionReadyWaitInMilliseconds = 10000;
         public const string SystemServicePrefix = @"fabric:/System/";
         public const string ImageStoreConnectionString = "fabric:ImageStore";
@@ -75,6 +76,7 @@ namespace System.Fabric.UpgradeService
             public const string TestCabFolderParam = "TestCabFolder";
             public const string OnlyBaseUpgradeParam = "OnlyBaseUpgrade";
             public const string CategoryId = "c80cb2c8-6c51-4732-b615-f4762d0e9feb";
+            public const string HealthProperty = "WUSCoordinator";
 
             public const int PollingIntervalInMinutesDefault = 15;
             public const int WuApiTimeoutInMinutesDefault = 30;            
@@ -88,6 +90,7 @@ namespace System.Fabric.UpgradeService
             public readonly static string HealthSourceId = "UpgradeService.Primary";
             public readonly static string SFRPPollHealthProperty = "SFRPPoll";
             public readonly static string SFRPStreamChannelHealthProperty = "SFRPStreamChannel";
+            public readonly static string ClusterCommandProcessorHealthProperty  = "ClusterCommandProcessor";
         }
 
         public static class ApplicationCoordinator

@@ -1,0 +1,40 @@
+load DynamicLonghaul-PAAS-Setup.test
+
+setcfg Config.TraceEtw.Level 4
+
+# Create the cluster.
+fmservice 3 1
+namingservice 1 3 1
+cmandfsservice 3 1
+faservice 3 1
+
+cm.add v1
+
+var NumNodes 5
+var NumSeedNodes 3
+
+cm.setnodes v1 <var.NumNodes> <var.NumSeedNodes> vmSizes=<var.vmSize>
+
+cm.deployandstart v1
+
+# Deploy the Service App
+uploadapp DynamicLonghaulApp apppackages\DynamicLonghaulApp
+provisionapp DynamicLonghaulApp
+
+var accountKey <get.secret.AccountKey-shrek>
+var dumpContainerName <get.crashdumpcontainername>
+
+createapp fabric:/DynamicLonghaulApp DynamicLonghaulApp appParameters={"DiagnosticsConnectionString":"xstore:DefaultEndpointsProtocol=https;AccountName=shrek;AccountKey=<var.accountKey>","CrashDumpContainerName":"<var.dumpContainerName>"}
+createservice fabric:/DynamicLonghaulApp fabric:/DynamicLonghaulApp/Service DynamicLonghaulVolatileServiceType true minReplicaSetSize=2 targetReplicaSetSize=3 partitionCount=1 lowKey=0 highKey=5 uniformInt64Partition=true hasPersistedState=false
+
+verify
+
+# Start client and test
+client.newclient DynamicLonghaul NativeReplicatorHTTPClient.HTTPClient,NativeReplicatorHTTPClient parameters=serviceName:fabric:/DynamicLonghaulApp/Service
+
+client.starttask DynamicLonghaul DynamicLonghaulTask StartTest parameters={"loopCount":"3","int64PartitionKey":"1","retryCount":"512","sendTimeout":"30","PAAS":"true","scenario":"basic;primaryfailover;randomfailover;failoverstress;","persisted":"false"}
+
+# Current test finished around 2 hours 50 mins, set it to 4 hours.
+client.waittask taskIds=DynamicLonghaulTask timeout=14400
+
+quit

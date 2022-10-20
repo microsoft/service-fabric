@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<InfrastructureInformation xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <NodeList>
+    <Node NodeName="Node1" IPAddressOrFQDN="148.151.88.173" RoleOrTierName="NodeType1" NodeTypeRef="Nodes" IsSeedNode="true" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="10545" />
+        <ClusterConnectionEndpoint Port="10546" />
+        <HttpGatewayEndpoint Port="19080" Protocol="http" />
+        <ServiceConnectionEndpoint Port="10547" />
+        <ClusterManagerReplicatorEndpoint Port="10548" />
+        <NamingReplicatorEndpoint Port="10548" />
+        <FailoverManagerReplicatorEndpoint Port="10548" />
+        <ImageStoreServiceReplicatorEndpoint Port="10551" />
+        <ApplicationEndpoints StartPort="10552" EndPort="10584" />
+      </Endpoints>
+    </Node>
+    <Node NodeName="Node2" IPAddressOrFQDN="148.151.88.173" RoleOrTierName="NodeType1" NodeTypeRef="Nodes" IsSeedNode="true" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="10545" />
+        <ClusterConnectionEndpoint Port="10546" />
+        <HttpGatewayEndpoint Port="19080" Protocol="http" />
+        <ServiceConnectionEndpoint Port="10547" />
+        <ClusterManagerReplicatorEndpoint Port="10548" />
+        <NamingReplicatorEndpoint Port="10548" />
+        <FailoverManagerReplicatorEndpoint Port="10548" />
+        <ImageStoreServiceReplicatorEndpoint Port="10551" />
+        <ApplicationEndpoints StartPort="10552" EndPort="10584" />
+      </Endpoints>
+    </Node>
+    <Node NodeName="Node3" IPAddressOrFQDN="148.151.88.173" RoleOrTierName="NodeType1" NodeTypeRef="Nodes" IsSeedNode="true" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="10545" />
+        <ClusterConnectionEndpoint Port="10546" />
+        <HttpGatewayEndpoint Port="19080" Protocol="http" />
+        <ServiceConnectionEndpoint Port="10547" />
+        <ClusterManagerReplicatorEndpoint Port="10548" />
+        <NamingReplicatorEndpoint Port="10548" />
+        <FailoverManagerReplicatorEndpoint Port="10548" />
+        <ImageStoreServiceReplicatorEndpoint Port="10551" />
+        <ApplicationEndpoints StartPort="10552" EndPort="10584" />
+      </Endpoints>
+    </Node>
+    <Node NodeName="Node4" IPAddressOrFQDN="148.151.88.173" RoleOrTierName="NodeType1" NodeTypeRef="Nodes" IsSeedNode="true" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="10545" />
+        <ClusterConnectionEndpoint Port="10546" />
+        <HttpGatewayEndpoint Port="19080" Protocol="http" />
+        <ServiceConnectionEndpoint Port="10547" />
+        <ClusterManagerReplicatorEndpoint Port="10548" />
+        <NamingReplicatorEndpoint Port="10548" />
+        <FailoverManagerReplicatorEndpoint Port="10548" />
+        <ImageStoreServiceReplicatorEndpoint Port="10551" />
+        <ApplicationEndpoints StartPort="10552" EndPort="10584" />
+      </Endpoints>
+    </Node>
+    <Node NodeName="Node5" IPAddressOrFQDN="148.151.88.173" RoleOrTierName="NodeType1" NodeTypeRef="Nodes" IsSeedNode="true" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="10545" />
+        <ClusterConnectionEndpoint Port="10546" />
+        <HttpGatewayEndpoint Port="19080" Protocol="http" />
+        <ServiceConnectionEndpoint Port="10547" />
+        <ClusterManagerReplicatorEndpoint Port="10548" />
+        <NamingReplicatorEndpoint Port="10548" />
+        <FailoverManagerReplicatorEndpoint Port="10548" />
+        <ImageStoreServiceReplicatorEndpoint Port="10551" />
+        <ApplicationEndpoints StartPort="10552" EndPort="10584" />
+      </Endpoints>
+    </Node>
+  </NodeList>
+</InfrastructureInformation>

@@ -104,7 +104,6 @@ void UDDeployedApplicationsHealthEvaluation::SetDescription()
 {
     size_t unhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1}% ({2}/{3}), UpgradeDomain='{4}', MaxPercentUnhealthyDeployedApplications={5}%.",
         HMResource::GetResources().HealthEvaluationUnhealthyDeployedApplicationsPerUDPolicy,
         GetUnhealthyPercent(unhealthyCount, totalCount_),
         unhealthyCount,

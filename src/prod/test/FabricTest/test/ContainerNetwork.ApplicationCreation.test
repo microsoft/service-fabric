@@ -1,0 +1,54 @@
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+enableunsupportedpreviewfeatures true
+networkinventorymanager true
+cleantest
+
++10
++20
++30
+verify
+
+# Create the networks needed for the test cases
+shownetworks expectedCount=0
+
+createnetwork networkName=testNetwork1 networkAddressPrefix=10.0.0.4/22
+
+createnetwork networkName=testNetwork2 networkAddressPrefix=10.0.0.8/22
+
+shownetworks expectedCount=2
+
+# Test case 1: a container network policy refers to a non-existing container network
+!string networkPolicies1a {"ContainerNetworkPolicies":[{"NetworkRef":"fakeTestNetwork1","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]}]}
+app.add appType1a
+app.clear appType1a
+app.servicepack appType1a ServicePackageA version=1.0
+app.servicetypes appType1a ServicePackageA ServiceTypeA stateless implicit
+app.codepack appType1a ServicePackageA CodePackageA types=ServiceTypeA version=1.0 entrytype=ContainerHost
+app.endpoint appType1a ServicePackageA name=GatewayEndpoint1 protocol=http type=Input
+app.network appType1a ServicePackageA jsondescription=<string.networkPolicies1a>
+app.upload appType1a compress
+provisionapp appType1a
+createapp fabric:/app1a appType1a 1.0 error=NetworkNotFound
+
+!string networkPolicies1b {"ContainerNetworkPolicies":[{"NetworkRef":"[logicalNetwork1]","EndpointBindings":[{"EndpointRef":"GatewayEndpoint1"}]}]}
+app.add appType1b
+app.clear appType1b
+app.servicepack appType1b ServicePackageA version=1.0
+app.servicetypes appType1b ServicePackageA ServiceTypeA stateless implicit
+app.codepack appType1b ServicePackageA CodePackageA types=ServiceTypeA version=1.0 entrytype=ContainerHost
+app.endpoint appType1b ServicePackageA name=GatewayEndpoint1 protocol=http type=Input
+app.network appType1b ServicePackageA jsondescription=<string.networkPolicies1b>
+app.parameters appType1b logicalNetwork1:fakeNetwork1
+app.upload appType1b compress
+provisionapp appType1b
+createapp fabric:/app1b appType1b 1.0 appparam=logicalNetwork1:fakeTestNetwork1 error=NetworkNotFound
+
+
+#verify
+
+-*
+
+!q

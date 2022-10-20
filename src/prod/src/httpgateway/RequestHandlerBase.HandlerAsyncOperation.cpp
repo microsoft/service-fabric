@@ -17,6 +17,20 @@ void RequestHandlerBase::HandlerAsyncOperation::OnStart(AsyncOperationSPtr const
     wstring urlSuffix = MessageContext.GetSuffix();
     wstring rawUrl = MessageContext.GetUrl();
     wstring const& verb = MessageContext.GetVerb();
+    ErrorCode error = ErrorCodeValue::Success;
+
+    auto hstsHeaderValue = HttpGatewayConfig::GetConfig().HttpStrictTransportSecurityHeader;
+    if (!hstsHeaderValue.empty())
+    {
+        error = MessageContext.SetResponseHeader(Constants::HSTSHeader, hstsHeaderValue);
+        if (!error.IsSuccess())
+        {
+            WriteInfo(TraceType, "SetHSTSResponseHeader failed with error- {0}", error);
+
+            OnError(thisSPtr, HttpCommon::HttpStatusCode::InternalServerError, L"Set Strict-Transport-Security header failed");
+            return;
+        }
+    }
 
     if (!GatewayUri::TryParse(owner_.validHandlerUris, verb, rawUrl, urlSuffix, uri_, owner_.allowHierarchicalEntityKeys))
     {
@@ -31,7 +45,7 @@ void RequestHandlerBase::HandlerAsyncOperation::OnStart(AsyncOperationSPtr const
     //admin client is not forwarded by a rogue cluster to target cluster that it is not
     //intented for
     wstring clusterId;
-    auto error = MessageContext.GetRequestHeader(Constants::ClusterIdHeader, clusterId);
+    error = MessageContext.GetRequestHeader(Constants::ClusterIdHeader, clusterId);
     if (error.IsSuccess())
     {
         auto expectedId = PaasConfig::GetConfig().ClusterId;

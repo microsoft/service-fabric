@@ -176,8 +176,6 @@ bool ServiceManifestImportDescription::operator != (ServiceManifestImportDescrip
     return !(*this == other);
 }
 
-
-
 void ServiceManifestImportDescription::ReadFromXml(
     XmlReaderUPtr const & xmlReader)
 {
@@ -266,6 +264,7 @@ void ServiceManifestImportDescription::ReadFromXml(
             envOverrides = false;
         }
     }
+
     // <Policies>
     if (xmlReader->IsStartElement(*SchemaNames::Element_Policies, *SchemaNames::Namespace))
     {
@@ -355,7 +354,18 @@ void ServiceManifestImportDescription::ReadFromXml(
                     description.ReadFromXml(xmlReader);
                     ConfigPackagePolicies.push_back(move(description));
                 }
-                else {
+                else if (xmlReader->IsStartElement(
+                    *SchemaNames::Element_NetworkPolicies,
+                    *SchemaNames::Namespace))
+                {
+                    // No need to read network policies here
+                    xmlReader->SkipElement(
+                        *SchemaNames::Element_NetworkPolicies,
+                        *SchemaNames::Namespace,
+                        true);
+                }
+                else 
+        {
                     hasPolicies = false;
                 }
             }
@@ -368,6 +378,7 @@ void ServiceManifestImportDescription::ReadFromXml(
     // </ServiceManifestImport>
     xmlReader->ReadEndElement();
 }
+
 ErrorCode ServiceManifestImportDescription::WriteToXml(Common::XmlWriterUPtr const & xmlWriter)
 {
     //<ServiceManifestImport>
@@ -471,6 +482,7 @@ ErrorCode ServiceManifestImportDescription::WriteToXml(Common::XmlWriterUPtr con
     //</ServiceManifestImport>
     return xmlWriter->WriteEndElement();
 }
+
 void ServiceManifestImportDescription::clear()
 {
     this->ServiceManifestRef.clear();

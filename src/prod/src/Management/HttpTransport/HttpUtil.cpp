@@ -272,6 +272,7 @@ void HttpUtil::ErrorCodeToHttpStatus(
     case (int)FABRIC_E_COMPOSE_DEPLOYMENT_ALREADY_EXISTS:
     case (int)FABRIC_E_RESTORE_SOURCE_TARGET_PARTITION_MISMATCH:
     case (int)FABRIC_E_BACKUP_POLICY_ALREADY_EXISTS:
+    case (int)FABRIC_E_NETWORK_IN_USE:
     {
         httpStatus = HttpStatusCode::Conflict;
         httpStatusLine = error.ErrorCodeValueToString();
@@ -354,6 +355,10 @@ void HttpUtil::ErrorCodeToHttpStatus(
     case (int)FABRIC_E_BACKUP_POLICY_DOES_NOT_EXIST:
     case (int)FABRIC_E_FAULT_ANALYSIS_SERVICE_NOT_ENABLED:
     case (int)FABRIC_E_INVALID_SERVICE_SCALING_POLICY:
+    case (int)FABRIC_E_COMPOSE_DEPLOYMENT_NOT_UPGRADING:
+    case (int)FABRIC_E_VOLUME_NOT_FOUND:
+    case (int)FABRIC_E_NETWORK_NOT_FOUND:
+    case (int)FABRIC_E_ENDPOINT_NOT_REFERENCED:
     {
         httpStatus = HttpStatusCode::BadRequest;
         httpStatusLine = error.ErrorCodeValueToString();

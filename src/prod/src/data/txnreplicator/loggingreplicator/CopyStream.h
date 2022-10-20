@@ -30,6 +30,7 @@ namespace Data
                 __in TxnReplicator::OperationDataStream & copyContext,
                 __in LogRecordLib::CopyStageBuffers & copyStageBuffers,
                 __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+                __in bool hasPersistedState,
                 __in KAllocator & allocator);
 
             ktl::Awaitable<NTSTATUS> GetNextAsync(
@@ -50,6 +51,7 @@ namespace Data
                 __in TxnReplicator::OperationDataStream & copyContext,
                 __in LogRecordLib::CopyStageBuffers & copyStageBuffers,
                 __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+                __in bool hasPersistedState,
                 __in KAllocator & allocator);
 
             ktl::Awaitable<NTSTATUS> GetNextAsyncSafe(
@@ -90,6 +92,7 @@ namespace Data
 
             // Pointer to a config object shared throughout this replicator instance
             TxnReplicator::TRInternalSettingsSPtr const transactionalReplicatorConfig_;
+            bool hasPersistedState_ = true;
 
             TxnReplicator::OperationDataStream::SPtr copyContext_;
             

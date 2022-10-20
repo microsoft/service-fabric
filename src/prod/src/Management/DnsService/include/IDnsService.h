@@ -38,7 +38,9 @@ namespace DNS
             MaxMessageSizeInKB(8),
             MaxCacheSize(5000),
             AllowMultipleListeners(false),
-            EnablePartitionedQuery(false)
+            EnablePartitionedQuery(false),
+            EnableOnCloseTimeout(true),
+            OnCloseTimeoutInSeconds(60)
         {
         }
 
@@ -57,6 +59,8 @@ namespace DNS
         KString::SPtr PartitionPrefix;
         KString::SPtr PartitionSuffix;
         bool EnablePartitionedQuery;
+        bool EnableOnCloseTimeout;
+        ULONG OnCloseTimeoutInSeconds;
     };
 
     void CreateDnsService(

@@ -100,6 +100,12 @@ protected:
         return error_;
     }
 
+    TimeSpan GetShortTimeoutInterval(uint retryCount)
+    {
+        auto shortTimeoutInterval = FileStoreServiceConfig::GetConfig().ShortRequestTimeout + Common::TimeSpan::FromMinutes(retryCount);
+        return shortTimeoutInterval < this->GetRemainingTime() ? shortTimeoutInterval : this->GetRemainingTime();
+    }
+
     typedef function<void(AsyncOperationSPtr const &)> RetryCallback;
 
     ErrorCode TryScheduleRetry(AsyncOperationSPtr const & thisSPtr, RetryCallback const & callback)
@@ -291,6 +297,7 @@ public:
         : OperationBaseAsyncOperation(L"FileExists", client, timeout, callback, root)
         , target_(target)
         , exists_(false)
+        , retryCount_(0)
     {
     }
 
@@ -325,12 +332,12 @@ protected:
             TraceComponent,
             "CheckExistence '{0}'",
             target_);
-
+            
         auto operation = this->GetClient()->BeginCheckExistence(
             target_,
-            this->GetRemainingTime(),
-                [this](AsyncOperationSPtr const & operation){ this->OnCheckExistenceComplete(operation, false); },
-                thisSPtr);
+            GetShortTimeoutInterval(retryCount_),
+            [this](AsyncOperationSPtr const & operation){ this->OnCheckExistenceComplete(operation, false); },
+            thisSPtr);
 
         this->OnCheckExistenceComplete(operation, true);
     }
@@ -350,7 +357,7 @@ private:
             false,
             true,
             false, //*isPaging*/
-            this->GetRemainingTime(),
+            GetShortTimeoutInterval(retryCount_),
             [this](AsyncOperationSPtr const & operation) { this->OnListComplete(operation, false); },
             thisSPtr);
         this->OnListComplete(operation, true);
@@ -368,6 +375,21 @@ private:
 
         if (!error.IsSuccess())
         {
+            if (error.IsError(ErrorCodeValue::Timeout) && retryCount_ < FileStoreServiceConfig::GetConfig().MaxFileOperationFailureRetryCount)
+            {
+                ++retryCount_;
+                WriteInfo(
+                    TraceComponent,
+                    "{0}: Exists failed: '{1}' error:{2} retryCount:{3}. Retrying the CheckExistence operation.",
+                    GetOperationName(),
+                    target_,
+                    error,
+                    retryCount_);
+
+                OnStart(thisSPtr);
+                return;
+            }
+
             WriteInfo(
                 TraceComponent,
                 "Exists failed: '{0}' error = {1}",
@@ -405,6 +427,21 @@ private:
         auto error = this->GetClient()->EndList(operation, files, folders, shares, continuationToken);
         if (!error.IsSuccess())
         {
+            if (error.IsError(ErrorCodeValue::Timeout) && retryCount_ < FileStoreServiceConfig::GetConfig().MaxFileOperationFailureRetryCount)
+            {
+                ++retryCount_;
+                WriteInfo(
+                    TraceComponent,
+                    "{0}: Exists failed: '{1}' error:{2} retryCount:{3}. Retrying the List operation.",
+                    GetOperationName(),
+                    target_,
+                    error,
+                    retryCount_);
+
+                this->StartList(thisSPtr);
+                return;
+            }
+
             WriteInfo(
                 TraceComponent,
                 "Exists failed: '{0}' error = {1}",
@@ -434,6 +471,7 @@ private:
 
     wstring target_;
     bool exists_;
+    uint retryCount_;
 };
 
 class NativeImageStore::DirectoryExistsAsyncOperation : public NativeImageStore::FileExistsAsyncOperation
@@ -526,7 +564,7 @@ protected:
         //
         auto operation = this->GetClient()->BeginDelete(
             target_,
-            this->GetRemainingTime(),
+            GetShortTimeoutInterval(retryCount_),
             [this](AsyncOperationSPtr const & operation){ this->OnDeleteComplete(operation, false); },
             thisSPtr);
         this->OnDeleteComplete(operation, true);
@@ -549,6 +587,21 @@ private:
 
         if (!error.IsSuccess())
         {
+            if (error.IsError(ErrorCodeValue::Timeout) && retryCount_ < FileStoreServiceConfig::GetConfig().MaxFileOperationFailureRetryCount)
+            {
+                ++retryCount_;
+                WriteInfo(
+                    TraceComponent,
+                    "{0}: Delete failed: '{1}' error:{2} retryCount:{3}. Retrying the Delete operation.",
+                    GetOperationName(),
+                    target_,
+                    error,
+                    retryCount_);
+
+                OnStart(thisSPtr);
+                return;
+            }
+
             WriteInfo(
                 TraceComponent,
                 "Delete failed: '{0}' error = {1}",
@@ -560,6 +613,7 @@ private:
     }
 
     wstring target_;
+    uint retryCount_;
 };
 
 class NativeImageStore::UploadFileAsyncOperation : public NativeImageStore::OperationBaseAsyncOperation
@@ -1701,6 +1755,7 @@ public:
         , directoryMarkerStoreFileInfo_()
         , continuationToken_()
         , matchedDirectory_(false)
+        , retryCount_(0)
     {
     }
 
@@ -1741,7 +1796,7 @@ private:
             false, // shouldIncludeDetails
             true, // isRecursive
             true, // isPaging
-            this->GetRemainingTime(),
+            GetShortTimeoutInterval(retryCount_),
             [this](AsyncOperationSPtr const & operation){ this->OnListComplete(operation, false); },
             thisSPtr);
         this->OnListComplete(operation, true);
@@ -1759,6 +1814,21 @@ private:
 
         if (!error.IsSuccess())
         {
+            if (error.IsError(ErrorCodeValue::Timeout) && retryCount_ < FileStoreServiceConfig::GetConfig().MaxFileOperationFailureRetryCount)
+            {
+                ++retryCount_;
+                WriteInfo(
+                    TraceComponent,
+                    "{0}: Exists failed: '{1}' error:{2} retryCount:{3}. Retrying the List operation.",
+                    GetOperationName(),
+                    remoteRelativePath_,
+                    error,
+                    retryCount_);
+
+                StartList(thisSPtr);
+                return;
+            }
+
             WriteWarning(
                 TraceComponent,
                 "List failed: '{0}' error = {1}",
@@ -2016,7 +2086,7 @@ private:
     INativeImageStoreProgressEventHandlerPtr progressHandler_;
     StoreFileInfoMap versions_;
     vector<wstring> shares_;
-
+    uint retryCount_;
     vector<wstring> sources_;
     vector<wstring> destinations_;
     vector<CopyFlag::Enum> flags_;
@@ -2452,6 +2522,7 @@ public:
         , continuationToken_()
         , sourceDirectoryMarkerFile_()
         , matchedDirectory_(false)
+        , retryCount_(0)
     {		
     }
 
@@ -2493,7 +2564,7 @@ private:
             false,
             true,
             true,
-            this->GetRemainingTime(),
+            GetShortTimeoutInterval(retryCount_),
             [this](AsyncOperationSPtr const & operation){ this->OnListComplete(operation, false); },
             thisSPtr);
         this->OnListComplete(operation, true);
@@ -2513,6 +2584,21 @@ private:
 
         if (!error.IsSuccess())
         {
+            if (error.IsError(ErrorCodeValue::Timeout) && retryCount_ < FileStoreServiceConfig::GetConfig().MaxFileOperationFailureRetryCount)
+            {
+                ++retryCount_;
+                WriteInfo(
+                    TraceComponent,
+                    "{0}: Exists failed: '{1}' error:{2} retryCount:{3}. Retrying the List operation.",
+                    GetOperationName(),
+                    sourceStoreRelativePath_,
+                    error,
+                    retryCount_);
+
+                StartList(thisSPtr);
+                return;
+            }
+
             WriteInfo(
                 TraceComponent,
                 "List failed: '{0}' error = {1}",
@@ -2703,6 +2789,7 @@ private:
     std::wstring continuationToken_;
     StoreFileInfo sourceDirectoryMarkerFile_;
     bool matchedDirectory_;
+    uint retryCount_;
 };
 
 class NativeImageStore::ParallelDownloadObjectsAsyncOperation : public NativeImageStore::ParallelOperationsBaseAsyncOperation

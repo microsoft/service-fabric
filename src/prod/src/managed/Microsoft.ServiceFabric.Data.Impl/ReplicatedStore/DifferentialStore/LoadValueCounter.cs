@@ -6,6 +6,7 @@
 namespace System.Fabric.Store
 {
     using System.Fabric.Common;
+    using System.Fabric.Common.Tracing;
     using System.Fabric.Data.Common;
     using System.Globalization;
     using System.Threading;
@@ -38,7 +39,11 @@ namespace System.Fabric.Store
         {
             if (Interlocked.Increment(ref this.count) >= this.store.SweepThreshold)
             {
+#if !DotNetCoreClr
+                FabricEvents.Events.SweepOnReads(this.traceType);
+#else
                 AppTrace.TraceSource.WriteInfo(string.Format(CultureInfo.InvariantCulture, "TStore.Sweep.OnReads@{0}", this.traceType), "starting");
+#endif
                 this.store.TryStartSweep();
             }
 

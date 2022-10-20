@@ -61,8 +61,7 @@ namespace Common
 {
     class RWLockBase
     {
-        DENY_COPY(RWLockBase);
-
+        DENY_COPY_ASSIGNMENT(RWLockBase)
     public:
         typedef AcquireSharedTraits<RWLockBase>        AcquireSharedTraitsT;
         typedef AcquireExclusiveTraits<RWLockBase>     AcquireExclusiveTraitsT;
@@ -79,14 +78,13 @@ namespace Common
 #endif
         }
 
-        //
-        // SRW locks cannot be moved or copied. This move constructor is a no-op
-        // and is created so we can allow 'default' move constructor for objects using
-        // the lock.
-        //
-        RWLockBase(RWLockBase &&)
-        {
-        }
+        // SRWLOCK can not be moved or copied.
+        // We initialize it in copy and move constructor so that
+        // we can allow "default" copy and move constructor for classes using RWLockBase.
+        // This class(RWLockBase) should not be explictly copied or moved.
+        RWLockBase(RWLockBase const &) : RWLockBase() {}
+
+        RWLockBase(RWLockBase &&) : RWLockBase() {}
 
 #ifdef DBG
         virtual ~RWLockBase()

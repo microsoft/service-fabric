@@ -1,0 +1,87 @@
+{
+    "name": "SampleCluster",
+    "clusterConfigurationVersion": "1.0.0",
+    "apiVersion": "06-2018",
+    "nodes": [
+        {
+            "nodeName": "vm0",
+            "iPAddress": "machine1",
+            "nodeTypeRef": "NodeType0",
+            "faultDomain": "fd:/dc1/r0",
+            "upgradeDomain": "UD0"
+        },
+        {
+            "nodeName": "vm1",
+            "iPAddress": "machine2",
+            "nodeTypeRef": "NodeType0",
+            "faultDomain": "fd:/dc1/r1",
+            "upgradeDomain": "UD1"
+        },
+        {
+            "nodeName": "vm2",
+            "iPAddress": "machine3",
+            "nodeTypeRef": "NodeType0",
+            "faultDomain": "fd:/dc1/r2",
+            "upgradeDomain": "UD2"
+        }
+    ],
+  "properties": {
+    "codeVersion":  "incorrectVersion",
+    "diagnosticsStore": {
+      "metadata": "Please replace the diagnostics file share with an actual file share accessible from all cluster machines.",
+      "dataDeletionAgeInDays": "7",
+      "storeType": "FileShare",
+      "connectionstring": "c:\\ProgramData\\SF\\DiagnosticsStore"
+    },
+    "security": {
+      "ClusterCredentialType": "Windows",
+      "ServerCredentialType": "Windows",
+      "WindowsIdentities": {
+        "ClustergMSAIdentity": "accountname@fqdn",
+        "ClusterSPN": "SPN",
+        "ClientIdentities": [
+          {
+            "Identity": "domain\\username",
+            "IsAdmin": true
+          }
+        ]
+      }
+    },
+    "reliabilityLevel": "Bronze",
+    "nodeTypes": [
+      {
+        "name": "NodeType0",
+        "clientConnectionEndpointPort": "19000",
+        "clusterConnectionEndpointPort": "19001",
+        "leaseDriverEndpointPort": "19002",
+        "serviceConnectionEndpointPort": "19003",
+        "httpGatewayEndpointPort": "19080",
+        "reverseProxyEndpointPort": "19081",
+        "applicationPorts": {
+          "startPort": "20001",
+          "endPort": "20031"
+        },
+        "ephemeralPorts": {
+          "startPort": "20032",
+          "endPort": "20287"
+        },
+        "isPrimary": true
+      }
+    ],
+    "fabricSettings": [
+      {
+        "name": "Setup",
+        "parameters": [
+          {
+            "name": "FabricDataRoot",
+            "value": "C:\\ProgramData\\SF"
+          },
+          {
+            "name": "FabricLogRoot",
+            "value": "C:\\ProgramData\\SF\\Log"
+          }
+        ]
+      }
+    ]
+  }
+}

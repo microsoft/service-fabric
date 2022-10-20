@@ -1,0 +1,16 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!-- Common properties for the native projects that should be included before setting the ConfigurationType -->
+  <PropertyGroup>
+    <_NT_TARGET_VERSION Condition="'$(_NT_TARGET_VERSION)' == ''">0xA000001</_NT_TARGET_VERSION>
+    <_NT_TARGET_VERSION_WIN10>0x0A00</_NT_TARGET_VERSION_WIN10>
+    <_NT_TARGET_VERSION_WINV63>0x0603</_NT_TARGET_VERSION_WINV63>
+    <_NT_TARGET_VERSION_WIN8>0x0602</_NT_TARGET_VERSION_WIN8>
+    <_NT_TARGET_VERSION_WIN7>0x0601</_NT_TARGET_VERSION_WIN7>
+    <_NT_TARGET_VERSION_VISTA>0x0600</_NT_TARGET_VERSION_VISTA>
+    <_NT_TARGET_VERSION_LONGHORN>0x0600</_NT_TARGET_VERSION_LONGHORN>
+    <_NT_TARGET_VERSION_NT4>0x0400</_NT_TARGET_VERSION_NT4>
+
+    <!-- WindowsSdk.Corext doesn't support 15.0 yet -->
+    <VisualStudioVersion>14.0</VisualStudioVersion>
+  </PropertyGroup>
+</Project>

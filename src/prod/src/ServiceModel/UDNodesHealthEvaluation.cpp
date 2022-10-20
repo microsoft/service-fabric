@@ -102,7 +102,6 @@ void UDNodesHealthEvaluation::SetDescription()
 {
     size_t unhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1}% ({2}/{3}), UpgradeDomain='{4}', MaxPercentUnhealthyNodes={5}%.",
         HMResource::GetResources().HealthEvaluationUnhealthyNodesPerUDPolicy,
         GetUnhealthyPercent(unhealthyCount, totalCount_),
         unhealthyCount,

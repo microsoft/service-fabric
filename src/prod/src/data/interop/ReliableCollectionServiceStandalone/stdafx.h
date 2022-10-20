@@ -9,6 +9,9 @@
 #include "../../txnreplicator/TransactionalReplicator.Public.h"
 #include "../../tstore/Store.Public.h"
 #include "../../logicallog/LogicalLog.Public.h"
+#if defined(PLATFORM_UNIX)
+#include "../../../resources/StringResourceRepo.h"
+#endif
 #ifndef WIN32
 #define UNDER_PAL
 #endif

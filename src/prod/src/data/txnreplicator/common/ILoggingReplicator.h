@@ -18,6 +18,9 @@ namespace TxnReplicator
     public:
         typedef KDelegate<ktl::Awaitable<NTSTATUS>(FABRIC_REPLICA_ROLE, ktl::CancellationToken)> StateManagerBecomeSecondaryDelegate;
 
+        __declspec(property(get = get_HasPersistedState)) bool HasPersistedState;
+        virtual bool get_HasPersistedState() const = 0;
+
         virtual ktl::Awaitable<NTSTATUS> OpenAsync(__out RecoveryInformation & recoveryInformation) noexcept = 0;
 
         virtual ktl::Awaitable<NTSTATUS> PerformRecoveryAsync(__in RecoveryInformation const & recoveryInformation) noexcept = 0;

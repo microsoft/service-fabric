@@ -1,0 +1,18 @@
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <ItemGroup>
+    <FabricVerFile Include="Linux\ApplicationManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\VolumePluginDrop\ubuntu.16.04-x64\AzureFiles</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="Windows\ApplicationManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\VolumePluginDrop\win10-x64\AzureFiles</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="Linux\ServiceManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\VolumePluginDrop\ubuntu.16.04-x64\AzureFiles\AzureFilesVolumePluginPkg</TargetPath>
+    </FabricVerFile>
+    <FabricVerFile Include="Windows\ServiceManifest.xml">
+      <TargetPath>$(BinariesBuildTypeArchDirectory)\bin\VolumePluginDrop\win10-x64\AzureFiles\AzureFilesVolumePluginPkg</TargetPath>
+    </FabricVerFile>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+</Project>

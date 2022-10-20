@@ -13,6 +13,7 @@ namespace ClientServerTransport
         static Common::GlobalWString CreateComposeDeploymentAction;
         static Common::GlobalWString DeleteComposeDeploymentAction;
         static Common::GlobalWString UpgradeComposeDeploymentAction;
+        static Common::GlobalWString RollbackComposeDeploymentUpgradeAction;
         static Common::GlobalWString DeleteSingleInstanceDeploymentAction;
 
         ContainerOperationTcpMessage(
@@ -94,6 +95,18 @@ namespace ClientServerTransport
             auto message = Common::make_unique<ContainerOperationTcpMessage>(
                 DeleteComposeDeploymentAction,
                 Common::make_unique<Management::ClusterManager::DeleteComposeDeploymentMessageBody>(deploymentName, applicationName),
+                activityId);
+
+            return std::move(message);
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetRollbackComposeDeploymentMessage(
+            std::wstring const & deploymentName,
+            Common::ActivityId const &activityId)
+        {
+            auto message = Common::make_unique<ContainerOperationTcpMessage>(
+                RollbackComposeDeploymentUpgradeAction,
+                Common::make_unique<Management::ClusterManager::RollbackComposeDeploymentMessageBody>(deploymentName),
                 activityId);
 
             return std::move(message);

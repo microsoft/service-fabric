@@ -141,7 +141,7 @@ bool ServiceDescription::operator == (ServiceDescription const & other ) const
     {
         for (auto index = 0; index < scalingPolicies_.size(); ++index)
         {
-            if (!scalingPolicies_[index].Equals(other.scalingPolicies_[index], true))
+            if (!scalingPolicies_[index].Equals(other.scalingPolicies_[index], true).IsSuccess())
             {
                 return false;
             }
@@ -222,20 +222,15 @@ void ServiceDescription::UpdateRGMetrics(std::map<std::wstring, uint> const & re
         metrics.push_back(ServiceMetric(wstring(itResource->first), rgMetricWeight, primaryLoad, secondaryLoad, true));
     }
 
-    //add the non-rg metrics but remove default ones if there is at least 1 rg metric present
+    //add the non-rg metrics
     for (auto itMetric = metrics_.begin(); itMetric != metrics_.end(); ++itMetric)
     {
-        if ((resources.size() == 0 ||
-            (itMetric->Name != ServiceMetric::PrimaryCountName &&
-            itMetric->Name != ServiceMetric::ReplicaCountName &&
-            itMetric->Name != ServiceMetric::CountName)) &&
-            !itMetric->IsRGMetric)
+        if (!itMetric->IsRGMetric)
         {
             metrics.push_back(move(*itMetric));
         }
     }
     metrics_ = move(metrics);
-
 }
 
 bool ServiceDescription::AddDefaultMetrics()

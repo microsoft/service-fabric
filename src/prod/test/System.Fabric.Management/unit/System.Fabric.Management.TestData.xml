@@ -1,0 +1,263 @@
+<?xml version="1.0"?>
+<Data>
+  <Table Id="InvalidDiagnosticsElement">
+    <ParameterTypes>
+      <ParameterType Name="InvalidName">String</ParameterType>
+      <ParameterType Name="InvalidValue">String</ParameterType>
+    </ParameterTypes>
+
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpCollectionEnabled</Parameter>
+      <Parameter Name="InvalidValue">xyz</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpLocalStore1Enabled</Parameter>
+      <Parameter Name="InvalidValue">123</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpLocalStore1DataDeletionAgeInDays</Parameter>
+      <Parameter Name="InvalidValue">xyz</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStore1Enabled</Parameter>
+      <Parameter Name="InvalidValue">xyz</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStore1UploadInterval</Parameter>
+      <Parameter Name="InvalidValue">-3</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStore1DataDeletionAgeInDays</Parameter>
+      <Parameter Name="InvalidValue">0</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpAzureBlob1Enabled</Parameter>
+      <Parameter Name="InvalidValue">-5</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpAzureBlob1UploadIntervalInMinutes</Parameter>
+      <Parameter Name="InvalidValue">xyz</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpAzureBlob1DataDeletionAgeInDays</Parameter>
+      <Parameter Name="InvalidValue">xyz</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">ETWDataCollectionEnabled</Parameter>
+      <Parameter Name="InvalidValue">123</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">ETWLocalStore0LevelFilter</Parameter>
+      <Parameter Name="InvalidValue">Noisy</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">ETWFileStore0LevelFilter</Parameter>
+      <Parameter Name="InvalidValue">Infinite</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">ETWAzureBlob0LevelFilter</Parameter>
+      <Parameter Name="InvalidValue">Problem</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">Folder0CollectionEnabled</Parameter>
+      <Parameter Name="InvalidValue">123</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">Folder0DataDeletionAgeInDays</Parameter>
+      <Parameter Name="InvalidValue">xyz</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStore1AccountType</Parameter>
+      <Parameter Name="InvalidValue">CustomUser</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStore1ManagedServiceAccountName</Parameter>
+      <Parameter Name="InvalidValue">user@domain@company.com</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStore1ManagedServiceAccountPassword</Parameter>
+      <Parameter Name="InvalidValue">abc123</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStore1ManagedServiceAccountPasswordIsEncrypted</Parameter>
+      <Parameter Name="InvalidValue">false</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">ETWFileStore0DomainUserAccountName</Parameter>
+      <Parameter Name="InvalidValue">user\domain1\domain2</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">ETWFileStore0DomainUserAccountPasswordIsEncrypted</Parameter>
+      <Parameter Name="InvalidValue">abc</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">FolderFileStore0AccountName</Parameter>
+      <Parameter Name="InvalidValue">mydomain\myuser</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">FolderFileStore0AccountPassword</Parameter>
+      <Parameter Name="InvalidValue">abc123</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">FolderFileStore0AccountPasswordIsEncrypted</Parameter>
+      <Parameter Name="InvalidValue">false</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpAzureBlob1ConnectionStringIsEncrypted</Parameter>
+      <Parameter Name="InvalidValue">abc</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpLocalPath0</Parameter>
+      <Parameter Name="InvalidValue">abc\..\def</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">Folder0RelativeFolderPath</Parameter>
+      <Parameter Name="InvalidValue">..\xyz</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpLocalPath0</Parameter>
+      <Parameter Name="InvalidValue">\\winfabfs\scratch</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">Folder0RelativeFolderPath</Parameter>
+      <Parameter Name="InvalidValue">C:\xyz</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStorePath0</Parameter>
+      <Parameter Name="InvalidValue"></Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="InvalidName">CrashDumpFileStorePath0</Parameter>
+      <Parameter Name="InvalidValue">file:[]</Parameter>
+    </Row>
+    
+  </Table>
+
+  <Table Id="UpdateDiagnosticsElement">
+    <ParameterTypes>
+      <ParameterType Name="Name">String</ParameterType>
+      <ParameterType Name="UpdatedValue">String</ParameterType>
+    </ParameterTypes>
+
+    <Row>
+      <Parameter Name="Name">CrashDumpCollectionEnabled</Parameter>
+      <Parameter Name="UpdatedValue">false</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpLocalPath0</Parameter>
+      <Parameter Name="UpdatedValue">LocalCrashDumps100</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpLocalStore1Enabled</Parameter>
+      <Parameter Name="UpdatedValue">true</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpLocalStore1DataDeletionAgeInDays</Parameter>
+      <Parameter Name="UpdatedValue">11</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpLocalStore1P3</Parameter>
+      <Parameter Name="UpdatedValue">CrashDumpSource0LocalStore1, P3</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpFileStorePath0</Parameter>
+      <Parameter Name="UpdatedValue">file://myshare/crashdumps100</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpFileStore1Enabled</Parameter>
+      <Parameter Name="UpdatedValue">true</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpFileStore1UploadInterval</Parameter>
+      <Parameter Name="UpdatedValue">6</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpFileStore1DataDeletionAgeInDays</Parameter>
+      <Parameter Name="UpdatedValue">4</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpFileStore1P0</Parameter>
+      <Parameter Name="UpdatedValue">CrashDumpSource0FileStore1, P0</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpAzureBlob1Enabled</Parameter>
+      <Parameter Name="UpdatedValue">false</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpAzureBlob1ConnectionString</Parameter>
+      <Parameter Name="UpdatedValue">xstore:DefaultEndpointsProtocol=https;AccountName=myazurestorageaccount100;AccountKey=myazurestoragekey</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpAzureBlob1ConnectionStringIsEncrypted</Parameter>
+      <Parameter Name="UpdatedValue">true</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpAzureBlob1UploadIntervalInMinutes</Parameter>
+      <Parameter Name="UpdatedValue">8</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpAzureBlob1DataDeletionAgeInDays</Parameter>
+      <Parameter Name="UpdatedValue">16</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDumpAzureBlob0P0</Parameter>
+      <Parameter Name="UpdatedValue">CrashDumpSource0AzureBlob000, P0</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">CrashDump0P1</Parameter>
+      <Parameter Name="UpdatedValue">CrashDumpSource000, P1</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWDataCollectionEnabled</Parameter>
+      <Parameter Name="UpdatedValue">false</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWLocalStore0LevelFilter</Parameter>
+      <Parameter Name="UpdatedValue">Informational</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWFileStore0LevelFilter</Parameter>
+      <Parameter Name="UpdatedValue">Warning</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWAzureBlob0LevelFilter</Parameter>
+      <Parameter Name="UpdatedValue">Warning</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWAzureBlob0ContainerName</Parameter>
+      <Parameter Name="UpdatedValue">etwtraces100</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWP0</Parameter>
+      <Parameter Name="UpdatedValue">ETWSource000, P0</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">Folder0CollectionEnabled</Parameter>
+      <Parameter Name="UpdatedValue">false</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">Folder0RelativeFolderPath</Parameter>
+      <Parameter Name="UpdatedValue">DataFolder100</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">Folder0DataDeletionAgeInDays</Parameter>
+      <Parameter Name="UpdatedValue">9</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">FolderP0</Parameter>
+      <Parameter Name="UpdatedValue">FolderSource000, P0</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWFileStore0DomainUserAccountName</Parameter>
+      <Parameter Name="UpdatedValue">UpdatedDomain\UpdatedUser</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWFileStore0DomainUserAccountPassword</Parameter>
+      <Parameter Name="UpdatedValue">UpdatedPassword</Parameter>
+    </Row>
+    <Row>
+      <Parameter Name="Name">ETWFileStore0DomainUserAccountPasswordIsEncrypted</Parameter>
+      <Parameter Name="UpdatedValue">true</Parameter>
+    </Row>
+  </Table>
+</Data>

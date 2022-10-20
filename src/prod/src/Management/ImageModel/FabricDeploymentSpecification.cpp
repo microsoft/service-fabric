@@ -145,6 +145,14 @@ wstring FabricDeploymentSpecification::GetInstallerLogFile(wstring const & nodeN
     return Path::Combine(logFolder, logFileName);
 }
 
+#if defined(PLATFORM_UNIX)
+wstring FabricDeploymentSpecification::GetUpgradeScriptFile(wstring const & nodeName) const
+{
+    wstring fileName = wformatString("doupgrade.{0}.sh", nodeName);
+    return Path::Combine(dataRoot_, fileName);
+}
+#endif
+
 wstring FabricDeploymentSpecification::GetInfrastructureManfiestFile(wstring const & nodeName)
 {
     wstring dataFolder = GetDataDeploymentFolder(nodeName);

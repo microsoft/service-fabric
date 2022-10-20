@@ -22,6 +22,8 @@ namespace Data
 
         public:
 
+            virtual std::wstring ToString() const override;
+
             __declspec(property(get = get_IsEnlistedTransaction, put = set_IsEnlistedTransaction)) bool IsEnlistedTransaction;
             bool get_IsEnlistedTransaction() const
             {
@@ -66,6 +68,11 @@ namespace Data
             TxnReplicator::TransactionBase & get_TransactionBase() const
             {
                 return *transactionBase_;
+            }
+
+            LONG64 get_TransactionId() const
+            {
+                return transactionBase_->get_TransactionId();
             }
 
             bool Test_Equals(__in LogRecord const & other) const override;

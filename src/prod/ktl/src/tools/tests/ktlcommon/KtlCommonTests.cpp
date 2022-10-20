@@ -3985,6 +3985,15 @@ main(int argc, char* cargs[])
 #endif
     NTSTATUS status;
 
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+	
     //
     // Adjust for the test name so CmdParseLine works.
     //
@@ -4018,6 +4027,11 @@ main(int argc, char* cargs[])
 #endif
     
     KTestPrintf("KCommonTests: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+	
     return RtlNtStatusToDosError(status);
 }
 #endif

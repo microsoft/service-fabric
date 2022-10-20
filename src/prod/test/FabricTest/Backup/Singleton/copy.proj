@@ -1,0 +1,15 @@
+﻿<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <Import Project="$(EnvironmentConfig)" />
+  
+    <ItemGroup>
+        <PostBuildCopy Include="restore.dat">
+            <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\Backup\Singleton</DestinationFolder>
+        </PostBuildCopy>
+        <PostBuildCopy Include="New\*">
+            <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\Backup\Singleton\New</DestinationFolder>
+        </PostBuildCopy>
+    </ItemGroup>
+  
+   <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+</Project>

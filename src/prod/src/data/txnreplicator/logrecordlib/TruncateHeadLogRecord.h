@@ -32,6 +32,8 @@ namespace Data
                 __in IndexingLogRecord & invalidIndexingLogRecord,
                 __in KAllocator & allocator);
 
+            virtual std::wstring ToString() const override;
+
             __declspec(property(get = get_isStable)) bool IsStable;
             bool get_isStable() const
             {

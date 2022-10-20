@@ -74,7 +74,11 @@ KWStringTestX(
         KWString testString(string);
         r = testString.CompareTo(L"foo");
         if (r) {
+#if defined(PLATFORM_UNIX)
+            KTestPrintf("Copy constructor yields wrong string: %s\n", Utf16To8((WCHAR*)testString).c_str());
+#else
             KTestPrintf("Copy constructor yields wrong string: %ws\n", (WCHAR*) testString);
+#endif
         }
     }
 
@@ -93,7 +97,11 @@ KWStringTestX(
         KWString testString(KtlSystem::GlobalNonPagedAllocator(), unicodeString1);
         r = testString.CompareTo(L"foo");
         if (r) {
+#if defined(PLATFORM_UNIX)
+            KTestPrintf("Unicode string constructor yields wrong string: %s\n", Utf16To8((WCHAR*)testString).c_str());
+#else
             KTestPrintf("Unicode string constructor yields wrong string: %ws\n", (WCHAR*) testString);
+#endif
         }
     }
 
@@ -110,7 +118,11 @@ KWStringTestX(
         KWString testString(KtlSystem::GlobalNonPagedAllocator(), L"foo");
         r = testString.CompareTo(L"foo");
         if (r) {
+#if defined(PLATFORM_UNIX)
+            KTestPrintf("pwsz constructor yields wrong string: %s\n", Utf16To8((WCHAR*)testString).c_str());
+#else
             KTestPrintf("pwsz constructor yields wrong string: %ws\n", (WCHAR*) testString);
+#endif
         }
     }
 
@@ -130,7 +142,11 @@ KWStringTestX(
         KWString testString(KtlSystem::GlobalNonPagedAllocator(), guid);
         r = testString.CompareTo(string, TRUE);
         if (r) {
+#if defined(PLATFORM_UNIX)
+            KTestPrintf("guid constructor yields wrong string: %s\n", Utf16To8((WCHAR*)testString).c_str());
+#else
             KTestPrintf("guid constructor yields wrong string: %ws\n", (WCHAR*) testString);
+#endif
         }
     }
 
@@ -146,7 +162,11 @@ KWStringTestX(
     anotherString = string;
     r = anotherString.CompareTo(string, TRUE);
     if (r) {
+#if defined(PLATFORM_UNIX)
+        KTestPrintf("operator= KWString yields wrong string: %s\n", Utf16To8((WCHAR*)anotherString).c_str());
+#else
         KTestPrintf("operator= KWString yields wrong string: %ws\n", (WCHAR*) anotherString);
+#endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
     }
@@ -159,7 +179,11 @@ KWStringTestX(
     anotherString = unicodeString;
     r = anotherString.CompareTo(string, TRUE);
     if (r) {
+#if defined(PLATFORM_UNIX)
+        KTestPrintf("operator= UNICODE_STRING yields wrong string: %s\n", Utf16To8((WCHAR*)anotherString).c_str());
+#else
         KTestPrintf("operator= UNICODE_STRING yields wrong string: %ws\n", (WCHAR*) anotherString);
+#endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
     }
@@ -171,7 +195,11 @@ KWStringTestX(
     anotherString = ((WCHAR*) string);
     r = anotherString.CompareTo(string, TRUE);
     if (r) {
+#if defined(PLATFORM_UNIX)
+        KTestPrintf("operator= WCHAR* yields wrong string: %s\n", Utf16To8((WCHAR*)anotherString).c_str());
+#else
         KTestPrintf("operator= WCHAR* yields wrong string: %ws\n", (WCHAR*) anotherString);
+#endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
     }
@@ -183,7 +211,11 @@ KWStringTestX(
     anotherString = guid;
     r = anotherString.CompareTo(string, TRUE);
     if (r) {
+#if defined(PLATFORM_UNIX)
+        KTestPrintf("operator= GUID yields wrong string: %s\n", Utf16To8((WCHAR*)anotherString).c_str());
+#else
         KTestPrintf("operator= GUID yields wrong string: %ws\n", (WCHAR*) anotherString);
+#endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
     }
@@ -196,7 +228,11 @@ KWStringTestX(
     string += anotherString;
     r = anotherString.CompareTo(string, TRUE);
     if (r) {
+#if defined(PLATFORM_UNIX)
+        KTestPrintf("operator+= KWString yields wrong string: %s\n", Utf16To8((WCHAR*)anotherString).c_str());
+#else
         KTestPrintf("operator+= KWString yields wrong string: %ws\n", (WCHAR*) anotherString);
+#endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
     }
@@ -210,7 +246,11 @@ KWStringTestX(
     string += unicodeString;
     r = anotherString.CompareTo(string, TRUE);
     if (r) {
+#if defined(PLATFORM_UNIX)
+        KTestPrintf("operator+= UNICODE_STRING yields wrong string: %s\n", Utf16To8((WCHAR*)anotherString).c_str());
+#else
         KTestPrintf("operator+= UNICODE_STRING yields wrong string: %ws\n", (WCHAR*) anotherString);
+#endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
     }
@@ -223,7 +263,11 @@ KWStringTestX(
     string += ((WCHAR*) anotherString);
     r = anotherString.CompareTo(string, TRUE);
     if (r) {
+#if defined(PLATFORM_UNIX)
+        KTestPrintf("operator+= WCHAR* yields wrong string: %s\n", Utf16To8((WCHAR*)anotherString).c_str());
+#else
         KTestPrintf("operator+= WCHAR* yields wrong string: %ws\n", (WCHAR*) anotherString);
+#endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
     }
@@ -236,7 +280,11 @@ KWStringTestX(
     string += guid;
     r = anotherString.CompareTo(string, TRUE);
     if (r) {
+#if defined(PLATFORM_UNIX)
+        KTestPrintf("operator+= GUID yields wrong string: %s\n", Utf16To8((WCHAR*)anotherString).c_str());
+#else
         KTestPrintf("operator+= GUID yields wrong string: %ws\n", (WCHAR*) anotherString);
+#endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
     }
@@ -286,7 +334,7 @@ KWStringTestX(
 #if !defined(PLATFORM_UNIX)
         KTestPrintf("Extract Guid Suffix returned the wrong guid: %ws\n", KWString(KtlSystem::GlobalNonPagedAllocator(), anotherGuid));
 #else
-        KTestPrintf("Extract Guid Suffix returned the wrong guid: %ws\n", (WCHAR*)KWString(KtlSystem::GlobalNonPagedAllocator(), anotherGuid));
+        KTestPrintf("Extract Guid Suffix returned the wrong guid: %s\n", Utf16To8((WCHAR*)KWString(KtlSystem::GlobalNonPagedAllocator(), anotherGuid)).c_str());
 #endif
         status = STATUS_INVALID_PARAMETER;
         goto Finish;
@@ -583,9 +631,19 @@ KWStringTest(
     int argc, WCHAR* args[]
     )
 {
-    KTestPrintf("KWStringTest: STARTED\n");
-
     NTSTATUS status;
+
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+
+    KTestPrintf("KWStringTest: STARTED\n");
+    
     EventRegisterMicrosoft_Windows_KTL();
 
     status = KtlSystem::Initialize();
@@ -596,6 +654,11 @@ KWStringTest(
     EventUnregisterMicrosoft_Windows_KTL();
 
     KTestPrintf("KWStringTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return status;
 }
 

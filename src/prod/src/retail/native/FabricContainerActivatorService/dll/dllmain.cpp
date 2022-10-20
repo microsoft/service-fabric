@@ -41,7 +41,7 @@ BOOL APIENTRY DllMain(
     /* [in] */ __RPC__in REFIID riid,
     /* [retval][out] */ __RPC__deref_out_opt void **fabricContainerActivatorServiceAgent)
 {
-    if (riid != IID_IFabricContainerActivatorServiceAgent)
+    if (riid != IID_IFabricContainerActivatorServiceAgent2)
     { 
         return ComUtility::OnPublicApiReturn(E_NOINTERFACE);
     }

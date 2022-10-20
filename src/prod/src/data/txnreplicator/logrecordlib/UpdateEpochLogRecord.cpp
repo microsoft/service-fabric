@@ -62,6 +62,17 @@ UpdateEpochLogRecord::SPtr UpdateEpochLogRecord::CreateZeroUpdateEpochLogRecord(
     return UpdateEpochLogRecord::SPtr(pointer);
 }
 
+std::wstring UpdateEpochLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CompEndlJSON;
+
+    logRecordString += L"Primary Replica Id" + Constants::DivisionJSON +
+        std::to_wstring(primaryReplicaId_) + Constants::Quote;
+    logRecordString += Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}
+
 UpdateEpochLogRecord::SPtr UpdateEpochLogRecord::Create(
     __in LogRecordType::Enum recordType,
     __in ULONG64 recordPosition,

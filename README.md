@@ -1,25 +1,40 @@
 # Service Fabric
 
-Service Fabric is a distributed systems platform for packaging, deploying, and managing stateless and stateful distributed applications and containers at large scale. Service Fabric runs on Windows and Linux, on any cloud, any datacenter, across geographic regions, or on your laptop.
+Service Fabric is a distributed systems platform for packaging, deploying, and managing stateless and stateful distributed applications and containers at large scale. Service Fabric runs on Windows and Linux, on any cloud, any datacenter, across geographic regions, or on your laptop.Service Fabric represents the next-generation platform for building and managing these enterprise-class, tier-1, cloud-scale applications running in containers.
 
 ## Architecture and Subsystem Explorer
 [Learn about Service Fabric's Core Subsystems](docs/architecture/README.md), mapped to this repo's folder structure.
- 
-## Project timeline and development
-Service Fabric is currently undergoing a big transition to open development. Our main goal right now is to move the entire build, test, and development process to GitHub. For now the Service Fabric team will continue regular feature development internally while we work on transitioning everything to GitHub.  
 
-We'll be providing frequent updates here and on our [team blog](https://blogs.msdn.microsoft.com/azureservicefabric/) as we work to get situated in our new home.  
+## Service Fabric release schedule 
+Here is the upcoming release schedule for Service Fabric runtime versions that we will be supporting starting with version 8.0.
+
+| Version 	| Release date 	   |
+|---------	|----------------- |
+| 8.0     	| 2021 Mar     	   |
+| 8.1     	| 2021 Jul     	   |
+| 8.2     	| 2021 Oct     	   |
+| 9.0     	| From April 25, 2022 **(*)** <br/> * Delayed from 2022 Mar |
+| 9.1     	| 2022 Jul     	   |
+| 9.2     	| 2022 Oct     	   |
+
+**(*) Note**: The Service Fabric release version 9.0, which was originally expected to be released by end of March 2022 / begining of April 2022 was delayed and has now started rolling out to various regions from April 25, 2022. The updates would be fully available across all regions in the next 7-10 days.
+
+Please note that these dates are advanced estimates and might be subject to change or minor adjustments closer to each release.
+
+We will be publishing upcoming features and roadmap items on [Azure Updates for Service Fabric](https://azure.microsoft.com/en-us/updates/?product=service-fabric).
+
+ 
+## Repo status
+We are in the process to move our development to GitHub. Until then, the Service Fabric team will continue regular feature development internally. We'll be providing frequent updates here and on our [team blog](https://blogs.msdn.microsoft.com/azureservicefabric/) as we make progress.  
 
 ### Quick look at our current status
  - [x] Service Fabric build tools for Linux
  - [x] Basic tests for Linux builds available
  - [x] Container image with build tools available to run builds
 
-### Currently in progress
- - [ ] Build tools for Windows
- - [ ] Improve dependency consumption process
- - [ ] Automated CI environment
- - [ ] Migrate complete test infrastructure 
+
+## Providing feedback and filing issues
+We have multiple repositories (in addition to this one) that constitute the Service Fabric product. For more information on how to provide feedback and file issues across the different components (and associated repositories), please see [Contributing.md](CONTRIBUTING.md).
 
 
 ## Build Requirements
@@ -117,13 +132,6 @@ For more details please refer to [Testing using ClusterDeployer](docs/cluster_de
 
 ## Running a local cluster  
 For more details please refer [Deploying local cluster from build](docs/install_packages_and_deploy_cluster.md)
-
-## How to engage, contribute and provide feedback 
-During our transition to open development, we are primarily focused on tasks related to building, testing, and developing Service Fabric on GitHub. If you are interested in helping out with this effort, head over to the current set of issues to see what we currently need help with. We will happily work with you and take any contributions that help us move Service Fabric development to GitHub.
-
-In the meantime, contributions to other areas of Service Fabric are welcome on a best-effort basis. While the team continues to develop internally, we will integrate the changes into our internal development repo for testing and verification, and then push the merged changes back to GitHub when the change is released. The smaller and more targeted your PRs, the easier it will be for us to review and integrate them. 
-
-For more information on how this process works and how to contribute, provide feedback, and log bugs, please see [Contributing.md](CONTRIBUTING.md).
 
 ## Documentation 
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).

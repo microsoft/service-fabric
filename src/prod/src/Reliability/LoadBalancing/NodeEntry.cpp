@@ -40,7 +40,9 @@ NodeEntry::NodeEntry(
     TreeNodeIndex && upgradeDomainIndex,
     bool isDeactivated,
     bool isUp,
-    std::vector<std::wstring> && nodeImages)
+    std::vector<std::wstring> && nodeImages,
+    bool isValid,
+    wstring && nodeTypeName)
     : nodeIndex_(nodeIndex),
     nodeId_(nodeId),
     loads_(move(loads)),
@@ -53,7 +55,10 @@ NodeEntry::NodeEntry(
     upgradeDomainIndex_(move(upgradeDomainIndex)),
     isDeactivated_(isDeactivated),
     isUp_(isUp),
-    nodeImages_(move(nodeImages))
+    nodeImages_(move(nodeImages)),
+    maxConcurrentBuilds_(0),
+    isValid_(isValid),
+    nodeTypeName_(move(nodeTypeName))
 {
     ASSERT_IFNOT(capacityRatios_.Values.size() == bufferedCapacities_.Values.size(),
         "Buffered capacities size {0} and CapacityRatios size {1} should be equal",
@@ -88,7 +93,10 @@ NodeEntry::NodeEntry(NodeEntry && other)
     upgradeDomainIndex_(move(other.upgradeDomainIndex_)),
     isDeactivated_(other.isDeactivated_),
     isUp_(other.isUp_),
-    nodeImages_(move(other.nodeImages_))
+    nodeImages_(move(other.nodeImages_)),
+    maxConcurrentBuilds_(other.maxConcurrentBuilds_),
+    isValid_(other.isValid_),
+    nodeTypeName_(move(other.nodeTypeName_))
 {
 }
 
@@ -109,6 +117,9 @@ NodeEntry & NodeEntry::operator = (NodeEntry && other)
         isDeactivated_ = other.isDeactivated_;
         isUp_ = other.isUp_;
         nodeImages_ = move(other.nodeImages_);
+        isValid_ = other.isValid_;
+        maxConcurrentBuilds_ = other.maxConcurrentBuilds_;
+        nodeTypeName_ = move(other.nodeTypeName_);
     }
 
     return *this;
@@ -146,7 +157,7 @@ GlobalWString const NodeEntry::TraceDescription = make_global<wstring>(
 
 void NodeEntry::WriteTo(TextWriter& writer, FormatOptions const&) const
 {
-    writer.Write("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11}",
+    writer.Write("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12}",
         nodeId_,
         nodeIndex_,
         faultDomainIndex_,
@@ -158,7 +169,8 @@ void NodeEntry::WriteTo(TextWriter& writer, FormatOptions const&) const
         totalCapacities_,
         isDeactivated_,
         isUp_,
-        nodeImages_);
+        nodeImages_,
+        maxConcurrentBuilds_);
 }
 
 void NodeEntry::WriteToEtw(uint16 contextSequenceId) const

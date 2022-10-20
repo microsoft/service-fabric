@@ -524,6 +524,8 @@ void TestStateProvider::Initialize(
         ReplicaId,
         StateProviderId);
 
+    hasPersistedState_ = tmpReplicatorWRef->TryGetTarget()->HasPeristedState;
+
     ASSERT_IFNOT(
         lifeState_ == Created,
         "{0}:{1}:{2} Initialize: lifeState must be Created, lifeState: {3}.",
@@ -729,7 +731,7 @@ Awaitable<void> TestStateProvider::PerformCheckpointAsync(
         status,
         lastPrepareCheckpointLSN);
 
-    if (checkpointing_)
+    if (checkpointing_ && hasPersistedState_)
     {
         co_await this->WriteAsync();
     }
@@ -799,8 +801,11 @@ Awaitable<void> TestStateProvider::RecoverCheckpointAsync(__in CancellationToken
         StateProviderId,
         static_cast<LONG32>(lifeState_));
 
-    KWString filePath = KWString(GetThisAllocator(), currentCheckpointFilePath_->ToUNICODE_STRING());
-    co_await this->ReadAsync(filePath);
+    if (hasPersistedState_)
+    {
+        KWString filePath = KWString(GetThisAllocator(), currentCheckpointFilePath_->ToUNICODE_STRING());
+        co_await this->ReadAsync(filePath);
+    }
 
     recoverCheckpoint_ = true;
 

@@ -13,7 +13,7 @@ StringLiteral const TraceSource("NodeQueryDescription");
 NodeQueryDescription::NodeQueryDescription()
     : nodeNameFilter_()
     , nodeStatusFilter_()
-    , queryPagingDescriptionUPtr_()
+    , queryPagingDescription_()
 {
 }
 
@@ -46,11 +46,19 @@ Common::ErrorCode NodeQueryDescription::FromPublicApi(FABRIC_NODE_QUERY_DESCRIPT
             if (ex2->Reserved != NULL)
             {
                 auto ex3 = reinterpret_cast<FABRIC_NODE_QUERY_DESCRIPTION_EX3*>(ex2->Reserved);
+
+                if (ex3->MaxResults < 0)
+                {
+                    return ErrorCode(
+                        ErrorCodeValue::InvalidArgument,
+                        wformatString(GET_COMMON_RC(Invalid_Max_Results), ex3->MaxResults));
+                }
+
                 pagingDescription.MaxResults = ex3->MaxResults;
             }
         }
 
-        queryPagingDescriptionUPtr_ = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryPagingDescription_ = make_unique<QueryPagingDescription>(move(pagingDescription));
     }
 
     return ErrorCode::Success();
@@ -72,8 +80,8 @@ void NodeQueryDescription::GetQueryArgumentMap(__out QueryArgumentMap & argMap) 
             StringUtility::ToWString<DWORD>(nodeStatusFilter_));
     }
 
-    if (queryPagingDescriptionUPtr_ != nullptr)
+    if (queryPagingDescription_ != nullptr)
     {
-        queryPagingDescriptionUPtr_->SetQueryArguments(argMap);
+        queryPagingDescription_->SetQueryArguments(argMap);
     }
 }

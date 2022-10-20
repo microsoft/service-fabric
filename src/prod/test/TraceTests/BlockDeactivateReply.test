@@ -1,0 +1,28 @@
+#Block DeactivateReply so that reconfiguration is stuck in Deactivation phase
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 3 1
+namingservice 1 3 2
+fmservice 3 1
+cleantest
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+addbehavior b1 50 60 DeactivateReply
+deactivatenode 50 RemoveData
+!pause,300
+removebehavior b1
+!waitforstate FM.Node.DeactivationIntent.50 RemoveData
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+verify
+!q

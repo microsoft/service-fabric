@@ -8,18 +8,51 @@ namespace System.Fabric.Dca
     using System;
     using System.IO;
 
-    internal static class ContainerEnvironment
+    internal enum ContainerMarkerFileType
+    {
+        ContainerRemoveLogMarker,
+        ContainerProcessLogMarker,
+        NotInContainerFolder,
+        None
+    }
+
+    internal class ContainerEnvironment
     {
         internal const string ContainersRootFolderName = "Containers";
+        internal const string ContainerLogMarkerFileNameFilter = "*ContainerLog.txt";
+        internal const string ContainerRemoveLogMarkerFileName = "RemoveContainerLog.txt";
+        internal const string ContainerProcessLogMarkerFileName = "ProcessContainerLog.txt";
 
-        internal const string ContainerDeletionMarkerFileName = "RemoveContainerLog.txt";
+        private static readonly TimeSpan DefaultContainerFolderCleanupTimerInterval = TimeSpan.FromMinutes(10.0);
+        private static readonly TimeSpan DefaultMaxContainerLogsProcessingWaitTime = TimeSpan.FromMinutes(30.0);
 
-        internal static string ContainerLogRootDirectory
+        internal virtual TimeSpan ContainerFolderCleanupTimerInterval
+        {
+            get
+            {
+                return ContainerEnvironment.DefaultContainerFolderCleanupTimerInterval;
+            }
+        }
+
+        internal virtual TimeSpan MaxContainerLogsProcessingWaitTime
+        {
+            get
+            {
+                return ContainerEnvironment.DefaultMaxContainerLogsProcessingWaitTime;
+            }
+        }
+
+        internal virtual string ContainerLogRootDirectory
         {
             get
             {
                 return Path.Combine(Utility.LogDirectory, ContainersRootFolderName);
             }
+        }
+
+        internal static string GetAppInstanceIdFromContainerFolderFullPath(string containerFolderPath)
+        {
+            return Path.Combine(ContainerEnvironment.ContainersRootFolderName, Path.GetFileName(containerFolderPath));
         }
 
         internal static bool IsContainerApplication(string applicationInstanceId)
@@ -36,6 +69,35 @@ namespace System.Fabric.Dca
         {
             var logSourceIdSpit = logSourceId.Split('_');
             return string.Join("_", logSourceIdSpit, 0, logSourceIdSpit.Length - 1);
+        }
+
+        internal ContainerMarkerFileType GetContainerMarkerFileType(string fileFullPath)
+        {
+            string fileName = Path.GetFileName(fileFullPath);
+            string folderName = Path.GetFileName(Path.GetDirectoryName(fileFullPath));
+
+            string expectedMarkerFilePath = Path.Combine(
+                this.ContainerLogRootDirectory,
+                folderName);
+
+            // check whether file is inside a container folder root.
+            if (!expectedMarkerFilePath.Equals(Path.GetDirectoryName(fileFullPath), StringComparison.OrdinalIgnoreCase))
+            {
+                return ContainerMarkerFileType.NotInContainerFolder;
+            }
+
+            if (fileName.Equals(ContainerProcessLogMarkerFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                return ContainerMarkerFileType.ContainerProcessLogMarker;
+            }
+            else if (fileName.Equals(ContainerRemoveLogMarkerFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                return ContainerMarkerFileType.ContainerRemoveLogMarker;
+            }
+            else
+            {
+                return ContainerMarkerFileType.None;
+            }
         }
     }
 }

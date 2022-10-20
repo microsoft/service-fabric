@@ -26,6 +26,7 @@
 #include "ApplicationReservedLoads.h"
 #include "ServicePackageEntry.h"
 #include "ServicePackagePlacement.h"
+#include "InBuildCountPerNode.h"
 
 namespace Reliability
 {
@@ -56,6 +57,7 @@ namespace Reliability
                 std::vector<std::unique_ptr<PlacementReplica>> && allReplicas,
                 std::vector<std::unique_ptr<PlacementReplica>> && standByReplicas,
                 ApplicationReservedLoad && reservationLoads,
+                InBuildCountPerNode && ibCountsPerNode,
                 size_t hasUpgradePartitions,
                 bool isSingletonReplicaMoveAllowedDuringUpgrade,
                 int randomSeed,
@@ -121,6 +123,9 @@ namespace Reliability
 
             __declspec(property(get = get_ServicePackagePlacement)) ServicePackagePlacement const& ServicePackagePlacements;
             ServicePackagePlacement const& get_ServicePackagePlacement() const { return servicePackagePlacements_; }
+
+            __declspec(property(get = get_InBuildCountsPerNode)) InBuildCountPerNode InBuildCountsPerNode;
+            InBuildCountPerNode const& get_InBuildCountsPerNode() const { return inBuildCountPerNode_; }
 
             __declspec (property(get = get_ApplicationPlacements)) ApplicationPlacement const& ApplicationPlacements;
             ApplicationPlacement const& get_ApplicationPlacements() const { return applicationPlacements_; }
@@ -209,6 +214,20 @@ namespace Reliability
             __declspec (property(get = getQuorumBasedServicesTempCache)) std::set<uint64> const& QuorumBasedServicesTempCache;
             std::set<uint64> const& getQuorumBasedServicesTempCache() const { return quorumBasedServicesTempCache_; }
 
+            // Returns maximum number of moves that can be generated due to node throttling.
+            size_t GetThrottledMoveCount() const;
+
+            __declspec(property(get = get_Action)) PLBSchedulerActionType::Enum Action;
+            PLBSchedulerActionType::Enum get_Action() const { return action_; }
+
+            __declspec(property(get = get_IsThrottlingConstraintNeeded)) bool IsThrottlingConstraintNeeded;
+            bool get_IsThrottlingConstraintNeeded() const { return throttlingConstraintPriority_ >= 0; }
+
+            __declspec(property(get = get_ThrottlingConstraintPriority)) int ThrottlingConstraintPriority;
+            int get_ThrottlingConstraintPriority() const { return throttlingConstraintPriority_; }
+
+            // Updates the action, and updates nodes for throttling.
+            void UpdateAction(PLBSchedulerActionType::Enum action, bool constructor = false);
         private:
             void PrepareServices();
             void PreparePartitions();
@@ -216,6 +235,7 @@ namespace Reliability
             void ComputeBeneficialTargetNodesPerMetric();
             void ComputeBeneficialTargetNodesForPlacementPerMetric();
             void CreateReplicaPlacement();
+            void CreateNodePlacement();
             void PrepareApplications();
 
         private:
@@ -338,6 +358,9 @@ namespace Reliability
             // NodeEntry -> ServicePackageEntry -> pair<ReplicaSet, count of replicas>
             ServicePackagePlacement servicePackagePlacements_;
 
+            // NodeEntry -> Number of InBuild replicas (used for throttling)
+            InBuildCountPerNode inBuildCountPerNode_;
+
             std::vector<size_t> partitionBatchIndexVec_;
 
             size_t quorumBasedServicesCount_;
@@ -346,6 +369,13 @@ namespace Reliability
             // Makes temporary cache of services that use quorum based logic.
             // Takes into account only services that have a partition in closure.
             std::set<uint64> quorumBasedServicesTempCache_;
+
+            // Action that this placement object was made for
+            PLBSchedulerActionType::Enum action_;
+
+            // If greater than zero, then there are nodes that are throttled.
+            // Checker should use ThrottlingConstraint for this placement in that case.
+            int throttlingConstraintPriority_;
         };
     }
 }

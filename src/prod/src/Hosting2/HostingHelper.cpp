@@ -9,14 +9,130 @@ using namespace std;
 using namespace Common;
 using namespace Hosting2;
 using namespace ServiceModel;
+using namespace Management::CentralSecretService;
+using namespace Management::ImageModel;
 
 StringLiteral TraceType_HostingHelper = "HostingHelper";
 
+// ********************************************************************************************************************
+// HostingHelper.GetSecretStoreRefValuesAsyncOperation Implementation
+//
+// Queries SecretStore to retrieve SecretRefValues
+class HostingHelper::GetSecretStoreRefValuesAsyncOperation
+    : public AsyncOperation
+{
+    DENY_COPY(GetSecretStoreRefValuesAsyncOperation)
+
+public:
+    GetSecretStoreRefValuesAsyncOperation(
+        _In_ HostingSubsystem & hosting,
+        vector<wstring> const & secretStoreRefs,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : hosting_(hosting),
+        secretStoreRefs_(secretStoreRefs),
+        decryptedSecretStoreRefMap_(),
+        AsyncOperation(callback, parent)
+    {
+    }
+
+    virtual ~GetSecretStoreRefValuesAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(
+        AsyncOperationSPtr const & operation,
+        _Out_ map<wstring, wstring> & decryptedSecretStoreRef)
+    {
+        auto thisPtr = AsyncOperation::End<GetSecretStoreRefValuesAsyncOperation>(operation);
+        decryptedSecretStoreRef = move(thisPtr->decryptedSecretStoreRefMap_);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (!CentralSecretServiceConfig::IsCentralSecretServiceEnabled())
+        {
+            ErrorCode err(ErrorCodeValue::InvalidOperation, StringResource::Get(IDS_HOSTING_SecretStoreIsUnavailable));
+            TryComplete(thisSPtr, move(err));
+            return;
+        }
+
+        GetSecretsDescription getSecretsDesc;
+        ErrorCode error = hosting_.LocalSecretServiceManagerObj->ParseSecretStoreRef(
+            secretStoreRefs_,
+            getSecretsDesc);
+
+        if (!error.IsSuccess())
+        {
+            TraceError(
+                TraceTaskCodes::Hosting,
+                TraceType_HostingHelper,
+                "Error while parsing SecretRefs LocalSecretServiceManagerObj->ParseSecretStoreRef {0}, SecretStoreRef: {1}",
+                error,
+                secretStoreRefs_);
+
+            TryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        auto operation = hosting_.LocalSecretServiceManagerObj->BeginGetSecrets(
+            getSecretsDesc,
+            HostingConfig::GetConfig().RequestTimeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnBeginGetSecretsCompleted(operation, false);
+        },
+            thisSPtr);
+        this->OnBeginGetSecretsCompleted(operation, true);
+    }
+
+private:
+    void OnBeginGetSecretsCompleted(
+        AsyncOperationSPtr const& operation,
+        bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        SecretsDescription secretsDesc;
+        ErrorCode error = hosting_.LocalSecretServiceManagerObj->EndGetSecrets(operation, secretsDesc);
+        if (!error.IsSuccess())
+        {
+            TraceError(
+                TraceTaskCodes::Hosting,
+                TraceType_HostingHelper,
+                "Error while obtaining SecretStoreRef values LocalSecretServiceManagerObj->EndGetSecrets {0}, SecretStoreRef: {1}",
+                error,
+                secretStoreRefs_);
+
+            TryComplete(operation->Parent, move(error));
+            return;
+        }
+
+        std::vector<Secret> secrets = secretsDesc.Secrets;
+        for (auto secret : secrets)
+        {
+            wstring key = wformatString("{0}:{1}", secret.Name, secret.Version);
+            decryptedSecretStoreRefMap_.insert(make_pair(move(key), move(secret.Value)));
+        }
+
+        TryComplete(operation->Parent, move(error));
+    }
+
+private:
+    vector<wstring> const secretStoreRefs_;
+    map<wstring, wstring> decryptedSecretStoreRefMap_;
+    HostingSubsystem & hosting_;
+};
 
 ErrorCode HostingHelper::GenerateAllConfigSettings(
     wstring const& applicationId,
     wstring const& servicePackageName,
-    Management::ImageModel::RunLayoutSpecification const& runLayout,
+    RunLayoutSpecification const& runLayout,
     vector<DigestedConfigPackageDescription> const& digestedConfigPackages,
     _Out_ map<wstring, ConfigSettings> & configSettingsMapResult)
 {
@@ -31,15 +147,17 @@ ErrorCode HostingHelper::GenerateAllConfigSettings(
 
         wstring settingsFile = runLayout.GetSettingsFile(configPackageFolder);
 
-		if (!File::Exists(settingsFile))
-		{
-			TraceError(
-				TraceTaskCodes::Hosting,
-				TraceType_HostingHelper,
-				"Couldn't find file Settings.xml {0}",
-				settingsFile);
-			return ErrorCodeValue::FileNotFound;
-		}
+        if (!File::Exists(settingsFile))
+        {
+            TraceError(
+                TraceTaskCodes::Hosting,
+                TraceType_HostingHelper,
+                "Couldn't find file Settings.xml {0}",
+                settingsFile);
+
+            return ErrorCode(ErrorCodeValue::FileNotFound,
+                wformatString(StringResource::Get(IDS_HOSTING_FailedToLoadConfigSettingsFile), settingsFile));
+        }
 
         ConfigSettings configSettings;
         auto error = Parser::ParseConfigSettings(settingsFile, configSettings);
@@ -66,7 +184,7 @@ ErrorCode HostingHelper::GenerateAllConfigSettings(
     return ErrorCodeValue::Success;
 }
 
-ErrorCode HostingHelper::DecryptAndGetSecretStoreRef(
+ErrorCode HostingHelper::DecryptAndGetSecretStoreRefForConfigSetting(
     _Inout_ map<wstring, ConfigSettings> & configSettingsMapResult,
     _Out_ vector<wstring> & secretStoreRef)
 {
@@ -101,40 +219,6 @@ ErrorCode HostingHelper::DecryptAndGetSecretStoreRef(
     }
 
     return ErrorCodeValue::Success;
-}
-
-
-void HostingHelper::ReplaceSecretStoreRef(_Inout_ map<wstring, ConfigSettings> & configSettingsMapResult, map<wstring, wstring> const& secrteStoreRef)
-{
-    if (secrteStoreRef.empty())
-    {
-        return;
-    }
-
-    for (auto & sections : configSettingsMapResult)
-    {
-        for (auto & section : sections.second.Sections)
-        {
-            if (section.second.Parameters.size() > 0)
-            {
-                for (auto & parameter : section.second.Parameters)
-                {
-                    if (StringUtility::AreEqualCaseInsensitive(parameter.second.Type, Constants::SecretsStoreRef))
-                    {
-                        auto it = secrteStoreRef.find(parameter.second.Value);
-                        if (it != secrteStoreRef.end())
-                        {
-                            parameter.second.Value = it->second;
-                        }
-                        else
-                        {
-                            Assert::CodingError("Can't find secret value for given secret {0} in secret store", parameter.second.Value);
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 ErrorCode HostingHelper::WriteSettingsToFile(wstring const& settingName, wstring const& settingValue, wstring const& fileName)
@@ -176,4 +260,24 @@ ErrorCode HostingHelper::WriteSettingsToFile(wstring const& settingName, wstring
     }
 
     return error;
+}
+
+AsyncOperationSPtr HostingHelper::BeginGetSecretStoreRef(
+    _In_ HostingSubsystem & hosting,
+    vector<wstring> const & secretStoreRefs,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<GetSecretStoreRefValuesAsyncOperation>(
+        hosting,
+        secretStoreRefs,
+        callback,
+        parent);
+}
+
+ErrorCode HostingHelper::EndGetSecretStoreRef(
+    AsyncOperationSPtr const & operation,
+    _Out_ map<wstring, wstring> & decryptedSecretStoreRef)
+{
+    return GetSecretStoreRefValuesAsyncOperation::End(operation, decryptedSecretStoreRef);
 }

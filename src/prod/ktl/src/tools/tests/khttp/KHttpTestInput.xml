@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Data>
+    <Table Id="Test">
+        <ParameterTypes>
+            <ParameterType Name="Parameters" Array="true">String</ParameterType>
+        </ParameterTypes>
+        <Row Name="Test">
+            <Parameter Name="Parameters">
+                <Value>KHttpTest:-ws InMem</Value>
+                <Value>KHttpTest:-ws InProc 100 1</Value>
+                <Value>KHttpTest:-ws InProc 1 100</Value>
+                <Value>KHttpTest:-ws InProc 20 10</Value>
+            </Parameter>
+        </Row>
+    </Table>
+</Data>

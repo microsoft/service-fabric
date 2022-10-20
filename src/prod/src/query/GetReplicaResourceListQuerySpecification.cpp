@@ -26,7 +26,7 @@ GetReplicaResourceListQuerySpecification::GetReplicaResourceListQuerySpecificati
 }
 
 ErrorCode GetReplicaResourceListQuerySpecification::GetNext(
-    __in QuerySpecificationSPtr const & previousQuerySpecification,
+    QuerySpecificationSPtr const & previousQuerySpecification,
     __in std::unordered_map<QueryNames::Enum, ServiceModel::QueryResult> & queryResults,
     __inout QueryArgumentMap & queryArgs,
     __out Query::QuerySpecificationSPtr & nextQuery,
@@ -44,14 +44,18 @@ ErrorCode GetReplicaResourceListQuerySpecification::GetNext(
         case QueryNames::Enum::GetServiceResourceList:
         {
             vector<ModelV2::ContainerServiceQueryResult> serviceResourceResult;
-            queryResults[QueryNames::Enum::GetServiceResourceList].GetList<ModelV2::ContainerServiceQueryResult>(serviceResourceResult);
+            auto error = queryResults[QueryNames::Enum::GetServiceResourceList].GetList<ModelV2::ContainerServiceQueryResult>(serviceResourceResult);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
 
             if (serviceResourceResult.size() == 0)
             {
                 replyMessage = QueryMessage::GetQueryReply(queryResults[QueryNames::Enum::GetServiceResourceList]);
                 return ErrorCodeValue::EnumerationCompleted;
             }
-            
+
             ASSERT_IF(serviceResourceResult.size() != 1, "serviceResourceResult size is not 1 actually size is", serviceResourceResult.size());
 
             NamesArgument serviceNames;
@@ -61,7 +65,7 @@ ErrorCode GetReplicaResourceListQuerySpecification::GetNext(
             }
 
             wstring serviceNamesSerialized;
-            auto error = JsonHelper::Serialize(serviceNames, serviceNamesSerialized);
+            error = JsonHelper::Serialize(serviceNames, serviceNamesSerialized);
             if (!error.IsSuccess())
             {
                 return error;
@@ -92,10 +96,18 @@ ErrorCode GetReplicaResourceListQuerySpecification::GetNext(
         case QueryNames::Enum::GetReplicaListByServiceNames:
         {
             vector<ModelV2::ContainerServiceQueryResult> serviceResourceResult;
-            queryResults[QueryNames::Enum::GetServiceResourceList].GetList<ModelV2::ContainerServiceQueryResult>(serviceResourceResult);
+            auto error = queryResults[QueryNames::Enum::GetServiceResourceList].GetList<ModelV2::ContainerServiceQueryResult>(serviceResourceResult);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
 
             vector<ReplicasByServiceQueryResult> replicaResult;
-            queryResults[QueryNames::Enum::GetReplicaListByServiceNames].GetList<ReplicasByServiceQueryResult>(replicaResult);
+            error = queryResults[QueryNames::Enum::GetReplicaListByServiceNames].GetList<ReplicasByServiceQueryResult>(replicaResult);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
 
             vector<wstring> nodeNames;
             for (auto const & replicasByService : replicaResult)
@@ -127,14 +139,27 @@ ErrorCode GetReplicaResourceListQuerySpecification::GetNext(
         case QueryNames::Enum::GetDeployedCodePackageListByApplication:
         {
             vector<ModelV2::ContainerServiceQueryResult> serviceResourceResult;
-            queryResults[QueryNames::Enum::GetServiceResourceList].MoveList<ModelV2::ContainerServiceQueryResult>(serviceResourceResult);
+            auto error = queryResults[QueryNames::Enum::GetServiceResourceList].MoveList<ModelV2::ContainerServiceQueryResult>(serviceResourceResult);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+
             ModelV2::ContainerServiceQueryResult serviceResource = serviceResourceResult[0];
 
             vector<ReplicasByServiceQueryResult> replicaResult;
-            queryResults[QueryNames::Enum::GetReplicaListByServiceNames].MoveList<ReplicasByServiceQueryResult>(replicaResult);
+            error = queryResults[QueryNames::Enum::GetReplicaListByServiceNames].MoveList<ReplicasByServiceQueryResult>(replicaResult);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
 
             vector<DeployedCodePackageQueryResult> codePackagesResult;
-            queryResults[QueryNames::Enum::GetDeployedCodePackageListByApplication].MoveList<DeployedCodePackageQueryResult>(codePackagesResult);
+            error = queryResults[QueryNames::Enum::GetDeployedCodePackageListByApplication].MoveList<DeployedCodePackageQueryResult>(codePackagesResult);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
 
             ListPager<ReplicaResourceQueryResult> resultList;
 
@@ -166,9 +191,9 @@ ErrorCode GetReplicaResourceListQuerySpecification::GetNext(
                     auto codePackage = find_if(codePackagesResult.begin(), codePackagesResult.end(),
                         [&nodeName, &codePackageName, &serviceName](DeployedCodePackageQueryResult const & item)
                         {
-                            return 
-                                item.NodeName == nodeName && 
-                                item.CodePackageName == codePackageName && 
+                            return
+                                item.NodeName == nodeName &&
+                                item.CodePackageName == codePackageName &&
                                 item.ServiceNameInternalUseOnly == serviceName;
                         });
 
