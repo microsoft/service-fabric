@@ -48,7 +48,7 @@ Follow this guidance for setting up your developer environment:
 |.NET SDK |Windows .NET SDK | 6.0.1121 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.0.1121.msi |
 ||Microsoft.ServiceFabric | 9.0.1121 |N/A |https://www.nuget.org |
 ||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 9.0.1121 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
-||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 8.0.516 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
+||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 9.0.1121 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
 ||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 9.0.1121 |N/A| https://www.nuget.org |
 ||Microsoft.ServiceFabric.Data.Extensions | 9.0.1121 | N/A |https://www.nuget.org |
 |Java SDK |Java SDK | 1.0.6 |N/A |https://mvnrepository.com/artifact/com.microsoft.servicefabric/sf-actors/1.0.6 |
