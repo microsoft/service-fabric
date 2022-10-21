@@ -32,17 +32,10 @@ For more information see: [Breaking change for Azure Service Fabric Linux custom
 If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgradation to 9.0.1107.9590, BRS fails deserialize old BackupMetadata with changes in new release. BRS will stop taking backup and restore on the partition/service/app in question. Though user app, cluster and BRS remains healthy.
 
 **Identifying the issue**
-There are three ways to identifying and confirming the issue
+There are two ways to identifying and confirming the issue
 A. If periodic backups were happening on any partition, it should be visible on SFX under Cluster->Application->Service->Partition->Backup. Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whethere backup policy was enabled, backups were happening before upgrade and whether backups are happening post upgrade.
 
 B. Another way of checking and enumerating them is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
-
-C. Additionally customer can verify this issue by checking below exception in logs if they have access to log. These logs will be present on new primary node of partition where periodic backup is scheduled before and after upgrade.
-
-Customers would see logs something like –
-| Timestamp | Type | Process | Thread | Message |
-| --- | --- | --- | --- | --- |
-| 2022-10-18T11:14:18.44Z | BackupRestoreManager | 92384 | 576992 | 2f2f40a4-b8a6-416b-98c2-939ea60b0d77 Error encountered in BackupRestoreWorker InitializeAsync System.Runtime.Serialization.SerializationException: Error in line 1 position 198. 'Element' '_x003C_NumberOfBackupsInChain_x003E_k__BackingField' from namespace 'http://schemas.datacontract.org/2004/07/System.Fabric.BackupRestore' is not expected. Expecting element '_x003C_NextBackupTime_x003E_k__BackingField'.<br>    	   at System.Runtime.Serialization.XmlObjectSerializerReadContext.ThrowRequiredMemberMissingException(XmlReaderDelegator xmlReader, Int32 memberIndex, Int32 requiredIndex, XmlDictionaryString[] memberNames)|
 
 **Mitigation**
 To mitigate, customers need to update the existing policy after upgrading to 9.0.1107.9590. User can call updatebackuppolicy API as mentioned in this doc [Update Backup Policy] https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy with existing policy values. It will update the policy model inside BRS with new data model and BRS will start taking periodic backups again.
