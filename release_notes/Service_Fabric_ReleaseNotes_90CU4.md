@@ -1,7 +1,6 @@
 # Microsoft Azure Service Fabric 9.0 Cumulative Update 4.0 Release Notes
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
-* [Key Announcements](#key-announcements)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
 * [Repositories and Download Links](#repositories-and-download-links)
@@ -18,18 +17,11 @@ The following packages and versions are part of this release:
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
-## Key Announcements
-* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 10/30/2022. 5 VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads.VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
-* Azure Service Fabric node types with VMSS durability of Silver or Gold should always have Windows update explicitly disabled to avoid unintended OS restarts due to the Windows updates, which can impact the production workloads. This can be done by setting the "enableAutomaticUpdates": false, in the VMSS OSProfile. Consider enabling Automatic VMSS Image upgrades instead. The deployments will start failing from *11/10/2022* for new clusters, if the WindowsUpdates are not disabled on the VMSS. Enforcement for existing clusters will be rolled out in the coming months. <br>
-For more information see: [VMSS Image Upgrades](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade)
-
-
 ## Service Fabric Feature and Bug Fixes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.0.1121.9590<br>Ubuntu 18 - 9.0.1114.1<br>Ubuntu 20 - 9.0.1114.1** | **Bug** | Cluster Manager service | **Brief Description**: If Upgrade application was called against an application that did not exist then "ApplicationTypeNotFound" is returned instead of "ApplicationNotFound".<br>**Fix**: The code bug in Cluster Manager is fixed to return the correct error message of "ApplicationNotFound"
-
+| **Windows - 9.0.1121.9590<br>Ubuntu 18 - 9.0.1114.1<br>Ubuntu 20 - 9.0.1114.1** | **Bug** | Cluster Manager service | **Brief Description**: If Upgrade application was called against an application that did not exist, then "ApplicationTypeNotFound" is returned instead of "ApplicationNotFound".<br>**Fix**: The code bug in Cluster Manager is fixed to return the correct error message of "ApplicationNotFound"
 
 ## Retirement and Deprecation Path Callouts
 
