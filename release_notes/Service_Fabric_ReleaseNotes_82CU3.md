@@ -9,7 +9,7 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 16 <br> Ubuntu 18 <br> Windows | 8.2.1434.1 <br>  8.2.1434.1 <br> 8.2.1620.9590  |
+|Service Fabric Runtime| Ubuntu 18 <br> Windows | 8.2.1434.1 <br> 8.2.1620.9590  |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 8.2.1620.9590 |
 |.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 5.2.1620  <br> 8.2.1620 <br> 8.2.1620 <br> 8.2.1620 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
@@ -20,36 +20,15 @@ The following packages and versions are part of this release:
 
 Microsoft Azure Service Fabric 8.2 Cumulative Update 3.0 Release Notes
 
-* [Current Breaking Changes](#current-breaking-changes)
-* [Service Fabric Common Bug Fixes](#service-fabric-common-bug-fixes)
+* [Service Fabric Bug Fixes](#service-fabric-bug-fixes)
 * [Repositories and Download Links](#repositories-and-download-links)
 
-
-## Current Breaking Changes
-
-* **Guest Executable and Container Applications**: Guest executable and container applications created or upgraded in Service Fabric clusters with runtime versions 7.1+ are incompatible with prior Service Fabric runtime versions (e.g. Service Fabric 7.0).<br/>
-    Following scenarios are impacted:<br/>
-    * An application with guest executables or containers is created or upgraded in a Service Fabric 7.1+ cluster.<br/>
-    The cluster is then downgraded to a previous Service Fabric runtime version (e.g. Service Fabric 7.0).<br/>
-    The application fails to activate.<br/>
-    * A cluster upgrade from a version prior to Service Fabric v7.1 to Service Fabric 7.1+ version is in progress.<br/>
-    In parallel with the Service Fabric runtime upgrade, an application with guest executables or containers is created or upgraded.<br/>
-    The Service Fabric runtime upgrade starts rolling back (due to any reason) to a version prior to Service Fabric runtime v7.1.<br/>
-    The application fails to activate.<br/>
-    To avoid issues when upgrading from a version prior to Service Fabric runtime v7.1 to a Service Fabric 7.1+ runtime version, do not create or upgrade applications with guest executables or containers while the Service Fabric runtime upgrade is in progress.<br/>
-    * The simplest mitigation, when possible, is to delete and recreate the application in Service Fabric 7.0.<br/>
-    * The other option is to upgrade the application in Service Fabric 7.0 (for example, with a version only change).<br/>
-    If the application is stuck in rollback, the rollback has to be first completed before the application can be upgraded again.
-
-<br>
-
-
-## Service Fabric Common Bug Fixes
+## Service Fabric Bug Fixes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 8.2.1620.9590<br>Ubuntu 16 - 8.2.1434.1<br>Ubuntu 18 - 8.2.1434.1** | **Bug** | Backup Restore Service failure| **Brief desc**: When a large number of backup policy addition requests are made in parallel and RetentionManager object is created in a different thread, RunAsync gets cancelled for reconfiguration due to DisposeRetentionManager waiting for RetentionManagerSemaphore to be released.<br>**Impact**: Backup Restore Service will fail blocking cluster upgrade.<br>**Fix**: Release the RetentionManagerSemaphore properly. 
-| **Windows - 8.2.1620.9590<br>Ubuntu 16 - 8.2.1434.1<br>Ubuntu 18 - 8.2.1434.1** | **Feature** | Support for parallel recursive queries to Service Fabric DNS Service|**Brief Description**: This change adds support for parallel recursive queries in Service Fabric DNS, where requests will be sent to all forwarding DNS servers and the first response received is used. When enabled, parallel queries will be attempted after the serial queries. The following config options are introduced under **DNS Service** to control the behavior:<br><ul><li>**RecursiveQuerySerialMaxAttempts** - The number of serial queries that will be attempted, at most. If this number is higher than the amount of forwarding DNS servers, querying will stop once all the servers have been attempted exactly once.</li><li>**RecursiveQuerySerialTimeout** - The timeout value in seconds for each attempted serial query.</li><li>**RecursiveQueryParallelMaxAttempts** - The number of times parallel queries will be attempted. Parallel queries are executed after the max attempts for serial queries have been exhausted.</li><li>**RecursiveQueryParallelTimeout** - The timeout value in seconds for each attempted parallel query.</li></ul>If clusters were previously using the RecursiveQueryTimeout config option, they will need to remove it before upgrading; this config is replaced by the ones above.<br>**Documentation Reference**: Read more about it at - <ul><li>[DNS Service in Azure Service Fabric - Recursive Queries](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-dnsservice#recursive-queries)</li><li>[What is the default behavior of a DNS client when three or more DNS servers are configured on the NIC](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/dns-client-resolution-timeouts#what-is-the-default-behavior-of-a-dns-client-when-three-or-more-dns-servers-are-configured-on-the-nic)</li><li>[What is the default behavior of a Windows XP DNS client when two DNS servers are configured on the NIC](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/dns-client-resolution-timeouts#what-is-the-default-behavior-of-a-windows-xp-dns-client-when-two-dns-servers-are-configured-on-the-nic)</li></ul> | 
+| **Windows - 8.2.1620.9590<br>Ubuntu 18 - 8.2.1434.1** | **Bug** | Backup Restore Service failure| **Brief desc**: When a large number of backup policy addition requests are made in parallel and RetentionManager object is created in a different thread, RunAsync gets cancelled for reconfiguration due to DisposeRetentionManager waiting for RetentionManagerSemaphore to be released.<br>**Impact**: Backup Restore Service will fail blocking cluster upgrade.<br>**Fix**: Release the RetentionManagerSemaphore properly. 
+| **Windows - 8.2.1620.9590<br>Ubuntu 18 - 8.2.1434.1** | **Feature** | Support for parallel recursive queries to Service Fabric DNS Service|**Brief Description**: This change adds support for parallel recursive queries in Service Fabric DNS, where requests will be sent to all forwarding DNS servers and the first response received is used. When enabled, parallel queries will be attempted after the serial queries. The following config options are introduced under **DNS Service** to control the behavior:<br><ul><li>**RecursiveQuerySerialMaxAttempts** - The number of serial queries that will be attempted, at most. If this number is higher than the amount of forwarding DNS servers, querying will stop once all the servers have been attempted exactly once.</li><li>**RecursiveQuerySerialTimeout** - The timeout value in seconds for each attempted serial query.</li><li>**RecursiveQueryParallelMaxAttempts** - The number of times parallel queries will be attempted. Parallel queries are executed after the max attempts for serial queries have been exhausted.</li><li>**RecursiveQueryParallelTimeout** - The timeout value in seconds for each attempted parallel query.</li></ul>If clusters were previously using the RecursiveQueryTimeout config option, they will need to remove it before upgrading; this config is replaced by the ones above.<br>**Documentation Reference**: Read more about it at - <ul><li>[DNS Service in Azure Service Fabric - Recursive Queries](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-dnsservice#recursive-queries)</li><li>[What is the default behavior of a DNS client when three or more DNS servers are configured on the NIC](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/dns-client-resolution-timeouts#what-is-the-default-behavior-of-a-dns-client-when-three-or-more-dns-servers-are-configured-on-the-nic)</li><li>[What is the default behavior of a Windows XP DNS client when two DNS servers are configured on the NIC](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/dns-client-resolution-timeouts#what-is-the-default-behavior-of-a-windows-xp-dns-client-when-two-dns-servers-are-configured-on-the-nic)</li></ul> | 
 
 
 ## Repositories and Download Links
