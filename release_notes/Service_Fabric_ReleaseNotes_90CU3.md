@@ -39,7 +39,7 @@ A. If periodic backups were happening on any partition, it should be visible on 
 B. Another way of checking and enumerating backups is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
 
 **Mitigation:**
-To mitigate, customers need to update the existing policy after upgrading to 9.0.1107.9590. User can call updatebackuppolicy API as mentioned in this doc [Update Backup Policy] https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy with existing policy values. It will update the policy model inside BRS with new data model and BRS will start taking periodic backups again.
+To mitigate, customers need to update the existing policy after upgrading to 9.0.1107.9590. User can call updatebackuppolicy API as mentioned in this doc [Update Backup Policy](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy) with existing policy values. It will update the policy model inside BRS with new data model and BRS will start taking periodic backups again.
 
 **Steps:**
 1. Check and confirm issue as mentioned in "Identifying the issue" section above.
