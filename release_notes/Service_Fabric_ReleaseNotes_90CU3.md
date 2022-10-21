@@ -29,18 +29,27 @@ Beginning with 9.0 CU 2.1 release, Service Fabric Runtime will no longer install
 For more information see: [Breaking change for Azure Service Fabric Linux customers](https://techcommunity.microsoft.com/t5/azure-service-fabric-blog/breaking-change-for-azure-service-fabric-linux-customers/ba-p/3604678)
 
 **Breaking Changes with  BackupRestoreService**
-When SF cluster is upgraded to to 9.0.1107.9590 which has existing backup policies and these are enabled on any of the app/service/partition, post upgradation BRS fails deserialize old metadata with changes in new release. It will stop taking backup and restore on the partition/service/app in question, though cluster and BRS remains healthy. Customers would see logs something like –
+When an SF cluster A. has existing backup policies and B.these policies enabled on any of the app/service/partition, if this cluster is now upgraded to is upgraded to 9.0.1107.9590, then BRS fails deserialize old metadata with changes in new release. BRS will stop taking backup and restore on the partition/service/app in question, though user app, cluster and BRS remains healthy.
+
+**Identifying the issue**
+There are three ways to identifying and confirming the issue
+A. If periodic backups were happening on any partition, it should be visible on SFX under Cluster->Application->Service->Partition->Backup. Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whethere backup policy was enabled, backups were happening before upgrade and whether backups are happening post upgrade.
+
+B. Another way of checking and enumerating them is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
+
+C. Additionally customer can verify this issue by checking below exception in logs if they have access to log. These logs will be present on new primary node of partition where periodic backup is scheduled before and after upgrade.
+
+Customers would see logs something like –
 | Timestamp | Type | Process | Thread | Message |
 | --- | --- | --- | --- | --- |
 | 2022-10-18T11:14:18.44Z | BackupRestoreManager | 92384 | 576992 | 2f2f40a4-b8a6-416b-98c2-939ea60b0d77 Error encountered in BackupRestoreWorker InitializeAsync System.Runtime.Serialization.SerializationException: Error in line 1 position 198. 'Element' '_x003C_NumberOfBackupsInChain_x003E_k__BackingField' from namespace 'http://schemas.datacontract.org/2004/07/System.Fabric.BackupRestore' is not expected. Expecting element '_x003C_NextBackupTime_x003E_k__BackingField'.<br>    	   at System.Runtime.Serialization.XmlObjectSerializerReadContext.ThrowRequiredMemberMissingException(XmlReaderDelegator xmlReader, Int32 memberIndex, Int32 requiredIndex, XmlDictionaryString[] memberNames)|
 
 **Mitigation**
 To mitigate, customers need to update the existing policy after upgrading to 9.0.1107.9590. User can call updatebackuppolicy API as mentioned in this doc [Update Backup Policy] https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy with existing policy values. It will update the policy model inside BRS with new data model and BRS will start taking periodic backups again.
+
 **Steps**
-1. Check if there were some existing backup policies applied on any application/service/partition before upgrading to 9.0.1107.9590
-2. Check if periodic backups are stopped post upgrading and above error is appearing in logs.
-above errors are appearing
-3. Update the backup policy with same old values by calling updatebackuppolicy API. Below is one sample -
+1. Check and confirm issue as mentioned in "Identifying the issue" section above.
+2. If issues is confirmed, update the backup policy with same old values by calling updatebackuppolicy API. Below is one sample -
     ```powershell
      $BackupPolicy=@{
       Name = "DailyAzureBackupPolicy"
@@ -67,8 +76,8 @@ above errors are appearing
       Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType 'application/json' -CertificateThumbprint '<Thumbprint>'
       # User should update the name of backup policy [DailyAzureBackupPolicy being used here and other possible values accordinly].
     ```
-4. Wait for 1-2 mins and policy should get updated across all entities.
-5. Periodic backups will start happening as per backup policy.
+3. Wait for 1-2 mins and policy should get updated across all entities.
+4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them.
 
 
 ## Key Announcements
