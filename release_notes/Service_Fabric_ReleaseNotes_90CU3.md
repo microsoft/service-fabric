@@ -68,7 +68,7 @@ To mitigate, customers need to update the existing policy after upgrading to 9.0
       $body = (ConvertTo-Json $BackupPolicy)
       $url = 'https://<ClusterEndPoint>:19080/BackupRestore/BackupPolicies/DailyAzureBackupPolicy/$/Update?api-version=6.4'
       Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType 'application/json' -CertificateThumbprint '<Thumbprint>'
-      # User should update the name of backup policy [DailyAzureBackupPolicy being used here and other possible values accordinly].
+      # User should update the name of backup policy [DailyAzureBackupPolicy being used here and other possible values accordingly].
     ```
 3. Wait for 1-2 mins and policy should get updated across all entities.
 4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them.
