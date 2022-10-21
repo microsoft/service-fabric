@@ -28,19 +28,20 @@ Starting 8/19/2022, the following versions have been deprecated and will not be 
 Beginning with 9.0 CU 2.1 release, Service Fabric Runtime will no longer install any JDK dependency which will ensure that customer can scale out, reimage, or create new Linux clusters. If your application needs JDK, please utilize an alternate mechanism to provision a JDK. To get the latest Service Fabric Runtime releases with this change, follow the upgrade documentation. If you depend on a JDK, please be sure to install one of your choice.<br>
 For more information see: [Breaking change for Azure Service Fabric Linux customers](https://techcommunity.microsoft.com/t5/azure-service-fabric-blog/breaking-change-for-azure-service-fabric-linux-customers/ba-p/3604678)
 
-**Breaking Changes with  BackupRestoreService**
+**Breaking Changes with  BackupRestoreService:**
 If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgradation to 9.0.1107.9590, BRS fails deserialize old BackupMetadata with changes in new release. BRS will stop taking backup and restore on the partition/service/app in question. Though user app, cluster and BRS remains healthy.
 
-**Identifying the issue**
+**Identifying the issue:**
 There are two ways to identifying and confirming the issue
+
 A. If periodic backups were happening on any partition, it should be visible on SFX under Cluster->Application->Service->Partition->Backup. Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whethere backup policy was enabled, backups were happening before upgrade and whether backups are happening post upgrade.
 
-B. Another way of checking and enumerating them is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
+B. Another way of checking and enumerating backups is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
 
-**Mitigation**
+**Mitigation:**
 To mitigate, customers need to update the existing policy after upgrading to 9.0.1107.9590. User can call updatebackuppolicy API as mentioned in this doc [Update Backup Policy] https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy with existing policy values. It will update the policy model inside BRS with new data model and BRS will start taking periodic backups again.
 
-**Steps**
+**Steps:**
 1. Check and confirm issue as mentioned in "Identifying the issue" section above.
 2. If issues is confirmed, update the backup policy with same old values by calling updatebackuppolicy API. Below is one sample -
     ```powershell
