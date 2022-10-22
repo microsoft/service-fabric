@@ -28,6 +28,52 @@ Starting 8/19/2022, the following versions have been deprecated and will not be 
 Beginning with 9.0 CU 2.1 release, Service Fabric Runtime will no longer install any JDK dependency which will ensure that customer can scale out, reimage, or create new Linux clusters. If your application needs JDK, please utilize an alternate mechanism to provision a JDK. To get the latest Service Fabric Runtime releases with this change, follow the upgrade documentation. If you depend on a JDK, please be sure to install one of your choice.<br>
 For more information see: [Breaking change for Azure Service Fabric Linux customers](https://techcommunity.microsoft.com/t5/azure-service-fabric-blog/breaking-change-for-azure-service-fabric-linux-customers/ba-p/3604678)
 
+**Breaking Changes with  BackupRestoreService:**
+If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgradation to 9.0.1107.9590, BRS fails deserialize old BackupMetadata with changes in new release. BRS will stop taking backup and restore on the partition/service/app in question. Though user app, cluster and BRS remains healthy.
+
+**Identifying the issue:**
+There are two ways to identifying and confirming the issue
+
+A. If periodic backups were happening on any partition, it should be visible on SFX under Cluster->Application->Service->Partition->Backup. Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whethere backup policy was enabled, backups were happening before upgrade and whether backups are happening post upgrade.
+
+B. Another way of checking and enumerating backups is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
+
+**Mitigation:**
+To mitigate, customers need to update the existing policy after upgrading to 9.0.1107.9590. User can call updatebackuppolicy API as mentioned in this doc [Update Backup Policy](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy) with existing policy values. It will update the policy model inside BRS with new data model and BRS will start taking periodic backups again.
+
+**Steps:**
+1. Check and confirm issue as mentioned in "Identifying the issue" section above.
+2. If issues is confirmed, update the backup policy with same old values by calling updatebackuppolicy API. Below is one sample -
+    ```powershell
+     $BackupPolicy=@{
+      Name = "DailyAzureBackupPolicy"
+      AutoRestoreOnDataLoss = "false"
+      MaxIncrementalBackups = "3"
+      Schedule = @{
+        ScheduleKind = "FrequencyBased"
+        Interval = "PT3M"
+      }
+      Storage = @{
+        StorageKind = "AzureBlobStore"
+        FriendlyName = "Azure_storagesample"
+        ConnectionString = "<connection string values>"
+        ContainerName = "<Container Name>"
+      }
+      RetentionPolicy = @{
+        RetentionPolicyType = "Basic"
+        MinimumNumberOfBackups = "20"
+        RetentionDuration = "P3M"
+      }
+     }
+      $body = (ConvertTo-Json $BackupPolicy)
+      $url = 'https://<ClusterEndPoint>:19080/BackupRestore/BackupPolicies/DailyAzureBackupPolicy/$/Update?api-version=6.4'
+      Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType 'application/json' -CertificateThumbprint '<Thumbprint>'
+      # User should update the name of backup policy [DailyAzureBackupPolicy being used here and other possible values accordingly].
+    ```
+3. Wait for 1-2 mins and policy should get updated across all entities.
+4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them.
+
+
 ## Key Announcements
 * Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 10/30/2022. 5 VMs or more will be enforced with this change for newer clusters created after *10/30/2022* to help avoid data loss from VM-level infrastructure requests for production workloads.VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
 * Azure Service Fabric node types with VMSS durability of Silver or Gold should always have Windows update explicitly disabled to avoid unintended OS restarts due to the Windows updates, which can impact the production workloads. This can be done by setting the "enableAutomaticUpdates": false, in the VMSS OSProfile. Consider enabling Automatic VMSS Image upgrades instead. The deployments will start failing from *10/30/2022* for new clusters, if the WindowsUpdates are not disabled on the VMSS. Enforcement for existing clusters will be rolled out in the coming months. <br>
