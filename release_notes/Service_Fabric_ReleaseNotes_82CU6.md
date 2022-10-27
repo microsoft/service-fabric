@@ -34,7 +34,7 @@ If an SF cluster has periodic backup enabled on any of the app/service/partition
 **Identifying the issue:**
 There are two ways to identifying and confirming the issue
 
-A. If periodic backups were happening on any partition, it should be visible on SFX under Cluster->Application->Service->Partition->Backup. Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whethere backup policy was enabled, backups were happening before upgrade and whether backups are happening post upgrade.
+A. If periodic backups were happening on any partition, it should be visible on SFX under Cluster->Application->Service->Partition->Backup. Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whether a backup policy was enabled, backups were happening before upgrade and whether backups are happening post upgrade.
 
 B. Another way of checking and enumerating backups is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
 
@@ -43,7 +43,7 @@ To mitigate, customers need to update the existing policy after upgrading to 8.2
 
 **Steps:**
 1. Check and confirm issue as mentioned in "Identifying the issue" section above.
-2. If issues is confirmed, update the backup policy with same old values by calling updatebackuppolicy API. Below is one sample -
+2. If the issue is confirmed, update the backup policy with same old values by calling updatebackuppolicy API. Below is one sample -
     ```powershell
      $BackupPolicy=@{
       Name = "DailyAzureBackupPolicy"
@@ -75,8 +75,8 @@ To mitigate, customers need to update the existing policy after upgrading to 8.2
 
 
 ## Key Announcements
-* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 11/10/2022. 5 VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads.VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
-* Azure Service Fabric node types with VMSS durability of Silver or Gold should always have the property  "virtualMachineProfile.osProfile.windowsConfiguration.enableAutomaticUpdates" set to false in the scale set model definition. Setting this will prevent unintended OS restarts due to the Windows updates like patching, which can impact the production workloads.Instead you should enable Automatic OS upgrades through VMSS OS Image updates by setting "enableAutomaticOSUpgrade" set to true.With automatic OS image upgrades enabled on your scaleset, an extra patching process through Windows Update is not required.<br>
+* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 11/10/2022. 5 VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
+* Azure Service Fabric node types with VMSS durability of Silver or Gold should always have the property  "virtualMachineProfile.osProfile.windowsConfiguration.enableAutomaticUpdates" set to false in the scale set model definition. Setting this will prevent unintended OS restarts due to the Windows updates like patching, which can impact the production workloads. Instead you should enable Automatic OS upgrades through VMSS OS Image updates by setting "enableAutomaticOSUpgrade" to true. With automatic OS image upgrades enabled on your scale set, an extra patching process through Windows Update is not required.<br>
 For more information see: [VMSS Image Upgrades](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade)
 
 ## Service Fabric Feature and Bug Fixes
