@@ -25,7 +25,7 @@ Starting 8/19/2022, the following versions have been deprecated and will not be 
 * 8.2 CU4/CU3/CU2.1/CU2/CU1/RTO<br>
 
 **Details:** Service Fabric Runtime (for Linux) placed a dependency on Zulu for Azure build of OpenJDK which is no longer supported as announced in their dev [blog](https://devblogs.microsoft.com/java/end-of-updates-support-and-availability-of-zulu-for-azure/). Since the creation of new Linux clusters or scale-out/reimage of nodes required all the dependencies to be installed, these workflows broke when the dependency became unavailable.<br>
-Beginning with 82CU51 release, Service Fabric Runtime will no longer install any JDK dependency which will ensure that customer can scale out, reimage, or create new Linux clusters. If your application needs JDK, please utilize an alternate mechanism to provision a JDK. To get the latest Service Fabric Runtime releases with this change, follow the upgrade documentation. If you depend on a JDK, please be sure to install one of your choice.<br>
+Beginning with 8.2 CU 5.1 release, Service Fabric Runtime will no longer install any JDK dependency which will ensure that customer can scale out, reimage, or create new Linux clusters. If your application needs JDK, please utilize an alternate mechanism to provision a JDK. To get the latest Service Fabric Runtime releases with this change, follow the upgrade documentation. If you depend on a JDK, please be sure to install one of your choice.<br>
 For more information see: [Breaking change for Azure Service Fabric Linux customers](https://techcommunity.microsoft.com/t5/azure-service-fabric-blog/breaking-change-for-azure-service-fabric-linux-customers/ba-p/3604678)
 
 **Breaking Changes with  BackupRestoreService:**
