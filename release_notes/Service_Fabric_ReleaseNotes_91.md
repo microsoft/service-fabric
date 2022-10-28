@@ -2,7 +2,6 @@
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
 * [Current Breaking Changes](#current-breaking-changes)
-* [Previous Breaking Changes](#previous-breaking-changes)
 * [Key Announcements](#key-announcements)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
@@ -22,7 +21,7 @@ The following packages and versions are part of this release:
 ## Current Breaking Changes
 
 **Breaking Changes with  BackupRestoreService:**
-If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.1.1390.9590, BRS will fail to deserialize old BackupMetadata. BRS will also stop taking backup and restore on the partition/service/app in question with changes in new release even though user app, cluster and BRS shows healthy.
+If a Service Fabric cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.1.1390.9590, BRS will fail to deserialize old BackupMetadata. BRS will also stop taking backup and restore on the partition/service/app in question with changes in the new release even though the user app, cluster, and BRS shows healthy
 
 **Identifying the issue:**
 There are two ways to identify and confirm the issue
@@ -66,13 +65,9 @@ To mitigate, customers need to update the existing policy after upgrading to 9.1
 3. Wait for 1-2 mins and policy should get updated across all entities.
 4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them.
 
-## Previous Breaking Changes
-
-
-
 ## Key Announcements
-* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 10/30/2022. 5 VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads.VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
-* Azure Service Fabric node types with VMSS durability of Silver or Gold should always have the property  "virtualMachineProfile.osProfile.windowsConfiguration.enableAutomaticUpdates" set to false in the scale set model definition. Setting this will prevent unintended OS restarts due to the Windows updates like patching, which can impact the production workloads. Instead you should enable Automatic OS upgrades through VMSS OS Image updates by setting "enableAutomaticOSUpgrade" set to true. With automatic OS image upgrades enabled on your scale set, an extra patching process through Windows Update is not required. <br>
+* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 11/10/2022. Five VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads.VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
+* Azure Service Fabric node types with VMSS durability of Silver or Gold should always have the property "virtualMachineProfile.osProfile.windowsConfiguration.enableAutomaticUpdates" set to false in the scale set model definition. Setting enableAutomaticUpdates to false will prevent unintended OS restarts due to the Windows updates like patching, which can impact the production workloads. <br>Instead you should enable Automatic OS upgrades through VMSS OS Image updates by setting "enableAutomaticOSUpgrade" set to true. With automatic OS image upgrades enabled on your scale set, an extra patching process through Windows Update is not required. <br>
 For more information see: [VMSS Image Upgrades](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade)
 
 ## Service Fabric Feature and Bug Fixes
@@ -93,7 +88,7 @@ The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shi
 * Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021. Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS. Current applications running on it will continue to work, but requests to investigate issues w.r.t this OS or requests for change will no longer be entertained. Service Fabric runtime has also dropped producing builds for U16.04 so customers will no longer be able to get SF related patches.
 * Service Fabric runtime will soon stop supporting BinaryFormatter based remoting exception serialization by default and move to using Data Contract Serialization (DCS) based remoting exception serialization by default. Current applications using it will continue to work as-is, but Service Fabric strongly recommends moving to using Data Contract Serialization (DCS) based remoting exception instead.
 * Service Fabric runtime will soon be archiving and removing Service Fabric runtime version 6.4 packages and older, as well as SDK version 3.3 packages and older from the package Download Center. Archiving/Removing will affect application scaling and re-imaging of virtual machines in a Service Fabric Cluster running on unsupported versions. After older versions are removed/archived, this may cause failure while rolling back when the current in-progress upgrade has errors.
-* Migrate Azure Active Directory Authentication Library (ADAL) library to Microsoft Authentication Library (MSAL) library, since ADAL will be out of support after December 2022. . This will impact customers using AAD for authentication in Service Fabric for below features.<ul><li>Powershell, StandAlone SFX, TokenValicationService</li><li>FabricBRS using AAD for keyvault authentication</li><li>KeyVaultWrapper</li><li>ms.test.winfabric.current test framework</li><li>KXM tool</li><li>AzureClusterDeployer tool</li></ul>For more information see: [MSAL Migration] (https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-migration)
+* Migrate Azure Active Directory Authentication Library (ADAL) library to Microsoft Authentication Library (MSAL) library, since ADAL will be out of support after December 2022. This will impact customers using AAD for authentication in Service Fabric for below features.<ul><li>Powershell, StandAlone SFX, TokenValicationService</li><li>FabricBRS using AAD for keyvault authentication</li><li>KeyVaultWrapper</li><li>ms.test.winfabric.current test framework</li><li>KXM tool</li><li>AzureClusterDeployer tool</li></ul>For more information see: [MSAL Migration] (https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-migration)
 * Ubuntu 18.04 LTS will reach its 5-year end-of-life window on April 30, 2023. Service Fabric runtime will drop support for 18.04 LTS after the published date, and we recommend moving your clusters and applications to Ubuntu 20.04 LTS. 
 
 ## Repositories and Download Links
