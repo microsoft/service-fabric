@@ -29,7 +29,7 @@ Beginning with 8.2 CU 5.1 release, Service Fabric Runtime will no longer install
 For more information see: [Breaking change for Azure Service Fabric Linux customers](https://techcommunity.microsoft.com/t5/azure-service-fabric-blog/breaking-change-for-azure-service-fabric-linux-customers/ba-p/3604678)
 
 **Breaking Changes with  BackupRestoreService:**
-If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 8.2.1686.9590 even though user app, cluster and BRS shows healthy. BRS will fail to deserialize old BackupMetadata and stop taking backup and restore on the partition/service/app in question  with changes in new release.
+If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 8.2.1686.9590, BRS will fail to deserialize old BackupMetadata. BRS will also stop taking backup and restore on the partition/service/app in question with changes in new release even though user app, cluster and BRS shows healthy.
 
 **Identifying the issue:**
 There are two ways to identify and confirm the issue
