@@ -1,7 +1,8 @@
 # Microsoft Azure Service Fabric 9.1 Release Notes
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
-* [Breaking Changes](#breaking-changes)
+* [Current Breaking Changes](#current-breaking-changes)
+* [Previous Breaking Changes](#previous-breaking-changes)
 * [Key Announcements](#key-announcements)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
@@ -66,6 +67,8 @@ To mitigate, customers need to update the existing policy after upgrading to 9.1
 4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them.
 
 ## Previous Breaking Changes
+
+
 
 ## Key Announcements
 * Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 10/30/2022. 5 VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads.VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
