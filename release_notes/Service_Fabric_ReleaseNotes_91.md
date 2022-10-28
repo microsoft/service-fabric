@@ -22,7 +22,7 @@ The following packages and versions are part of this release:
 ## Current Breaking Changes
 
 **Breaking Changes with  BackupRestoreService:**
-If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.1.1390.9590, BRS will fail to deserialize old BackupMetadata with changes in new release. BRS will stop taking backup and restore on the partition/service/app in question. Even though user app, cluster and BRS remains healthy.
+If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.1.1390.9590 even though user app, cluster and BRS shows healthy. BRS will fail to deserialize old BackupMetadata and stop taking backup and restore on the partition/service/app in question  with changes in new release.
 
 **Identifying the issue:**
 There are two ways to identify and confirm the issue
