@@ -29,10 +29,10 @@ Beginning with 9.0 CU 2.1 release, Service Fabric Runtime will no longer install
 For more information see: [Breaking change for Azure Service Fabric Linux customers](https://techcommunity.microsoft.com/t5/azure-service-fabric-blog/breaking-change-for-azure-service-fabric-linux-customers/ba-p/3604678)
 
 **Breaking Changes with  BackupRestoreService:**
-If an SF cluster has periodic backup enabled on any of the app/service/partition, post upgradation to 9.0.1107.9590, BRS fails deserialize old BackupMetadata with changes in new release. BRS will stop taking backup and restore on the partition/service/app in question. Though user app, cluster and BRS remains healthy.
+If a Service Fabric cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.0.1107.9590, BRS will fail to deserialize old BackupMetadata. BRS will also stop taking backup and restore on the partition/service/app in question with changes in the new release even though the user app, cluster, and BRS shows healthy
 
 **Identifying the issue:**
-There are two ways to identifying and confirming the issue
+There are two ways to identify and confirm the issue
 
 A. If periodic backups were happening on any partition, it should be visible on SFX under Cluster->Application->Service->Partition->Backup. Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whether a backup policy was enabled, backups were happening before upgrade and whether backups are happening post upgrade.
 
@@ -55,7 +55,7 @@ To mitigate, customers need to update the existing policy after upgrading to 9.0
       }
       Storage = @{
         StorageKind = "AzureBlobStore"
-        FriendlyName = "Azure_storagesample"
+        FriendlyName = "Azure_StorageSample"
         ConnectionString = "<connection string values>"
         ContainerName = "<Container Name>"
       }
@@ -75,8 +75,8 @@ To mitigate, customers need to update the existing policy after upgrading to 9.0
 
 
 ## Key Announcements
-* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 10/30/2022. 5 VMs or more will be enforced with this change for newer clusters created after *10/30/2022* to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
-* Azure Service Fabric node types with VMSS durability of Silver or Gold should always have the property  "virtualMachineProfile.osProfile.windowsConfiguration.enableAutomaticUpdates" set to false in the scale set model definition. Setting this will prevent unintended OS restarts due to the Windows updates like patching, which can impact the production workloads. Instead you should enable Automatic OS upgrades through VMSS OS Image updates by setting "enableAutomaticOSUpgrade" set to true. With automatic OS image upgrades enabled on your scale set, an extra patching process through Windows Update is not required. <br>
+* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 11/10/2022. Five VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
+* Azure Service Fabric node types with VMSS durability of Silver or Gold should always have the property "virtualMachineProfile.osProfile.windowsConfiguration.enableAutomaticUpdates" set to false in the scale set model definition. Setting enableAutomaticUpdates to false will prevent unintended OS restarts due to the Windows updates like patching, which can impact the production workloads. <br>Instead you should enable Automatic OS upgrades through VMSS OS Image updates by setting "enableAutomaticOSUpgrade" set to true. With automatic OS image upgrades enabled on your scale set, an extra patching process through Windows Update is not required. <br>
 For more information see: [VMSS Image Upgrades](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade)
 
 ## Service Fabric Feature and Bug Fixes
