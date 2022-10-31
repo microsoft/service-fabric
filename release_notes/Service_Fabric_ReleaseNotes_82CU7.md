@@ -2,11 +2,12 @@
 
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
+* [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
 * [Repositories and Download Links](#repositories-and-download-links)
 
 ## Service Fabric Packages and Versions
-This release is for Windows only and includes quality improvements not specific to customers.
+This release is for Windows only.
 
 The following packages and versions are part of this release:
 
@@ -18,9 +19,11 @@ The following packages and versions are part of this release:
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
+## Service Fabric Feature and Bug Fixes
+This release includes quality improvements only and does not contain bug fixes to specific issue.
 
 ## Retirement and Deprecation Path Callouts
-* Service Fabric ASP.NET Core packages built against ASP.NET Core 1.0 binaries are out of support. Starting Service Fabric 8.2, we will be building Service Fabric ASP.NET Core packages for .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, .NET Framework 4.6.1. As a result, they can be used only to build services targeting .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, >=.NET Framework 4.6.1 respectively.
+* Service Fabric ASP.NET Core packages built against ASP.NET Core 1.0 binaries are out of support. Starting Service Fabric 8.2, we will be building Service Fabric ASP.NET Core packages for .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, .NET Framework 4.6.1. As a result, they can be used only to build services targeting .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, >=.NET Framework 4.6.1 respectively.<br>
 For .NET Core 3.1, .NET Core 5.0, .NET Core 6.0, Service Fabric ASP.NET Core will be taking dependency on Microsoft.AspNetCore.App shared framework; whereas, for NetFx target frameworks >=.NET Framework 4.6.1, Service Fabric ASP.NET Core will be taking dependency on ASP.NET Core 2.1 packages.
 The package Microsoft.ServiceFabric.AspNetCore.WebListener will no longer be shipped, Microsoft.ServiceFabric.AspNetCore.HttpSys package should be used instead.
 * .Net Core 2.1 is out support as of August 2021. Applications running on .net core 2.1 and lower will stop working from Service Fabric release 10 in Feb 2023. Please migrate to a higher supported version at the earliest.
