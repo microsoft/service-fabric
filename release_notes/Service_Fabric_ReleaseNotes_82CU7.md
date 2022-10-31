@@ -6,7 +6,7 @@
 * [Repositories and Download Links](#repositories-and-download-links)
 
 ## Service Fabric Packages and Versions
-This release is for Windows only.
+This release is for Windows only and includes quality improvements not specific to customers.
 
 The following packages and versions are part of this release:
 
