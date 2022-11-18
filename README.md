@@ -17,8 +17,9 @@ Here is the upcoming release schedule for Service Fabric runtime versions that w
 | 9.1     	| 2022 Oct     	   |
 | 10.0     	| 2023 Apr     	   |
 
-We will be publishing upcoming features and roadmap items on [Azure Updates for Service Fabric](https://azure.microsoft.com/en-us/updates/?product=service-fabric).
+Please note that these dates are advanced estimates and might be subject to change or minor adjustments closer to each release.
 
+We will be publishing upcoming features and roadmap items on [Azure Updates for Service Fabric](https://azure.microsoft.com/en-us/updates/?product=service-fabric).
  
 ## Repo status
 We are in the process to move our development to GitHub. Until then, the Service Fabric team will continue regular feature development internally. We'll be providing frequent updates here and on our [team blog](https://blogs.msdn.microsoft.com/azureservicefabric/) as we make progress.  
