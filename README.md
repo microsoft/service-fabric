@@ -13,16 +13,13 @@ Here is the upcoming release schedule for Service Fabric runtime versions that w
 | 8.0     	| 2021 Mar     	   |
 | 8.1     	| 2021 Jul     	   |
 | 8.2     	| 2021 Oct     	   |
-| 9.0     	| From April 25, 2022 **(*)** <br/> * Delayed from 2022 Mar |
-| 9.1     	| 2022 Jul     	   |
-| 9.2     	| 2022 Oct     	   |
-
-**(*) Note**: The Service Fabric release version 9.0, which was originally expected to be released by end of March 2022 / begining of April 2022 was delayed and has now started rolling out to various regions from April 25, 2022. The updates would be fully available across all regions in the next 7-10 days.
+| 9.0     	| 2022 Apr         |
+| 9.1     	| 2022 Oct     	   |
+| 10.0     	| 2023 Apr     	   |
 
 Please note that these dates are advanced estimates and might be subject to change or minor adjustments closer to each release.
 
 We will be publishing upcoming features and roadmap items on [Azure Updates for Service Fabric](https://azure.microsoft.com/en-us/updates/?product=service-fabric).
-
  
 ## Repo status
 We are in the process to move our development to GitHub. Until then, the Service Fabric team will continue regular feature development internally. We'll be providing frequent updates here and on our [team blog](https://blogs.msdn.microsoft.com/azureservicefabric/) as we make progress.  
