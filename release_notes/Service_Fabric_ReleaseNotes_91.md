@@ -63,7 +63,7 @@ To mitigate, customers need to update the existing policy after upgrading to 9.1
       # User should update the name of backup policy [DailyAzureBackupPolicy being used here and other possible values accordingly].
     ```
 3. Wait for 1-2 mins and policy should get updated across all entities.
-4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them.
+4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them. 
 
 ## Key Announcements
 * Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 11/10/2022. Five VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
