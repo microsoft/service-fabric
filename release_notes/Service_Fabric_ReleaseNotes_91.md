@@ -20,6 +20,12 @@ The following packages and versions are part of this release:
 
 ## Current Breaking Changes
 
+**Breaking Changes with  FabricDNS:** Service Fabric DNS names do not resolve in process-based services for Windows clsters after upgrading to 9.1.1390.9590. while having cluster setting Hosting.DnsServerListTwoIps set to true.
+
+**Identifying the issue:**  A warning message shows up in Service Fabric Explorer stating FabricDnsService is not preferred DNS server on the node for property Environment.IPv4.
+
+**Mitigation:** Set Hosting.DnsServerListTwoIps to false in the cluster settings or rollback cluster version.
+
 **Breaking Changes with  BackupRestoreService:**
 If a Service Fabric cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.1.1390.9590, BRS will fail to deserialize old BackupMetadata. BRS will also stop taking backup and restore on the partition/service/app in question with changes in the new release even though the user app, cluster, and BRS shows healthy
 
