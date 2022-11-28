@@ -14,19 +14,19 @@ The following packages and versions are part of this release:
 |---------|----------|---------|
 |Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 <br> Windows | 9.1.1206.1 <br> 9.1.1206.1 <br> 9.1.1390.9590 |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.1.1390.9590 |
-|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.1.1390  <br> 9.1.1390 <br> 9.1.1390 <br> 9.1.1390 |
+|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.1.1390  <br> 9.1.1390 <br> 6.1.1390 <br> 6.1.1390 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
 ## Current Breaking Changes
 
-**Breaking Changes with  FabricDNS:** Service Fabric DNS names do not resolve in process-based services for Windows clsters after upgrading to 9.1.1390.9590. while having cluster setting Hosting.DnsServerListTwoIps set to true.
+* **Breaking Changes with  FabricDNS:** Service Fabric DNS names do not resolve in process-based services for Windows clusters after upgrading to 9.1.1390.9590 when Hosting.DnsServerListTwoIps set to true in Cluster settings.
 
-**Identifying the issue:**  A warning message shows up in Service Fabric Explorer stating FabricDnsService is not preferred DNS server on the node for property Environment.IPv4.
+**Identifying the issue:** Verify in Service Fabric Explorer if there is a warning message of "FabricDnsService is not preferred for property Environment.IPv4"
 
-**Mitigation:** Set Hosting.DnsServerListTwoIps to false in the cluster settings or rollback cluster version.
+**Mitigation:** Set Hosting.DnsServerListTwoIps to false in the Service Fabric cluster settings or rollback cluster version.
 
-**Breaking Changes with  BackupRestoreService:**
+* **Breaking Changes with  BackupRestoreService:**
 If a Service Fabric cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.1.1390.9590, BRS will fail to deserialize old BackupMetadata. BRS will also stop taking backup and restore on the partition/service/app in question with changes in the new release even though the user app, cluster, and BRS shows healthy
 
 **Identifying the issue:**
@@ -72,7 +72,7 @@ To mitigate, customers need to update the existing policy after upgrading to 9.1
 4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them. 
 
 ## Key Announcements
-* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting on 11/10/2022. Five VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
+* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting from February 2023. Five VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
 * Azure Service Fabric node types with VMSS durability of Silver or Gold should always have the property "virtualMachineProfile.osProfile.windowsConfiguration.enableAutomaticUpdates" set to false in the scale set model definition. Setting enableAutomaticUpdates to false will prevent unintended OS restarts due to the Windows updates like patching, which can impact the production workloads. <br>Instead you should enable Automatic OS upgrades through VMSS OS Image updates by setting "enableAutomaticOSUpgrade" set to true. With automatic OS image upgrades enabled on your scale set, an extra patching process through Windows Update is not required. <br>
 For more information see: [VMSS Image Upgrades](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade)
 
@@ -113,8 +113,8 @@ Follow this guidance for setting up your developer environment:
 ||Service Fabric Standalone Runtime | 9.1.1390.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/9.1.1390.9590/MicrosoftAzureServiceFabric.9.1.1390.9590.cab |
 |.NET SDK |Windows .NET SDK | 6.1.1390 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.1.1390.msi  |
 ||Microsoft.ServiceFabric | 9.1.1390 |N/A |https://www.nuget.org |
-||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 9.1.1390 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
-||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 9.1.1390 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
+||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 6.1.1390 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
+||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 6.1.1390 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
 ||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 9.1.1390 |N/A| https://www.nuget.org |
 ||Microsoft.ServiceFabric.Data.Extensions | 9.1.1390 | N/A |https://www.nuget.org |
 |Java SDK |Java SDK | 1.0.6 |N/A |https://mvnrepository.com/artifact/com.microsoft.servicefabric/sf-actors/1.0.6 |
