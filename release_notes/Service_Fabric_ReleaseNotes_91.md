@@ -20,56 +20,57 @@ The following packages and versions are part of this release:
 
 ## Current Breaking Changes
 
-* **Breaking Changes with  FabricDNS:** Service Fabric DNS names do not resolve in process-based services for Windows clusters after upgrading to 9.1.1390.9590 when Hosting.DnsServerListTwoIps set to true in Cluster settings.
+* **Breaking Changes with  FabricDNS:** 
+    Service Fabric DNS names do not resolve in process-based services for Windows clusters after upgrading to 9.1.1390.9590 when Hosting.DnsServerListTwoIps set to   true in Cluster settings.
 
-**Identifying the issue:** Verify in Service Fabric Explorer if there is a warning message of "FabricDnsService is not preferred for property Environment.IPv4"
+  **Identifying the issue:** Verify in Service Fabric Explorer if there is a warning message of "FabricDnsService is not preferred for property Environment.IPv4"
 
-**Mitigation:** Set Hosting.DnsServerListTwoIps to false in the Service Fabric cluster settings or rollback cluster version.
+  **Mitigation:** Set Hosting.DnsServerListTwoIps to false in the Service Fabric cluster settings or rollback cluster version.
 
 * **Breaking Changes with  BackupRestoreService:**
-If a Service Fabric cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.1.1390.9590, BRS will fail to deserialize old BackupMetadata. BRS will also stop taking backup and restore on the partition/service/app in question with changes in the new release even though the user app, cluster, and BRS shows healthy
+  If a Service Fabric cluster has periodic backup enabled on any of the app/service/partition, post upgrade to 9.1.1390.9590, BRS will fail to deserialize old   BackupMetadata. BRS will also stop taking backup and restore on the partition/service/app in question with changes in the new release even though the user app, cluster, and BRS shows healthy
 
-**Identifying the issue:**
-There are two ways to identify and confirm the issue
+  **Identifying the issue:**
+  There are two ways to identify and confirm the issue
 
-A. If periodic backups were happening on any partition, it should be visible on Service Fabric Explorer(SFX) under Cluster->Application->Service->Partition->Backup. Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whether a backup policy was enabled, backups were happening before upgrade and whether backups are happening post upgrade.
+  A. If periodic backups were happening on any partition, it should be visible on Service Fabric Explorer(SFX) under Cluster->Application->Service->Partition->Backup.      Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whether a backup policy was enabled,      backups were happening before upgrade and whether backups are happening post upgrade.
 
-B. Another way of checking and enumerating backups is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
+  B. Another way of checking and enumerating backups is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-      api-getpartitionbackuplist).
 
-**Mitigation:**
-To mitigate, customers need to update the existing policy after upgrading to 9.1.1390.9590. User can call update API for Backup policy as mentioned in this doc [Update Backup Policy](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy) with existing policy values. It will update the policy model inside BRS with new data model and BRS will start taking periodic backups again.
+  **Mitigation:**
+  To mitigate, customers need to update the existing policy after upgrading to 9.1.1390.9590. User can call update API for Backup policy as mentioned in this doc  [Update Backup Policy](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy) with existing policy values. It will update the policy   model inside BRS with new data model and BRS will start taking periodic backups again.
 
-**Steps:**
-1. Check and confirm issue as mentioned in "Identifying the issue" section above.
-2. If the issue is confirmed, update the backup policy with same old values by calling update API for Backup policy. Below is one sample -
-    ```powershell
-     $BackupPolicy=@{
-      Name = "DailyAzureBackupPolicy"
-      AutoRestoreOnDataLoss = "false"
-      MaxIncrementalBackups = "3"
-      Schedule = @{
-        ScheduleKind = "FrequencyBased"
-        Interval = "PT3M"
-      }
-      Storage = @{
-        StorageKind = "AzureBlobStore"
-        FriendlyName = "Azure_Storage_Sample"
-        ConnectionString = "<connection string values>"
-        ContainerName = "<Container Name>"
-      }
-      RetentionPolicy = @{
-        RetentionPolicyType = "Basic"
-        MinimumNumberOfBackups = "20"
-        RetentionDuration = "P3M"
-      }
-     }
-      $body = (ConvertTo-Json $BackupPolicy)
-      $url = 'https://<ClusterEndPoint>:19080/BackupRestore/BackupPolicies/DailyAzureBackupPolicy/$/Update?api-version=6.4'
-      Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType 'application/json' -CertificateThumbprint '<Thumbprint>'
-      # User should update the name of backup policy [DailyAzureBackupPolicy being used here and other possible values accordingly].
+   **Steps:**
+   1. Check and confirm issue as mentioned in "Identifying the issue" section above.
+   2. If the issue is confirmed, update the backup policy with same old values by calling update API for Backup policy. Below is one sample -
+        ```powershell
+         $BackupPolicy=@{
+          Name = "DailyAzureBackupPolicy"
+          AutoRestoreOnDataLoss = "false"
+          MaxIncrementalBackups = "3"
+          Schedule = @{
+            ScheduleKind = "FrequencyBased"
+            Interval = "PT3M"
+          }
+          Storage = @{
+            StorageKind = "AzureBlobStore"
+            FriendlyName = "Azure_Storage_Sample"
+            ConnectionString = "<connection string values>"
+            ContainerName = "<Container Name>"
+          }
+          RetentionPolicy = @{
+            RetentionPolicyType = "Basic"
+            MinimumNumberOfBackups = "20"
+            RetentionDuration = "P3M"
+          }
+         }
+          $body = (ConvertTo-Json $BackupPolicy)
+          $url = 'https://<ClusterEndPoint>:19080/BackupRestore/BackupPolicies/DailyAzureBackupPolicy/$/Update?api-version=6.4'
+          Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType 'application/json' -CertificateThumbprint '<Thumbprint>'
+          # User should update the name of backup policy [DailyAzureBackupPolicy being used here and other possible values accordingly].
     ```
-3. Wait for 1-2 mins and policy should get updated across all entities.
-4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them. 
+  3. Wait for 1-2 mins and policy should get updated across all entities.
+  4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them. 
 
 ## Key Announcements
 * Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting from February 2023. Five VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
