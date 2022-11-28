@@ -20,7 +20,7 @@ The following packages and versions are part of this release:
 
 ## Current Breaking Changes
 
-* **Breaking Changes with  FabricDNS:** 
+* **Breaking Changes with FabricDNS:** 
     Service Fabric DNS names do not resolve in process-based services for Windows clusters after upgrading to 9.1.1390.9590 when Hosting.DnsServerListTwoIps set to   true in Cluster settings.
 
   **Identifying the issue:** Verify in Service Fabric Explorer if there is a warning message of "FabricDnsService is not preferred for property Environment.IPv4"
@@ -35,7 +35,7 @@ The following packages and versions are part of this release:
 
   A. If periodic backups were happening on any partition, it should be visible on Service Fabric Explorer(SFX) under Cluster->Application->Service->Partition->Backup.      Here list of all backups being taken with creation time is available. Using this info and upgrade time, customer can identify whether a backup policy was enabled,      backups were happening before upgrade and whether backups are happening post upgrade.
 
-  B. Another way of checking and enumerating backups is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-      api-getpartitionbackuplist).
+  B. Another way of checking and enumerating backups is calling this API [get partition backup list](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-getpartitionbackuplist).
 
   **Mitigation:**
   To mitigate, customers need to update the existing policy after upgrading to 9.1.1390.9590. User can call update API for Backup policy as mentioned in this doc  [Update Backup Policy](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-updatebackuppolicy) with existing policy values. It will update the policy   model inside BRS with new data model and BRS will start taking periodic backups again.
