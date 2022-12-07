@@ -21,7 +21,7 @@ The following packages and versions are part of this release:
 ## Current Breaking Changes
 
 * **Breaking Changes with FabricDNS:** 
-    Service Fabric DNS names fail to resolve in Process-based services for Windows clusters after upgrading to 9.1.1390.9590 when Hosting.DnsServerListTwoIps set to   true in Cluster settings.
+    Service Fabric DNS names fail to resolve in Process-based services for Windows clusters after upgrading to 9.1.1390.9590 when Hosting.DnsServerListTwoIps set to  true in Cluster settings.
 
   **Identifying the issue:** In Service Fabric Explorer, check if there is a warning message of "System.FabricDnsService reported Warning for property 'Environment.IPv4'. FabricDnsService is not preferred DNS server on the node."
 
@@ -73,7 +73,7 @@ The following packages and versions are part of this release:
   4. Periodic backups will start happening as per backup policy and it can be confirmed by enumerating them. 
 
 ## Key Announcements
-* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting from February 2023. Five VMs or more will be enforced with this change for newer clusters created after *11/10/2022* to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
+* Azure Service Fabric will block deployments that do not meet Silver or Gold durability requirements starting from February 2023. Five VMs or more will be enforced with this change for newer clusters created after Feb 2023 to help avoid data loss from VM-level infrastructure requests for production workloads. VM count requirement is not changing for Bronze durability. Enforcement for existing clusters will be rolled out in the coming months. <br> For details see: [Durability characteristics of the cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster). 
 * Azure Service Fabric node types with VMSS durability of Silver or Gold should always have the property "virtualMachineProfile.osProfile.windowsConfiguration.enableAutomaticUpdates" set to false in the scale set model definition. Setting enableAutomaticUpdates to false will prevent unintended OS restarts due to the Windows updates like patching, which can impact the production workloads. <br>Instead you should enable Automatic OS upgrades through VMSS OS Image updates by setting "enableAutomaticOSUpgrade" set to true. With automatic OS image upgrades enabled on your scale set, an extra patching process through Windows Update is not required. <br>
 For more information see: [VMSS Image Upgrades](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-automatic-upgrade)
 
