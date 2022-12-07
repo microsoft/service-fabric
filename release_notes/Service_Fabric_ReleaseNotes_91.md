@@ -23,7 +23,7 @@ The following packages and versions are part of this release:
 * **Breaking Changes with FabricDNS:** 
     Service Fabric DNS names fail to resolve in Process-based services for Windows clusters after upgrading to 9.1.1390.9590 when Hosting.DnsServerListTwoIps set to   true in Cluster settings.
 
-  **Identifying the issue:** In Service Fabric Explorer, Verify if there is a warning "System.FabricDnsService reported Warning for property 'Environment.IPv4'. FabricDnsService is not preferred DNS server on the node." against node
+  **Identifying the issue:** In Service Fabric Explorer, check if there is a warning message of "System.FabricDnsService reported Warning for property 'Environment.IPv4'. FabricDnsService is not preferred DNS server on the node."
 
   **Mitigation:** Set Hosting.DnsServerListTwoIps to false in the Service Fabric cluster settings or rollback cluster version.
 
