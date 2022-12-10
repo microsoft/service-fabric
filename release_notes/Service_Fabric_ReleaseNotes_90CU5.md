@@ -23,19 +23,12 @@ The following packages and versions are part of this release:
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
-## Key Announcements
-* Starting 9.1.1390.9590, Service Fabric Runtime will provide a configuration on Linux and Windows called "Setup/BlockAccessToWireServer" to allow the runtime deployer to set up Access Control Lists(ACLs) on the Virtual Machine(VM) to prevent access from containers to the wire server. These ACLs will be kept in sync during new cluster creation/upgrade and VM/SF node restart scenarios.
-
-
 ## Service Fabric Feature and Bug Fixes
 
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| **Windows - 9.1.1390.9590<br>Ubuntu 18 - 9.1.1206.1<br>Ubuntu 20 - 9.1.1206.1** | **Bug** | Service Fabric DNS | **Brief Description**: Service Fabric DNS names fail to resolve in Process-based services for Windows clusters after upgrading to 9.1.1390.9590 when Hosting.DnsServerListTwoIps set to true in Cluster settings.<br>**Fix**: The code bug is fixed at the backend. Service Fabric Explorer will no longer display the warning message "System.FabricDnsService reported Warning for property 'Environment.IPv4'. FabricDnsService is not preferred DNS server on the node."
-| **Windows - 9.1.1390.9590<br>Ubuntu 18 - 9.1.1206.1<br>Ubuntu 20 - 9.1.1206.1** | **Bug** | Backup Restore Service(BRS) | **Brief Description**: Customers using plain text credentials in backup policy will have a persistent health warning on BRS to intimate users to use token-based backup storage type.<br>**Fix**: Azure Storage Connection String backup storage type is in process of deprecation. From SF 10.0 release(Apr 2023), only token based backup storage types will be supported.
 | **Windows - 9.1.1390.9590<br>Ubuntu 18 - 9.1.1206.1<br>Ubuntu 20 - 9.1.1206.1** | **Bug** | Backup Restore Service(BRS) | **Brief Description**: OnDatalossAsync fails for NetCore applications due to System.MissingMethodException: Method not found: 'Void System.Fabric.Common.Tracing.FabricEvents.BRSInfoPartitionEvent. This results in Service partition getting stuck in reconfiguring in case of DataLoss or QuorumLoss.<br>**Fix**: Rebuild SF application using SF SDK version 6.0.1107.9590 and upgrade/redeploy applications or Rollback cluster to 9.0.1028.9590 till we have a CU with fix for this regression
-| **Windows - 9.1.1390.9590<br>Ubuntu 18 - 9.1.1206.1<br>Ubuntu 20 - 9.1.1206.1** | **Bug** | Backup Restore Service(BRS) | **Brief Description**: If SF cluster is upgraded to 8.2.1686.9590 / 9.0.1107.9590 / 9.1.1387.9590 which has existing backup policies, post upgrade BRS fails to deserialize old metadata. It will stop taking backup and restore on the partition/service/app in question, though cluster and BRS remains healthy <br>**Fix**: The issue with backup and restore functionality is fixed. 
-| **Windows - 9.1.1390.9590<br>Ubuntu 18 - 9.1.1206.1<br>Ubuntu 20 - 9.1.1206.1** | **Bug** | Microsoft Authentication Library(MSAL) | **Brief Description**: Migrate Azure Active Directory Authentication Library (ADAL) to MSAL library, since ADAL will be out of support after December 2022.This will impact customers using AAD for authentication in Service Fabric for below features:<ul><li>Powershell, StandAlone Service Fabric Explorer(SFX), TokenValicationService</li><li>FabricBRS using AAD for keyvault authentication</li><li>KeyVaultWrapper</li></ul>**Fix**: Replace ADAL API with MSAL API.<br> For more information see: [MSAL Migration] (https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-migration)
+| **Windows - 9.1.1390.9590<br>Ubuntu 18 - 9.1.1206.1<br>Ubuntu 20 - 9.1.1206.1** | **Bug** | Backup Restore Service(BRS) | **Brief Description**: Breaking change of BRS introduced in 8.2.1686.9590 / 9.0.1107.9590 / 9.1.1387.9590 that caused BRS to deserialize old metadata is now fixed in this release. The backup and restore on the partition/service/app works as expected.
 
 ## Retirement and Deprecation Path Callouts
 
