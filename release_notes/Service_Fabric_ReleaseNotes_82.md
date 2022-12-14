@@ -8,7 +8,7 @@ The following packages and versions are part of this release:
 |---------|----------|---------|
 |Service Fabric Runtime| Ubuntu 18 <br> Windows | 8.2.1124.1 <br> 8.2.1235.9590 |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 8.2.1235.9590 |
-|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 5.2.1235 <br> 8.2.1235 <br> 8.2.1235 <br> 8.2.1235 |
+|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 5.2.1235 <br> 8.2.1235 <br> 5.2.1235 <br> 5.2.1235 |
 |Java SDK |Java for Linux SDK | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module <br> SFCTL | 0.3.15 <br> 11.1.0 |
 
@@ -52,6 +52,7 @@ Microsoft Azure Service Fabric 8.2 Release Notes
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
 | **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | Expose an API in Cluster Manager to note if upgrade is impactful | **Brief Description**: Added a new ValidateFabricUpgrade API, which validates the parameters of a Fabric Cluster upgrade request and returns the expected service host impact. Impact is assessed based on whether the upgrade is expected to cause Service Fabric's service host to restart when applied to a node, which leads to all services on the node to restart as well. |
+| **Windows - 8.2.1235.9590<br>Ubuntu 18 - 8.2.1124.1** | **Feature** | New Sfx by Default | **Brief Description**: The option to return to the old SFX application has been moved to the advanced option's dropdown. The old SFX application is not recommended to be used due to security concerns and will be removed in a later version entirely. |
 
 
 ## Service Fabric Add-ons Applications
@@ -83,8 +84,8 @@ Follow this guidance for setting up your developer environment:
 ||Service Fabric Standalone Runtime | 8.2.1235.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/8.2.1235.9590/MicrosoftAzureServiceFabric.8.2.1235.9590.cab |
 |.NET SDK |Windows .NET SDK | 5.2.1235 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.5.2.1235.msi |
 ||Microsoft.ServiceFabric | 8.2.1235 |N/A |https://www.nuget.org |
-||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 8.2.1235 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
-||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.ASP.NET Core.*| 8.2.1235 |https://github.com/Azure/service-fabric-ASP.NET Core |https://www.nuget.org |
+||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 5.2.1235 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
+||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.ASP.NET Core.*| 5.2.1235 |https://github.com/Azure/service-fabric-ASP.NET Core |https://www.nuget.org |
 ||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 8.2.1235 |N/A| https://www.nuget.org |
 ||Microsoft.ServiceFabric.Data.Extensions | 8.2.1235 | N/A |https://www.nuget.org |
 |Java SDK |Java SDK | 1.0.6 |N/A |https://mvnrepository.com/artifact/com.microsoft.servicefabric/sf-actors/1.0.6 |
