@@ -23,7 +23,7 @@ The following packages and versions are part of this release:
 
 ## Key Announcements
 
-Starting 9.1.1436, the Service Fabric runtime will include a configuration setting that prevents access from Docker containers(deployed as Service Fabric applications) to WireServer endpoint. The setting, "Setup/BlockAccessToWireServer", is supported for Service Fabric clusters deployed on Azure VMs, Windows, and Linux, and defaults to 'false' (access is permitted).  Please note that enabling this setting might break containerized services that rely on access to WireServer - which is uncommon.
+Starting this release (Service Fabric 9.1 Cumulative Update 1.0), the Service Fabric runtime will include a configuration setting that prevents access from Docker containers(deployed as Service Fabric applications) to WireServer endpoint. The setting, "Setup/BlockAccessToWireServer", is supported for Service Fabric clusters deployed on Azure VMs, Windows, and Linux, and defaults to 'false' (access is permitted).  Please note that enabling this setting might break containerized services that rely on access to WireServer - which is uncommon.
 
 ## Service Fabric Feature and Bug Fixes
 
