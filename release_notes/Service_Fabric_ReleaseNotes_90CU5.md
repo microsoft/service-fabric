@@ -22,6 +22,8 @@ The following packages and versions are part of this release:
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
+## Key Announcements
+Starting 9.0.1155.9590, the Service Fabric runtime will include a configuration setting that prevents access from Docker containers(deployed as Service Fabric applications) to WireServer endpoint. The setting, "Setup/BlockAccessToWireServer", is supported for Service Fabric clusters deployed on Azure VMs, Windows, and Linux, and defaults to 'false' (access is permitted).  Please note that enabling this setting might break containerized services that rely on access to WireServer - which is uncommon.
 
 ## Service Fabric Feature and Bug Fixes
 
