@@ -23,8 +23,7 @@ The following packages and versions are part of this release:
 
 ## Key Announcements
 
-Starting 9.1.1436.9590, Service Fabric Runtime will provide a configuration on Linux and Windows called "Setup/BlockAccessToWireServer" to allow the runtime deployer to set up Access Control Lists (ACLs) on the Virtual Machine (VM) to prevent access from containers to the wire server. These ACLs will be kept in sync during new cluster creation/upgrade and VM/SF node restart scenarios.
-
+Starting this release (Service Fabric 9.1 Cumulative Update 1.0), the Service Fabric runtime will include a configuration setting that prevents access from Docker containers(deployed as Service Fabric applications) to WireServer endpoint. The setting, "Setup/BlockAccessToWireServer", is supported for Service Fabric clusters deployed on Azure VMs, Windows, and Linux, and defaults to 'false' (access is permitted).  Please note that enabling this setting might break containerized services that rely on access to WireServer - which is uncommon.
 
 ## Service Fabric Feature and Bug Fixes
 
