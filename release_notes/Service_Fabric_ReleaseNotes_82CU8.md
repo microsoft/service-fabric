@@ -6,6 +6,7 @@ This release will only be available through manual upgrades. Clusters set to aut
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
 * [Key Announcements](#key-announcements)
+* [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
 * [Repositories and Download Links](#repositories-and-download-links)
 
@@ -23,6 +24,15 @@ The following packages and versions are part of this release:
 
 ## Key Announcements
 Starting this release (Service Fabric 8.2 Cumulative Update 8.0), the Service Fabric runtime will include a configuration setting that prevents access from Docker containers(deployed as Service Fabric applications) to WireServer endpoint. The setting, "Setup/BlockAccessToWireServer", is supported for Service Fabric clusters deployed on Azure VMs, Windows, and Linux, and defaults to 'false' (access is permitted).  Please note that enabling this setting might break containerized services that rely on access to WireServer - which is uncommon.
+
+
+## Service Fabric Feature and Bug Fixes
+
+| Versions | IssueType | Description | Resolution | 
+|-|-|-|-|
+| **Windows - 8.2.1723.9590<br>Ubuntu 18 - 8.2.1521.1<br>Ubuntu 20 - 8.2.1521.1** | **Bug** | Backup Restore Service (BRS) | **Brief Description**: OnDatalossAsync fails for NetCore applications due to System.MissingMethodException: Method is not found: 'Void System.Fabric.Common.Tracing.FabricEvents.BRSInfoPartitionEvent. This results in the Service partition getting stuck in reconfiguring in the case of data loss or QuorumLoss.<br>**Fix**: Rebuild SF application using SF SDK version 6.0.1107.9590 and upgrade/redeploy applications or Rollback cluster to 9.0.1028.9590 till we have a CU with fix for this regression
+| **Windows - 8.2.1723.9590<br>Ubuntu 18 - 8.2.1521.1<br>Ubuntu 20 - 8.2.1521.1** | **Bug** | Backup Restore Service (BRS) | **Brief Description**: If Service Fabric cluster has existing backup policies and is upgraded to 8.2.1686.9590 / 9.0.1107.9590 / 9.1.1387.9590, BRS will fail to deserialize old metadata and will stop taking backup and restore on the partition/service/app in question, even though cluster and BRS remain healthy.<br>**Fix**: The breaking change introduced in 8.2.1686.9590 / 9.0.1107.9590 / 9.1.1387.9590 versions is fixed in this release
+| **Windows - 8.2.1723.9590<br>Ubuntu 18 - 8.2.1521.1<br>Ubuntu 20 - 8.2.1521.1** | **Bug** | Key Value Store (KVS) | **Brief Description**: When the KVS version store reaches its maximum allotted memory due to long-running or especially large uncommitted transactions it would throw a StoreTransactionTooLarge error, which didn't provide accurate information. A new error of "VersionStoreOutOfMemory" was added to provide appropriate information "Version store has exceeded its available memory. This is likely caused by a long-running transaction preventing cleanup, or by a large read/write data load. Version Store Size can be configured with LocalEseStoreSettings.MaxVerPages" to provide accurate information.
 
 ## Retirement and Deprecation Path Callouts
 * Service Fabric ASP.NET Core packages built against ASP.NET Core 1.0 binaries are out of support. Starting Service Fabric 8.2, we will be building Service Fabric ASP.NET Core packages for .NET Core 3.1, .NET 5.0, .NET 6.0, .NET Framework 4.6.1. As a result, they can be used only to build services targeting .NET Core 3.1, .NET 5.0, .NET 6.0, >=.NET Framework 4.6.1 respectively.<br>
