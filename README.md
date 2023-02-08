@@ -21,6 +21,18 @@ Please note that these dates are advanced estimates and might be subject to chan
 
 We will be publishing upcoming features and roadmap items on [Azure Updates for Service Fabric](https://azure.microsoft.com/en-us/updates/?product=service-fabric).
  
+## Service Fabric community Q & A schedule 
+Here is the upcoming schedule for Service Fabric community Q & A .
+
+| Schedule	| 
+|---------	|
+| 30 Mar 2023 | 
+| 25 May 2023 |
+| 27 July 2023|
+| 28 Sept 2023| 
+| 25 Jan 2024	|
+| 28 Mar 2024 |
+
 ## Repo status
 We are in the process to move our development to GitHub. Until then, the Service Fabric team will continue regular feature development internally. We'll be providing frequent updates here and on our [team blog](https://blogs.msdn.microsoft.com/azureservicefabric/) as we make progress.  
 
