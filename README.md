@@ -22,7 +22,7 @@ Please note that these dates are advanced estimates and might be subject to chan
 We will be publishing upcoming features and roadmap items on [Azure Updates for Service Fabric](https://azure.microsoft.com/en-us/updates/?product=service-fabric).
  
 ## Service Fabric community Q & A schedule 
-Here is the upcoming schedule for Service Fabric community Q & A .
+The Service Fabric community Q&A will be held on the following dates:
 
 | Schedule	| 
 |---------	|
