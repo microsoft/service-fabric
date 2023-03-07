@@ -18,6 +18,8 @@ The following packages and versions are part of this release:
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
 ## Key Announcements
+Service Fabric version 9.1CU2 introduces programming model support for .NET 7.0.  Service Fabric applications running on .NET 6.0 can now be upgraded to .NET 7.0.
+Note: Please install the .Net 7 runtime version greater than 7.0.2 which contains fix for binary-deserialization of float/doubles in DataContractSerializer. For details see: [Binary-deserialization of float/doubles fix](https://github.com/dotnet/runtime/pull/80321)
 
 ## Service Fabric Feature and Bug Fixes
 This release includes quality improvements only and does not contain bug fixes to specific issue.
