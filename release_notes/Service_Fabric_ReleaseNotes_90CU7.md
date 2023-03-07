@@ -43,7 +43,7 @@ Follow this guidance for setting up your developer environment:
 
 | Area | Package | Version | Repository | Direct Download Link |
 |-|-|-|-|-|
-|Service Fabric Runtime |Ubuntu Developer Set-up | 9.0.1309.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
+|Service Fabric Runtime |Ubuntu Developer Set-up | 9.0.1260.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
 || Windows Developer Set-up| 9.0.1309.9590 | N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.0.1309.9590.exe |
 |Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 9.0.1309.9590 |N/A | https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.0.1309.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.0.1309.9590.zip |
 ||Service Fabric Standalone Runtime | 9.0.1309.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/9.0.1309.9590/MicrosoftAzureServiceFabric.9.0.1309.9590.cab |
