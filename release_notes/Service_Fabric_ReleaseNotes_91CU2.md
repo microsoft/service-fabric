@@ -18,8 +18,10 @@ The following packages and versions are part of this release:
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
 ## Key Announcements
-Service Fabric version 9.1CU2 introduces programming model support for .NET 7.0.  Service Fabric applications running on .NET 6.0 can now be upgraded to .NET 7.0.
+* Service Fabric version 9.1CU2 introduces programming model support for .NET 7.0.  Service Fabric applications running on .NET 6.0 can now be upgraded to .NET 7.0.
 Note: Please install the .Net 7 runtime version greater than 7.0.2 which contains fix for binary-deserialization of float/doubles in DataContractSerializer. For details see: [Binary-deserialization of float/doubles fix](https://github.com/dotnet/runtime/pull/80321)
+* Azure Service Fabric introduced a policy which will validate that the minimum virtual machine count configuration meets the durability requirements for "Silver" and "Gold." This has been a [documented requirement](https://learn.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity#durability-characteristics-of-the-cluster) to ensure reliable and safe infrastructure updates can occur for production workloads. Per this policy, Service Fabric Resource Provider node types with virtual machine scale set "Silver" or "Gold" durability tiers should always have at least 5 virtual machines. Any configuration with less than 5 virtual machines leads to various reliability issues while performing infrastructure updates (such as AutoOSUpgrades, scale out/in, platform updates, etc.) and can lead to availability or data loss. 
+Update all of your existing/new deployments to have at least 5 virtual machine instances when the virtual machine scale set durability tier is "Silver" or "Gold." We have blocked operations for new cluster creation of "Silver" and "Gold" durability tier virtual machine scale sets when the target instance count is less than 5 starting February 2023. For more updates or information on this policy and upcoming virtual machine scale set validations, refer to our [documentation](https://github.com/Azure/Service-Fabric-Troubleshooting-Guides/blob/master/Deployment/SFRP-VMSS-Validations.md).
 
 ## Service Fabric Feature and Bug Fixes
 This release includes quality improvements only and does not contain bug fixes to specific issue.
