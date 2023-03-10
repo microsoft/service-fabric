@@ -1,8 +1,6 @@
 # Microsoft Azure Service Fabric 9.0 Cumulative Update 7.0 Release Notes
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
-* [Breaking Changes](#breaking-changes)
-* [Key Announcements](#key-announcements)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
 * [Repositories and Download Links](#repositories-and-download-links)
@@ -14,27 +12,21 @@ The following packages and versions are part of this release:
 |---------|----------|---------|
 |Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 <br> Windows | 9.0.1260.1 <br> 9.0.1260.1 <br> 9.0.1309.9590 |
 |Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.0.1309.9590 |
-|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1309  <br> 9.0.1309 <br> 9.0.1309 <br> 9.0.1309 |
+|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.0.1309  <br> 9.0.1309 <br> 6.0.1309 <br> 6.0.1309 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
-
 
 ## Service Fabric Feature and Bug Fixes
 This release includes quality improvements only and does not contain bug fixes to specific issue.
 
-
 ## Retirement and Deprecation Path Callouts
-
-* .NET 5.0 runtime has reached end-of-life on May 8, 2022. Service Fabric releases after this date will drop support for Service Fabric applications running with .NET 5.0 runtime. Current applications running on .NET 5.0 runtime will continue to work, but requests for investigations or requests for changes will no longer be entertained. Please migrate to using .NET 6.0 version instead.
-* Ubuntu 16.04 LTS reached its 5-year end-of-life window on April 30, 2021. Service Fabric runtime has dropped support for 16.04 LTS, and we recommend moving your clusters and applications to Ubuntu 18.04 LTS or 20.04 LTS. Current applications running on it will continue to work, but requests to investigate issues w.r.t this OS or requests for change will no longer be entertained. Service Fabric runtime has also dropped producing builds for U16.04 so customers will no longer be able to get SF related patches.
+* As aligned with [Microsoft .NET and .NET Core - Microsoft Lifecycle | Microsoft Learn](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-and-net-core), SF Runtime has dropped support for Net Core 3.1 as of December 2022. For  supported versions see [Service Fabric supported Linux versions](https://learn.microsoft.com/en-us/azure/service-fabric/service-fabric-versions#current-versions-1) and migrate applications as needed.
+* Ubuntu 18.04 LTS will reach its 5-year end-of-life window on April 30, 2023. Service Fabric runtime will drop support for 18.04 LTS after the published date, and we recommend moving your clusters and applications to supported versions listed here: [Service Fabric supported Linux versions](https://learn.microsoft.com/en-us/azure/service-fabric/service-fabric-versions#supported-linux-versions-and-support-end-date)
 * Service Fabric runtime will soon stop supporting BinaryFormatter based remoting exception serialization by default and move to using Data Contract Serialization (DCS) based remoting exception serialization by default. Current applications using it will continue to work as-is, but Service Fabric strongly recommends moving to using Data Contract Serialization (DCS) based remoting exception instead.
 * Service Fabric runtime will soon be archiving and removing Service Fabric runtime version 6.4 packages and older, as well as SDK version 3.3 packages and older from the package Download Center. Archiving/Removing will affect application scaling and re-imaging of virtual machines in a Service Fabric Cluster running on unsupported versions. After older versions are removed/archived, this may cause failure while rolling back when the current in-progress upgrade has errors.
-* .Net Core 2.1 is out support as of August 2021. Applications running on .net core 2.1 and lower will stop working from Service Fabric release 10 in Feb 2023. Please migrate to a higher supported version at the earliest.
-* Migrate Azure Active Directory Authentication Library (ADAL) library to Microsoft Authentication Library (MSAL) library, since ADAl will be out of support after December 2022. This will impact below features in Service Fabric using AAD for authentication.<ul><li>Powershell, StandAlone SFX, TokenValicationService</li><li>FabricBRS using AAD for keyvault authentication</li><li>KeyVaultWrapper</li><li>ms.test.winfabric.current test framework</li><li>KXM tool</li><li>AzureClusterDeployer tool</li></ul>For more information see: [MSAL Migration] (https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-migration)
-* Ubuntu 18.04 LTS will reach its 5-year end-of-life window on April 30, 2023. Service Fabric runtime will drop support for 18.04 LTS after the published date, and we recommend moving your clusters and applications to Ubuntu 20.04 LTS. 
+* Migrate Azure Active Directory Authentication Library (ADAL) library to Microsoft Authentication Library (MSAL) library, since ADAL will be out of support after December 2022. This will impact customers using AAD for authentication in Service Fabric for below features:<ul><li>Powershell, StandAlone Service Fabric Explorer(SFX), TokenValicationService</li><li>FabricBRS using AAD for keyvault authentication</li><li>KeyVaultWrapper</li><li>ms.test.winfabric.current test framework</li><li>KXM tool</li><li>AzureClusterDeployer tool</li></ul>For more information see: [MSAL Migration] (https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-migration)
 
 ## Repositories and Download Links
-
 The table below is an overview of the direct links to the packages associated with this release. 
 Follow this guidance for setting up your developer environment: 
 * [Getting Started with Linux](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-linux)
