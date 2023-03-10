@@ -1,5 +1,9 @@
 # Microsoft Azure Service Fabric 8.2 Cumulative Update 9.0 Release Notes
 
+This release will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this release. For how to configure upgrades, please see [classic](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade) or [managed](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-configuration) documentation.
+
+## Contents
+
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
