@@ -390,3 +390,4 @@ external/
 ossbuild/packageList.props
 # p4merge
 *.orig
+release_notes/Service_Fabric_ReleaseNotes_91CU2.md
