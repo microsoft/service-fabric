@@ -17,7 +17,6 @@ The following packages and versions are part of this release:
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
 
-
 ## Service Fabric Feature and Bug Fixes
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
