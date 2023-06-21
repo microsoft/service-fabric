@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 9.1 Cumulative Update 3.0 Release Notes
+# Microsoft Azure Service Fabric 9.1 Cumulative Update 6.0 Release Notes
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
