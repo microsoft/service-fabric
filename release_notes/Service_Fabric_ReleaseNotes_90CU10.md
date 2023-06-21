@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 9.0 Cumulative Update 8.0 Release Notes
+# Microsoft Azure Service Fabric 9.0 Cumulative Update 10.0 Release Notes
 
 This release will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this release. For how to configure upgrades, please see [classic](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade) or [managed](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-configuration) documentation.
 
