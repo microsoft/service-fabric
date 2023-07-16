@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(EnvironmentConfig)" />
   <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
@@ -268,7 +268,7 @@
     <ProjectReference Include="..\System.Fabric.JsonSerializerWrapper\System.Fabric.JsonSerializerWrapper.csproj" />
     <ProjectReference Include="..\..\..\..\..\tools\TraceDiagnostic\CoreCLR\TraceDiagnostic.Store\TraceDiagnostic.Store.csproj" />
     <Reference Include="$(PkgDotNetFxGAC_Corext)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
     <PackageReference Include="Microsoft.Data.OData" Version="5.8.3" />
   </ItemGroup>
