@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 9.1 Cumulative Update 5.0 Release Notes
+# Microsoft Azure Service Fabric 10.0 Release Notes
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
@@ -10,9 +10,9 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |---------|----------|---------|
-|Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 <br> Windows | 9.1.1625.1 <br> 9.1.1625.1 <br> 9.1.1833.9590 |
-|Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 9.1.1833.9590 |
-|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 6.1.1833  <br> 9.1.1833 <br> 6.1.1833 <br> 6.1.1833 |
+|Service Fabric Runtime| Ubuntu 18 <br> Ubuntu 20 <br> Windows | 10.0.x.1 <br> 10.0.x.1 <br> 10.0.1779.9590 |
+|Service Fabric for Windows Server|Service Fabric Standalone Installer Package | 10.0.1779.9590 |
+|.NET SDK |Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration| 7.0.1779  <br> 10.0.1779 <br> 7.0.1779 <br> 7.0.1779 |
 |Java SDK  |Java for Linux SDK  | 1.0.6 |
 |Service Fabric PowerShell and CLI | AzureRM PowerShell Module  <br> SFCTL |  0.3.15  <br> 11.0.1 |
 
