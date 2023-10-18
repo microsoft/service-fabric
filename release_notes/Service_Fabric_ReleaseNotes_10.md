@@ -1,21 +1,3 @@
-<table>
-    <tr> 
-
-        <th>Package</th>
-
-        <th>Version</th>
-
-        <th>Direct Download Link</th>
-
-        <th>Repository</th>
-
-   </tr>
-    
-</table>
-
-
-
-
 # Microsoft Azure Service Fabric 10.0 Release Notes
 
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
@@ -111,14 +93,9 @@ N/A |
 |PowerShell |AzureRM.ServiceFabric | 0.3.15 | N/A |https://github.com/Azure/azure-powershell/tree/preview/src/ResourceManager/ServiceFabric | -->
 
 <style>
-
-    /* #repos {
-        border: 1px 0 1px 1px;
-    } */
     #repos td {
         border: 0.5px solid white;
-    }
-    
+    }    
 </style>
 
 <table id="repos" style="table-layout:fixed; width:100%;">
