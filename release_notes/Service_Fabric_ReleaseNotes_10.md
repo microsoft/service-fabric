@@ -67,23 +67,23 @@ Follow this guidance for setting up your developer environment:
 * [Getting Started with Mac](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-mac)
 * [Getting Started with Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started)
 
-| Area | Package | Version | Repository | Direct Download Link |
+| Area | Package | Version | Direct Download Link | Repository |
 |-|-|-|-|-|
-|Service Fabric Runtime |Ubuntu Developer Set-up | 10.0.1728.1 |N/A | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ 
-|| Windows Developer Set-up| 10.0.1816.9590 | N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.0.1816.9590.exe |
-|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 10.0.1816.9590 |N/A |https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/10.0.1816.9590/Microsoft.Azure.ServiceFabric.WindowsServer.10.0.1816.9590.zip|
-||Service Fabric Standalone Runtime | 10.0.1816.9590 |N/A | https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/10.0.1816.9590/MicrosoftAzureServiceFabric.10.0.1816.9590.cab |
-|.NET SDK |Windows .NET SDK | 7.0.1816 |N/A | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.0.1816.msi |
-||Microsoft.ServiceFabric | 10.0.1816 |N/A |https://www.nuget.org |
-||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 7.0.1816 |https://github.com/Azure/service-fabric-services-and-actors-dotnet |https://www.nuget.org |
-||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 7.0.1816 |https://github.com/Azure/service-fabric-aspnetcore |https://www.nuget.org |
-||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 10.0.1816 |N/A| https://www.nuget.org |
-||Microsoft.ServiceFabric.Data.Extensions | 10.0.1816 | N/A |https://www.nuget.org |
-|Java SDK |Java SDK | 1.0.6 |N/A |https://mvnrepository.com/artifact/com.microsoft.servicefabric/sf-actors/1.0.6 |
+|Service Fabric Runtime |Ubuntu Developer Set-up | 10.0.1728.1 | Cluster Runtime: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabric <br> Service Fabric SDK for local cluster setup: https://apt-mo.trafficmanager.net/repos/servicefabric/pool/main/s/servicefabricsdkcommon/ <br> Container image: https://hub.docker.com/r/microsoft/service-fabric-onebox/ | N/A
+|| Windows Developer Set-up| 10.0.1816.9590 | https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.0.1816.9590.exe | N/A |
+|Service Fabric for Windows Server |Service Fabric Standalone Installer Package | 10.0.1816.9590 |https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/10.0.1816.9590/Microsoft.Azure.ServiceFabric.WindowsServer.10.0.1816.9590.zip | N/A|
+||Service Fabric Standalone Runtime | 10.0.1816.9590 |https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/10.0.1816.9590/MicrosoftAzureServiceFabric.10.0.1816.9590.cab | N/A |
+|.NET SDK |Windows .NET SDK | 7.0.1816 |https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.0.1816.msi | N/A |
+||Microsoft.ServiceFabric | 10.0.1816 | https://www.nuget.org | N/A |
+||Reliable Services and Reliable Actors<br>\-Microsoft.ServiceFabric.Services<br>\-Microsoft.ServiceFabric.Services.Remoting<br>\-Microsoft.ServiceFabric.Services.Wcf <br>\-Microsoft.ServiceFabric.Actors <br>\-Microsoft.ServiceFabric.Actors.Wcf | 7.0.1816 | https://www.nuget.org | https://github.com/Azure/service-fabric-services-and-actors-dotnet |
+||ASP.NET Core Service Fabric integration<br>\-Microsoft.ServiceFabric.Services.AspNetCore.*| 7.0.1816 | https://www.nuget.org | https://github.com/Azure/service-fabric-aspnetcore |
+||Data, Diagnostics and Fabric transport<br>\-Microsoft.ServiceFabric.Data <br>\-Microsoft.ServiceFabric.Data.Interfaces <br>\-Microsoft.ServiceFabric.Diagnostics.Internal <br>\-Microsoft.ServiceFabric.FabricTransport/Internal | 10.0.1816 |https://www.nuget.org | N/A|
+||Microsoft.ServiceFabric.Data.Extensions | 10.0.1816 | https://www.nuget.org | N/A |
+|Java SDK |Java SDK | 1.0.6 |https://mvnrepository.com/artifact/com.microsoft.servicefabric/sf-actors/1.0.6 | N/A |
 |Eclipse |Service Fabric plug-in for Eclipse | 2.0.7 | N/A |N/A |
-|Yeoman |Azure Service Fabric Java generator | 1.0.7 |https://github.com/Azure/generator-azuresfjava |N/A |
-||Azure Service Fabric C# generator | 1.0.9 |https://github.com/Azure/generator-azuresfcsharp |N/A |
-||Azure Service Fabric guest executables generator | 1.0.1 |https://github.com/Azure/generator-azuresfguest |N/A|
-||Azure Service Fabric Container generators | 1.0.1 |https://github.com/Azure/generator-azuresfcontainer |N/A |
-|CLI |Service Fabric CLI | 11.0.1 |https://github.com/Azure/service-fabric-cli |https://pypi.python.org/pypi/sfctl |
-|PowerShell |AzureRM.ServiceFabric | 0.3.15 |https://github.com/Azure/azure-powershell/tree/preview/src/ResourceManager/ServiceFabric |N/A  |
+|Yeoman |Azure Service Fabric Java generator | 1.0.7 | N/A |https://github.com/Azure/generator-azuresfjava |
+||Azure Service Fabric C# generator | 1.0.9 | N/A |https://github.com/Azure/generator-azuresfcsharp |
+||Azure Service Fabric guest executables generator | 1.0.1 | N/A |https://github.com/Azure/generator-azuresfguest|
+||Azure Service Fabric Container generators | 1.0.1 | N/A |https://github.com/Azure/generator-azuresfcontainer |
+|CLI |Service Fabric CLI | 11.0.1 | https://pypi.python.org/pypi/sfctl | https://github.com/Azure/service-fabric-cli|
+|PowerShell |AzureRM.ServiceFabric | 0.3.15 | N/A |https://github.com/Azure/azure-powershell/tree/preview/src/ResourceManager/ServiceFabric |
