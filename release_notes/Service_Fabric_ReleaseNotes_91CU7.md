@@ -46,7 +46,11 @@ Follow this guidance for setting up your developer environment:
 * [Getting Started with Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started)
 
 Run Time: https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.1.1993.9590.exe
+
 SDK: https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.1.1993.msi
+
 Cab: https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/9.1.1993.9590/MicrosoftAzureServiceFabric.9.1.1993.9590.cab
+
 Package: https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.1.1993.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.1.1993.9590.zip
+
 Goalstate: https://download.microsoft.com/download/7/D/1/7D1D1511-59A4-4933-8187-40C20065AA29/9.1.1993.9590/goalstate.9.1.1993.9590.json
