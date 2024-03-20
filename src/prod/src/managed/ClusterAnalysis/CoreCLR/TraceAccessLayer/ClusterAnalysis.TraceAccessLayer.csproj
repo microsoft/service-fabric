@@ -16,7 +16,7 @@
     <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
     <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Readers\Microsoft.ServiceFabric.Instrumentation.Tracing.Readers.csproj" />
     <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\CoreCLR\Parsers\Microsoft.ServiceFabric.Instrumentation.Tracing.Parsers.csproj" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" /> 
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" /> 
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\TraceAccessLayer\BoundedTraceStoreReader.cs"/>
