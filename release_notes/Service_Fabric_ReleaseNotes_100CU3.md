@@ -12,8 +12,8 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |-|-|-|
-| Service Fabric Runtime | Ubuntu 20 <br> Windows | 10.0.2020.1 <br> 10.0.2141.9590 |
-| Service Fabric for Windows Server | Service Fabric Standalone Installer Package | 10.0.2141.9590 |
+| Service Fabric Runtime | Ubuntu 20 <br> Windows | 10.0.2105.1 <br> 10.0.2226.9590 |
+| Service Fabric for Windows Server | Service Fabric Standalone Installer Package | 10.0.2226.9590 |
 | .NET SDK | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 7.0.2141 <br> 10.0.2141 <br> 7.0.2141 <br> 7.0.2141 |
 | Java SDK | Java for Linux SDK | 1.0.6 |
 | Service Fabric PowerShell and CLI | AzureRM PowerShell Module <br> SFCTL | 0.3.15 <br> 11.0.1 |
@@ -21,8 +21,8 @@ The following packages and versions are part of this release:
 ## Service Fabric Feature and Bug Fixes
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| Windows -<br>10.0.2141.9590 <br> Ubuntu 20 -<br>10.0.2020.1 | Feature | ESE Store | Brief Description: As there is no need to have the setting below maximum, MaxJetInstances will be increased to the maximum by default. <br> Solution: Increased MaxJetInstances to 1024 (the maximum value). |
-| Windows -<br>10.0.2141.9590 <br> Ubuntu 20 -<br>10.0.2020.1 | Bug | ESE Store | Brief Description: In Service Fabric versions starting with 9.1CU3, 9.0CU8 released in March 2023 and before 9.1CU8, 10.0CU2, 10.1CU1, November 2023 (9.1CU8, 10.0CU2, 10.1CU1) the FreePageSizeThresholdInPercent is invalid for any services based on the Reliable Actors with the KVSActorStateProvider or any services overriding the LocalEseStoreSettings. <br> Solution: Correct default setting will now be applied for all services and regular auto-compaction based on the database meeting the FreePageSizeInPercent Threshold will occur leading to reduction in unused space taken up by databases and thus reduce database bloat. |
+| Windows -<br>10.0.2226.9590 <br> Ubuntu 20 -<br>10.0.2105.1 | Feature | ESE Store | Brief Description: As there is no need to have the setting below maximum, MaxJetInstances will be increased to the maximum by default. <br> Solution: Increased MaxJetInstances to 1024 (the maximum value). |
+| Windows -<br>10.0.2226.9590 <br> Ubuntu 20 -<br>10.0.2105.1 | Bug | ESE Store | Brief Description: In Service Fabric versions starting with 9.1CU3, 9.0CU8 released in March 2023 and before 9.1CU8, 10.0CU2, 10.1CU1, November 2023 (9.1CU8, 10.0CU2, 10.1CU1) the FreePageSizeThresholdInPercent is invalid for any services based on the Reliable Actors with the KVSActorStateProvider or any services overriding the LocalEseStoreSettings. <br> Solution: Correct default setting will now be applied for all services and regular auto-compaction based on the database meeting the FreePageSizeInPercent Threshold will occur leading to reduction in unused space taken up by databases and thus reduce database bloat. |
 
 ## Retirement and Deprecation Path Callouts
 
