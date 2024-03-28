@@ -12,7 +12,7 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |-|-|-|
-| Service Fabric Runtime | Ubuntu 20 <br> Windows | 9.1.1891.1 <br> 9.1.2277.9590 |
+| Service Fabric Runtime | Ubuntu 20 <br> Windows | 9.1.2038.1 <br> 9.1.2277.9590 |
 | Service Fabric for Windows Server | Service Fabric Standalone Installer Package | 9.1.2277.9590 |
 | .NET SDK | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 6.1.2277 <br> 9.1.2277 <br> 6.1.2277 <br> 6.1.2277 |
 | Java SDK | Java for Linux SDK | 1.0.6 |
@@ -21,7 +21,7 @@ The following packages and versions are part of this release:
 ## Service Fabric Feature and Bug Fixes
 | Versions | IssueType | Description | Resolution | 
 |-|-|-|-|
-| Windows -<br>9.1.2277.9590 <br> Ubuntu 20 -<br>9.1.1891.1 | Feature | Key Value Store (KVS) | Brief Description: Increase MaxVerPages to 32768. <br> Increasing the value of MaxVerPages enables us to allow operations that would require bigger ESE Version store size such as logical builds of larger databases and reduce the number of incidents caused due to Version Store Out of Memory. <br> Solution: The default value of MaxVerPages is set to 32768. |
+| Windows -<br>9.1.2277.9590 <br> Ubuntu 20 -<br>9.1.2038.1 | Feature | Key Value Store (KVS) | Brief Description: Increase MaxVerPages to 32768. <br> Increasing the value of MaxVerPages enables us to allow operations that would require bigger ESE Version store size such as logical builds of larger databases and reduce the number of incidents caused due to Version Store Out of Memory. <br> Solution: The default value of MaxVerPages is set to 32768. |
 
 ## Retirement and Deprecation Path Callouts
 
