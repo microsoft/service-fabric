@@ -42,7 +42,7 @@
     <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\CoreCLR\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
     <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\CoreCLR\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
     <ProjectReference Include="$(SrcRoot)\test\current\framework\CoreClr\MS.Test.WinFabric.userclient\MS.Test.WinFabric.UserClient.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.9" />
     <PackageReference Include="System.Security.Principal.Windows" Version="4.4.0" />
   </ItemGroup>
   <ItemGroup>
