@@ -46,7 +46,7 @@ Follow this guidance for setting up your developer environment:
 * [Getting Started with Mac](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-mac)
 * [Getting Started with Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started)
 
-Run Time: https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.1.1541.9590.exe
+Runtime: https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.1.1541.9590.exe
 
 SDK: https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.1.1541.msi
 
