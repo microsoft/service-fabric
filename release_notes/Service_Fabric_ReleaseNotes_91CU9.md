@@ -6,6 +6,7 @@ This release will only be available through manual upgrades. Clusters set to aut
 * [Service Fabric Packages and Versions](#service-fabric-packages-and-versions)
 * [Service Fabric Feature and Bug Fixes](#service-fabric-feature-and-bug-fixes)
 * [Retirement and Deprecation Path Callouts](#retirement-and-deprecation-path-callouts)
+* [Repositories and Download Links](#repositories-and-download-links)
 
 ## Service Fabric Packages and Versions
 The following packages and versions are part of this release:
