@@ -13,10 +13,10 @@ The following packages and versions are part of this release:
 
 | Service | Platform | Version |
 |-|-|-|
-| [Service Fabric Runtime]() | Ubuntu 20 <br> Windows | 10.1.2137.1 <br> 10.1.2203.9590 |
-| [Service Fabric for Windows Server]() | Service Fabric Standalone Installer Package | 10.1.2203.9590 |
-| [.NET SDK]() | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 7.1.2175 <br> 10.1.2175 <br> 7.1.2175 <br> 7.1.2175 |
-| [Java SDK]() | Java for Linux SDK | 1.0.6 |
+| [Service Fabric Runtime](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.1.2338.9590.exe) | Ubuntu 20 <br> Windows | 10.1.2137.1 <br> 10.1.2203.9590 |
+| [Service Fabric for Windows Server](https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/10.1.2338.9590/Microsoft.Azure.ServiceFabric.WindowsServer.10.1.2338.9590.zip) | Service Fabric Standalone Installer Package | 10.1.2203.9590 |
+| [.NET SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.1.2338.msi) | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 7.1.2175 <br> 10.1.2175 <br> 7.1.2175 <br> 7.1.2175 |
+| [Java SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.1.2338.msi) | Java for Linux SDK | 1.0.6 |
 | Service Fabric PowerShell and CLI | AzureRM PowerShell Module <br> SFCTL | 0.3.15 <br> 11.0.1 |
 
 ## Service Fabric Feature and Bug Fixes
@@ -49,16 +49,16 @@ Follow this guidance for setting up your developer environment:
 * [Getting Started with Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started)
 
 Run Time:
-https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.1.2175.9590.exe
+https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.1.2338.9590.exe
 
 SDK:
-https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.1.2175.msi
+https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.1.2338.msi
 
 Cab:
-https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/10.1.2175.9590/MicrosoftAzureServiceFabric.10.1.2175.9590.cab
+https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/10.1.2338.9590/MicrosoftAzureServiceFabric.10.1.2338.9590.cab
 
 Package:
-https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/10.1.2175.9590/Microsoft.Azure.ServiceFabric.WindowsServer.10.1.2175.9590.zip
+https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/10.1.2338.9590/Microsoft.Azure.ServiceFabric.WindowsServer.10.1.2338.9590.zip
 
 Goalstate:
-https://download.microsoft.com/download/7/D/1/7D1D1511-59A4-4933-8187-40C20065AA29/10.1.2175.9590/goalstate.10.1.2175.9590.json
+https://download.microsoft.com/download/7/D/1/7D1D1511-59A4-4933-8187-40C20065AA29/10.1.2338.9590/goalstate.10.1.2338.9590.json
