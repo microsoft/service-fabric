@@ -12,8 +12,8 @@ The following packages and versions are part of this release:
 
 | **Service** | **Platform** | **Version** |
 |---|---|---|
-| [Service Fabric Runtime](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.0.2712.9590.exe) | Ubuntu 20 <br> Windows | 10.0.2686.9590 <br> 10.0.2686.9590 |
-| [Service Fabric for Windows Server](https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/10.0.2712.9590/Microsoft.Azure.ServiceFabric.WindowsServer.10.0.2712.9590.zip) | Service Fabric Standalone Installer Package | 10.0.2686.9590 |
+| [Service Fabric Runtime](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.0.2712.9590.exe) | Ubuntu 20 <br> Windows | 10.0.2499.1 <br> 10.0.2712.9590 |
+| [Service Fabric for Windows Server](https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/10.0.2712.9590/Microsoft.Azure.ServiceFabric.WindowsServer.10.0.2712.9590.zip) | Service Fabric Standalone Installer Package | 10.0.2712.9590 |
 | [.NET SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.0.2712.msi) | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 7.0.2382 <br> 10.0.2382 <br> 7.0.2382 <br> 7.0.2382 |
 | [Java SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.0.2712.msi) | Java for Linux SDK | 1.0.6 |
 | Service Fabric PowerShell and CLI | AzureRM PowerShell Module<br>SFCTL | 0.3.1511.0.1 |
@@ -22,7 +22,7 @@ The following packages and versions are part of this release:
 
 | **Versions** | **Issue Type** | **Description** | **Resolution** |
 |---|---|---|---|
-| Windows -<br> 10.0.2686.9590 <br> Ubuntu 20 -<br> 10.0.2686.9590 | Feature | Managed identity | **Brief Description:** Managed identity feature enables BRS user to create backup policies without providing the secret information for storage account thereby also removing the need to specify the encryption certificate in the cluster manifest. <br> **Feature/Bug Impact:** Backup and Restore using User-Assigned Managed-Identity feature will be impact. <br> **Solution/Fix:** To ensure seamless backup and restoration of partition or service data within a stateful service, our process involves retrieving an Access Token from Azure. This token can be acquired via Managed Identity Service. Also, we can assign one or more User-Assigned managed Identities. Adding a parameter "ManagedIdentityClientId " for Managed Identity in BRS operations. It distinguishes among multiple managed identities while fetching Access token from Azure server. |
+| Windows -<br> 10.0.2712.9590 <br> Ubuntu 20 -<br> 10.0.2499.1 | Feature | Managed identity | **Brief Description:** Managed identity feature enables BRS user to create backup policies without providing the secret information for storage account thereby also removing the need to specify the encryption certificate in the cluster manifest. <br> **Feature/Bug Impact:** Backup and Restore using User-Assigned Managed-Identity feature will be impact. <br> **Solution/Fix:** To ensure seamless backup and restoration of partition or service data within a stateful service, our process involves retrieving an Access Token from Azure. This token can be acquired via Managed Identity Service. Also, we can assign one or more User-Assigned managed Identities. Adding a parameter "ManagedIdentityClientId " for Managed Identity in BRS operations. It distinguishes among multiple managed identities while fetching Access token from Azure server. |
 
 ## Retirement and Deprecation Path Callouts
 
