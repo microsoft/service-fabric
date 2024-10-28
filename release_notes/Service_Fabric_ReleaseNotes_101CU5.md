@@ -18,7 +18,7 @@ The following packages and versions are part of this release:
 | [Service Fabric for Windows Server](https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/10.1.2448.9590/Microsoft.Azure.ServiceFabric.WindowsServer.10.1.2448.9590.zip) | Service Fabric Standalone Installer Package | 10.1.2448.9590 |
 | [.NET SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.1.2448.msi) | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 7.1.2175 <br> 10.1.2175 <br> 7.1.2175 <br> 7.1.2175 |
 | [Java SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.1.2448.msi) | Java for Linux SDK | 1.0.6 |
-| Service Fabric PowerShell and CLI | AzureRM PowerShell Module<br>SFCTL | 0.3.1511.0.1 |
+| Service Fabric PowerShell and CLI | AzureRM PowerShell Module<br>SFCTL | 0.3.15 <br> 11.0.1 |
 
 ## Service Fabric Feature and Bug Fixes
 
