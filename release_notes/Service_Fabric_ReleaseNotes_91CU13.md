@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 9.1 Cumulative Update 12.0 Release Notes
+# Microsoft Azure Service Fabric 9.1 Cumulative Update 13.0 Release Notes
 
 This release will only be available through manual upgrades. Clusters set to automatic upgrades will not receive this release. For how to configure upgrades, please see [classic](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade) or [managed](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-configuration) documentation.
 
@@ -14,17 +14,17 @@ The following packages and versions are part of this release:
 
 | **Service** | **Platform** | **Version** |
 |---|---|---|
-| [Service Fabric Runtime](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.1.2833.9590.exe) | Ubuntu 20 <br> Windows | 9.1.2512.1 <br> 9.1.2833.9590 |
-| [Service Fabric for Windows Server](https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.1.2833.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.1.2833.9590.zip) | Service Fabric Standalone Installer Package | 9.1.2833.9590 |
-| [.NET SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.1.2833.msi) | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 6.1.2488 <br> 9.1.2488 <br> 6.1.2488 <br> 6.1.2488 |
-| [Java SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.1.2833.msi) | Java for Linux SDK | 1.0.6 |
+| [Service Fabric Runtime](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.1.2837.9590.exe) | Ubuntu 20 <br> Windows | 9.1.2514.1 <br> 9.1.2837.9590 |
+| [Service Fabric for Windows Server](https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.1.2837.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.1.2837.9590.zip) | Service Fabric Standalone Installer Package | 9.1.2837.9590 |
+| [.NET SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.1.2837.msi) | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 6.1.2488 <br> 9.1.2488 <br> 6.1.2488 <br> 6.1.2488 |
+| [Java SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.1.2837.msi) | Java for Linux SDK | 1.0.6 |
 | Service Fabric PowerShell and CLI | AzureRM PowerShell Module<br>SFCTL | 0.3.15 <br> 11.0.1 |
 
 ## Service Fabric Feature and Bug Fixes
 
 | **Versions** | **Issue Type** | **Description** | **Resolution** |
 |---|---|---|---|
-| Windows - <br> 9.1.2833.9590 <br> Ubuntu 20 - <br> 9.1.2512.1 | Feature | Managed identity | **Brief Description:** Managed identity feature enables BRS user to create backup policies without providing the secret information for storage account thereby also removing the need to specify the encryption certificate in the cluster manifest. <br> **Feature/Bug Impact:** Backup and Restore using User-Assigned Managed-Identity feature will be impact. <br> **Solution/Fix:** To ensure seamless backup and restoration of partition or service data within a stateful service, our process involves retrieving an Access Token from Azure. This token can be acquired via Managed Identity Service. Also, we can assign one or more User-Assigned managed Identities. Adding a parameter "ManagedIdentityClientId " for Managed Identity in BRS operations. It distinguishes among multiple managed identities while fetching Access token from Azure server. |
+| Windows - <br> 9.1.2837.9590 <br> Ubuntu 20 - <br> 9.1.2514.1 | Bug | BRS | **Brief Description:** User Services with BRS enabled and running as elevated privileges as SYSTEM, will have BRS use the OS drive to temporarily write Compressed backups. This happened after [a .NET security upgrade](https://support.microsoft.com/topic/july-9-2024-kb5041016-cumulative-update-for-net-framework-3-5-4-8-and-4-8-1-for-windows-server-2022-6454ceab-7a1e-4d9e-8f56-385bee0054d7) that changed behavior of GetTempPath API that BRS relies on (backups get written to temp path before getting copied to Az storage). <br> **Feature/Bug Impact:** BRS backups were getting written to OS disk (smaller) instead of data disk (larger) where it usually goes. Disk filled up faster than what BRS could clean up (post uploading to Az storage). <br> **Solution/Fix:** BRS to use CodeActivationContext.TempFolder provided by Service Fabric Hosting instead of GetTempPath. <br> **Workaround:** Run user services as non-system. <br> **Temporary Workaround:** Opt out of the .NET security update. *Warning:* The opt-out will disable the security fix for the elevation of privilege vulnerability detailed in [CVE 2024-38081](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-38081). The opt-out is only for temporary workaround if you're sure that the software is running in secure environments. We don't recommend applying this temporary workaround. If you still wish to opt out, you have two options: opt out in a command window by setting the environment variable `COMPlus_Disable_GetTempPath2=true` or [opt out globally on the machine by creating a system-wide environment variable and rebooting to ensure all processes observe the change](https://stackoverflow.com/questions/2365307/what-determines-the-return-value-of-path-gettemppath). System-wide environment variables can be set by running `sysdm.cpl` from a command window and navigating to `Advanced -> Environment variables -> System variables -> New`. |
 
 ## Retirement and Deprecation Path Callouts
 
@@ -50,16 +50,16 @@ Follow this guidance for setting up your developer environment:
 * [Getting Started with Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started)
 
 Run Time:
-https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.1.2833.9590.exe
- 
+https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.9.1.2837.9590.exe
+
 SDK:
-https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.1.2833.msi
- 
+https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.6.1.2837.msi
+
 Cab:
-https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/9.1.2833.9590/MicrosoftAzureServiceFabric.9.1.2833.9590.cab
- 
+https://download.microsoft.com/download/B/0/B/B0BCCAC5-65AA-4BE3-AB13-D5FF5890F4B5/9.1.2837.9590/MicrosoftAzureServiceFabric.9.1.2837.9590.cab
+
 Package:
-https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.1.2833.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.1.2833.9590.zip
- 
+https://download.microsoft.com/download/8/3/6/836E3E99-A300-4714-8278-96BC3E8B5528/9.1.2837.9590/Microsoft.Azure.ServiceFabric.WindowsServer.9.1.2837.9590.zip
+
 Goalstate:
-https://download.microsoft.com/download/7/D/1/7D1D1511-59A4-4933-8187-40C20065AA29/9.1.2833.9590/goalstate.9.1.2833.9590.json
+https://download.microsoft.com/download/7/D/1/7D1D1511-59A4-4933-8187-40C20065AA29/9.1.2837.9590/goalstate.9.1.2837.9590.json
