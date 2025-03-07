@@ -1,14 +1,16 @@
 # Service Fabric Remoting V1 Deprecation Strategy
 
-The V1 version of Service Fabric Remoting protocol uses BinaryFormatter for message serialization. BinaryFormatter relies on type information embedded in the
-serialized data during deserialization, which allows an attacker to make deserializer execute arbitrary code and is inherently unsafe. The BinaryFormatter APIs
-were marked obsolete in .NET 5 and removed from .NET 9. For details see
+The V1 version of Service Fabric Remoting protocol uses BinaryFormatter for message and exception serialization. Because BinaryFormatter relies on type
+information embedded in the serialized data during deserialization, this allows an attacker to make deserializer execute arbitrary code and is inherently
+unsafe. The BinaryFormatter APIs were marked obsolete in .NET 5 and removed from .NET 9. For details see
 [BinaryFormatter Obsoletion Strategy](https://github.com/dotnet/designs/blob/main/accepted/2020/better-obsoletion/binaryformatter-obsoletion.md).
 
-The V1 version of the Remoting protocol is deprecated. Services should migrate to the V2_1 version of the Remoting protocol, which uses the DataContractSerializer
-for message serialization and allows using DataContratSerializer for exception serialization.
+The V1 version of the Remoting protocol has been deprecated. Services should migrate to the V2_1 version of the Remoting protocol, which uses
+DataContractSerializer for message serialization and allows using DataContratSerializer for exception serialization. Note that any protocol change in a
+distributed system requires multi-stage rollouts where new version listeners are enabled on all nodes first, then clients are switched to the new version,
+and finally old version listeners are removed.
 
-## Upgrade from V1 to V2_1
+## How to upgrade Remoting to V2_1
 - [Upgrade server and client applications to remoting V2_1](https://learn.microsoft.com/en-us/azure/service-fabric/service-fabric-reliable-services-communication-remoting#upgrade-from-remoting-v1-to-remoting-v2-interface-compatible)
 - [Switch exception serialization from BinaryFormatter to DataContractSerializer](https://learn.microsoft.com/en-us/azure/service-fabric/service-fabric-reliable-services-exception-serialization#enable-data-contract-serialization-for-remoting-exceptions)
 
@@ -24,7 +26,9 @@ for message serialization and allows using DataContratSerializer for exception s
 - V2 is the only protocol available for .NET (Core) applications
 
 ### Service Fabric Runtime version 11, SDK version 8 (2025)
-- All Remoting V1 APIs are marked obsolete.
+- All Remoting V1 APIs are marked obsolete. Their usage produces build warnings.
+- Version agnostic Remoting APIs throw InvalidOperationException when service assembly doesn't have a specific ServiceRemotingProviderAttribute or
+  ActorRemotingProviderAttribute. This helps services to fail fast and rollback the upgrade when the Remoting protocol change may be unexpected.
 - The V2_1 protocol is used by default.
 - BinaryFormatter is not enabled as a fallback for exception serialization by default.
 
