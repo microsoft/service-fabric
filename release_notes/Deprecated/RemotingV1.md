@@ -6,7 +6,7 @@ unsafe. The BinaryFormatter APIs were marked obsolete in .NET 5 and removed from
 [BinaryFormatter Obsoletion Strategy](https://github.com/dotnet/designs/blob/main/accepted/2020/better-obsoletion/binaryformatter-obsoletion.md).
 
 The V1 version of the Remoting protocol has been deprecated. Services should migrate to the V2_1 version of the Remoting protocol, which uses
-DataContractSerializer for message serialization and allows using DataContratSerializer for exception serialization. Note that any protocol change in a
+DataContractSerializer for message serialization and allows using DataContractSerializer for exception serialization. Note that any protocol change in a
 distributed system requires multi-stage rollouts where new version listeners are enabled on all nodes first, then clients are switched to the new version,
 and finally old version listeners are removed.
 
