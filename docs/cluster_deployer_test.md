@@ -8,7 +8,7 @@ You will need to setup Docker as instructed here for [mac](https://docs.microsof
 
 ---
 #### Note ####
-You can't run the local cluster and the Docker daemon concurrently. If you followed the [instructions]  (install_packages_and_deploy_cluster.md) to setup a local cluster, then in order to use use this test you will need to stop the local cluster and start the Docker daemon.
+You can't run the local cluster and the Docker daemon concurrently. If you followed the [instructions](install_packages_and_deploy_cluster.md) to setup a local cluster, then in order to use use this test you will need to stop the local cluster and start the Docker daemon.
 
 ```
 sudo systemctl stop servicefabric
