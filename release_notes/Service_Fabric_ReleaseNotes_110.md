@@ -55,6 +55,19 @@ The following packages and versions are part of this release:
     * [Create a Standalone cluster](/azure/service-fabric/service-fabric-cluster-creation-for-windows-server)
     * Install the supported version of Service Fabric SDK based on the Runtime version installed on the cluster.
 
+* Starting in Service Fabric 11.2, support for stateless instance removal will begin its deprecation pathway. Support for stateless instance removal will be fully removed approximately one year after the release of 11.2.
+  * The following cmdlets and API calls will be deprecated for stateless replicas:
+    * [Remove-ServiceFabricReplica](https://learn.microsoft.com/en-us/powershell/module/servicefabric/remove-servicefabricreplica)
+    * [FabricClient.FaultManagementClient.RemoveReplicaAsync](https://learn.microsoft.com/en-us/dotnet/api/system.fabric.fabricclient.faultmanagementclient.removereplicaasync)
+    * [Remove Replica – Microsoft Learn](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-removereplica)
+  * Support for stateless instance removal will be fully removed approximately one year after the release of 11.2:
+  * **Customer impact:** Using these APIs after upgrading to version 11.2 will trigger deprecation warnings. Full removal of support is targeted for a future release, approximately one year post-11.2.
+    * Scripts and tools depending on the deprecated APIs may fail in future versions.
+    * Customers should begin migrating to the new APIs as soon as they become available to prevent disruptions in automation workflows.
+    * Alternate APIs to support stateless instance removal will be announced in a 11.2 release.
+  * **Migration path:** Service Fabric 11.2 introduces new APIs and a compatibility switch to ensure existing scripts continue functioning after upgrading, while allowing time to transition.
+    * Full details about replacements and migration guidance will be included in the 11.2 release notes and documentation.
+
 ## Repositories and Download Links
 The table below is an overview of the direct links to the packages associated with this release. 
 Follow this guidance for setting up your developer environment: 
