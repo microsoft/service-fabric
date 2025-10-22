@@ -1,4 +1,4 @@
-# Microsoft Azure Service Fabric 11.1 (Auto Upgrade) Release Notes
+# Microsoft Azure Service Fabric 11 CU1 (Auto Upgrade) Release Notes
 
 This release will only be available through Auto upgrades. Clusters set to automatic upgrades will receive this release. For how to configure upgrades, please see [classic](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-upgrade) or [managed](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-configuration) documentation.
 
@@ -43,18 +43,18 @@ The following packages and versions are part of this release:
     * [Create a Standalone cluster](/azure/service-fabric/service-fabric-cluster-creation-for-windows-server)
     * Install the supported version of Service Fabric SDK based on the Runtime version installed on the cluster.
 
-* Starting in Service Fabric 11.2, support for stateless instance removal will begin its deprecation pathway. Support for stateless instance removal will be fully removed approximately one year after the release of 11.2.
+* Starting in Service Fabric 11 CU3, support for stateless instance removal will begin its deprecation pathway. Support for stateless instance removal will be fully removed approximately one year after the release of 11 CU3.
   * The following cmdlets and API calls will be deprecated for stateless replicas:
     * [Remove-ServiceFabricReplica](https://learn.microsoft.com/en-us/powershell/module/servicefabric/remove-servicefabricreplica)
     * [FabricClient.FaultManagementClient.RemoveReplicaAsync](https://learn.microsoft.com/en-us/dotnet/api/system.fabric.fabricclient.faultmanagementclient.removereplicaasync)
     * [Remove Replica – Microsoft Learn](https://learn.microsoft.com/en-us/rest/api/servicefabric/sfclient-api-removereplica)
-  * Support for stateless instance removal will be fully removed approximately one year after the release of 11.2:
-  * **Customer impact:** Using these APIs after upgrading to version 11.2 will trigger deprecation warnings. Full removal of support is targeted for a future release, approximately one year post-11.2.
+  * Support for stateless instance removal will be fully removed approximately one year after the release of 11 CU3:
+  * **Customer impact:** Using these APIs after upgrading to version 11 CU3 will trigger deprecation warnings. Full removal of support is targeted for a future release, approximately one year post-11.3.
     * Scripts and tools depending on the deprecated APIs may fail in future versions.
     * Customers should begin migrating to the new APIs as soon as they become available to prevent disruptions in automation workflows.
-    * Alternate APIs to support stateless instance removal will be announced in a 11.2 release.
-  * **Migration path:** Service Fabric 11.2 introduces new APIs and a compatibility switch to ensure existing scripts continue functioning after upgrading, while allowing time to transition.
-    * Full details about replacements and migration guidance will be included in the 11.2 release notes and documentation.
+    * Alternate APIs to support stateless instance removal will be announced in a 11 CU3 release.
+  * **Migration path:** Service Fabric 11 CU3 introduces new APIs and a compatibility switch to ensure existing scripts continue functioning after upgrading, while allowing time to transition.
+    * Full details about replacements and migration guidance will be included in the 11 CU3 release notes and documentation.
 
 * Starting with Service Fabric version 12, the managed assemblies of the public SDK no longer have the assembly CLSCompliantAttribute. Service Fabric APIs commonly use unsigned integer types that aren't CLS-compliant. The Service Fabric SDK doesn't support any .NET languages other than C#, so the CLS compliance isn't applicable. Users building CLS-compliant assemblies that expose Service Fabric types in their public API will get the CS3003 build warning.
   * User assemblies exposing Service Fabric types in their public APIs can do one of the following:
