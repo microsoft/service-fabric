@@ -16,7 +16,9 @@ This document provides a comprehensive analysis of the timer implementation for 
 8. [Thread Safety](#thread-safety)
 9. [Performance Considerations](#performance-considerations)
 10. [Comparison with Windows Implementation](#comparison-with-windows-implementation)
-11. [Potential Issues and Recommendations](#potential-issues-and-recommendations)
+11. [Signal Handling Bug Analysis](#signal-handling-bug-analysis)
+12. [Alternative Timer Implementation Approaches](#alternative-timer-implementation-approaches)
+13. [Potential Issues and Recommendations](#potential-issues-and-recommendations)
 
 ---
 
@@ -905,6 +907,322 @@ void DisposeLoop() {
 **Problem**: Signal handler uses `Invariant()` which could fail silently.
 
 **Recommendation**: Add robust error logging mechanism that's signal-safe.
+
+---
+
+## Alternative Timer Implementation Approaches
+
+This section presents alternative timer implementations that could address the identified bugs and improve the overall design.
+
+### Alternative 1: timerfd-Based Implementation (RECOMMENDED)
+
+**Overview**: Use Linux's `timerfd_create()` instead of POSIX timers with signals.
+
+```cpp
+// Simplified timerfd-based timer
+class TimerFdTimer {
+private:
+    int timerfd_;
+    std::thread pollThread_;
+    
+public:
+    TimerFdTimer() {
+        timerfd_ = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+    }
+    
+    void SetTimer(TimeSpan dueTime, TimeSpan period) {
+        struct itimerspec spec = {};
+        spec.it_value = ToTimeSpec(dueTime);
+        spec.it_interval = ToTimeSpec(period);
+        timerfd_settime(timerfd_, 0, &spec, nullptr);
+    }
+    
+    void PollLoop() {
+        struct pollfd pfd = { timerfd_, POLLIN, 0 };
+        while (running_) {
+            int ret = poll(&pfd, 1, -1);
+            if (ret > 0 && (pfd.revents & POLLIN)) {
+                uint64_t expirations;
+                read(timerfd_, &expirations, sizeof(expirations));
+                // Execute callback - no signal handler needed!
+                ExecuteCallback(expirations);
+            }
+        }
+    }
+};
+```
+
+**Advantages**:
+| Aspect | Current (POSIX signals) | timerfd |
+|--------|------------------------|---------|
+| Signal safety | ❌ Complex, async-signal-safe issues | ✅ No signals needed |
+| Multiplexing | ❌ Requires pipes | ✅ Can use epoll/poll directly |
+| Resource limits | ⚠️ RLIMIT_SIGPENDING | ✅ File descriptor limits (much higher) |
+| Debugging | ❌ Hard to debug signal issues | ✅ Standard I/O debugging |
+| Overrun handling | ⚠️ si_overrun may be inaccurate | ✅ Exact expiration count from read() |
+
+**Migration Path**:
+1. Create `TimerFd` wrapper class
+2. Replace `timer_create()` calls with `timerfd_create()`
+3. Replace signal handler with `epoll`/`poll` loop
+4. Remove pipe-based signal forwarding
+5. Simplify `TimerFinalizer` (no delayed cleanup needed)
+
+**Estimated Effort**: Medium (2-3 weeks for full migration)
+
+---
+
+### Alternative 2: epoll-Based Timer Wheel
+
+**Overview**: Use a single timerfd with an internal timer wheel data structure for O(1) timer operations.
+
+```cpp
+class TimerWheel {
+private:
+    static constexpr size_t WHEEL_SIZE = 4096;  // 4K slots
+    static constexpr auto TICK_INTERVAL = std::chrono::milliseconds(1);
+    
+    std::array<std::list<TimerEntry>, WHEEL_SIZE> wheel_;
+    size_t currentSlot_ = 0;
+    int timerfd_;
+    int epollfd_;
+    
+public:
+    void AddTimer(TimerEntry entry, std::chrono::milliseconds delay) {
+        size_t ticks = delay / TICK_INTERVAL;
+        size_t slot = (currentSlot_ + ticks) % WHEEL_SIZE;
+        wheel_[slot].push_back(std::move(entry));
+    }
+    
+    void Tick() {
+        currentSlot_ = (currentSlot_ + 1) % WHEEL_SIZE;
+        auto& slot = wheel_[currentSlot_];
+        for (auto& timer : slot) {
+            if (timer.rounds == 0) {
+                ExecuteCallback(timer);
+            } else {
+                timer.rounds--;
+            }
+        }
+        slot.remove_if([](const auto& t) { return t.rounds == 0; });
+    }
+};
+```
+
+**Advantages**:
+- O(1) timer insertion and deletion
+- Single kernel timer resource
+- Predictable memory usage
+- No signal handling complexity
+
+**Trade-offs**:
+- Coarser granularity (typically 1ms minimum)
+- More complex implementation
+- Memory overhead for empty slots
+
+**Best For**: High timer count scenarios (>10,000 concurrent timers)
+
+---
+
+### Alternative 3: Hierarchical Timer Wheel (Kafka-style)
+
+**Overview**: Multi-level timer wheel for both precision and efficiency.
+
+```cpp
+class HierarchicalTimerWheel {
+    // Level 0: 1ms resolution, 256 slots (256ms range)
+    // Level 1: 256ms resolution, 64 slots (16s range)  
+    // Level 2: 16s resolution, 64 slots (17 min range)
+    // Level 3: 17min resolution, 64 slots (18 hour range)
+    
+    std::array<TimerWheel, 4> levels_;
+    
+    void AddTimer(TimerEntry entry, Duration delay) {
+        int level = CalculateLevel(delay);
+        levels_[level].AddTimer(entry, delay);
+    }
+    
+    void Cascade(int level) {
+        // Move timers from higher level to lower level
+        // when their time approaches
+    }
+};
+```
+
+**Advantages**:
+- Handles both short and long timeouts efficiently
+- O(1) insert/delete at any timescale
+- Proven in production (Linux kernel, Kafka, Netty)
+
+**Trade-offs**:
+- Most complex implementation
+- Cascading overhead
+
+---
+
+### Alternative 4: Thread-Per-Timer with Condition Variables
+
+**Overview**: Simple approach using condition variables for small timer counts.
+
+```cpp
+class CondVarTimer {
+private:
+    std::condition_variable cv_;
+    std::mutex mtx_;
+    std::atomic<bool> cancelled_{false};
+    std::thread timerThread_;
+    
+public:
+    void Start(TimeSpan dueTime, Callback cb) {
+        timerThread_ = std::thread([=] {
+            std::unique_lock<std::mutex> lock(mtx_);
+            if (cv_.wait_for(lock, dueTime.ToChronoDuration(), 
+                [this] { return cancelled_.load(); })) {
+                return;  // Cancelled
+            }
+            cb();
+        });
+    }
+    
+    void Cancel() {
+        cancelled_ = true;
+        cv_.notify_all();
+        if (timerThread_.joinable()) timerThread_.join();
+    }
+};
+```
+
+**Advantages**:
+- Simple, portable implementation
+- No kernel timer resources needed
+- Easy to understand and debug
+
+**Trade-offs**:
+- One thread per timer (doesn't scale)
+- Higher memory usage
+- Context switch overhead
+
+**Best For**: Small number of timers (<100)
+
+---
+
+### Alternative 5: Boost.Asio Deadline Timer
+
+**Overview**: Leverage Boost.Asio's cross-platform timer implementation.
+
+```cpp
+#include <boost/asio.hpp>
+
+class AsioTimer {
+private:
+    boost::asio::io_context& io_;
+    boost::asio::steady_timer timer_;
+    
+public:
+    AsioTimer(boost::asio::io_context& io) 
+        : io_(io), timer_(io) {}
+    
+    void SetTimer(TimeSpan dueTime, Callback cb) {
+        timer_.expires_after(dueTime.ToChronoDuration());
+        timer_.async_wait([cb](const boost::system::error_code& ec) {
+            if (!ec) cb();
+        });
+    }
+    
+    void Cancel() {
+        timer_.cancel();
+    }
+};
+```
+
+**Advantages**:
+- Battle-tested, production-ready
+- Handles all edge cases
+- Cross-platform (Windows/Linux/macOS)
+- Integrates with async I/O
+
+**Trade-offs**:
+- External dependency (Boost)
+- May not match existing threading model
+- Learning curve for Asio concepts
+
+---
+
+### Comparison Matrix
+
+| Approach | Complexity | Scalability | Signal-Safe | Resource Usage | Precision |
+|----------|------------|-------------|-------------|----------------|-----------|
+| Current (POSIX+signals) | High | Medium | ❌ | Medium | High |
+| **timerfd** | Low | High | ✅ | Low | High |
+| Timer Wheel | Medium | Very High | ✅ | Medium | Medium |
+| Hierarchical Wheel | High | Very High | ✅ | Medium | Variable |
+| Thread-per-timer | Low | Low | ✅ | High | High |
+| Boost.Asio | Low | High | ✅ | Low | High |
+
+---
+
+### Recommendation
+
+**Short-term (Bug Fixes)**:
+1. Replace `Invariant()` in signal handlers with signal-safe alternatives
+2. Make `callbackTidSet_` atomic
+3. Add `EAGAIN` handling for pipe writes
+
+**Medium-term (Incremental Improvement)**:
+1. Migrate from POSIX timers to `timerfd` 
+2. Use `epoll` for multiplexing multiple timerfds
+3. Remove signal-based notification entirely
+
+**Long-term (Full Redesign)**:
+1. Implement hierarchical timer wheel for extreme scale
+2. Consider Boost.Asio if cross-platform consistency is prioritized
+3. Unify with Windows implementation using abstraction layer
+
+### Sample timerfd Migration
+
+Here's a concrete example of migrating the current signal handler to timerfd:
+
+```cpp
+// BEFORE: Current signal-based approach
+void Timer::SigHandler(int sig, siginfo_t *si, void*) {
+    auto savedErrno = errno;
+    KFinally([=] { errno = savedErrno; });
+    Timer* thisPtr = (Timer*)si->si_value.sival_ptr;
+    auto overrun = si->si_overrun;
+    for (uint i = 0; i <= overrun; ++i) {
+        write(pipeFd[1], &thisPtr, sizeof(thisPtr));  // Not signal-safe!
+    }
+}
+
+// AFTER: timerfd-based approach
+class TimerFdManager {
+    int epollfd_;
+    std::unordered_map<int, Timer*> fdToTimer_;
+    
+    void PollLoop() {
+        epoll_event events[64];
+        while (running_) {
+            int n = epoll_wait(epollfd_, events, 64, -1);
+            for (int i = 0; i < n; i++) {
+                int fd = events[i].data.fd;
+                uint64_t expirations;
+                read(fd, &expirations, sizeof(expirations));
+                
+                Timer* timer = fdToTimer_[fd];
+                for (uint64_t j = 0; j < expirations; j++) {
+                    Threadpool::Post([timer] { timer->Callback(); });
+                }
+            }
+        }
+    }
+};
+```
+
+This approach eliminates:
+- Signal handler complexity
+- Pipe buffer overflow risk
+- Async-signal-safety concerns
+- The need for `TimerFinalizer` delayed cleanup
 
 ---
 
