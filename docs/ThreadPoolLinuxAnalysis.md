@@ -12,7 +12,7 @@
 
 ## Executive Summary
 
-This document provides a deep analysis of the Service Fabric thread pool implementation for Linux, located primarily in `/src/prod/src/Common/Threadpool/`. The implementation is a Windows-compatible thread pool ported to Linux using POSIX threads (pthreads) and provides a work-stealing/work-queuing mechanism with dynamic thread count adjustment using the Hill Climbing algorithm.
+This document provides a deep analysis of the Service Fabric thread pool implementation for Linux, located primarily in `/src/prod/src/Common/Threadpool/`. The implementation is a Windows-compatible thread pool ported to Linux using POSIX threads (pthreads) and provides a centralized work-queuing mechanism with dynamic thread count adjustment using the Hill Climbing algorithm.
 
 ### Key Findings
 
@@ -390,7 +390,7 @@ class LifoSemaphore
 #if __aarch64__
     __asm__ __volatile__("yield");
 #elif __x86_64__ || __i386__
-    __asm__ __volatile__("pause");
+    __asm__ __volatile__("rep\nnop");  // PAUSE instruction, rep nop for compatibility
 #else
     sched_yield();
 #endif
@@ -481,7 +481,7 @@ std::atomic<int> counter;
 counter.fetch_add(1, std::memory_order_relaxed);
 
 // Instead of custom semaphores (C++20)
-std::counting_semaphore<> sem(0);
+std::counting_semaphore<256> sem(0);  // Specify max count explicitly
 sem.acquire();
 sem.release();
 
