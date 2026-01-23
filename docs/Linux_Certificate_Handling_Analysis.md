@@ -265,6 +265,16 @@ auto fd = open(privKeyFilePath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | 
 2. Root access can read all private keys
 3. No hardware security module (HSM) support
 
+**Current Mitigations:**
+- File permissions restrict access to owner only (0600)
+- sfuser account used for non-root operations
+- Separate certificate directories for root and sfuser processes
+
+**Recommended Interim Steps:**
+- Enable SELinux/AppArmor policies to further restrict access
+- Consider encrypted filesystem for certificate storage directories
+- Implement audit logging for certificate file access
+
 ### 4.2 Certificate Store Permissions
 
 **Current State:**
@@ -278,6 +288,13 @@ auto fd = open(privKeyFilePath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | 
 
 **Critical Security Gap:**
 With CRL checking disabled, certificates that have been revoked (due to compromise, key leak, etc.) will still be accepted. This is a significant security risk in production environments.
+
+**Recommended Interim Mitigations:**
+- Use shorter certificate validity periods to limit exposure
+- Implement certificate pinning for critical services
+- Use thumbprint-based validation with regular thumbprint rotation
+- Monitor certificate usage and implement alerting for unexpected certificates
+- Consider authentication at additional layers (e.g., client certificates + tokens)
 
 ---
 
