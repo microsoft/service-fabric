@@ -543,9 +543,11 @@ void Timer::Callback()
 
 ### POSIX Timer Overhead
 
-- **Creation**: ~2-5μs per `timer_create()`
-- **Setting**: ~0.5-1μs per `timer_settime()`
-- **Deletion**: ~1-2μs per `timer_delete()`
+The following are algorithmic complexity notes (actual performance varies by hardware, kernel version, and system load):
+
+- **Creation**: O(1) - `timer_create()` allocates kernel resources
+- **Setting**: O(1) - `timer_settime()` updates timer configuration  
+- **Deletion**: O(1) - `timer_delete()` frees kernel resources
 
 ### TimerQueue Complexity
 
@@ -556,11 +558,13 @@ void Timer::Callback()
 | Fire due | O(k log n) where k = number of expired timers |
 | Peek | O(1) |
 
-### Memory Usage
+### Memory Usage (64-bit architecture)
+
+Memory estimates assume x86-64 architecture with 8-byte pointers:
 
 - Per POSIX Timer: ~72 bytes (Timer object) + kernel resources
 - Per TimerQueue Timer: ~48 bytes (TimerQueue::Timer object)
-- TimerFinalizer Queue: ~16MB (2^21 pointers × 8 bytes)
+- TimerFinalizer Queue: ~16MB (2^21 pointers × 8 bytes on 64-bit systems)
 
 ---
 
@@ -621,13 +625,13 @@ void Timer::Cancel()  // Windows version
 
 **Recommendation**: Consider adaptive delay based on system load.
 
-### Issue 4: Heap Indexing
+### Issue 4: Heap Indexing (Minor/Theoretical)
 
-**Problem**: `InvalidHeapIndex` uses `size_t`'s max value, which could theoretically be a valid index.
+**Observation**: `InvalidHeapIndex` uses `size_t`'s max value as a sentinel.
 
-**Current Safety**: Queue capacity limits prevent this.
+**Analysis**: On 64-bit systems, this value (2^64-1) is practically unreachable as it would require more memory than physically exists. The queue capacity of 2^21 makes this a non-issue in practice.
 
-**Recommendation**: Consider using `std::optional<size_t>` for clearer semantics.
+**Status**: No action needed - the current design is sound for realistic scenarios.
 
 ### Issue 5: Error Handling in Signal Handler
 
