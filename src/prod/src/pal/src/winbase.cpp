@@ -67,6 +67,13 @@ CaptureStackBackTrace(
         return 0;
     }
     
+    // Check for potential overflow before adding
+    if (FramesToSkip > UINT_MAX - FramesToCapture)
+    {
+        // Overflow would occur, cap at maximum
+        return 0;
+    }
+    
     // Capture extra frames to account for frames we need to skip
     DWORD totalFrames = FramesToSkip + FramesToCapture;
     int captured = backtrace(BackTrace, totalFrames);
