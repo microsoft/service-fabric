@@ -32,7 +32,7 @@ Service Fabric team
 - [Sunsetting the ClientAuth EKU: What, Why, and How to Prepare for the Change | RSAC Conference](https://www.rsaconference.com/library/blog/sunsetting-the-clientauth-eku-what-why-and-how-to-prepare-for-the-change)
 - [Client Authentication EKU Phased Out - KeyTalk](https://keytalk.com/news/client-authentication-eku-phased-out)
 
-[2] [Add TSG for Client Authentication EKU removal impact by jagilber · Pull Request #320 · Azure/Service-Fabric-Troubleshooting-Guides](https://github.com/Azure/Service-Fabric-Troubleshooting-Guides/pull/320/files)
+[2] [Service Fabric Client EKU Troubleshooting Guide](https://github.com/Azure/Service-Fabric-Troubleshooting-Guides/blob/master/Security/certificate-client-authentication-eku-removal-impact.md)
 
 [3] Digicert's schedule is available below:  
 [Sunsetting the client authentication EKU from DigiCert public TLS certificates](https://knowledge.digicert.com/alerts/sunsetting-client-authentication-eku-from-digicert-public-tls-certificates)
