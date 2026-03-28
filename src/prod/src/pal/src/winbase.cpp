@@ -9,6 +9,7 @@
 #include "util/pal_time_util.h"
 #include "winnt.h"
 #include <execinfo.h>
+#include <limits.h>
 #include <string>
 #include <time.h>
 #include <unistd.h>
@@ -61,15 +62,41 @@ CaptureStackBackTrace(
     __out_opt PDWORD BackTraceHash
    )
 {
-    int captured = backtrace(BackTrace, FramesToCapture);
-            ASSERT(captured > FramesToSkip);
-
-    if (FramesToSkip)
+    if (!BackTrace || FramesToCapture == 0)
     {
-        for (int i = FramesToSkip; i < captured; i++)
-            BackTrace[i - FramesToSkip] = BackTrace[i];
+        return 0;
     }
-    return captured - FramesToSkip;
+    
+    // Check for potential overflow before adding
+    if (FramesToSkip > UINT_MAX - FramesToCapture)
+    {
+        // Overflow would occur, cap at maximum
+        return 0;
+    }
+    
+    // Capture extra frames to account for frames we need to skip
+    DWORD totalFrames = FramesToSkip + FramesToCapture;
+    int captured = backtrace(BackTrace, totalFrames);
+    
+    // If we didn't capture enough frames to skip, return 0
+    if (captured <= (int)FramesToSkip)
+    {
+        return 0;
+    }
+
+    // Shift the captured frames to skip the requested number
+    int resultCount = captured - FramesToSkip;
+    if (resultCount > (int)FramesToCapture)
+    {
+        resultCount = FramesToCapture;
+    }
+    
+    for (int i = 0; i < resultCount; i++)
+    {
+        BackTrace[i] = BackTrace[i + FramesToSkip];
+    }
+    
+    return (WORD)resultCount;
 }
 
 WINADVAPI
@@ -410,7 +437,38 @@ GetComputerNameExW (
     __inout LPDWORD nSize
     )
 {
-    memcpy(lpBuffer, L"Test", 10);
+    if (!nSize)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    char hostname[HOST_NAME_MAX + 1] = {0};
+    
+    if (gethostname(hostname, HOST_NAME_MAX) != 0)
+    {
+        SetLastError(ERROR_GEN_FAILURE);
+        return FALSE;
+    }
+    
+    wstring hostnameW = utf8to16(hostname);
+    DWORD requiredSize = static_cast<DWORD>(hostnameW.length() + 1);
+    
+    if (*nSize < requiredSize || lpBuffer == NULL)
+    {
+        *nSize = requiredSize;
+        if (lpBuffer == NULL && *nSize == 0)
+        {
+            // Caller is querying required size
+            return FALSE;
+        }
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+    
+    memcpy(lpBuffer, hostnameW.c_str(), requiredSize * sizeof(wchar_t));
+    *nSize = requiredSize - 1;  // Return length without null terminator
+    
     return TRUE;
 }
 
