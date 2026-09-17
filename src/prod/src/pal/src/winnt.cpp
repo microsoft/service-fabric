@@ -72,5 +72,18 @@ RtlSecureZeroMemory(
     __in SIZE_T cnt
     )
 {
-    return memset(ptr, 0, cnt);
+    if (!ptr || cnt == 0)
+    {
+        return ptr;
+    }
+    
+    // Use volatile to prevent compiler optimization
+    volatile unsigned char *p = (volatile unsigned char *)ptr;
+    while (cnt--)
+    {
+        *p++ = 0;
+    }
+    // Memory barrier to prevent reordering
+    __asm__ __volatile__("" ::: "memory");
+    return ptr;
 }
