@@ -30,7 +30,7 @@ Service Fabric 11.8 improves reliability across Reliable Collections, service re
 
 ## Breaking Changes
 
-No customer-impacting breaking changes are identified in this release. Review the behavior changes and configuration guidance in the feature and bug fix table before upgrading.
+* Windows clusters running or upgrading to Service Fabric `11.8.121.1` can experience node-down or upgrade-rollback failures when a centrally installed Microsoft x64 Visual C++ Redistributable older than `14.38.33135.0` is present on the node. Update the complete `vc_redist.x64` package to `14.44.35211.0` or later before upgrading to SF 11.8 or later. For confirmation steps, immediate mitigation, and validation guidance, see [Node down during or after an SF 11.8 upgrade](https://github.com/Azure/Service-Fabric-Troubleshooting-Guides/blob/master/Cluster/Node%20down%20during%20or%20after%20an%20SF%2011.8%20upgrade.md).
 
 ## Service Fabric Features and Bug Fixes
 
