@@ -1,8 +1,0 @@
-[Version]
-Signature="$WINDOWS NT$"
-
-[KBufferKernel.NT.Wdf]
-KmdfService = KBufferKernel, KmUnit_Service_kmdfInst
-
-[KmUnit_Service_kmdfInst]
-KmdfLibraryVersion = 1.9

@@ -1,30 +1,31 @@
 # How to contribute to Service Fabric
 Welcome! If you are interested in contributing to Service Fabric, reporting issues, or just getting in touch with the folks who work on Service Fabric, this guide is for you.
 
-One of the easiest ways to contribute is to participate in discussions and discuss issues. You can also contribute by opening an issue and submitting a pull request with code changes.
+This repository is used for Service Fabric release notes and issue tracking. You can contribute by reporting non-production issues, suggesting features, participating in discussions, or submitting corrections to release notes and repository documentation. It does not contain the Service Fabric runtime source code.
 
 ## Open an Issue
 
 ### Production Issues
-Issues related to Production workloads  **MUST NOT BE REPORTED** in this repository. Production support is out of scope of this repository's obejctives. To receive product  support, you must file a support request through below recommended channels.
+Issues related to production workloads **MUST NOT BE REPORTED** in this repository. Production support is out of scope of this repository's objectives. To receive product support, file a support request through the recommended channels below.
   
   #### Support Channels
   - [Azure Support options](https://azure.microsoft.com/en-us/support/options/)
-  - [Service Fabric Support Policies](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-support) 
+  - [Service Fabric Support Policies](https://learn.microsoft.com/azure/service-fabric/service-fabric-support)
 
 ### Reporting security issues and bugs
-Security issues and bugs should be reported privately, via email, to  **[Microsoft Security Response Center (MSRC)](secure@microsoft.com)**. You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [Security TechCenter](https://technet.microsoft.com/en-us/security/ff852094.aspx).
+Security vulnerabilities must not be reported through public GitHub issues. Follow the [security policy](SECURITY.md) to report them privately to the Microsoft Security Response Center (MSRC).
 
 ### Non-Production/Non-Security Issues
 
-#### Guidelines to files issues for this repository
-   -  File issues pertaining to Service Fabric runtime in this repo using this [template](https://github.com/microsoft/service-fabric/issues/new?template=create_new_issue.md) 
-   -  Edit the title and fill in the details (runtime version, OS type, behaviors) requested in the template.
-   -  New issues will be assigned automatically to our team @microsoft/service-fabric-triage . ***Do not update the assignees listed in the template***
+#### Guidelines for filing issues in this repository
+   - File Service Fabric runtime bugs using the [bug report template](https://github.com/microsoft/service-fabric/issues/new?template=bug_report.md).
+   - Suggest features using the [feature request template](https://github.com/microsoft/service-fabric/issues/new?template=feature_request.md).
+   - Edit the title and fill in the details (runtime version, OS type, behaviors) requested in the template.
+   - See [issue guidance](issue_guidance.md) for information about triage and the issue lifecycle.
      
  #### GitHub Repositories
 
-- [Microsoft/service-fabric](http://github.com/Microsoft/service-fabric) (this repository) for bugs or feature requests related to **Service Fabric Runtime**. When filing an issue, please tag **@microsoft/service-fabric-triage** team to get the issue triaged.
+- [Microsoft/service-fabric](https://github.com/microsoft/service-fabric) (this repository) for bugs or feature requests related to **Service Fabric Runtime**. When filing an issue, please tag **@microsoft/service-fabric-triage** team to get the issue triaged.
 - [Microsoft/service-fabric-services-and-actors-dotnet](https://github.com/Microsoft/service-fabric-services-and-actors-dotnet) for issues related to **Reliable Services, Reliable Actors, and Service Remoting**.
 - [Microsoft/service-fabric-aspnetcore](https://github.com/Microsoft/service-fabric-aspnetcore) for issues related to **ASP.NET Core integration with Reliable Services**.
 - [Microsoft/service-fabric-cli](https://github.com/Microsoft/service-fabric-cli) for any issues related to the **SF CLI (sfctl)**.
@@ -43,13 +44,11 @@ For general "how-to" and guidance questions about using Service Fabric to build 
 
 GitHub supports [markdown](https://help.github.com/categories/writing-on-github/), so when filing bugs make sure you check the formatting before clicking submit.
 
-## Contributing code and content
-We welcome all forms of contributions from the community. Please read the following guidelines  to maximize the chances of your PR being merged.
+## Contributing release notes and documentation
+We welcome corrections and improvements to release notes, issue guidance, and repository documentation. For source-code contributions to other Service Fabric components, use the relevant component repository listed above.
 
 ### Communication
- - Before starting work on a feature, please open an issue on GitHub describing the proposed feature. As we're still getting our development process off the ground, we want to make sure any feature work goes smoothly. We're happy to work with you to determine if it fits the current project direction and make sure no one else is already working on it.
-
- - For any work related to setting up build, test, and CI for Service Fabric on GitHub, or for small patches or bug fixes, please open an issue for tracking purposes, but we generally don't need a discussion prior to opening a PR.
+ - Before making a substantial change to release notes or repository documentation, please open an issue to discuss the proposed change. For small corrections, you can open a pull request directly.
 
 ### Development process
 Please be sure to follow the usual process for submitting PRs:

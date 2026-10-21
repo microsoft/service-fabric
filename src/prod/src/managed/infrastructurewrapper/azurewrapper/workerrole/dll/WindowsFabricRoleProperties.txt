@@ -1,2 +1,0 @@
-RolePlugins=WindowsFabric
-TargetFrameworkVersion=v4.0

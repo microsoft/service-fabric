@@ -1,3 +1,0 @@
-LIBRARY FabricGatewayResourceManager
-EXPORTS
-    CreateFabricGatewayResourceManagerAgent

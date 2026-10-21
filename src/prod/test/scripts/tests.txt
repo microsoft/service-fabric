@@ -1,2 +1,0 @@
-SingleMachine-CIT.json
-    TESTS:Lease.Test.exe

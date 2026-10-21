@@ -1,9 +1,0 @@
-Package: servicefabric
-Version: REPLACE_VERSION
-Section: base
-Priority: optional
-Architecture: amd64
-Depends: lttng-tools, lttng-modules-dkms, liblttng-ust0, openssh-server, rssh, sshpass, members, libunwind8, libib-util, acl, libssh2-1, nodejs, nodejs-legacy, npm, atop, libcurl3(>= 7.16.2), dotnet-runtime-2.0.7, cgroup-bin, ebtables, libelf-dev, zulu-8-azure-jdk
-Maintainer: ServiceFabric Maintainer <sfmaint@microsoft.com>
-Description: Service Fabric
- Version REPLACE_VERSION of Service Fabric package for linux

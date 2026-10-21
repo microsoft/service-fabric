@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest a feature or improvement for Service Fabric
 title: '[Feature]: Describe feature asks or new scenario or experience you want to enable'
 labels: 'type-enhancement'
 projects: 'ServiceFabric_NewFeature_Request'
@@ -30,12 +30,12 @@ A clear and concise description of what you expected to happen, expected timelin
 Add any other context or screenshots about the feature request here.
 
 **Service Fabric Runtime Version:** 
-ex: 7.1.*, 7.2.*
+Include the full runtime version, for example `<major>.<minor>.<build>.<revision>`.
 
 **Environment:**
  - Must be one of these values [Standalone OR Azure OR OneBox/Dev cluster]
- - OS: [e.g. Windows 2019, Ubuntu 18.04] 
- - Version [e.g. 7.1, 7.2 ]
+ - OS: [Windows Server or Linux distribution]
+ - OS version:
 
 ---
 Assignees: /cc @microsoft/service-fabric-triage

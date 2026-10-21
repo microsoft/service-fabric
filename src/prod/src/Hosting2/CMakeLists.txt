@@ -1,5 +1,0 @@
-add_subdirectory(lib)
-add_subdirectory(test)
-add_subdirectory(testprocess)
-add_subdirectory(workingFolderTestHost)
-add_subdirectory(networkingtests)

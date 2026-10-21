@@ -1,9 +1,0 @@
-# Non standard files
-Dockerfile.ubuntu eol=lf
-UBUNTUIMAGE_VERSION eol=lf
-
-Dockerfile.centos eol=lf
-CENTOSIMAGE_VERSION eol=lf
-
-Dockerfile.ubuntu18 eol=lf
-UBUNTU18IMAGE_VERSION eol=lf

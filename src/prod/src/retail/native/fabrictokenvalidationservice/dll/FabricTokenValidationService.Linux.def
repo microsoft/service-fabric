@@ -1,4 +1,0 @@
-LIBRARY FabricTokenValidationService
-EXPORTS
-    CreateFabricTokenValidationServiceAgent
-    GetDefaultAzureActiveDirectoryConfigurations
