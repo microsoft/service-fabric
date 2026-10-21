@@ -8,6 +8,8 @@ projects: 'ServiceFabric-Bugs'
 
 ---
 
+<!-- For production issues, use Azure Support. Report security vulnerabilities privately as described in SECURITY.md. -->
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
@@ -30,12 +32,12 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Service Fabric Runtime Version:** 
-ex: 7.1.*, 7.2.*
+Include the full runtime version, for example `<major>.<minor>.<build>.<revision>`.
 
 **Environment:**
  - Must be one of these values [Standalone OR Azure OR OneBox/Dev cluster]
- - OS: [e.g. Windows 2019, Ubuntu 18.04] 
- - Version [e.g. 7.1, 7.2 ]
+ - OS: [Windows Server or Linux distribution]
+ - OS version:
 
 
 If this is a regression, which version did it regress from?

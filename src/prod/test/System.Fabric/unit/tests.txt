@@ -1,2 +1,0 @@
-SingleMachine-CIT.json
-    TESTS:System.Fabric.Test.dll,System.Fabric.Test.CoreClr

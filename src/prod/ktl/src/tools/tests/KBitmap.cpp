@@ -1,1 +1,0 @@
-#include "../kbitmap/KBitmapTests.cpp"

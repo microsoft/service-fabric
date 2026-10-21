@@ -1,1 +1,0 @@
-#include "../kchecksum/KChecksumTests.cpp"

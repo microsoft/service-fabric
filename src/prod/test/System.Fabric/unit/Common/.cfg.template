@@ -1,4 +1,0 @@
-﻿[ServiceHost/OldClusterManager]
-  HostType = Process
-  Path = [[CLUSTER_MANAGER_BINARY_PATH]]
-  ServiceType = OldClusterManagerService
