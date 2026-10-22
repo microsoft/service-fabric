@@ -18,10 +18,10 @@ The following packages and versions are part of this release:
 
 | **Service** | **Platform** | **Version** |
 |---|---|---|
-| Service Fabric Runtime | Windows <br> ARM64 <br> Ubuntu 22 <br> AzLinux | 11.8.121.1 <br> 11.8.121.2 <br> 11.8.121.4 <br> 11.8.131.5|
-| Service Fabric for Windows Server | Service Fabric Standalone Installer Package | 11.8.121.1 |
-| .NET SDK | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 8.0.0 <br> 11.8.121.1 <br> 8.0.0 <br> 8.0.0 |
-| Java SDK | Java for Linux SDK | 1.0.6 |
+| [Service Fabric Runtime](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.11.8.121.1.exe) | Windows <br> ARM64 <br> Ubuntu 22 <br> AzLinux | 11.8.121.1 <br> 11.8.121.2 <br> 11.8.121.4 <br> 11.8.131.5|
+| [Service Fabric for Windows Server](https://download.microsoft.com/download/8/3/6/836e3e99-a300-4714-8278-96bc3e8b5528/11.8.121.1/Microsoft.Azure.ServiceFabric.WindowsServer.11.8.121.1.zip) | Service Fabric Standalone Installer Package | 11.8.121.1 |
+| [.NET SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.8.8.121.msi) | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 8.8.121 <br> 11.8.121.1 <br> 8.8.121 <br> 8.8.121 |
+| [Java SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.8.4.205.msi) | Java for Linux SDK | 1.0.6 |
 | Service Fabric PowerShell and CLI | AzureRM PowerShell Module <br> SFCTL | 0.3.15 <br> 11.0.1 |
 
 ## Key Announcements
@@ -46,7 +46,9 @@ The following features and bug fixes are part of this release:
 | Bug fix | Protection against partition metadata loss during Failover Manager rebuild | **Impact:** Reduces the risk of stateful partitions being lost when Failover Manager rebuilds happen. <br> **Solution/Fix:** Service Fabric can delay deletion of the last local replica until a replacement is available, reducing the risk of losing stateful partition metadata during a Failover Manager rebuild. This fix is controlled by the `DelayDeleteOfLastReplica` configuration setting. It is disabled by default in this release and is planned to be enabled by default in the following release. |
 | Security update | Native dependency security updates | **Impact:** Customers benefit from native dependencies that include their latest security fixes; no action is required. <br> **Solution/Fix:** Service Fabric now includes updated native dependencies that incorporate their latest security fixes. No customer action is required. |
 
-## Retirement and Deprecation Path Callouts
+## Retirement and Upgrade Path Callouts
+
+* Before upgrading Linux clusters to Service Fabric 11.9, validate and correct all explicitly configured TLS 1.3 cipher suites, or remove the explicit cipher suite configuration to use the system defaults.
 
 * Service Fabric plans to discontinue support for the Java SDK. Applications that use the Java SDK will continue to run, but customers should plan migration to the Service Fabric .NET SDK.
 
