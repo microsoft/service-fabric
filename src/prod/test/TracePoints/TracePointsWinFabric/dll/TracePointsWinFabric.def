@@ -1,6 +1,0 @@
-LIBRARY TracePointsWinFabric
-EXPORTS
-    Setup
-    EnableCrashOnNodeAddedToGFUM
-    EnableCallMe
-    Cleanup

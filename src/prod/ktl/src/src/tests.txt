@@ -1,2 +1,0 @@
-Ktl-Functional.json
-  ALL
