@@ -216,15 +216,13 @@ namespace Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue
 
         async Task IReliableConcurrentQueue<T>.EnqueueAsync(ITransaction tx, T value, CancellationToken cancellationToken, TimeSpan? timeout)
         {
-            // todo sangarg : RDBug 8887951
             this.ThrowIfTransactionIsNullOrInvalid(tx);
             this.ThrowIfNotInitialized("EnqueueAsync", tx.TransactionId);
             this.ThrowIfNotOpened("EnqueueAsync", tx.TransactionId);
             this.ThrowIfNotRecovered("EnqueueAsync", tx.TransactionId);
             this.ThrowIfClosing();
 
-            // todo sangarg : RDBug 9563497
-            // Enable checks for Read Write status
+            // Todo: Enable checks for Read Write status
 
             Stopwatch enqueueTimer = new Stopwatch();
             enqueueTimer.Start();
@@ -339,8 +337,7 @@ namespace Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue
             this.ThrowIfNotRecovered("TryDequeueAsync", tx.TransactionId);
             this.ThrowIfClosing();
 
-            // todo sangarg : RDBug 9563497
-            // Enable checks for Read Write status
+            //Todo: Enable checks for Read Write status
             
             IListElement<T> listElement = null;
             var primeLockTaken = false;
@@ -404,7 +401,6 @@ namespace Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue
                     // IReliableConcurrentBlockingQueue
                     case RCQMode.Blocking:
                     {
-                        // todo sangarg : RDBug 8829568
                         var tcs = new TaskCompletionSource<ConditionalValue<IListElement<T>>>();
 
                         stopWatch.Start();
@@ -990,8 +986,7 @@ namespace Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue
             {
                 this.checkpointSnap = this.GetPersistedItemsAndDropStableDequeues();
             }
-            // todo sangarg : else checkpointSnap == null, check prepare-prepare condition
-
+            
             stopWatch.Stop();
 
             FabricEvents.Events.ReliableConcurrentQueue_PrepareCheckpointCompleted(this.traceType, this.lastPrepareCheckpointLsn, this.DataStore.LinkedCount, this.DataStore.ItemsCount, this.isNoopCheckpoint, stopWatch.ElapsedMilliseconds);
@@ -1040,7 +1035,6 @@ namespace Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue
             // Noop Complete if no new checkpoint metadata exists, if it was a noop checkpoint, then nothing would be written during perform.
             // Also If the complete came in as part of the Open call before recovery, but the metadata were actually replaced,
             // Nothing to be done, return
-            // todo sangarg : add extra asserts to check that it is in one of the above conditions.
             if (this.nextCheckpointManager == null)
             {
                 var res = await CheckpointManager<T>.TryReadNewFile(this.WorkDirectory, this.ValueSerializer, this.traceType).ConfigureAwait(false);
@@ -1232,7 +1226,6 @@ namespace Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue
                 await this.LoadStateFromCopyFileAsync().ConfigureAwait(false);
             }
 
-            // todo sangarg : Add stateRecordNumber to trace
             FabricEvents.Events.ReliableConcurrentQueue_SetCurrentState(this.traceType, complete);
         }
 
@@ -1263,7 +1256,6 @@ namespace Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue
         {
             FabricEvents.Events.ReliableConcurrentQueue_ApiInfo(this.traceType, "RemoveStateAsync");
 
-            // todo sangarg : bug RDBug 8927523
             //if (this.currentRole != ReplicaRole.None)
             //{
             //    TestableAssertHelper.FailInvalidOperation(
@@ -1326,13 +1318,11 @@ namespace Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue
            
             while (current < lsn)
             {
-                // todo sangarg : define previous outside to avoid early break, and do all of your checks in the while conditional.
                 var previous = Interlocked.CompareExchange(ref this.lastMaxApplyLsn, lsn, current);
              
                 if (previous == current || previous >= lsn)
                     break;
 
-                // todo sangarg: check if these need to be interlocked reads
                 current = Interlocked.Read(ref this.lastMaxApplyLsn);
             }
 
