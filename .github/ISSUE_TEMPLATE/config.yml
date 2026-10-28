@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Service Fabric Community Support
+    url: https://docs.microsoft.com/en-us/answers/topics/azure-service-fabric.html
+    about: Please ask and answer questions here.
+  - name: Service Fabric Production and Paid Support
+    url: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-support#report-production-issues-or-request-paid-support-for-azure
+    about: Please open production issues or paid support needs here
