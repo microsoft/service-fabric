@@ -589,16 +589,22 @@ SetEnvironmentVariableW(
             IN LPCWSTR lpName,
             IN LPCWSTR lpValue)
 {
+    if (!lpName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    string name = utf16to8(lpName);
+
     if (!lpValue)
     {
-        unsetenv(utf16to8(lpName).c_str());
+        unsetenv(name.c_str());
         return TRUE;
     }
 
-    string nvpair = utf16to8(lpName) + "=" + utf16to8(lpValue);
-    char *buf = (char*) malloc(nvpair.length() + 1);
-    memcpy(buf, nvpair.c_str(), nvpair.length() + 1);
-    return putenv(buf) == 0;
+    string value = utf16to8(lpValue);
+    return setenv(name.c_str(), value.c_str(), 1) == 0;
 }
 
 PALIMPORT
