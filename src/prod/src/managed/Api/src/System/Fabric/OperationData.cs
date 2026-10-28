@@ -106,7 +106,7 @@ namespace System.Fabric
 
         private static unsafe IList<ArraySegment<byte>> CreateFromNativeInternal(uint count, IntPtr buffer)
         {
-            List<ArraySegment<byte>> returnValue = new List<ArraySegment<byte>>();
+            List<ArraySegment<byte>> returnValue = new List<ArraySegment<byte>>(count);
 
             for (int i = 0; i < count; i++)
             {
