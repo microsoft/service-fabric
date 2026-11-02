@@ -1,8 +1,0 @@
-[Version]
-Signature="$WINDOWS NT$"
-
-[KNetFaultInjectorKernel.NT.Wdf]
-KmdfService = KNetFaultInjectorKernel, KmUnit_Service_kmdfInst
-
-[KmUnit_Service_kmdfInst]
-KmdfLibraryVersion = 1.9

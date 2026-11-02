@@ -1,6 +1,0 @@
-LIBRARY ReliableCollectionService
-EXPORTS
-    ReliableCollectionService_Initialize
-    ReliableCollectionService_InitializeEx
-    ReliableCollectionService_Cleanup
-    ClusterConfig_GetDnsSettings

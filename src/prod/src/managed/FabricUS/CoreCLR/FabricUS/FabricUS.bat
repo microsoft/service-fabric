@@ -1,1 +1,0 @@
-dotnet.exe "%~dp0\FabricUS.dll" %*
