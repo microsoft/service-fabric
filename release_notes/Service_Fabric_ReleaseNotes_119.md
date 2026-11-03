@@ -20,7 +20,7 @@ The following packages and versions are part of this release:
 |---|---|---|
 | [Service Fabric Runtime](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.11.9.121.1.exe) | Windows <br> ARM64 <br> Ubuntu 22 <br> AzLinux | 11.9.121.1 <br> 11.9.121.2 <br> 11.9.121.4 <br> 11.9.122.5|
 | [Service Fabric for Windows Server](https://download.microsoft.com/download/8/3/6/836e3e99-a300-4714-8278-96bc3e8b5528/11.9.121.1/Microsoft.Azure.ServiceFabric.WindowsServer.11.9.121.1.zip) | Service Fabric Standalone Installer Package | 11.9.121.1 |
-| [.NET SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.8.9.121.msi) | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 8.9.121 <br> 11.9.121.1 <br> 8.0.0 <br> 8.0.0 |
+| [.NET SDK](https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.8.9.121.msi) | Windows .NET SDK <br> Microsoft.ServiceFabric <br> Reliable Services and Reliable Actors <br> ASP.NET Core Service Fabric integration | 8.9.121 <br> 11.9.121.1 <br> 8.9.121 <br> 8.9.121 |
 | Service Fabric PowerShell and CLI | AzureRM PowerShell Module <br> SFCTL | 0.3.15 <br> 11.0.1 |
 
 ## Key Announcements
