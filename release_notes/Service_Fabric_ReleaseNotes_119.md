@@ -29,9 +29,7 @@ Service Fabric 11.9 improves Reliable Collections recovery, Linux runtime stabil
 
 ## Breaking Changes
 
-Upgrade considerations: `ReadAheadCacheSizeInKb` values above 2,097,148 KiB are now rejected; reduce higher values before upgrading or submitting configuration. The default remains 1,024 KiB. `ResourceNameHash` is removed from `LockAcquired`, `LockAcquisitionFailure`, and `LockHeldDuration` metrics; update queries and dashboards that use that dimension. Review the table for other behavior changes and diagnostic event-consumer guidance.
-
-Before upgrading Linux clusters to Service Fabric 11.9, validate and correct all explicitly configured TLS 1.3 cipher suites, or remove the explicit cipher suite configuration to use the system defaults.
+No customer-impacting breaking changes are identified in this release. Review the behavior changes, upgrade callouts, and configuration guidance in the feature and bug fix table before upgrading.
 
 ## Service Fabric Features and Bug Fixes
 
