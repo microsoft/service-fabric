@@ -35,9 +35,7 @@ Before upgrading Linux clusters to Service Fabric 11.9, validate and correct all
 
 ## Service Fabric Features and Bug Fixes
 
-The following public features and bug fixes are part of this release:
-
-### Service Fabric 11.9 Features and Bug Fixes
+The following public features, behavior changes, reliability updates and bug fixes are part of this release:
 
 | **Type** | **Description** | **Impact and Resolution** |
 |---|---|---|
