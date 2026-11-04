@@ -29,7 +29,7 @@ Service Fabric 11.9 improves Reliable Collections recovery, Linux runtime stabil
 
 ## Breaking Changes
 
-No customer-impacting breaking changes are identified in this release. Review the behavior changes, upgrade callouts, and configuration guidance in the feature and bug fix table before upgrading.
+Upgrade considerations: `ReadAheadCacheSizeInKb` values above 2,097,148 KiB are now rejected; reduce higher values before upgrading or submitting configuration. The default remains 1,024 KiB. Review the behavior changes, upgrade callouts, and configuration guidance in the feature and bug fix table before upgrading.
 
 ## Service Fabric Features and Bug Fixes
 
